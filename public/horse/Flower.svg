@@ -1,0 +1,14 @@
+<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' viewBox='0 0 32 32'>
+  <defs><linearGradient id='mane-color'><stop stop-color='#f25a5f'/></linearGradient><linearGradient id='pattern-color'><stop stop-color='#72d2ff'/></linearGradient><linearGradient id='hoof-color'><stop stop-color='#000'/></linearGradient><linearGradient id='body-color'><stop stop-color='#6d6e71'/></linearGradient></defs>
+  <rect width='32' height='32' fill='transparent' />
+  <path fill='#75c164' d='M27 25h1v1h-1zM27 24h1v1h-1zM27 23h1v1h-1z' />
+  <path fill='#ffda6a' d='M27 22h1v1h-1z' />
+  <path fill='#ee2636' d='M27 21h1v1h-1z' />
+  <path fill='#ffda6a' d='M27 20h1v1h-1z' />
+  <path fill='#fff' d='M26 20h1v1h-1z' />
+  <path fill='#ffda6a' d='M26 21h1v1h-1z' />
+  <path fill='#fff' d='M26 22h1v1h-1zM28 22h1v1h-1z' />
+  <path fill='#ffda6a' d='M28 21h1v1h-1z' />
+  <path fill='#fff' d='M28 20h1v1h-1z' />
+  <path fill='#75c164' d='M28 24h1v1h-1z' />
+</svg>

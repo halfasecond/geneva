@@ -1,0 +1,13 @@
+services:
+  vite:
+    build:
+      context: .
+      dockerfile: ${DOCKERFILE}
+    container_name: ${CONTAINER_NAME}
+    volumes:
+      - .:/app
+      - /app/node_modules
+    ports:
+      - ${PORT}:${PORT}
+    stdin_open: true
+    tty: true
