@@ -5,6 +5,7 @@ import { useMovement } from './hooks/useMovement'
 import { useZoom } from './hooks/useZoom'
 import { useGameServer } from './hooks/useGameServer'
 import { Position } from '../../server/types'
+import IssuesField from './components/IssuesField'
 
 interface PaddockProps {
     horseId: string
