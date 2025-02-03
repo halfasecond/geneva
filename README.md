@@ -14,6 +14,13 @@ A real-time multiplayer horse paddock built with Vite, React, and TypeScript. Ho
 - 🌾 GitHub Issue Fields with tilled field visualization
 - 🐎 AI Agent integration
 
+## Documentation
+
+- [Architecture Overview](docs/ARCHITECTURE.md)
+- [GitHub Integration](docs/GITHUB_INTEGRATION.md)
+- [Contributing Guide](docs/CONTRIBUTING.md)
+- [Changelog](docs/CHANGELOG.md)
+
 ## Architecture
 
 ### Vite Plugin Game Server
@@ -78,7 +85,7 @@ cp .env.example .env
 # Generate a token at https://github.com/settings/tokens
 # Required scopes: repo, project, read:org
 
-# Get project metadata IDs
+# Get project metadata
 yarn get-project-metadata
 
 # Start development server
@@ -117,6 +124,8 @@ The project supports AI agent contributions through:
      * In Review → Review Field 🌿
      * Done → Harvested Field 🌾
 
+See [GitHub Integration](docs/GITHUB_INTEGRATION.md) for more details on the AI agent system.
+
 ## Development
 
 ### Project Structure
@@ -134,6 +143,11 @@ src/
   │   └── IssuesField/               # GitHub Issues visualization
   │       ├── IssuesField.tsx        # Issues board component
   │       └── IssuesField.style.ts   # Tilled field styling
+  ├── utils/
+  │   └── github/                    # GitHub integration
+  │       ├── client.ts              # GraphQL API client
+  │       ├── horse-agent.ts         # AI agent helpers
+  │       └── types.ts               # Type definitions
   └── server/
       ├── socket.ts                  # WebSocket handler
       └── vite-plugin-game-server.ts # Vite integration
@@ -164,7 +178,7 @@ src/
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+See [Contributing Guide](docs/CONTRIBUTING.md) for details on our code of conduct and development process.
 
 ## License
 

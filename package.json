@@ -11,9 +11,9 @@
     "preview": "yarn vite preview",
     "test:browser": "yarn vitest --workspace=vitest.workspace.ts",
     "test:coverage": "yarn vitest --coverage",
-    "get-project-metadata": "node --experimental-modules scripts/get-project-metadata.js",
-    "setup-agent-label": "node --experimental-modules scripts/setup-agent-label.js",
-    "create-agent-issue": "yarn setup-agent-label && node --experimental-modules scripts/create-horse82-issue.js"
+    "github:build": "tsc --project scripts/github/tsconfig.json && node scripts/github/copy-env.js",
+    "github:metadata": "yarn github:build && node scripts/github/dist/scripts/github/get-metadata.js",
+    "horse82:pr": "yarn github:build && node scripts/github/dist/scripts/github/horse82/create-pr.js"
   },
   "dependencies": {
     "@asseinfo/react-kanban": "^2.2.0",
