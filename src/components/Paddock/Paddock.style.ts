@@ -10,6 +10,16 @@ export const Container = styled.div`
     z-index: 0;
 `
 
+export const IssuesFieldContainer = styled.div`
+    position: absolute;
+    top: 100px;
+    left: 800px;
+    max-height: 80vh;
+    overflow: auto;
+    transform: ${props => `scale(${1 / props.scale})`}; // Counter parent scale
+    transform-origin: top left;
+`
+
 export const GameSpace = styled.div`
     position: absolute;
     width: 5000px;
@@ -23,6 +33,7 @@ export const Horse = styled.div`
     width: 100px;
     height: 100px;
     will-change: transform;
+
     z-index: 2;
     img {
         width: 100%;

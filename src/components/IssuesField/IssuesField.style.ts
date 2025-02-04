@@ -1,22 +1,39 @@
 import styled from 'styled-components';
 
-export const FieldContainer = styled.div`
+export const FieldContainer = styled.div<{ loading?: boolean }>`
   padding: 20px;
-  background: #654321; // Dark soil color
-  min-height: 600px;
+  background: transparent;
+  height: 600px; // Fixed height for consistency
   border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  position: relative;
+
+  ${props => props.loading && `
+    &:after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(2px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+    }
+  `}
 
   /* Style the react-kanban-board container */
-  > div {
+  .react-kanban-board {
+    z-index: 0; // Lower z-index than container
     display: flex;
     gap: 0; // Remove default gap
     margin: 0 -20px; // Compensate for parent padding
     padding: 0 20px; // Add padding back
     overflow-x: auto;
+    flex: 1; // Take up remaining height
+    min-height: 0; // Allow flex child to scroll
 
     /* Style the columns container */
     > div {
@@ -24,46 +41,61 @@ export const FieldContainer = styled.div`
       gap: 24px; // Consistent gap between columns
       min-width: fit-content;
       width: 100%;
+      height: 100%; // Full height
 
-      /* Make columns equal width */
-      > div {
+      /* Style react-kanban-column */
+      .react-kanban-column {
         flex: 1;
-        min-width: 280px;
+        min-width: 210px;
+        max-width: 210px;
+        height: 100%; // Full height
+        display: flex; // Enable flex layout
+        flex-direction: column; // Stack children vertically
+        background: #654321; // Dark soil color
+        background-image: repeating-linear-gradient(
+          45deg,
+          #654321,
+          #654321 10px,
+          #8B4513 10px,
+          #8B4513 20px
+        );
+        border-radius: 8px;
+        padding: 16px;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+        overflow-y: auto; // Allow scrolling within column
+
+        /* Column content should align to top */
+        > div {
+          display: flex;
+          flex-direction: column;
+          align-items: stretch;
+          justify-content: flex-start;
+        }
+
+        /* Column header using pseudo-element */
+        &::before {
+          content: attr(data-title);
+          display: block;
+          color: #F5DEB3; // Wheat color
+          font-size: 20px;
+          font-weight: bold;
+          margin: 0 0 16px 0;
+          text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Hover effect */
+        &:hover {
+          background-image: repeating-linear-gradient(
+            45deg,
+            #654321,
+            #654321 8px,
+            #8B4513 8px,
+            #8B4513 16px
+          );
+          transition: background-image 0.3s ease;
+        }
       }
     }
-  }
-`;
-
-export const TilledLane = styled.div`
-  background: #8B4513; // Saddle brown for tilled soil
-  background-image: repeating-linear-gradient(
-    45deg,
-    #8B4513,
-    #8B4513 10px,
-    #654321 10px,
-    #654321 20px
-  );
-  border-radius: 8px;
-  padding: 16px;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
-
-  h2 {
-    color: #F5DEB3; // Wheat color
-    font-size: 20px;
-    margin: 0 0 16px 0;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
-  }
-
-  /* Add soil texture effect on hover */
-  &:hover {
-    background-image: repeating-linear-gradient(
-      45deg,
-      #8B4513,
-      #8B4513 8px,
-      #654321 8px,
-      #654321 16px
-    );
-    transition: background-image 0.3s ease;
   }
 `;
 
@@ -73,6 +105,8 @@ export const IssueCard = styled.div`
   border-radius: 8px;
   padding: 12px;
   margin: 8px 0;
+  width: 178px; // Fixed width (85% of lane width to account for padding)
+  flex-shrink: 0; // Prevent cards from shrinking
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   cursor: pointer;
   
@@ -115,17 +149,37 @@ export const FieldHeader = styled.div`
 `;
 
 export const FieldTitle = styled.h2`
-  color: #F5DEB3;
+  color: #2C1810;
   font-size: 28px;
   margin: 0;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
 `;
 
-export const LoadingField = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 400px;
+export const LoadingSpinner = styled.div`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 101;
+  width: 50px;
+  height: 50px;
+  border: 4px solid #F5DEB3;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+
+  @keyframes spin {
+    from { transform: translate(-50%, -50%) rotate(0deg); }
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+  }
+`;
+
+export const LoadingText = styled.div`
+  position: absolute;
+  top: calc(50% + 40px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 101;
   color: #F5DEB3;
   font-size: 20px;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);

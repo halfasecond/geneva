@@ -3,14 +3,14 @@ import Board from '@asseinfo/react-kanban';
 import { graphql } from '@octokit/graphql';
 import {
   FieldContainer,
-  TilledLane,
   IssueCard,
   IssueTitle,
   IssueLabels,
   Label,
   FieldHeader,
   FieldTitle,
-  LoadingField
+  LoadingSpinner,
+  LoadingText
 } from './IssuesField.style';
 
 // Initialize GitHub GraphQL client
@@ -154,14 +154,13 @@ const IssuesField: React.FC = () => {
 
   // Custom column component
   const renderColumn = useCallback((column: KanbanColumn) => (
-    <TilledLane>
-      <h2>{column.title} ({column.cards.length})</h2>
+    <div data-title={`${column.title} (${column.cards.length})`}>
       {column.cards.map(card => (
         <div key={`${card.projectId}-${card.contentId}`}>
           {renderCard(card)}
         </div>
       ))}
-    </TilledLane>
+    </div>
   ), [renderCard]);
 
   // Map GitHub status to column index
@@ -341,30 +340,28 @@ const IssuesField: React.FC = () => {
     };
   }, [fetchProjectItems]);
 
-  if (loading) {
-    return (
-      <FieldContainer>
-        <LoadingField>
-          🌱 Tending to the fields...
-        </LoadingField>
-      </FieldContainer>
-    );
-  }
-
   if (error) {
     return (
-      <FieldContainer>
-        <LoadingField>
+      <FieldContainer loading={false}>
+        <LoadingText>
           🚫 {error}
-        </LoadingField>
+        </LoadingText>
       </FieldContainer>
     );
   }
 
   return (
-    <FieldContainer>
+    <FieldContainer loading={loading}>
+      {loading && (
+        <>
+          <LoadingSpinner />
+          <LoadingText>
+            🌱 Tending to the fields...
+          </LoadingText>
+        </>
+      )}
       <FieldHeader>
-        <FieldTitle>🌾 Issue Fields</FieldTitle>
+        <FieldTitle>🌾 Engagement Farm</FieldTitle>
       </FieldHeader>
       <Board
         disableColumnDrag
