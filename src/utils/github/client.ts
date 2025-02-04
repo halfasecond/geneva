@@ -391,6 +391,21 @@ export class GitHubClient {
   /**
    * Move an issue to a new status
    */
+  /**
+   * Add labels to an issue using REST API
+   */
+  async addLabelsToIssue(issueNumber: number, labels: string[]) {
+    await this.octokit.rest.issues.addLabels({
+      owner: this.config.owner,
+      repo: this.config.repo,
+      issue_number: issueNumber,
+      labels
+    });
+  }
+
+  /**
+   * Move an issue to a new status
+   */
   async moveIssueToStatus(issueNumber: number, status: ProjectItemStatus) {
     const metadata = await this.getProjectMetadata();
     const item = await this.findProjectItem(issueNumber);
