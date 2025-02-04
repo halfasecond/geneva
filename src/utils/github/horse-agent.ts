@@ -43,13 +43,15 @@ export class HorseAgent {
     type: string,
     description: string,
     body: string,
-    labelIds?: string[]
+    labelIds?: string[],
+    projectIds?: string[]
   ) {
     // Create issue first
     const input: CreateIssueInput = {
       title: this.formatTitle(type, description),
       body: this.sign(body),
-      repositoryId: (await this.client.getProjectMetadata()).repositoryId
+      repositoryId: (await this.client.getProjectMetadata()).repositoryId,
+      projectIds: projectIds
     };
 
     const result = await this.client.createIssue(input);
