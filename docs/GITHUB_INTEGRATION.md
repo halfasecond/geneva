@@ -39,15 +39,6 @@ await horse82.createIssue(
   'Implementation details...',
   ['agent:horse82']
 );
-
-// Create a PR and move issue to review
-await horse82.createPullRequestForIssue(
-  'feat',
-  'Add new feature',
-  'Implementation details...',
-  1,
-  'feat/new-feature'
-);
 ```
 
 ### 3. Project Board Integration
@@ -91,21 +82,26 @@ VITE_APP_GITHUB_PROJECT_DONE_OPTION_ID=xxx
    - Creates feature branch
    - Implements changes
 
-3. Pull Request:
-   - Horse creates PR linking to issue
-   - PR title includes horse attribution
-   - Issue automatically moves to "Review Field"
+3. Pull Request Creation:
+   ```bash
+   # Create a PR and move issue to review
+   yarn github:pr <horse-number> <type> <description> <issue-number> <head-branch> [base-branch]
+
+   # Example:
+   yarn github:pr 82 feat "Add tilled fields board" 1 feat/tilled-fields-board
+   yarn github:pr 21 fix "Fix issue duplication" 2 fix/duplicate-issues main
+   ```
 
 4. PR Comments:
    ```bash
    # Add a general comment
-   yarn github:comment 82 2 comment "Great progress on this feature!"
+   yarn github:comment <horse-number> <pr-number> comment "Great progress!"
 
    # Add a code review
-   yarn github:comment 21 2 review "Code looks good, just a few suggestions..."
+   yarn github:comment <horse-number> <pr-number> review "Code looks good..."
 
    # Suggest improvements
-   yarn github:comment 82 2 suggest "Consider adding error handling"
+   yarn github:comment <horse-number> <pr-number> suggest "Consider adding..."
    ```
 
 5. Completion:
@@ -118,7 +114,20 @@ VITE_APP_GITHUB_PROJECT_DONE_OPTION_ID=xxx
    yarn github:metadata
    ```
 
-2. Comment on PRs:
+2. Create Pull Requests:
+   ```bash
+   yarn github:pr <horse-number> <type> <description> <issue-number> <head-branch> [base-branch]
+
+   # Arguments:
+   # - horse-number: The horse's number (e.g., 21, 82)
+   # - type: PR type (feat, fix, docs, refactor)
+   # - description: Brief description of changes
+   # - issue-number: Related issue number
+   # - head-branch: Source branch with changes
+   # - base-branch: Target branch (optional, defaults to 'master')
+   ```
+
+3. Comment on PRs:
    ```bash
    yarn github:comment <horse-number> <pr-number> <comment-type> [comment]
 
@@ -130,18 +139,19 @@ VITE_APP_GITHUB_PROJECT_DONE_OPTION_ID=xxx
 
 ## Best Practices
 
-1. **Attribution**: Always use the HorseAgent class to ensure proper attribution in commits, issues, and PRs.
+1. **Attribution**: Always use the provided scripts to ensure proper horse attribution.
 
-2. **Status Updates**: Use the provided methods to update issue status to maintain consistency.
+2. **Status Updates**: Status changes are handled automatically by the PR scripts.
 
 3. **Branch Names**: Follow the pattern: `type/description` (e.g., `feat/tilled-fields-board`).
 
 4. **Commit Messages**: Format as `[Horse #XX] type: description (#issue)`.
 
-5. **PR Comments**: Use the appropriate comment type:
-   - `comment` for general feedback
-   - `review` for code reviews
-   - `suggest` for specific improvement suggestions
+5. **PR Creation**: Use descriptive types and clear descriptions:
+   - `feat`: New features
+   - `fix`: Bug fixes
+   - `docs`: Documentation changes
+   - `refactor`: Code improvements
 
 ## Error Handling
 
@@ -157,3 +167,4 @@ The integration includes comprehensive error handling:
 2. Support for multiple projects
 3. Enhanced agent collaboration features
 4. Automated PR reviews
+5. Support for multi-line comments from files

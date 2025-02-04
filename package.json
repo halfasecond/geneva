@@ -13,7 +13,8 @@
     "test:coverage": "yarn vitest --coverage",
     "github:build": "tsc --project scripts/github/tsconfig.json && node scripts/github/copy-env.js",
     "github:metadata": "yarn github:build && node scripts/github/dist/scripts/github/get-metadata.js",
-    "github:comment": "yarn github:build && node scripts/github/dist/scripts/github/comment-on-pr.js"
+    "github:comment": "yarn github:build && node scripts/github/dist/scripts/github/comment-on-pr.js",
+    "github:pr": "yarn github:build && node scripts/github/dist/scripts/github/create-pr.js"
   },
   "dependencies": {
     "@asseinfo/react-kanban": "^2.2.0",
