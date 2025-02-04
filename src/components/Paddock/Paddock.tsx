@@ -5,7 +5,7 @@ import { useMovement } from './hooks/useMovement'
 import { useZoom } from './hooks/useZoom'
 import { useGameServer } from './hooks/useGameServer'
 import { Position } from '../../server/types'
-import IssuesField from './components/IssuesField'
+import IssuesField from '../IssuesField'
 
 interface PaddockProps {
     horseId: string
@@ -86,6 +86,11 @@ export const Paddock: React.FC<PaddockProps> = ({
                     transformOrigin: `${zoomOrigin.x}% ${zoomOrigin.y}%`
                 }}
             >
+                {/* Issues Field */}
+                <Styled.IssuesFieldContainer scale={scale}>
+                    <IssuesField />
+                </Styled.IssuesFieldContainer>
+
                 {/* Current player */}
                 <Styled.Horse
                     style={{
@@ -116,34 +121,34 @@ export const Paddock: React.FC<PaddockProps> = ({
 
             {/* Minimap */}
             <Styled.Minimap>
-                {/* Current player */}
-                <Styled.MinimapHorse
-                    style={{
-                        left: `${(position.x / 5000) * 200}px`,
-                        top: `${(position.y / 5000) * 200}px`,
-                    }}
-                />
+                    {/* Current player */}
+                    <Styled.MinimapHorse
+                        style={{
+                            left: `${(position.x / 5000) * 200}px`,
+                            top: `${(position.y / 5000) * 200}px`,
+                        }}
+                    />
 
-                {/* Other players */}
-                {Array.from(players.entries()).map(([id, player]) => {
-                    if (id === horseId) return null
-                    return (
-                        <Styled.MinimapHorse
-                            key={id}
-                            x={player.position.x}
-                            y={player.position.y}
-                        />
-                    )
-                })}
+                    {/* Other players */}
+                    {Array.from(players.entries()).map(([id, player]) => {
+                        if (id === horseId) return null
+                        return (
+                            <Styled.MinimapHorse
+                                key={id}
+                                x={player.position.x}
+                                y={player.position.y}
+                            />
+                        )
+                    })}
 
-                <Styled.ViewportIndicator
-                    x={viewportOffset.x}
-                    y={viewportOffset.y}
-                    width={viewportDimensions.width}
-                    height={viewportDimensions.height}
-                    scale={scale}
-                />
-            </Styled.Minimap>
+                    <Styled.ViewportIndicator
+                        x={viewportOffset.x}
+                        y={viewportOffset.y}
+                        width={viewportDimensions.width}
+                        height={viewportDimensions.height}
+                        scale={scale}
+                    />
+                </Styled.Minimap>
         </Styled.Container>
     )
 }
