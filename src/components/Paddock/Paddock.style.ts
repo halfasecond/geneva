@@ -6,14 +6,14 @@ export const Container = styled.div`
     width: 100vw;
     height: 100vh;
     overflow: hidden;
-    background: #f0f0f0;
+    background: rgb(170, 255, 207);
+    z-index: 0;
 `
 
 export const GameSpace = styled.div`
     position: absolute;
     width: 5000px;
     height: 8000px;
-    background: white;
     transition: transform 0.1s ease-out;
     will-change: transform;
 `
@@ -23,6 +23,7 @@ export const Horse = styled.div`
     width: 100px;
     height: 100px;
     will-change: transform;
+    z-index: 2;
     img {
         width: 100%;
         height: 100%;

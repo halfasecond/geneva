@@ -11,6 +11,15 @@ A real-time multiplayer horse paddock built with Vite, React, and TypeScript. Ho
 - 🔄 Automatic direction flipping based on movement
 - 🌐 WebSocket-based synchronization
 - 🎨 SVG horse animations
+- 🌾 GitHub Issue Fields with tilled field visualization
+- 🐎 AI Agent integration
+
+## Documentation
+
+- [Architecture Overview](docs/ARCHITECTURE.md)
+- [GitHub Integration](docs/GITHUB_INTEGRATION.md)
+- [Contributing Guide](docs/CONTRIBUTING.md)
+- [Changelog](docs/CHANGELOG.md)
 
 ## Architecture
 
@@ -58,6 +67,7 @@ The UI is built with styled-components, featuring:
 
 - Node.js 18+
 - Yarn
+- GitHub Personal Access Token (for Issue Fields)
 
 ### Installation
 
@@ -67,6 +77,16 @@ git clone [repository-url]
 
 # Install dependencies
 yarn install
+
+# Configure GitHub integration
+cp .env.example .env
+
+# Edit .env file with your GitHub token and repository details
+# Generate a token at https://github.com/settings/tokens
+# Required scopes: repo, project, read:org
+
+# Get project metadata
+yarn get-project-metadata
 
 # Start development server
 yarn dev
@@ -80,6 +100,32 @@ The game will be available at `http://localhost:3131`
 - Zoom: Ctrl + / Ctrl -
 - Direction: Automatically flips based on movement
 
+### AI Agent Integration
+
+The project supports AI agent contributions through:
+
+1. Agent Labels:
+   - Format: `agent:horse<number>`
+   - Example: `agent:horse82`, `agent:horse21`
+   - Special styling in the tilled fields board
+
+2. Creating Agent Issues:
+   ```bash
+   # Create an issue as an AI agent
+   yarn create-agent-issue
+   ```
+
+3. Tilled Fields Board:
+   - Shows issues in a farming-themed board
+   - Special styling for AI agent contributions
+   - Status mapping to field stages:
+     * Todo → Backlog Field 🌱
+     * In Progress → Growing Field 🌾
+     * In Review → Review Field 🌿
+     * Done → Harvested Field 🌾
+
+See [GitHub Integration](docs/GITHUB_INTEGRATION.md) for more details on the AI agent system.
+
 ## Development
 
 ### Project Structure
@@ -87,13 +133,21 @@ The game will be available at `http://localhost:3131`
 ```
 src/
   ├── components/
-  │   └── Paddock/
-  │       ├── hooks/
-  │       │   ├── useGameServer.ts   # Socket management
-  │       │   ├── useMovement.ts     # Movement controls
-  │       │   └── useZoom.ts         # Camera controls
-  │       ├── Paddock.tsx            # Main component
-  │       └── Paddock.style.ts       # Styled components
+  │   ├── Paddock/
+  │   │   ├── hooks/
+  │   │   │   ├── useGameServer.ts   # Socket management
+  │   │   │   ├── useMovement.ts     # Movement controls
+  │   │   │   └── useZoom.ts         # Camera controls
+  │   │   ├── Paddock.tsx            # Main component
+  │   │   └── Paddock.style.ts       # Styled components
+  │   └── IssuesField/               # GitHub Issues visualization
+  │       ├── IssuesField.tsx        # Issues board component
+  │       └── IssuesField.style.ts   # Tilled field styling
+  ├── utils/
+  │   └── github/                    # GitHub integration
+  │       ├── client.ts              # GraphQL API client
+  │       ├── horse-agent.ts         # AI agent helpers
+  │       └── types.ts               # Type definitions
   └── server/
       ├── socket.ts                  # WebSocket handler
       └── vite-plugin-game-server.ts # Vite integration
@@ -116,9 +170,15 @@ src/
    - Other players' state in useGameServer
    - Minimap reflects all positions
 
+4. **Issue Fields**
+   - Visualizes GitHub issues as crops in tilled fields
+   - Automatic organization based on status
+   - Real-time updates when issues change
+   - Special handling of AI agent contributions
+
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+See [Contributing Guide](docs/CONTRIBUTING.md) for details on our code of conduct and development process.
 
 ## License
 
