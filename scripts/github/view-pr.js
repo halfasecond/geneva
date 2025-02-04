@@ -63,7 +63,6 @@ async function viewPR() {
                 path
                 additions
                 deletions
-                patch
               }
             }
             comments(first: 100) {
@@ -111,11 +110,6 @@ async function viewPR() {
     console.log('📝 Changed Files:');
     pr.files.nodes.forEach(file => {
       console.log(`\n${file.path} (+${file.additions}/-${file.deletions})`);
-      if (file.patch) {
-        console.log('```diff');
-        console.log(file.patch);
-        console.log('```');
-      }
     });
 
     // Display comments

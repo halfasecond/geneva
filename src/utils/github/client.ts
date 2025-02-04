@@ -8,7 +8,8 @@ import type {
   ProjectItem,
   ProjectItemStatus,
   PullRequest,
-  AddCommentInput
+  AddCommentInput,
+  MergePullRequestInput
 } from './types.js';
 
 /**
@@ -211,6 +212,7 @@ export class GitHubClient {
             id
             number
             url
+            title
             comments(first: 100) {
               nodes {
                 id
@@ -251,6 +253,27 @@ export class GitHubClient {
               }
               createdAt
             }
+          }
+        }
+      }
+    `;
+
+    return this.graphqlWithAuth(mutation, { input });
+  }
+
+  /**
+   * Merge a pull request
+   */
+  async mergePullRequest(input: MergePullRequestInput) {
+    const mutation = `
+      mutation($input: MergePullRequestInput!) {
+        mergePullRequest(input: $input) {
+          pullRequest {
+            id
+            number
+            url
+            merged
+            mergedAt
           }
         }
       }

@@ -73,10 +73,18 @@ export interface AddCommentInput {
   body: string;
 }
 
+export interface MergePullRequestInput {
+  pullRequestId: string;
+  mergeMethod: 'MERGE' | 'SQUASH' | 'REBASE';
+  commitHeadline: string;
+  commitBody?: string;
+}
+
 export interface PullRequest {
   id: string;
   number: number;
   url: string;
+  title: string;
   comments: {
     nodes: Comment[];
   };

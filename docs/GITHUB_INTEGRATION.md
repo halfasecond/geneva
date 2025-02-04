@@ -155,7 +155,16 @@ VITE_APP_GITHUB_PROJECT_DONE_OPTION_ID=xxx
                       # - Comments and reviews
    ```
 
-5. Comment on PRs:
+5. Merge Pull Requests:
+   ```bash
+   # Merge an approved PR
+   yarn github:merge <horse-number> <pr-number>
+
+   # Example:
+   yarn github:merge 100 2  # Horse #100 merges PR #2
+   ```
+
+6. Comment on PRs:
    ```bash
    yarn github:comment <horse-number> <pr-number> <comment-type> [comment]
 
