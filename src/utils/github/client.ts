@@ -116,7 +116,6 @@ export class GitHubClient {
           label(name: $name) {
             id
             name
-            nodeId
           }
         }
       }
@@ -131,7 +130,7 @@ export class GitHubClient {
 
       const label = (response as any).repository.label;
       if (label) {
-        return label.nodeId;
+        return label.id;
       }
 
       // Create label if it doesn't exist
@@ -150,7 +149,7 @@ export class GitHubClient {
         name
       });
 
-      return (newResponse as any).repository.label.nodeId;
+      return (newResponse as any).repository.label.id;
     } catch (error) {
       console.error('Error getting/creating label:', error);
       throw error;
