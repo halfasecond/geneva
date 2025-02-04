@@ -278,7 +278,11 @@ export class GitHubClient {
       }
     `;
 
-    interface PRStatusResponse {
+    const prStatus = await this.graphqlWithAuth(query, {
+      owner: this.config.owner,
+      repo: this.config.repo,
+      number: parseInt(input.pullRequestId, 10)
+    }) as {
       repository: {
         pullRequest: {
           id: string;
@@ -286,13 +290,7 @@ export class GitHubClient {
           viewerCanUpdate: boolean;
         };
       };
-    }
-
-    const prStatus = await this.graphqlWithAuth<PRStatusResponse>(query, {
-      owner: this.config.owner,
-      repo: this.config.repo,
-      number: parseInt(input.pullRequestId, 10)
-    });
+    };
 
     console.log('PR Status:', JSON.stringify(prStatus, null, 2));
 
