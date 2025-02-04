@@ -265,6 +265,45 @@ export class GitHubClient {
    * Merge a pull request
    */
   async mergePullRequest(input: MergePullRequestInput) {
+    // First check if PR can be merged
+    const query = `
+      query($owner: String!, $repo: String!, $number: Int!) {
+        repository(owner: $owner, name: $repo) {
+          pullRequest(number: $number) {
+            id
+            mergeable
+            viewerCanUpdate
+          }
+        }
+      }
+    `;
+
+    interface PRStatusResponse {
+      repository: {
+        pullRequest: {
+          id: string;
+          mergeable: 'MERGEABLE' | 'CONFLICTING' | 'UNKNOWN';
+          viewerCanUpdate: boolean;
+        };
+      };
+    }
+
+    const prStatus = await this.graphqlWithAuth<PRStatusResponse>(query, {
+      owner: this.config.owner,
+      repo: this.config.repo,
+      number: parseInt(input.pullRequestId, 10)
+    });
+
+    console.log('PR Status:', JSON.stringify(prStatus, null, 2));
+
+    if (prStatus.repository.pullRequest.mergeable !== 'MERGEABLE') {
+      throw new Error('Pull request cannot be merged. Please check for conflicts.');
+    }
+
+    if (!prStatus.repository.pullRequest.viewerCanUpdate) {
+      throw new Error('You do not have permission to merge this pull request.');
+    }
+
     const mutation = `
       mutation($input: MergePullRequestInput!) {
         mergePullRequest(input: $input) {
@@ -274,12 +313,21 @@ export class GitHubClient {
             url
             merged
             mergedAt
+            mergeCommit {
+              oid
+              messageHeadline
+            }
           }
         }
       }
     `;
 
-    return this.graphqlWithAuth(mutation, { input });
+    return this.graphqlWithAuth(mutation, {
+      input: {
+        ...input,
+        pullRequestId: prStatus.repository.pullRequest.id
+      }
+    });
   }
 
   /**
