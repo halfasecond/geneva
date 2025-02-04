@@ -167,9 +167,12 @@ const IssuesField: React.FC = () => {
   // Map GitHub status to column index
   const getColumnIndex = useCallback((status: string): number => {
     const statusLower = status.toLowerCase();
-    if (statusLower.includes('in progress')) return 1;
-    if (statusLower.includes('review')) return 2;
-    if (statusLower.includes('done')) return 3;
+    if (statusLower === 'in progress') return 1;
+    if (statusLower === 'in review') return 2;
+    if (statusLower === 'done') return 3;
+    if (statusLower === 'todo') return 0;
+    // Log unknown status for debugging
+    console.log('Unknown status:', status);
     return 0; // Default to backlog
   }, []);
 
@@ -252,9 +255,13 @@ const IssuesField: React.FC = () => {
         }
         processedKeys.add(itemKey);
 
-        const status = item.fieldValues.nodes.find(
+        const statusNode = item.fieldValues.nodes.find(
           (value: ProjectV2ItemFieldValue) => value?.field?.name === 'Status'
-        )?.name || 'Todo';
+        );
+        const status = statusNode?.name || 'Todo';
+        
+        // Debug log status values
+        console.log('Issue #' + item.content.number + ' status:', status);
 
         const projectItem: KanbanCard = {
           projectId: item.id,
