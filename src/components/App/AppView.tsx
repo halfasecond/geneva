@@ -4,7 +4,6 @@ import { BrowserRouter as Router, useLocation } from 'react-router-dom'
 import Metamask from '../Metamask'
 import { AuthProps } from '../../types/auth'
 import { Paddock } from 'components/Paddock'
-import IssuesField from 'components/IssuesField'
 
 const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn: walletAddress, BASE_URL }) => {
     return (
@@ -14,9 +13,6 @@ const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn: w
             <Styled.Main>
                 <h1>The Paddock</h1>
                 <Paddock horseId="21" />
-                <div style={{ marginTop: '2rem', position: 'fixed', top: 100, left: 100, zIndex: 1 }}>
-                    <IssuesField />
-                </div>
             </Styled.Main>
         </Router>
     )
