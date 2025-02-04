@@ -45,18 +45,20 @@ export class HorseAgent {
     body: string,
     labelIds?: string[]
   ) {
-    // Get or create agent label first
-    const agentLabelId = await this.getAgentLabel();
-    const allLabelIds = [...(labelIds || []), agentLabelId];
-
+    // Create issue first without agent label
     const input: CreateIssueInput = {
       title: this.formatTitle(type, description),
       body: this.sign(body),
       repositoryId: (await this.client.getProjectMetadata()).repositoryId,
-      labelIds: allLabelIds
+      labelIds: labelIds || []
     };
 
     const result = await this.client.createIssue(input);
+
+    // Add agent label after issue creation
+    const agentLabelId = await this.getAgentLabel();
+    await this.client.addLabels(result.createIssue.issue.id, [agentLabelId]);
+
     return result;
   }
 

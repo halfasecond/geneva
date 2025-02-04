@@ -55,8 +55,8 @@ export interface CreatePullRequestInput {
   title: string;
   body: string;
   repositoryId: string;
-  baseRefName: string;
   headRefName: string;
+  baseRefName: string;
 }
 
 export interface UpdateProjectItemInput {
@@ -127,4 +127,64 @@ export interface GitHubError extends Error {
       path: string[];
     }>;
   };
+}
+
+export interface CreateIssueResult {
+  createIssue: {
+    issue: {
+      id: string;
+      number: number;
+      url: string;
+    };
+  };
+}
+
+export interface CreatePullRequestResult {
+  createPullRequest: {
+    pullRequest: {
+      id: string;
+      number: number;
+      url: string;
+    };
+  };
+}
+
+export interface AddLabelsResult {
+  addLabelsToLabelable: {
+    labelable: {
+      labels: {
+        nodes: Array<{
+          id: string;
+          name: string;
+        }>;
+      };
+    };
+  };
+}
+
+export interface UpdateItemStatusResult {
+  updateProjectV2ItemFieldValue: {
+    projectV2Item: {
+      id: string;
+    };
+  };
+}
+
+export interface AddCommentResult {
+  addComment: {
+    commentEdge: {
+      node: Comment;
+    };
+  };
+}
+
+export interface MergePullRequestResult {
+  sha: string;
+  merged: boolean;
+  message: string;
+}
+
+export interface AddLabelsInput {
+  labelableId: string;
+  labelIds: string[];
 }
