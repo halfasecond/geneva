@@ -3,15 +3,21 @@ import { Octokit } from '@octokit/rest';
 import type {
   ProjectMetadata,
   CreateIssueInput,
+  CreateIssueResult,
   CreatePullRequestInput,
+  CreatePullRequestResult,
   UpdateProjectItemInput,
+  UpdateItemStatusResult,
   GitHubClientConfig,
   ProjectItem,
   ProjectItemStatus,
   PullRequest,
   AddCommentInput,
+  AddCommentResult,
   MergePullRequestInput,
-  GitHubError
+  MergePullRequestResult,
+  GitHubError,
+  AddLabelsResult
 } from './types.js';
 
 /**
@@ -100,9 +106,61 @@ export class GitHubClient {
   }
 
   /**
+   * Create or get a label
+   */
+  async getOrCreateLabel(name: string, color: string = 'f29513'): Promise<string> {
+    try {
+      // Try to get existing label
+      const { data: label } = await this.octokit.rest.issues.getLabel({
+        owner: this.config.owner,
+        repo: this.config.repo,
+        name
+      });
+      return label.node_id;
+    } catch (error) {
+      // Create label if it doesn't exist
+      const { data: newLabel } = await this.octokit.rest.issues.createLabel({
+        owner: this.config.owner,
+        repo: this.config.repo,
+        name,
+        color,
+        description: 'Horse agent label'
+      });
+      return newLabel.node_id;
+    }
+  }
+
+  /**
+   * Add labels to an issue or PR
+   */
+  async addLabels(subjectId: string, labelIds: string[]): Promise<AddLabelsResult> {
+    const mutation = `
+      mutation($input: AddLabelsToLabelableInput!) {
+        addLabelsToLabelable(input: $input) {
+          labelable {
+            labels {
+              nodes {
+                id
+                name
+              }
+            }
+          }
+        }
+      }
+    `;
+
+    return this.graphqlWithAuth(mutation, {
+      input: {
+        labelableId: subjectId,
+        labelIds
+      }
+    });
+  }
+
+  /**
    * Create a new issue
    */
-  async createIssue(input: CreateIssueInput) {
+  async createIssue(input: CreateIssueInput): Promise<CreateIssueResult> {
     const mutation = `
       mutation($input: CreateIssueInput!) {
         createIssue(input: $input) {
@@ -121,7 +179,7 @@ export class GitHubClient {
   /**
    * Create a new pull request
    */
-  async createPullRequest(input: CreatePullRequestInput) {
+  async createPullRequest(input: CreatePullRequestInput): Promise<CreatePullRequestResult> {
     const mutation = `
       mutation($input: CreatePullRequestInput!) {
         createPullRequest(input: $input) {
@@ -134,13 +192,13 @@ export class GitHubClient {
       }
     `;
 
-    return this.graphqlWithAuth(mutation, { input });
+    return this.graphqlWithAuth(mutation, { input }) as Promise<CreatePullRequestResult>;
   }
 
   /**
    * Update a project item's status
    */
-  async updateItemStatus(input: UpdateProjectItemInput) {
+  async updateItemStatus(input: UpdateProjectItemInput): Promise<UpdateItemStatusResult> {
     const mutation = `
       mutation($input: UpdateProjectV2ItemFieldValueInput!) {
         updateProjectV2ItemFieldValue(input: $input) {
@@ -250,7 +308,7 @@ export class GitHubClient {
   /**
    * Add a comment to a pull request
    */
-  async addComment(input: AddCommentInput) {
+  async addComment(input: AddCommentInput): Promise<AddCommentResult> {
     const mutation = `
       mutation($input: AddCommentInput!) {
         addComment(input: $input) {
@@ -274,7 +332,7 @@ export class GitHubClient {
   /**
    * Merge a pull request
    */
-  async mergePullRequest(input: MergePullRequestInput) {
+  async mergePullRequest(input: MergePullRequestInput): Promise<MergePullRequestResult> {
     // First check if PR can be merged using GraphQL
     const pr = await this.getPullRequest(parseInt(input.pullRequestId, 10));
     console.log('PR Status:', JSON.stringify(pr, null, 2));
