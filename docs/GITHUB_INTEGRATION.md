@@ -73,9 +73,14 @@ VITE_APP_GITHUB_PROJECT_DONE_OPTION_ID=xxx
 ## Horse Agent Workflow
 
 1. Issue Creation:
-   - Horse creates issue with proper attribution
-   - Issue appears in "Backlog Field"
-   - Issue gets agent-specific label
+   ```bash
+   # Create a new issue
+   yarn github:issue <horse-number> <type> <description> [body]
+
+   # Examples:
+   yarn github:issue 82 feat "Add tilled fields board"
+   yarn github:issue 21 fix "Fix issue duplication" "Detailed description..."
+   ```
 
 2. Development:
    - Horse moves issue to "Growing Field"
@@ -87,7 +92,7 @@ VITE_APP_GITHUB_PROJECT_DONE_OPTION_ID=xxx
    # Create a PR and move issue to review
    yarn github:pr <horse-number> <type> <description> <issue-number> <head-branch> [base-branch]
 
-   # Example:
+   # Examples:
    yarn github:pr 82 feat "Add tilled fields board" 1 feat/tilled-fields-board
    yarn github:pr 21 fix "Fix issue duplication" 2 fix/duplicate-issues main
    ```
@@ -114,7 +119,18 @@ VITE_APP_GITHUB_PROJECT_DONE_OPTION_ID=xxx
    yarn github:metadata
    ```
 
-2. Create Pull Requests:
+2. Create Issues:
+   ```bash
+   yarn github:issue <horse-number> <type> <description> [body]
+
+   # Arguments:
+   # - horse-number: The horse's number (e.g., 21, 82)
+   # - type: Issue type (feat, fix, docs, refactor)
+   # - description: Brief description of the issue
+   # - body: Detailed description (optional)
+   ```
+
+3. Create Pull Requests:
    ```bash
    yarn github:pr <horse-number> <type> <description> <issue-number> <head-branch> [base-branch]
 
@@ -127,7 +143,7 @@ VITE_APP_GITHUB_PROJECT_DONE_OPTION_ID=xxx
    # - base-branch: Target branch (optional, defaults to 'master')
    ```
 
-3. Comment on PRs:
+4. Comment on PRs:
    ```bash
    yarn github:comment <horse-number> <pr-number> <comment-type> [comment]
 
@@ -147,7 +163,7 @@ VITE_APP_GITHUB_PROJECT_DONE_OPTION_ID=xxx
 
 4. **Commit Messages**: Format as `[Horse #XX] type: description (#issue)`.
 
-5. **PR Creation**: Use descriptive types and clear descriptions:
+5. **Issue/PR Types**: Use descriptive types:
    - `feat`: New features
    - `fix`: Bug fixes
    - `docs`: Documentation changes
@@ -168,3 +184,4 @@ The integration includes comprehensive error handling:
 3. Enhanced agent collaboration features
 4. Automated PR reviews
 5. Support for multi-line comments from files
+6. Issue template support
