@@ -26,10 +26,10 @@ const ORGANIZATION = import.meta.env.VITE_APP_GITHUB_REPO_OWNER;
 
 // Map GitHub's default status fields to our tilled field names
 const STATUS_MAPPING = {
-  'todo': 'Backlog Field 🌱',
-  'in progress': 'Growing Field 🌾',
-  'in review': 'Review Field 🌿',
-  'done': 'Harvested Field 🌾',
+  'Todo': 'Backlog Field 🌱',
+  'In Progress': 'Growing Field 🌾',
+  'In Review': 'Review Field 🌿',
+  'Done': 'Harvested Field 🌾',
   // Default fallback
   'default': 'Backlog Field 🌱'
 } as const;
@@ -80,7 +80,7 @@ interface GraphQLResponse {
             nodes: ProjectV2ItemFieldValue[];
           };
           content: {
-            __typename: string;
+            __typename: 'Issue' | 'PullRequest';
             id: string;
             title: string;
             number: number;
@@ -103,23 +103,23 @@ interface GraphQLResponse {
 const INITIAL_BOARD: KanbanBoard = {
   columns: [
     {
-      id: 'todo',
-      title: STATUS_MAPPING['todo'],
+      id: 'Todo',
+      title: STATUS_MAPPING['Todo'],
       cards: []
     },
     {
-      id: 'in-progress',
-      title: STATUS_MAPPING['in progress'],
+      id: 'In Progress',
+      title: STATUS_MAPPING['In Progress'],
       cards: []
     },
     {
-      id: 'in-review',
-      title: STATUS_MAPPING['in review'],
+      id: 'In Review',
+      title: STATUS_MAPPING['In Review'],
       cards: []
     },
     {
-      id: 'done',
-      title: STATUS_MAPPING['done'],
+      id: 'Done',
+      title: STATUS_MAPPING['Done'],
       cards: []
     }
   ]
@@ -166,11 +166,16 @@ const IssuesField: React.FC = () => {
 
   // Map GitHub status to column index
   const getColumnIndex = useCallback((status: string): number => {
-    const statusLower = status.toLowerCase();
-    if (statusLower === 'in progress') return 1;
-    if (statusLower === 'in review') return 2;
-    if (statusLower === 'done') return 3;
-    if (statusLower === 'todo') return 0;
+    console.log('Mapping status:', status);
+    console.log('Status type:', typeof status);
+    console.log('Status length:', status.length);
+    console.log('Status chars:', status.split('').map(c => c.charCodeAt(0)));
+    
+    if (status === 'In Progress') return 1;
+    if (status === 'In Review') return 2;
+    if (status === 'Done') return 3;
+    if (status === 'Todo') return 0;
+    
     // Log unknown status for debugging
     console.log('Unknown status:', status);
     return 0; // Default to backlog
@@ -221,6 +226,19 @@ const IssuesField: React.FC = () => {
                         }
                       }
                     }
+                    ... on PullRequest {
+                      id
+                      title
+                      number
+                      url
+                      labels(first: 10) {
+                        nodes {
+                          id
+                          name
+                          color
+                        }
+                      }
+                    }
                   }
                 }
               }
@@ -228,6 +246,12 @@ const IssuesField: React.FC = () => {
           }
         }
       `;
+      console.log('GraphQL Query:', query);
+
+      console.log('Fetching project data with:', {
+        org: ORGANIZATION,
+        number: PROJECT_NUMBER
+      });
 
       const response = await graphqlWithAuth<GraphQLResponse>(query, {
         org: ORGANIZATION,
@@ -236,13 +260,16 @@ const IssuesField: React.FC = () => {
 
       if (!mountedRef.current) return;
 
+      console.log('API Response:', JSON.stringify(response, null, 2));
+
       const items = response.organization.projectV2.items.nodes;
+      console.log('Found items:', items.length);
       const newBoard = structuredClone(INITIAL_BOARD);
       const processedKeys = new Set<string>();
 
       items.forEach(item => {
-        // Skip items that don't have content or aren't Issues
-        if (!item.content || item.content.__typename !== 'Issue') {
+        // Skip items that don't have content
+        if (!item.content || !['Issue', 'PullRequest'].includes(item.content.__typename)) {
           return;
         }
 
@@ -255,13 +282,21 @@ const IssuesField: React.FC = () => {
         }
         processedKeys.add(itemKey);
 
+        // Log all field values for debugging
+        console.log('Issue #' + item.content.number + ' field values:', JSON.stringify(item.fieldValues.nodes, null, 2));
+        
         const statusNode = item.fieldValues.nodes.find(
-          (value: ProjectV2ItemFieldValue) => value?.field?.name === 'Status'
+          (value: ProjectV2ItemFieldValue) => {
+            console.log('Checking field value:', JSON.stringify(value, null, 2));
+            return value?.field?.name === 'Status';
+          }
         );
+        
+        console.log('Issue #' + item.content.number + ' status node:', JSON.stringify(statusNode, null, 2));
         const status = statusNode?.name || 'Todo';
         
-        // Debug log status values
-        console.log('Issue #' + item.content.number + ' status:', status);
+        // Debug log final status value
+        console.log('Issue #' + item.content.number + ' final status:', status);
 
         const projectItem: KanbanCard = {
           projectId: item.id,
@@ -280,6 +315,7 @@ const IssuesField: React.FC = () => {
       });
 
       if (mountedRef.current) {
+        console.log('Final board state:', JSON.stringify(newBoard, null, 2));
         setBoard(newBoard);
         setError(null);
       }
