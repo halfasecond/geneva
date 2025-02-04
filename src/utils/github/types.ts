@@ -68,6 +68,29 @@ export interface UpdateProjectItemInput {
   };
 }
 
+export interface AddCommentInput {
+  subjectId: string;
+  body: string;
+}
+
+export interface PullRequest {
+  id: string;
+  number: number;
+  url: string;
+  comments: {
+    nodes: Comment[];
+  };
+}
+
+export interface Comment {
+  id: string;
+  body: string;
+  author: {
+    login: string;
+  };
+  createdAt: string;
+}
+
 export enum ProjectItemStatus {
   TODO = 'todo',
   IN_PROGRESS = 'inProgress',

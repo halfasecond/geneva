@@ -1,5 +1,5 @@
 import { GitHubClient } from './client.js';
-import { ProjectItemStatus, CreateIssueInput, CreatePullRequestInput } from './types.js';
+import { ProjectItemStatus, CreateIssueInput, CreatePullRequestInput, PullRequest } from './types.js';
 
 /**
  * Helper class for Horse agents to interact with GitHub
@@ -101,5 +101,45 @@ export class HorseAgent {
     await this.moveIssue(issueNumber, ProjectItemStatus.IN_REVIEW);
 
     return pr;
+  }
+
+  /**
+   * Get a pull request with comments
+   */
+  async getPullRequest(prNumber: number): Promise<PullRequest> {
+    return this.client.getPullRequest(prNumber);
+  }
+
+  /**
+   * Add a comment to a pull request with horse attribution
+   */
+  async commentOnPR(prNumber: number, comment: string) {
+    const pr = await this.getPullRequest(prNumber);
+    
+    return this.client.addComment({
+      subjectId: pr.id,
+      body: this.sign(comment)
+    });
+  }
+
+  /**
+   * Review code in a pull request
+   */
+  async reviewPR(prNumber: number, feedback: string) {
+    const reviewComment = `Code Review Feedback:\n\n${feedback}`;
+    return this.commentOnPR(prNumber, reviewComment);
+  }
+
+  /**
+   * Suggest improvements to code in a pull request
+   */
+  async suggestImprovements(prNumber: number, suggestions: string[]) {
+    const comment = `Suggested Improvements:
+
+${suggestions.map((s, i) => `${i + 1}. ${s}`).join('\n')}
+
+Let me know if you'd like me to help implement any of these suggestions!`;
+
+    return this.commentOnPR(prNumber, comment);
   }
 }

@@ -6,7 +6,9 @@ import type {
   UpdateProjectItemInput,
   GitHubClientConfig,
   ProjectItem,
-  ProjectItemStatus
+  ProjectItemStatus,
+  PullRequest,
+  AddCommentInput
 } from './types.js';
 
 /**
@@ -196,6 +198,65 @@ export class GitHubClient {
 
     const items = (response as any).organization.projectV2.items.nodes;
     return items.find((item: ProjectItem) => item.content?.number === issueNumber) || null;
+  }
+
+  /**
+   * Get a pull request by number
+   */
+  async getPullRequest(prNumber: number): Promise<PullRequest> {
+    const query = `
+      query($owner: String!, $repo: String!, $number: Int!) {
+        repository(owner: $owner, name: $repo) {
+          pullRequest(number: $number) {
+            id
+            number
+            url
+            comments(first: 100) {
+              nodes {
+                id
+                body
+                author {
+                  login
+                }
+                createdAt
+              }
+            }
+          }
+        }
+      }
+    `;
+
+    const response = await this.graphqlWithAuth(query, {
+      owner: this.config.owner,
+      repo: this.config.repo,
+      number: prNumber
+    });
+
+    return (response as any).repository.pullRequest;
+  }
+
+  /**
+   * Add a comment to a pull request
+   */
+  async addComment(input: AddCommentInput) {
+    const mutation = `
+      mutation($input: AddCommentInput!) {
+        addComment(input: $input) {
+          commentEdge {
+            node {
+              id
+              body
+              author {
+                login
+              }
+              createdAt
+            }
+          }
+        }
+      }
+    `;
+
+    return this.graphqlWithAuth(mutation, { input });
   }
 
   /**
