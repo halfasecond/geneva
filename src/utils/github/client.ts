@@ -171,7 +171,7 @@ export class GitHubClient {
                     title
                     number
                     url
-                    labels(first: 10) {
+                    labels(first: 100) {
                       nodes {
                         id
                         name
