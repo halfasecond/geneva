@@ -24,6 +24,11 @@ Arguments:
   description   Brief description of the issue
   body          Detailed description (optional)
 
+Notes:
+  - Issues are automatically added to the configured project
+  - Agent labels are automatically applied
+  - Project ID is fetched from metadata
+
 Examples:
   node create-issue.js 82 feat "Add tilled fields board"
   node create-issue.js 21 fix "Fix issue duplication" "Detailed description..."
@@ -58,12 +63,16 @@ async function createIssue() {
     // Create horse agent
     const horse = new HorseAgent(client, parseInt(horseNumber, 10));
 
+    // Get project metadata
+    const metadata = await client.getProjectMetadata();
+
     // Create issue
     const result = await horse.createIssue(
       type,
       description,
       body,
-      [`agent:horse${horseNumber}`]
+      [`agent:horse${horseNumber}`],
+      [metadata.projectId]
     );
 
     console.log(`✨ Created issue #${result.createIssue.issue.number}`);
