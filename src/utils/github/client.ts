@@ -265,7 +265,7 @@ export class GitHubClient {
    * Merge a pull request
    */
   async mergePullRequest(input: MergePullRequestInput) {
-    // First check if PR can be merged
+    // First check if PR can be merged using GraphQL
     const query = `
       query($owner: String!, $repo: String!, $number: Int!) {
         repository(owner: $owner, name: $repo) {
@@ -302,30 +302,29 @@ export class GitHubClient {
       throw new Error('You do not have permission to merge this pull request.');
     }
 
-    const mutation = `
-      mutation($input: MergePullRequestInput!) {
-        mergePullRequest(input: $input) {
-          pullRequest {
-            id
-            number
-            url
-            merged
-            mergedAt
-            mergeCommit {
-              oid
-              messageHeadline
-            }
-          }
-        }
-      }
-    `;
-
-    return this.graphqlWithAuth(mutation, {
-      input: {
-        ...input,
-        pullRequestId: prStatus.repository.pullRequest.id
-      }
+    // Use REST API for merging since it has better permission handling
+    const response = await fetch(`https://api.github.com/repos/${this.config.owner}/${this.config.repo}/pulls/${input.pullRequestId}/merge`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `token ${this.config.token}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        merge_method: 'squash',
+        commit_title: input.commitHeadline,
+        commit_message: input.commitBody
+      })
     });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(`Failed to merge PR: ${error.message}`);
+    }
+
+    const result = await response.json();
+    console.log('Merge result:', JSON.stringify(result, null, 2));
+    return result;
   }
 
   /**
