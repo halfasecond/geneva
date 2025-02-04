@@ -273,6 +273,9 @@ export class GitHubClient {
             id
             mergeable
             viewerCanUpdate
+            headRefName
+            baseRefName
+            headRefOid
           }
         }
       }
@@ -288,6 +291,9 @@ export class GitHubClient {
           id: string;
           mergeable: 'MERGEABLE' | 'CONFLICTING' | 'UNKNOWN';
           viewerCanUpdate: boolean;
+          headRefName: string;
+          baseRefName: string;
+          headRefOid: string;
         };
       };
     };
@@ -306,19 +312,22 @@ export class GitHubClient {
     const response = await fetch(`https://api.github.com/repos/${this.config.owner}/${this.config.repo}/pulls/${input.pullRequestId}/merge`, {
       method: 'PUT',
       headers: {
-        'Authorization': `token ${this.config.token}`,
+        'Authorization': `Bearer ${this.config.token}`,
         'Accept': 'application/vnd.github.v3+json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'X-GitHub-Api-Version': '2022-11-28'
       },
       body: JSON.stringify({
         merge_method: 'squash',
         commit_title: input.commitHeadline,
-        commit_message: input.commitBody
+        commit_message: input.commitBody,
+        sha: prStatus.repository.pullRequest.headRefOid // Add commit SHA for validation
       })
     });
 
     if (!response.ok) {
       const error = await response.json();
+      console.error('Full error response:', JSON.stringify(error, null, 2));
       throw new Error(`Failed to merge PR: ${error.message}`);
     }
 
