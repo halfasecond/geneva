@@ -29,6 +29,14 @@ export class HorseAgent {
   }
 
   /**
+   * Get or create the agent label
+   */
+  private async getAgentLabel(): Promise<string> {
+    const labelName = `agent:horse${this.horseNumber}`;
+    return this.client.getOrCreateLabel(labelName, 'f29513');
+  }
+
+  /**
    * Create an issue with horse attribution
    */
   async createIssue(
@@ -37,11 +45,15 @@ export class HorseAgent {
     body: string,
     labelIds?: string[]
   ) {
+    // Get or create agent label first
+    const agentLabelId = await this.getAgentLabel();
+    const allLabelIds = [...(labelIds || []), agentLabelId];
+
     const input: CreateIssueInput = {
       title: this.formatTitle(type, description),
       body: this.sign(body),
       repositoryId: (await this.client.getProjectMetadata()).repositoryId,
-      labelIds
+      labelIds: allLabelIds
     };
 
     const result = await this.client.createIssue(input);

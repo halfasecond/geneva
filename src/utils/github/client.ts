@@ -22,6 +22,31 @@ export class GitHubClient {
   private octokit;
   private config: GitHubClientConfig;
 
+  /**
+   * Create or get a label
+   */
+  async getOrCreateLabel(name: string, color: string = 'f29513'): Promise<string> {
+    try {
+      // Try to get existing label
+      const { data: label } = await this.octokit.rest.issues.getLabel({
+        owner: this.config.owner,
+        repo: this.config.repo,
+        name
+      });
+      return label.node_id;
+    } catch (error) {
+      // Create label if it doesn't exist
+      const { data: newLabel } = await this.octokit.rest.issues.createLabel({
+        owner: this.config.owner,
+        repo: this.config.repo,
+        name,
+        color,
+        description: 'Horse agent label'
+      });
+      return newLabel.node_id;
+    }
+  }
+
   constructor(config: GitHubClientConfig) {
     this.config = config;
     this.graphqlWithAuth = graphql.defaults({
