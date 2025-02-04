@@ -15,7 +15,8 @@
     "github:metadata": "yarn github:build && node scripts/github/dist/scripts/github/get-metadata.js",
     "github:issue": "yarn github:build && node scripts/github/dist/scripts/github/create-issue.js",
     "github:pr": "yarn github:build && node scripts/github/dist/scripts/github/create-pr.js",
-    "github:comment": "yarn github:build && node scripts/github/dist/scripts/github/comment-on-pr.js"
+    "github:comment": "yarn github:build && node scripts/github/dist/scripts/github/comment-on-pr.js",
+    "github:view": "yarn github:build && node scripts/github/dist/scripts/github/view-pr.js"
   },
   "dependencies": {
     "@asseinfo/react-kanban": "^2.2.0",

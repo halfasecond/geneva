@@ -143,7 +143,19 @@ VITE_APP_GITHUB_PROJECT_DONE_OPTION_ID=xxx
    # - base-branch: Target branch (optional, defaults to 'master')
    ```
 
-4. Comment on PRs:
+4. View Pull Requests:
+   ```bash
+   # View PR details, changes, and comments
+   yarn github:view <pr-number>
+
+   # Example:
+   yarn github:view 2  # Shows full PR details including:
+                      # - Description
+                      # - Changed files with diffs
+                      # - Comments and reviews
+   ```
+
+5. Comment on PRs:
    ```bash
    yarn github:comment <horse-number> <pr-number> <comment-type> [comment]
 
