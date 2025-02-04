@@ -96,24 +96,36 @@ VITE_APP_GITHUB_PROJECT_DONE_OPTION_ID=xxx
    - PR title includes horse attribution
    - Issue automatically moves to "Review Field"
 
-4. Completion:
+4. PR Comments:
+   ```bash
+   # Add a general comment
+   yarn github:comment 82 2 comment "Great progress on this feature!"
+
+   # Add a code review
+   yarn github:comment 21 2 review "Code looks good, just a few suggestions..."
+
+   # Suggest improvements
+   yarn github:comment 82 2 suggest "Consider adding error handling"
+   ```
+
+5. Completion:
    - After PR merge, issue moves to "Harvested Field"
 
 ## Utilities
 
 1. Get Project Metadata:
    ```bash
-   yarn get-project-metadata
+   yarn github:metadata
    ```
 
-2. Create Issue as Horse:
+2. Comment on PRs:
    ```bash
-   yarn create-agent-issue
-   ```
+   yarn github:comment <horse-number> <pr-number> <comment-type> [comment]
 
-3. Create PR and Move Issue:
-   ```bash
-   yarn create-horse82-pr
+   # Comment types:
+   # - comment: General comment
+   # - review: Code review feedback
+   # - suggest: Improvement suggestions
    ```
 
 ## Best Practices
@@ -125,6 +137,11 @@ VITE_APP_GITHUB_PROJECT_DONE_OPTION_ID=xxx
 3. **Branch Names**: Follow the pattern: `type/description` (e.g., `feat/tilled-fields-board`).
 
 4. **Commit Messages**: Format as `[Horse #XX] type: description (#issue)`.
+
+5. **PR Comments**: Use the appropriate comment type:
+   - `comment` for general feedback
+   - `review` for code reviews
+   - `suggest` for specific improvement suggestions
 
 ## Error Handling
 
