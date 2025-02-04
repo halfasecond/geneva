@@ -13,9 +13,7 @@
     "test:coverage": "yarn vitest --coverage",
     "github:build": "tsc --project scripts/github/tsconfig.json && node scripts/github/copy-env.js",
     "github:metadata": "yarn github:build && node scripts/github/dist/scripts/github/get-metadata.js",
-    "horse21:comment": "yarn github:build && node scripts/github/dist/scripts/github/horse21/comment-on-pr.js",
-    "horse82:pr": "yarn github:build && node scripts/github/dist/scripts/github/horse82/create-pr.js",
-    "horse82:comment": "yarn github:build && node scripts/github/dist/scripts/github/horse82/comment-on-pr.js"
+    "github:comment": "yarn github:build && node scripts/github/dist/scripts/github/comment-on-pr.js"
   },
   "dependencies": {
     "@asseinfo/react-kanban": "^2.2.0",
