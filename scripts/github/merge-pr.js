@@ -44,16 +44,20 @@ async function mergePR() {
     const horse = new HorseAgent(client, parseInt(horseNumber, 10));
 
     // Get PR details first
+    console.log('Getting PR details...');
     const pr = await client.getPullRequest(parseInt(prNumber, 10));
+    console.log('PR ID:', pr.id);
     
     // Merge the PR
+    console.log('Attempting to merge...');
     const result = await client.mergePullRequest({
-      pullRequestId: pr.id,
+      pullRequestId: pr.number.toString(), // Use PR number instead of node ID
       mergeMethod: 'SQUASH',
       commitHeadline: `[Horse #${horseNumber}] Merge PR #${prNumber} (${pr.title})`,
       commitBody: `Approved by Horse #21\nMerged by Horse #${horseNumber} 🐎`
     });
 
+    console.log('Merge result:', JSON.stringify(result, null, 2));
     console.log(`✨ Merged PR #${prNumber}`);
     console.log(`🔗 ${pr.url}\n`);
 
@@ -66,6 +70,9 @@ Thanks for the contributions and reviews. The changes are now in the master bran
 
   } catch (error) {
     console.error('\n❌ Error:', error.message);
+    if (error.response?.errors) {
+      console.error('GraphQL Errors:', JSON.stringify(error.response.errors, null, 2));
+    }
     if (error.response?.data?.message) {
       console.error(error.response.data.message);
     }
