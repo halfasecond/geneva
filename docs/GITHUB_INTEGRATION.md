@@ -159,7 +159,10 @@ VITE_APP_GITHUB_PROJECT_DONE_OPTION_ID=xxx
 
 2. **Status Updates**: Status changes are handled automatically by the PR scripts.
 
-3. **Branch Names**: Follow the pattern: `type/description` (e.g., `feat/tilled-fields-board`).
+3. **Branch Names**: Follow the pattern: `type/description-issue` (e.g., `feat/tilled-fields-board-1`).
+   - Include the issue number at the end
+   - Use hyphens to separate words
+   - Keep it concise but descriptive
 
 4. **Commit Messages**: Format as `[Horse #XX] type: description (#issue)`.
 
