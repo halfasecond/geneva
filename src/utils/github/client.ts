@@ -109,15 +109,29 @@ export class GitHubClient {
    * Create or get a label
    */
   async getOrCreateLabel(name: string, color: string = 'f29513'): Promise<string> {
+    // Get label's global ID using GraphQL
+    const query = `
+      query($owner: String!, $repo: String!, $name: String!) {
+        repository(owner: $owner, name: $repo) {
+          label(name: $name) {
+            id
+          }
+        }
+      }
+    `;
+
     try {
-      // Try to get existing label
-      const { data: label } = await this.octokit.rest.issues.getLabel({
+      const response = await this.graphqlWithAuth(query, {
         owner: this.config.owner,
         repo: this.config.repo,
         name
       });
-      return label.node_id;
-    } catch (error) {
+
+      const label = (response as any).repository.label;
+      if (label) {
+        return label.id;
+      }
+
       // Create label if it doesn't exist
       const { data: newLabel } = await this.octokit.rest.issues.createLabel({
         owner: this.config.owner,
@@ -126,7 +140,18 @@ export class GitHubClient {
         color,
         description: 'Horse agent label'
       });
-      return newLabel.node_id;
+
+      // Get the new label's global ID
+      const newResponse = await this.graphqlWithAuth(query, {
+        owner: this.config.owner,
+        repo: this.config.repo,
+        name
+      });
+
+      return (newResponse as any).repository.label.id;
+    } catch (error) {
+      console.error('Error getting/creating label:', error);
+      throw error;
     }
   }
 
