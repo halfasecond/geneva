@@ -1,4 +1,5 @@
 import { graphql } from '@octokit/graphql';
+import { Octokit } from '@octokit/rest';
 import type {
   ProjectMetadata,
   CreateIssueInput,
@@ -9,7 +10,8 @@ import type {
   ProjectItemStatus,
   PullRequest,
   AddCommentInput,
-  MergePullRequestInput
+  MergePullRequestInput,
+  GitHubError
 } from './types.js';
 
 /**
@@ -17,6 +19,7 @@ import type {
  */
 export class GitHubClient {
   private graphqlWithAuth;
+  private octokit;
   private config: GitHubClientConfig;
 
   constructor(config: GitHubClientConfig) {
@@ -25,6 +28,10 @@ export class GitHubClient {
       headers: {
         authorization: `token ${config.token}`,
       },
+    });
+    this.octokit = new Octokit({
+      auth: config.token,
+      timeZone: 'UTC',
     });
   }
 
@@ -213,6 +220,9 @@ export class GitHubClient {
             number
             url
             title
+            headRefName
+            baseRefName
+            headRefOid
             comments(first: 100) {
               nodes {
                 id
@@ -266,74 +276,32 @@ export class GitHubClient {
    */
   async mergePullRequest(input: MergePullRequestInput) {
     // First check if PR can be merged using GraphQL
-    const query = `
-      query($owner: String!, $repo: String!, $number: Int!) {
-        repository(owner: $owner, name: $repo) {
-          pullRequest(number: $number) {
-            id
-            mergeable
-            viewerCanUpdate
-            headRefName
-            baseRefName
-            headRefOid
-          }
-        }
-      }
-    `;
+    const pr = await this.getPullRequest(parseInt(input.pullRequestId, 10));
+    console.log('PR Status:', JSON.stringify(pr, null, 2));
 
-    const prStatus = await this.graphqlWithAuth(query, {
-      owner: this.config.owner,
-      repo: this.config.repo,
-      number: parseInt(input.pullRequestId, 10)
-    }) as {
-      repository: {
-        pullRequest: {
-          id: string;
-          mergeable: 'MERGEABLE' | 'CONFLICTING' | 'UNKNOWN';
-          viewerCanUpdate: boolean;
-          headRefName: string;
-          baseRefName: string;
-          headRefOid: string;
-        };
-      };
-    };
-
-    console.log('PR Status:', JSON.stringify(prStatus, null, 2));
-
-    if (prStatus.repository.pullRequest.mergeable !== 'MERGEABLE') {
-      throw new Error('Pull request cannot be merged. Please check for conflicts.');
-    }
-
-    if (!prStatus.repository.pullRequest.viewerCanUpdate) {
-      throw new Error('You do not have permission to merge this pull request.');
-    }
-
-    // Use REST API for merging since it has better permission handling
-    const response = await fetch(`https://api.github.com/repos/${this.config.owner}/${this.config.repo}/pulls/${input.pullRequestId}/merge`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${this.config.token}`,
-        'Accept': 'application/vnd.github.v3+json',
-        'Content-Type': 'application/json',
-        'X-GitHub-Api-Version': '2022-11-28'
-      },
-      body: JSON.stringify({
+    // Use Octokit REST client for merging
+    try {
+      const result = await this.octokit.pulls.merge({
+        owner: this.config.owner,
+        repo: this.config.repo,
+        pull_number: parseInt(input.pullRequestId, 10),
         merge_method: 'squash',
         commit_title: input.commitHeadline,
         commit_message: input.commitBody,
-        sha: prStatus.repository.pullRequest.headRefOid // Add commit SHA for validation
-      })
-    });
+        sha: pr.headRefOid
+      });
 
-    if (!response.ok) {
-      const error = await response.json();
-      console.error('Full error response:', JSON.stringify(error, null, 2));
-      throw new Error(`Failed to merge PR: ${error.message}`);
+      console.log('Merge result:', JSON.stringify(result.data, null, 2));
+      return result.data;
+    } catch (error) {
+      const gitHubError = error as GitHubError;
+      console.error('Full error:', JSON.stringify(gitHubError, null, 2));
+      
+      const message = gitHubError.response?.data?.message || gitHubError.message;
+      const errors = gitHubError.response?.errors?.map(e => e.message).join(', ');
+      
+      throw new Error(`Failed to merge PR: ${message}${errors ? ` (${errors})` : ''}`);
     }
-
-    const result = await response.json();
-    console.log('Merge result:', JSON.stringify(result, null, 2));
-    return result;
   }
 
   /**

@@ -75,7 +75,7 @@ export interface AddCommentInput {
 
 export interface MergePullRequestInput {
   pullRequestId: string;
-  mergeMethod: 'MERGE' | 'SQUASH' | 'REBASE';
+  mergeMethod?: 'MERGE' | 'SQUASH' | 'REBASE';
   commitHeadline: string;
   commitBody?: string;
 }
@@ -85,6 +85,9 @@ export interface PullRequest {
   number: number;
   url: string;
   title: string;
+  headRefName: string;
+  baseRefName: string;
+  headRefOid: string;
   comments: {
     nodes: Comment[];
   };
@@ -111,4 +114,17 @@ export interface GitHubClientConfig {
   owner: string;
   repo: string;
   projectNumber: number;
+}
+
+export interface GitHubError extends Error {
+  response?: {
+    data?: {
+      message?: string;
+    };
+    errors?: Array<{
+      message: string;
+      type: string;
+      path: string[];
+    }>;
+  };
 }
