@@ -10,30 +10,13 @@ export const FieldContainer = styled.div<{ loading?: boolean }>`
   flex-direction: column;
   position: relative;
 
-  ${props => props.loading && `
-    &:after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.1);
-      backdrop-filter: blur(2px);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 100;
-    }
-  `}
-
   /* Style the react-kanban-board container */
   .react-kanban-board {
     z-index: 0; // Lower z-index than container
     display: flex;
     gap: 0; // Remove default gap
-    margin: 0 -20px; // Compensate for parent padding
-    padding: 0 20px; // Add padding back
     overflow-x: auto;
     flex: 1; // Take up remaining height
-    min-height: 0; // Allow flex child to scroll
 
     /* Style the columns container */
     > div {
@@ -43,26 +26,24 @@ export const FieldContainer = styled.div<{ loading?: boolean }>`
       width: 100%;
       height: 100%; // Full height
 
+      .react-kanban-column-header {
+        font-weight: bold;
+        margin-bottom: 12px;
+      }
+
       /* Style react-kanban-column */
       .react-kanban-column {
         flex: 1;
-        min-width: 210px;
-        max-width: 210px;
+        min-width: 236px;
+        max-width: 236px;
         height: 100%; // Full height
         display: flex; // Enable flex layout
         flex-direction: column; // Stack children vertically
-        background: #654321; // Dark soil color
-        background-image: repeating-linear-gradient(
-          45deg,
-          #654321,
-          #654321 10px,
-          #8B4513 10px,
-          #8B4513 20px
-        );
+        background: rgb(139, 69, 19); //#654321; // Dark soil color
         border-radius: 8px;
         padding: 16px;
         box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
-        overflow-y: auto; // Allow scrolling within column
+        box-sizing: border-box;
 
         /* Column content should align to top */
         > div {
@@ -81,18 +62,6 @@ export const FieldContainer = styled.div<{ loading?: boolean }>`
           font-weight: bold;
           margin: 0 0 16px 0;
           text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
-        }
-
-        /* Hover effect */
-        &:hover {
-          background-image: repeating-linear-gradient(
-            45deg,
-            #654321,
-            #654321 8px,
-            #8B4513 8px,
-            #8B4513 16px
-          );
-          transition: background-image 0.3s ease;
         }
       }
     }

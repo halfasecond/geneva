@@ -286,16 +286,12 @@ const IssuesField: React.FC = () => {
         
         const statusNode = item.fieldValues.nodes.find(
           (value: ProjectV2ItemFieldValue) => {
-            console.log('Checking field value:', JSON.stringify(value, null, 2));
             return value?.field?.name === 'Status';
           }
         );
         
         console.log('Issue #' + item.content.number + ' status node:', JSON.stringify(statusNode, null, 2));
         const status = statusNode?.name || 'Todo';
-        
-        // Debug log final status value
-        console.log('Issue #' + item.content.number + ' final status:', status);
 
         const projectItem: KanbanCard = {
           projectId: item.id,
@@ -352,14 +348,6 @@ const IssuesField: React.FC = () => {
 
   return (
     <FieldContainer loading={loading}>
-      {loading && (
-        <>
-          <LoadingSpinner />
-          <LoadingText>
-            🌱 Tending to the fields...
-          </LoadingText>
-        </>
-      )}
       <FieldHeader>
         <FieldTitle>🌾 Engagement Farm</FieldTitle>
       </FieldHeader>

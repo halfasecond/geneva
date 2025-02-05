@@ -49,7 +49,6 @@ export interface CreateIssueInput {
   body: string;
   repositoryId: string;
   labelIds?: string[];
-  projectIds?: string[];
 }
 
 export interface CreatePullRequestInput {
