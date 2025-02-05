@@ -356,6 +356,18 @@ export class GitHubClient {
   }
 
   /**
+   * Add a comment to an issue
+   */
+  async addIssueComment(issueNumber: number, body: string): Promise<void> {
+    await this.octokit.rest.issues.createComment({
+      owner: this.config.owner,
+      repo: this.config.repo,
+      issue_number: issueNumber,
+      body
+    });
+  }
+
+  /**
    * Merge a pull request
    */
   async mergePullRequest(input: MergePullRequestInput): Promise<MergePullRequestResult> {
@@ -388,9 +400,6 @@ export class GitHubClient {
     }
   }
 
-  /**
-   * Move an issue to a new status
-   */
   /**
    * Add labels to an issue using REST API
    */

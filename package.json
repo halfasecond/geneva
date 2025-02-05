@@ -16,12 +16,13 @@
     "github:issue": "yarn github:build && node scripts/github/dist/scripts/github/create-issue.js",
     "github:pr": "yarn github:build && node scripts/github/dist/scripts/github/create-pr.js",
     "github:view": "yarn github:build && node scripts/github/dist/scripts/github/view-pr.js",
-    "github:comment": "yarn github:build && node scripts/github/dist/scripts/github/comment-on-pr.js",
+    "github:comment-pr": "yarn github:build && node scripts/github/dist/scripts/github/comment-on-pr.js",
     "github:merge": "yarn github:build && node scripts/github/dist/scripts/github/merge-pr.js",
     "github:update-pr": "yarn github:build && node scripts/github/dist/scripts/github/update-pr-branch.js",
     "github:labels": "yarn github:build && node scripts/github/dist/scripts/github/add-labels.js",
     "github:project": "yarn github:build && node scripts/github/dist/scripts/github/add-to-project.js",
-    "github:status": "yarn github:build && node scripts/github/dist/scripts/github/update-status.js"
+    "github:status": "yarn github:build && node scripts/github/dist/scripts/github/update-status.js",
+    "github:comment-issue": "yarn github:build && node scripts/github/dist/scripts/github/comment-on-issue.js"
   },
   "dependencies": {
     "@asseinfo/react-kanban": "^2.2.0",
