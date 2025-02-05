@@ -20,7 +20,8 @@
     "github:merge": "yarn github:build && node scripts/github/dist/scripts/github/merge-pr.js",
     "github:update-pr": "yarn github:build && node scripts/github/dist/scripts/github/update-pr-branch.js",
     "github:labels": "yarn github:build && node scripts/github/dist/scripts/github/add-labels.js",
-    "github:project": "yarn github:build && node scripts/github/dist/scripts/github/add-to-project.js"
+    "github:project": "yarn github:build && node scripts/github/dist/scripts/github/add-to-project.js",
+    "github:status": "yarn github:build && node scripts/github/dist/scripts/github/update-status.js"
   },
   "dependencies": {
     "@asseinfo/react-kanban": "^2.2.0",
