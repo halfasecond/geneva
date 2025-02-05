@@ -74,7 +74,7 @@ export interface AddCommentInput {
 }
 
 export interface MergePullRequestInput {
-  pullRequestId: string;
+  prNumber: number;
   mergeMethod?: 'MERGE' | 'SQUASH' | 'REBASE';
   commitHeadline: string;
   commitBody?: string;

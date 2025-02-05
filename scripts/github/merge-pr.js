@@ -51,7 +51,7 @@ async function mergePR() {
     // Merge the PR
     console.log('Attempting to merge...');
     const result = await client.mergePullRequest({
-      pullRequestId: pr.id, // Use PR node ID for GraphQL
+      prNumber: parseInt(prNumber, 10),
       mergeMethod: 'SQUASH',
       commitHeadline: `[Horse #${horseNumber}] Merge PR #${prNumber} (${pr.title})`,
       commitBody: `Approved by Horse #21\nMerged by Horse #${horseNumber} 🐎`
