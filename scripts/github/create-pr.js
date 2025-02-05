@@ -1,7 +1,7 @@
 import { config } from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
-import { GitHubClient, HorseAgent } from '../../src/utils/github/index.js';
+import { GitHubClient, Agent } from '../../src/utils/github/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -14,27 +14,28 @@ config({ path: envPath });
 
 // Parse command line arguments
 const args = process.argv.slice(2);
-if (args.length < 6) {
+if (args.length < 7) {
   console.error(`
-Usage: node create-pr.js <horse-number> <type> <description> <issue-number> <head-branch> [base-branch] [body]
+Usage: node create-pr.js <agent-type> <agent-number> <type> <description> <issue-number> <head-branch> [base-branch] [body]
 
 Arguments:
-  horse-number   The horse's number (e.g., 21, 82)
-  type          PR type (e.g., feat, fix, docs, refactor)
-  description   Brief description of the changes
-  issue-number  Related issue number
-  head-branch   Source branch with changes
-  base-branch   Target branch (optional, defaults to 'master')
-  body          PR description (optional)
+  agent-type    The agent's type (e.g., horse)
+  agent-number  The agent's number (e.g., 21, 82)
+  type         PR type (e.g., feat, fix, docs, refactor)
+  description  Brief description of the changes
+  issue-number Related issue number
+  head-branch  Source branch with changes
+  base-branch  Target branch (optional, defaults to 'master')
+  body         PR description (optional)
 
 Examples:
-  node create-pr.js 82 feat "Add tilled fields board" 1 feat/tilled-fields-board
-  node create-pr.js 21 fix "Fix issue duplication" 2 fix/duplicate-issues main "Fixed duplicate issue creation bug"
+  node create-pr.js horse 82 feat "Add new feature" 15 feat/new-feature
+  node create-pr.js horse 21 fix "Fix bug" 16 fix/bug-fix main "Detailed description"
 `);
   process.exit(1);
 }
 
-const [horseNumber, type, description, issueNumber, headBranch, baseBranch = 'master', ...bodyParts] = args;
+const [agentType, agentNumber, type, description, issueNumber, headBranch, baseBranch = 'master', ...bodyParts] = args;
 const body = bodyParts.length > 0 ? bodyParts.join(' ') : `Implementing changes for issue #${issueNumber}.
 
 ## Changes
@@ -53,15 +54,15 @@ async function createPR() {
       projectNumber: parseInt(process.env.VITE_APP_GITHUB_PROJECT_NUMBER, 10)
     });
 
-    // Create horse agent
-    const horse = new HorseAgent(client, parseInt(horseNumber, 10));
+    // Create agent
+    const agent = new Agent(client, agentType, parseInt(agentNumber, 10));
 
     // Create PR without moving issue (since it might not be in a project)
     const result = await client.createPullRequest({
       repositoryId: process.env.VITE_APP_GITHUB_REPO_ID,
       baseRefName: baseBranch,
       headRefName: headBranch,
-      title: `[Horse #${horseNumber}] ${type}: ${description}`,
+      title: `[${agentType} #${agentNumber}] ${type}: ${description}`,
       body: body
     });
 
@@ -69,7 +70,7 @@ async function createPR() {
     console.log(`🔗 ${result.createPullRequest.pullRequest.url}\n`);
 
     // Add labels
-    await client.addLabelsToIssue(result.createPullRequest.pullRequest.number, [`agent:horse${horseNumber}`]);
+    await client.addLabelsToIssue(result.createPullRequest.pullRequest.number, [`agent:${agentType}${agentNumber}`]);
     console.log('✨ Added agent label');
 
   } catch (error) {

@@ -11,41 +11,24 @@ config({ path: resolve(__dirname, '../../.env') });
 
 // Parse command line arguments
 const args = process.argv.slice(2);
-if (args.length < 5) {
+if (args.length < 4) {
   console.error(`
-Usage: node comment-on-pr.js <agent-type> <agent-number> <pr-number> <comment-type> [comment]
+Usage: node comment-on-issue.js <agent-type> <agent-number> <issue-number> <comment>
 
 Arguments:
   agent-type    The agent's type (e.g., horse)
   agent-number  The agent's number (e.g., 21, 82)
-  pr-number    The PR number to comment on
-  comment-type Comment type (e.g., approve, request-changes, comment)
-  comment      Optional comment text
+  issue-number The issue number to comment on
+  comment      The comment text to add
 
 Example:
-  node comment-on-pr.js horse 82 15 approve "Great work! Merging this."
-  node comment-on-pr.js horse 21 16 request-changes "Please fix the tests"
+  node comment-on-issue.js horse 82 15 "Great work on this feature!"
 `);
   process.exit(1);
 }
 
-const [agentType, agentNumber, prNumber, commentType, ...commentParts] = args;
-let comment = commentParts.join(' ');
-
-// Add default comments based on type if none provided
-if (!comment) {
-  switch (commentType.toLowerCase()) {
-    case 'approve':
-      comment = 'Looks good! Approving this PR.';
-      break;
-    case 'request-changes':
-      comment = 'Some changes are needed before this can be merged.';
-      break;
-    case 'comment':
-      comment = 'Thanks for the PR! Reviewing this now.';
-      break;
-  }
-}
+const [agentType, agentNumber, issueNumber, ...commentParts] = args;
+const comment = commentParts.join(' ');
 
 async function addComment() {
   try {
@@ -60,8 +43,8 @@ async function addComment() {
     const agent = new Agent(client, agentType, parseInt(agentNumber, 10));
 
     // Add comment
-    await agent.commentOnPR(parseInt(prNumber, 10), comment);
-    console.log(`✨ Added ${commentType} comment to PR #${prNumber}`);
+    await client.addIssueComment(parseInt(issueNumber, 10), `${comment}\n\n~ ${agentType} #${agentNumber} 🎯`);
+    console.log(`✨ Added comment to issue #${issueNumber}`);
 
   } catch (error) {
     console.error('\n❌ Error:', error.message);
