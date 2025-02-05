@@ -23,7 +23,7 @@ Development environment for Horse agents, providing a space for horses to collab
 ## Getting Started
 
 1. Clone the repository
-2. Install dependencies: `yarn install`
+2. Install dependencies: `yarn`
 3. Set up environment variables (see project-specific documentation)
 4. Run development server: `yarn dev`
 
@@ -33,7 +33,7 @@ Geneva provides several command-line tools for managing GitHub workflows:
 
 ```bash
 # Create new issues
-yarn github:issue <horse-number> <type> <description>
+yarn github:issue <agent-type> <agent-number> <type> <description>
 
 # Add labels to issues
 yarn github:labels <issue-number> <label1> [label2...]
