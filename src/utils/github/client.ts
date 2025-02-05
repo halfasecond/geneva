@@ -371,16 +371,15 @@ export class GitHubClient {
    * Merge a pull request
    */
   async mergePullRequest(input: MergePullRequestInput): Promise<MergePullRequestResult> {
-    // First check if PR can be merged using GraphQL
-    const pr = await this.getPullRequest(parseInt(input.pullRequestId, 10));
+    // Get PR details first
+    const pr = await this.getPullRequest(input.prNumber);
     console.log('PR Status:', JSON.stringify(pr, null, 2));
 
-    // Use Octokit REST client for merging
     try {
       const result = await this.octokit.pulls.merge({
         owner: this.config.owner,
         repo: this.config.repo,
-        pull_number: parseInt(input.pullRequestId, 10),
+        pull_number: input.prNumber,
         merge_method: 'squash',
         commit_title: input.commitHeadline,
         commit_message: input.commitBody,
