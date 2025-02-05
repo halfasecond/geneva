@@ -16,7 +16,7 @@ config({ path: envPath });
 const args = process.argv.slice(2);
 if (args.length < 6) {
   console.error(`
-Usage: node create-pr.js <horse-number> <type> <description> <issue-number> <head-branch> [base-branch]
+Usage: node create-pr.js <horse-number> <type> <description> <issue-number> <head-branch> [base-branch] [body]
 
 Arguments:
   horse-number   The horse's number (e.g., 21, 82)
@@ -25,15 +25,23 @@ Arguments:
   issue-number  Related issue number
   head-branch   Source branch with changes
   base-branch   Target branch (optional, defaults to 'master')
+  body          PR description (optional)
 
 Examples:
   node create-pr.js 82 feat "Add tilled fields board" 1 feat/tilled-fields-board
-  node create-pr.js 21 fix "Fix issue duplication" 2 fix/duplicate-issues main
+  node create-pr.js 21 fix "Fix issue duplication" 2 fix/duplicate-issues main "Fixed duplicate issue creation bug"
 `);
   process.exit(1);
 }
 
-const [horseNumber, type, description, issueNumber, headBranch, baseBranch = 'master'] = args;
+const [horseNumber, type, description, issueNumber, headBranch, baseBranch = 'master', ...bodyParts] = args;
+const body = bodyParts.length > 0 ? bodyParts.join(' ') : `Implementing changes for issue #${issueNumber}.
+
+## Changes
+- [Add your changes here]
+
+## Testing
+- [Add testing steps here]`;
 
 async function createPR() {
   try {
@@ -52,17 +60,7 @@ async function createPR() {
     const result = await horse.createPullRequestForIssue(
       type,
       description,
-      `Implementing changes for issue #${issueNumber}.
-
-Changes:
-- Add your changes here
-- List major updates
-- Note any breaking changes
-
-Testing:
-1. Steps to test
-2. Expected outcomes
-3. Edge cases considered`,
+      body,
       parseInt(issueNumber, 10),
       headBranch,
       baseBranch
