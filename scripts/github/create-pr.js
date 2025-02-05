@@ -56,19 +56,21 @@ async function createPR() {
     // Create horse agent
     const horse = new HorseAgent(client, parseInt(horseNumber, 10));
 
-    // Create PR and move issue to review
-    const result = await horse.createPullRequestForIssue(
-      type,
-      description,
-      body,
-      parseInt(issueNumber, 10),
-      headBranch,
-      baseBranch
-    );
+    // Create PR without moving issue (since it might not be in a project)
+    const result = await client.createPullRequest({
+      repositoryId: process.env.VITE_APP_GITHUB_REPO_ID,
+      baseRefName: baseBranch,
+      headRefName: headBranch,
+      title: `[Horse #${horseNumber}] ${type}: ${description}`,
+      body: body
+    });
 
     console.log(`✨ Created PR #${result.createPullRequest.pullRequest.number}`);
     console.log(`🔗 ${result.createPullRequest.pullRequest.url}\n`);
-    console.log('🌾 Issue moved to Review Field\n');
+
+    // Add labels
+    await client.addLabelsToIssue(result.createPullRequest.pullRequest.number, [`agent:horse${horseNumber}`]);
+    console.log('✨ Added agent label');
 
   } catch (error) {
     console.error('\n❌ Error:', error.message);
