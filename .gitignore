@@ -27,8 +27,8 @@ Thumbs.db
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.DS_Store
-.env
-.env
-.env
-.env
+
+# Wiki
+wiki/
+geneva.wiki/
+*.wiki/
