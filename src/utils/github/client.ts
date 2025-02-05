@@ -17,7 +17,9 @@ import type {
   MergePullRequestInput,
   MergePullRequestResult,
   GitHubError,
-  AddLabelsResult
+  AddLabelsResult,
+  AddToProjectInput,
+  AddToProjectResult
 } from './types.js';
 
 /**
@@ -139,7 +141,7 @@ export class GitHubClient {
         repo: this.config.repo,
         name,
         color,
-        description: 'Horse agent label'
+        description: 'Agent label'
       });
 
       // Get the new label's global ID
@@ -332,7 +334,7 @@ export class GitHubClient {
   }
 
   /**
-   * Add a comment to a pull request
+   * Add a comment to a pull request or issue
    */
   async addComment(input: AddCommentInput): Promise<AddCommentResult> {
     const mutation = `
@@ -368,13 +370,36 @@ export class GitHubClient {
   }
 
   /**
+   * Add an issue to a project
+   */
+  async addIssueToProject(contentId: string, projectId: string): Promise<AddToProjectResult> {
+    const mutation = `
+      mutation($input: AddProjectV2ItemByIdInput!) {
+        addProjectV2ItemById(input: $input) {
+          item {
+            id
+          }
+        }
+      }
+    `;
+
+    return this.graphqlWithAuth(mutation, {
+      input: {
+        projectId,
+        contentId
+      }
+    }) as Promise<AddToProjectResult>;
+  }
+
+  /**
    * Merge a pull request
    */
   async mergePullRequest(input: MergePullRequestInput): Promise<MergePullRequestResult> {
-    // Get PR details first
+    // First check if PR can be merged using GraphQL
     const pr = await this.getPullRequest(input.prNumber);
     console.log('PR Status:', JSON.stringify(pr, null, 2));
 
+    // Use Octokit REST client for merging
     try {
       const result = await this.octokit.pulls.merge({
         owner: this.config.owner,

@@ -1,7 +1,7 @@
 import { config } from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
-import { GitHubClient, HorseAgent } from '../../src/utils/github/index.js';
+import { GitHubClient, Agent } from '../../src/utils/github/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -14,21 +14,22 @@ config({ path: envPath });
 
 // Parse command line arguments
 const args = process.argv.slice(2);
-if (args.length < 2) {
+if (args.length < 4) {
   console.error(`
-Usage: node merge-pr.js <horse-number> <pr-number>
+Usage: node merge-pr.js <agent-type> <agent-number> <pr-number>
 
 Arguments:
-  horse-number   The horse's number (e.g., 21, 82)
-  pr-number      The PR number to merge
+  agent-type    The agent's type (e.g., horse)
+  agent-number  The agent's number (e.g., 21, 82)
+  pr-number    The PR number to merge
 
 Example:
-  node merge-pr.js 100 2  # Horse #100 merges PR #2
+  node merge-pr.js horse 82 15  # Horse #82 merges PR #15
 `);
   process.exit(1);
 }
 
-const [horseNumber, prNumber] = args;
+const [agentType, agentNumber, prNumber] = args;
 
 async function mergePR() {
   try {
@@ -40,8 +41,8 @@ async function mergePR() {
       projectNumber: parseInt(process.env.VITE_APP_GITHUB_PROJECT_NUMBER, 10)
     });
 
-    // Create horse agent
-    const horse = new HorseAgent(client, parseInt(horseNumber, 10));
+    // Create agent
+    const agent = new Agent(client, agentType, parseInt(agentNumber, 10));
 
     // Get PR details first
     console.log('Getting PR details...');
@@ -53,8 +54,8 @@ async function mergePR() {
     const result = await client.mergePullRequest({
       prNumber: parseInt(prNumber, 10),
       mergeMethod: 'SQUASH',
-      commitHeadline: `[Horse #${horseNumber}] Merge PR #${prNumber} (${pr.title})`,
-      commitBody: `Approved by Horse #21\nMerged by Horse #${horseNumber} 🐎`
+      commitHeadline: `[${agentType} #${agentNumber}] Merge PR #${prNumber} (${pr.title})`,
+      commitBody: `Approved by ${agentType} #21\nMerged by ${agentType} #${agentNumber} 🎯`
     });
 
     console.log('Merge result:', JSON.stringify(result, null, 2));
@@ -62,7 +63,7 @@ async function mergePR() {
     console.log(`🔗 ${pr.url}\n`);
 
     // Add merge comment
-    await horse.commentOnPR(parseInt(prNumber, 10), `Merged this PR! 🌾
+    await agent.commentOnPR(parseInt(prNumber, 10), `Merged this PR! 🌾
 
 Thanks for the contributions and reviews. The changes are now in the master branch.`);
 

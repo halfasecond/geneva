@@ -188,3 +188,16 @@ export interface AddLabelsInput {
   labelableId: string;
   labelIds: string[];
 }
+
+export interface AddToProjectInput {
+  projectId: string;
+  contentId: string;
+}
+
+export interface AddToProjectResult {
+  addProjectV2Item: {
+    item: {
+      id: string;
+    };
+  };
+}
