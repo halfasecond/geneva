@@ -7,54 +7,12 @@ import {
     validateIssueNumber,
     validateProjectNumber,
     validateIssueType,
+    validateStatus,
     logRequest,
     rateLimit
 } from './middleware';
 import { sendSuccessResponse } from './errors';
 import { GitHubAPIError } from './types';
-import { ProjectItemStatus } from '../../utils/github/types';
-import type {
-    CreateIssueRequest,
-    AddLabelsRequest,
-    UpdateStatusRequest,
-    CreatePullRequestRequest,
-    AddCommentRequest,
-    MergePullRequestRequest
-} from './types';
-
-// Validate status value
-function validateStatus(req: Request, _res: Response, next: Function) {
-    const { status } = req.body;
-    const validStatuses = Object.values(ProjectItemStatus);
-    if (!status || !validStatuses.includes(status)) {
-        throw new GitHubAPIError('Invalid status value', 400);
-    }
-    next();
-}
-
-// Error handling middleware
-function errorHandler(err: Error, _req: Request, res: Response, _next: NextFunction) {
-    console.error('Error in router:', err);
-    
-    res.setHeader('Content-Type', 'application/json');
-    
-    if (err instanceof GitHubAPIError) {
-        res.status(err.statusCode).json({
-            success: false,
-            error: {
-                message: err.message,
-                details: err.details
-            }
-        });
-    } else {
-        res.status(500).json({
-            success: false,
-            error: {
-                message: err instanceof Error ? err.message : 'Internal server error'
-            }
-        });
-    }
-}
 
 export function createGitHubRouter(client: GitHubClient): Router {
     const router = express.Router();
@@ -65,6 +23,19 @@ export function createGitHubRouter(client: GitHubClient): Router {
     router.use(rateLimit());
 
     // Public endpoints (no agent validation required)
+    router.get(
+        '/issues/:issueNumber',
+        validateIssueNumber,
+        asyncHandler(async (req: Request, res: Response) => {
+            const issueNumber = parseInt(req.params.issueNumber);
+            const issue = await client.findIssue(issueNumber);
+            if (!issue) {
+                throw new GitHubAPIError('Issue not found', 404);
+            }
+            sendSuccessResponse(res, issue);
+        })
+    );
+
     router.get(
         '/projects/:projectNumber/board',
         validateProjectNumber,
@@ -102,11 +73,7 @@ export function createGitHubRouter(client: GitHubClient): Router {
         validateBody(['type', 'description', 'body', 'projectNumber']),
         validateIssueType,
         asyncHandler(async (req: Request, res: Response) => {
-            const { type, description, body, projectNumber }: CreateIssueRequest = req.body;
-            
-            if (!projectNumber) {
-                throw new GitHubAPIError('Project number is required', 400);
-            }
+            const { type, description, body, projectNumber } = req.body;
 
             try {
                 const metadata = await client.getProjectMetadata(projectNumber);
@@ -125,7 +92,7 @@ export function createGitHubRouter(client: GitHubClient): Router {
                 if (error instanceof GitHubAPIError) {
                     throw error;
                 }
-                throw new GitHubAPIError((error as Error).message, 404);
+                throw new GitHubAPIError('Project not found', 404);
             }
         })
     );
@@ -136,7 +103,7 @@ export function createGitHubRouter(client: GitHubClient): Router {
         validateIssueNumber,
         validateBody(['labels']),
         asyncHandler(async (req: Request, res: Response) => {
-            const { labels }: AddLabelsRequest = req.body;
+            const { labels } = req.body;
             const { issueNumber } = req.params;
 
             await client.addLabelsToIssue(parseInt(issueNumber), labels);
@@ -175,7 +142,7 @@ export function createGitHubRouter(client: GitHubClient): Router {
         validateBody(['status', 'projectNumber']),
         validateStatus,
         asyncHandler(async (req: Request, res: Response) => {
-            const { status, projectNumber }: UpdateStatusRequest = req.body;
+            const { status, projectNumber } = req.body;
             const { issueNumber } = req.params;
 
             const result = await client.moveIssueToStatus(
@@ -200,7 +167,7 @@ export function createGitHubRouter(client: GitHubClient): Router {
                 baseBranch,
                 body,
                 projectNumber
-            }: CreatePullRequestRequest = req.body;
+            } = req.body;
 
             const metadata = await client.getProjectMetadata(projectNumber);
             if (!metadata) {
@@ -225,7 +192,7 @@ export function createGitHubRouter(client: GitHubClient): Router {
         validateIssueNumber,
         validateBody(['body']),
         asyncHandler(async (req: Request, res: Response) => {
-            const { body }: AddCommentRequest = req.body;
+            const { body } = req.body;
             const { issueNumber } = req.params;
 
             await client.addIssueComment(parseInt(issueNumber), body);
@@ -239,10 +206,7 @@ export function createGitHubRouter(client: GitHubClient): Router {
         validateBody(['commitHeadline', 'commitBody']),
         asyncHandler(async (req: Request, res: Response) => {
             const { prNumber } = req.params;
-            const {
-                commitHeadline,
-                commitBody
-            }: MergePullRequestRequest = req.body;
+            const { commitHeadline, commitBody } = req.body;
 
             const result = await client.mergePullRequest({
                 prNumber: parseInt(prNumber),
@@ -255,7 +219,28 @@ export function createGitHubRouter(client: GitHubClient): Router {
     );
 
     // Error handling middleware must be last
-    router.use(errorHandler);
+    router.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+        console.error('Error in router:', err);
+        
+        res.setHeader('Content-Type', 'application/json');
+        
+        if (err instanceof GitHubAPIError) {
+            res.status(err.statusCode).json({
+                success: false,
+                error: {
+                    message: err.message,
+                    details: err.details
+                }
+            });
+        } else {
+            res.status(500).json({
+                success: false,
+                error: {
+                    message: err instanceof Error ? err.message : 'Internal server error'
+                }
+            });
+        }
+    });
 
     return router;
 }

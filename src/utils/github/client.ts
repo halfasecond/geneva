@@ -24,7 +24,8 @@ import type {
     GetProjectFieldsResult,
     GetBoardDataResult,
     Board,
-    BoardCard
+    BoardCard,
+    Issue
 } from './types';
 
 /**
@@ -313,6 +314,51 @@ export class GitHubClient {
         this.projectMetadataCache.set(projectNumber, metadata);
 
         return metadata;
+    }
+
+    /**
+     * Find an issue by number
+     */
+    async findIssue(issueNumber: number): Promise<Issue | null> {
+        const query = `
+            query($owner: String!, $repo: String!, $number: Int!) {
+                repository(owner: $owner, name: $repo) {
+                    issue(number: $number) {
+                        id
+                        number
+                        title
+                        body
+                        url
+                        state
+                        labels(first: 100) {
+                            nodes {
+                                id
+                                name
+                                color
+                            }
+                        }
+                        comments(first: 100) {
+                            nodes {
+                                id
+                                body
+                                author {
+                                    login
+                                }
+                                createdAt
+                            }
+                        }
+                    }
+                }
+            }
+        `;
+
+        const response = await this.graphqlWithAuth(query, {
+            owner: this.config.owner,
+            repo: this.config.repo,
+            number: issueNumber
+        });
+
+        return (response as any).repository.issue;
     }
 
     /**

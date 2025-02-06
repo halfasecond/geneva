@@ -35,6 +35,25 @@ export interface ProjectField {
     }>;
 }
 
+export interface Issue {
+    id: string;
+    number: number;
+    title: string;
+    body: string;
+    url: string;
+    state: string;
+    labels: {
+        nodes: Array<{
+            id: string;
+            name: string;
+            color: string;
+        }>;
+    };
+    comments: {
+        nodes: Comment[];
+    };
+}
+
 export interface ProjectItem {
     id: string;
     content: {
@@ -318,6 +337,7 @@ export interface GitHubClient {
     createPullRequest(input: CreatePullRequestInput): Promise<CreatePullRequestResult>;
     updateItemStatus(input: UpdateProjectItemInput): Promise<UpdateItemStatusResult>;
     findProjectItem(projectId: string, issueNumber: number): Promise<ProjectItem | null>;
+    findIssue(issueNumber: number): Promise<Issue | null>;
     getPullRequest(prNumber: number): Promise<PullRequest>;
     addComment(input: AddCommentInput): Promise<AddCommentResult>;
     addIssueComment(issueNumber: number, body: string): Promise<void>;
