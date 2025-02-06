@@ -301,6 +301,25 @@ export function createGitHubRouter(client: GitHubClient): Router {
         })
     );
 
+    // Add labels to PR
+    router.post(
+        '/pulls/:prNumber/labels',
+        validatePullRequestNumber,
+        validateBody(['labels']),
+        asyncHandler(async (req: Request, res: Response) => {
+            const { labels } = req.body;
+            const { prNumber } = req.params;
+
+            const pr = await client.getPullRequest(parseInt(prNumber));
+            if (!pr) {
+                throw new GitHubAPIError('Pull request not found', 404);
+            }
+
+            await client.addLabels(pr.id, labels);
+            sendSuccessResponse(res, { added: labels });
+        })
+    );
+
     // Error handling middleware must be last
     router.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
         console.error('Error in router:', err);

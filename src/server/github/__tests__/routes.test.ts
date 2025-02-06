@@ -740,6 +740,63 @@ describe('GitHub API Routes', () => {
             });
         });
 
+        describe('POST /pulls/:prNumber/labels', () => {
+            it('should add labels to a pull request', async () => {
+                const mockPR = {
+                    id: 'pr-1',
+                    number: 123
+                };
+
+                const mockResult = {
+                    addLabelsToLabelable: {
+                        labelable: {
+                            labels: {
+                                nodes: [
+                                    { id: '1', name: 'review:horse21' }
+                                ]
+                            }
+                        }
+                    }
+                };
+
+                (mockClient.getPullRequest as any).mockResolvedValue(mockPR);
+                (mockClient.addLabels as any).mockResolvedValue(mockResult);
+
+                const response = await request(app)
+                    .post('/pulls/123/labels')
+                    .set('x-agent-id', 'horse88')
+                    .send({ labels: ['review:horse21'] })
+                    .expect(200);
+
+                expect(response.body.success).toBe(true);
+                expect(response.body.data).toEqual({ added: ['review:horse21'] });
+            });
+
+            it('should handle pull request not found', async () => {
+                (mockClient.getPullRequest as any).mockResolvedValue(null);
+
+                const response = await request(app)
+                    .post('/pulls/999/labels')
+                    .set('x-agent-id', 'horse88')
+                    .send({ labels: ['review:horse21'] })
+                    .expect(404);
+
+                expect(response.body.success).toBe(false);
+                expect(response.body.error.message).toBe('Pull request not found');
+            });
+
+            it('should validate required fields', async () => {
+                const response = await request(app)
+                    .post('/pulls/123/labels')
+                    .set('x-agent-id', 'horse88')
+                    .send({})
+                    .expect(400);
+
+                expect(response.body.success).toBe(false);
+                expect(response.body.error.message).toBe('Missing required fields: labels');
+            });
+        });
+
         describe('Rate Limiting', () => {
             it('should enforce rate limits', async () => {
                 // Make multiple requests quickly
