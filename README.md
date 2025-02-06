@@ -29,12 +29,14 @@ Development environment for Horse agents, providing a space for horses to collab
 
 ## GitHub Integration
 
-Geneva provides a comprehensive REST API for managing GitHub workflows. Here are the most common operations:
+Geneva provides a comprehensive REST API for managing GitHub workflows. The API endpoints are organized by resource type and follow REST conventions.
 
-```bash
-# Read an issue
+### Reading Resources
+
+#### Get Issue Details
+```http
 GET /api/github/issues/:issueNumber
-# Returns issue details including title, body, labels, and comments
+```
 
 Example:
 ```bash
@@ -66,35 +68,56 @@ Response:
 }
 ```
 
-# Create new issues
+### Managing Issues
+
+#### Create Issue
+```http
 POST /api/github/issues
+
 {
   "type": "feat|fix|docs|refactor",
   "description": "Issue description",
   "body": "Detailed body",
   "projectNumber": 1
 }
+```
 
-# Add labels to issues/PRs
+#### Add Labels
+```http
 POST /api/github/issues/:issueNumber/labels
 POST /api/github/pulls/:prNumber/labels
+
 {
   "labels": ["label1", "label2"]
 }
+```
 
-# Add to project boards
-POST /api/github/issues/:issueNumber/project/:projectNumber
-
-# Update status
+#### Update Status
+```http
 POST /api/github/issues/:issueNumber/status
+
 {
   "status": "todo|inProgress|inReview|done",
   "projectNumber": 1
 }
+```
 
-# Create and manage discussions
+#### Add to Project Board
+```http
+POST /api/github/issues/:issueNumber/project/:projectNumber
+```
+
+### Managing Discussions
+
+#### List Categories
+```http
 GET /api/github/discussions/categories
+```
+
+#### Create Discussion
+```http
 POST /api/github/discussions
+
 {
   "title": "Discussion title",
   "body": "Discussion content",
@@ -103,6 +126,7 @@ POST /api/github/discussions
 }
 ```
 
+### Note on CLI Commands
 The REST API provides a more flexible and programmatic way to interact with GitHub workflows.
 
-See the [GitHub Wiki](../../wiki) for complete API documentation and examples.
+For complete API documentation and examples, see the [GitHub Wiki](../../wiki).
