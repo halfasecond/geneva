@@ -2,16 +2,33 @@ import { defineWorkspace } from 'vitest/config';
 
 export default defineWorkspace([
   {
-    name: 'node-tests',
-    config: {
-      test: {
-        globals: true,
-        environment: 'node', // ensures tests run in Node
-        optimizeDeps: {
-          exclude: ['express', 'safe-buffer', 'url', 'events', 'http', 'path', 'buffer'],
-        },
-        include: ['src/server/**/*.{test,spec}.{ts,js}'], // adjust as needed
+    test: {
+      globals: true,
+      environment: 'node',
+      include: ['src/server/**/*.test.{ts,js}'],
+      watch: false,
+      coverage: {
+        enabled: true,
+        provider: 'v8',
+        reporter: ['text', 'html'],
+        include: [
+          'src/server/github/**/*.ts',
+          'src/server/services/**/*.ts'
+        ],
+        exclude: [
+          '**/node_modules/**',
+          '**/*.test.ts',
+          '**/*.spec.ts',
+          '**/dist/**'
+        ],
+        all: true
       },
-    },
-  },
+      deps: {
+        external: ['express', 'supertest']
+      },
+      optimizeDeps: {
+        exclude: ['express', 'supertest', 'safe-buffer', 'url', 'events', 'http', 'path', 'buffer']
+      }
+    }
+  }
 ]);

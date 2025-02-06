@@ -8,6 +8,9 @@ export function asyncHandler(fn: Function) {
         } catch (error) {
             console.error('Error in async handler:', error);
             
+            // Set JSON content type for all error responses
+            res.setHeader('Content-Type', 'application/json');
+            
             if (error instanceof GitHubAPIError) {
                 res.status(error.statusCode).json({
                     success: false,
@@ -29,6 +32,7 @@ export function asyncHandler(fn: Function) {
 }
 
 export function sendSuccessResponse<T>(res: Response, data: T) {
+    res.setHeader('Content-Type', 'application/json');
     res.json({
         success: true,
         data
