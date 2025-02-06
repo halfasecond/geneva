@@ -33,8 +33,7 @@ async function addComment() {
     const client = new GitHubClient({
       token: process.env.VITE_APP_GITHUB_TOKEN,
       owner: process.env.VITE_APP_GITHUB_REPO_OWNER,
-      repo: process.env.VITE_APP_GITHUB_REPO_NAME,
-      projectNumber: 1
+      repo: process.env.VITE_APP_GITHUB_REPO_NAME
     });
 
     await client.addIssueComment(parseInt(issueNumber, 10), comment);

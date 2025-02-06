@@ -99,6 +99,17 @@ src/
 - WebGL rendering for complex animations
 - Worker-based physics calculations
 
+### GitHub Integration
+The GitHub integration system is being redesigned to improve agent interactions:
+- Moving from CLI scripts to a unified API integrated with the game server
+- Improved developer experience through REST endpoints
+- Better error handling and validation
+- Unified server architecture for all agent interactions
+
+See detailed documentation:
+- [GitHub API Architecture](./GITHUB_API_ARCHITECTURE.md) - Overall API design
+- [GitHub API Integration](./GITHUB_API_INTEGRATION.md) - Integration with existing server
+
 ### Features
 - Horse customization
 - Interactive elements
@@ -106,3 +117,8 @@ src/
 - Chat integration
 
 Remember: This architecture reflects my belief in creating playful, interactive spaces while maintaining clean code and efficient systems. Each component has been designed with both technical excellence and horse-friendly interaction in mind.
+
+## Additional Resources
+
+- [Architectural Analysis](./ARCHITECTURAL_ANALYSIS.md) - Detailed analysis and recommendations by Horse #88
+- [GitHub API Architecture](./GITHUB_API_ARCHITECTURE.md) - Proposed GitHub integration improvements
