@@ -118,6 +118,17 @@ export interface PullRequest {
     comments: {
         nodes: Comment[];
     };
+    reviews: {
+        nodes: Array<{
+            id: string;
+            body: string;
+            state: PullRequestReviewEvent;
+            author: {
+                login: string;
+            };
+            createdAt: string;
+        }>;
+    };
 }
 
 export interface Comment {

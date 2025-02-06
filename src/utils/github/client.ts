@@ -576,6 +576,17 @@ export class GitHubClient {
                                 createdAt
                             }
                         }
+                        reviews(first: 100) {
+                            nodes {
+                                id
+                                body
+                                state
+                                author {
+                                    login
+                                }
+                                createdAt
+                            }
+                        }
                     }
                 }
             }
