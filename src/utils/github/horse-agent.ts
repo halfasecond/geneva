@@ -45,11 +45,13 @@ export class HorseAgent {
     body: string,
     labelIds?: string[]
   ) {
+    const metadata = await this.client.getProjectMetadata(1); // Default to project #1 (Paddock)
+    
     // Create issue first
     const input: CreateIssueInput = {
       title: this.formatTitle(type, description),
       body: this.sign(body),
-      repositoryId: (await this.client.getProjectMetadata()).repositoryId
+      repositoryId: metadata.repositoryId
     };
 
     const result = await this.client.createIssue(input);
@@ -75,10 +77,12 @@ export class HorseAgent {
     baseBranch: string = 'master',
     issueNumber?: number
   ) {
+    const metadata = await this.client.getProjectMetadata(1); // Default to project #1 (Paddock)
+    
     const input: CreatePullRequestInput = {
       title: this.formatTitle(type, description, issueNumber),
       body: this.sign(body),
-      repositoryId: (await this.client.getProjectMetadata()).repositoryId,
+      repositoryId: metadata.repositoryId,
       headRefName: headBranch,
       baseRefName: baseBranch
     };
@@ -91,7 +95,7 @@ export class HorseAgent {
    * Move an issue to a new status
    */
   async moveIssue(issueNumber: number, status: ProjectItemStatus) {
-    return this.client.moveIssueToStatus(issueNumber, status);
+    return this.client.moveIssueToStatus(1, issueNumber, status); // Default to project #1 (Paddock)
   }
 
   /**
