@@ -25,7 +25,13 @@ import type {
     GetBoardDataResult,
     Board,
     BoardCard,
-    Issue
+    Issue,
+    CreatePullRequestReviewInput,
+    CreatePullRequestReviewResult,
+    Discussion,
+    DiscussionCategory,
+    CreateDiscussionInput,
+    CreateDiscussionResult
 } from './types';
 
 /**
@@ -548,7 +554,7 @@ export class GitHubClient {
     /**
      * Get a pull request by number
      */
-    async getPullRequest(prNumber: number): Promise<PullRequest> {
+    async getPullRequest(prNumber: number): Promise<PullRequest | null> {
         const query = `
             query($owner: String!, $repo: String!, $number: Int!) {
                 repository(owner: $owner, name: $repo) {
@@ -570,18 +576,36 @@ export class GitHubClient {
                                 createdAt
                             }
                         }
+                        reviews(first: 100) {
+                            nodes {
+                                id
+                                body
+                                state
+                                author {
+                                    login
+                                }
+                                createdAt
+                            }
+                        }
                     }
                 }
             }
         `;
 
-        const response = await this.graphqlWithAuth(query, {
-            owner: this.config.owner,
-            repo: this.config.repo,
-            number: prNumber
-        });
+        try {
+            const response = await this.graphqlWithAuth(query, {
+                owner: this.config.owner,
+                repo: this.config.repo,
+                number: prNumber
+            });
 
-        return (response as any).repository.pullRequest;
+            return (response as any).repository.pullRequest;
+        } catch (error) {
+            if (error instanceof Error && error.message.includes('Could not resolve to a PullRequest')) {
+                return null;
+            }
+            throw error;
+        }
     }
 
     /**
@@ -647,6 +671,9 @@ export class GitHubClient {
      */
     async mergePullRequest(input: MergePullRequestInput): Promise<MergePullRequestResult> {
         const pr = await this.getPullRequest(input.prNumber);
+        if (!pr) {
+            throw new Error(`Pull request #${input.prNumber} not found`);
+        }
 
         try {
             const result = await this.octokit.pulls.merge({
@@ -684,6 +711,18 @@ export class GitHubClient {
     }
 
     /**
+     * Add labels to a pull request using REST API
+     */
+    async addLabelsToPullRequest(prNumber: number, labels: string[]) {
+        await this.octokit.rest.issues.addLabels({
+            owner: this.config.owner,
+            repo: this.config.repo,
+            issue_number: prNumber,
+            labels
+        });
+    }
+
+    /**
      * Move an issue to a new status in a project
      */
     async moveIssueToStatus(projectNumber: number, issueNumber: number, status: ProjectItemStatus) {
@@ -707,5 +746,134 @@ export class GitHubClient {
                 singleSelectOptionId: statusOptionId
             }
         });
+    }
+
+    /**
+     * Create a pull request review
+     */
+    async createPullRequestReview(prNumber: number, input: CreatePullRequestReviewInput): Promise<CreatePullRequestReviewResult> {
+        const pr = await this.getPullRequest(prNumber);
+        if (!pr) {
+            throw new Error(`Pull request #${prNumber} not found`);
+        }
+        
+        const mutation = `
+            mutation($input: AddPullRequestReviewInput!) {
+                addPullRequestReview(input: $input) {
+                    pullRequestReview {
+                        id
+                        body
+                        state
+                        author {
+                            login
+                        }
+                        createdAt
+                    }
+                }
+            }
+        `;
+
+        return this.graphqlWithAuth(mutation, {
+            input: {
+                pullRequestId: pr.id,
+                event: input.event,
+                body: input.body || ''
+            }
+        }) as Promise<CreatePullRequestReviewResult>;
+    }
+
+    /**
+     * Get a discussion by number
+     */
+    async getDiscussion(discussionNumber: number): Promise<Discussion | null> {
+        const query = `
+            query($owner: String!, $repo: String!, $number: Int!) {
+                repository(owner: $owner, name: $repo) {
+                    discussion(number: $number) {
+                        id
+                        number
+                        title
+                        body
+                        url
+                        category {
+                            id
+                            name
+                            emoji
+                        }
+                        comments(first: 100) {
+                            nodes {
+                                id
+                                body
+                                author {
+                                    login
+                                }
+                                createdAt
+                            }
+                        }
+                    }
+                }
+            }
+        `;
+
+        try {
+            const response = await this.graphqlWithAuth(query, {
+                owner: this.config.owner,
+                repo: this.config.repo,
+                number: discussionNumber
+            });
+
+            return (response as any).repository.discussion;
+        } catch (error) {
+            if (error instanceof Error && error.message.includes('Could not resolve to a Discussion')) {
+                return null;
+            }
+            throw error;
+        }
+    }
+
+    /**
+     * List discussion categories
+     */
+    async listDiscussionCategories(): Promise<DiscussionCategory[]> {
+        const query = `
+            query($owner: String!, $repo: String!) {
+                repository(owner: $owner, name: $repo) {
+                    discussionCategories(first: 100) {
+                        nodes {
+                            id
+                            name
+                            emoji
+                            description
+                        }
+                    }
+                }
+            }
+        `;
+
+        const response = await this.graphqlWithAuth(query, {
+            owner: this.config.owner,
+            repo: this.config.repo
+        });
+
+        return (response as any).repository.discussionCategories.nodes;
+    }
+
+    /**
+     * Create a new discussion
+     */
+    async createDiscussion(input: CreateDiscussionInput): Promise<CreateDiscussionResult> {
+        const mutation = `
+            mutation($input: CreateDiscussionInput!) {
+                createDiscussion(input: $input) {
+                    discussion {
+                        id
+                        number
+                        url
+                    }
+                }
+            }
+        `;
+
+        return this.graphqlWithAuth(mutation, { input }) as Promise<CreateDiscussionResult>;
     }
 }

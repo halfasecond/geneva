@@ -118,6 +118,17 @@ export interface PullRequest {
     comments: {
         nodes: Comment[];
     };
+    reviews: {
+        nodes: Array<{
+            id: string;
+            body: string;
+            state: PullRequestReviewEvent;
+            author: {
+                login: string;
+            };
+            createdAt: string;
+        }>;
+    };
 }
 
 export interface Comment {
@@ -134,6 +145,12 @@ export enum ProjectItemStatus {
     IN_PROGRESS = 'inProgress',
     IN_REVIEW = 'inReview',
     DONE = 'done'
+}
+
+export enum PullRequestReviewEvent {
+    APPROVE = 'APPROVE',
+    REQUEST_CHANGES = 'REQUEST_CHANGES',
+    COMMENT = 'COMMENT'
 }
 
 // Input types
@@ -181,6 +198,12 @@ export interface AddLabelsInput {
 export interface AddToProjectInput {
     projectId: string;
     contentId: string;
+}
+
+export interface CreatePullRequestReviewInput {
+    pullRequestId: string;
+    event: PullRequestReviewEvent;
+    body?: string;
 }
 
 // Response types
@@ -254,6 +277,20 @@ export interface AddToProjectResult {
     };
 }
 
+export interface CreatePullRequestReviewResult {
+    addPullRequestReview: {
+        pullRequestReview: {
+            id: string;
+            body: string;
+            state: PullRequestReviewEvent;
+            author: {
+                login: string;
+            };
+            createdAt: string;
+        };
+    };
+}
+
 export interface ListProjectsResult {
     organization: {
         projectsV2: {
@@ -315,6 +352,46 @@ export interface GitHubErrorDetails {
     path?: string[];
 }
 
+export interface Discussion {
+    id: string;
+    number: number;
+    title: string;
+    body: string;
+    url: string;
+    category: {
+        id: string;
+        name: string;
+        emoji: string;
+    };
+    comments: {
+        nodes: Comment[];
+    };
+}
+
+export interface DiscussionCategory {
+    id: string;
+    name: string;
+    emoji: string;
+    description: string;
+}
+
+export interface CreateDiscussionInput {
+    title: string;
+    body: string;
+    categoryId: string;
+    repositoryId: string;
+}
+
+export interface CreateDiscussionResult {
+    createDiscussion: {
+        discussion: {
+            id: string;
+            number: number;
+            url: string;
+        };
+    };
+}
+
 export interface GitHubError extends Error {
     response?: {
         status?: number;
@@ -338,11 +415,17 @@ export interface GitHubClient {
     updateItemStatus(input: UpdateProjectItemInput): Promise<UpdateItemStatusResult>;
     findProjectItem(projectId: string, issueNumber: number): Promise<ProjectItem | null>;
     findIssue(issueNumber: number): Promise<Issue | null>;
-    getPullRequest(prNumber: number): Promise<PullRequest>;
+    getPullRequest(prNumber: number): Promise<PullRequest | null>;
     addComment(input: AddCommentInput): Promise<AddCommentResult>;
     addIssueComment(issueNumber: number, body: string): Promise<void>;
     addIssueToProject(contentId: string, projectId: string): Promise<void>;
     mergePullRequest(input: MergePullRequestInput): Promise<MergePullRequestResult>;
     addLabelsToIssue(issueNumber: number, labels: string[]): Promise<void>;
     moveIssueToStatus(projectNumber: number, issueNumber: number, status: ProjectItemStatus): Promise<UpdateItemStatusResult>;
+    createPullRequestReview(prNumber: number, input: CreatePullRequestReviewInput): Promise<CreatePullRequestReviewResult>;
+
+    // Discussion methods
+    getDiscussion(discussionNumber: number): Promise<Discussion | null>;
+    listDiscussionCategories(): Promise<DiscussionCategory[]>;
+    createDiscussion(input: CreateDiscussionInput): Promise<CreateDiscussionResult>;
 }

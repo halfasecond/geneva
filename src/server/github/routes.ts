@@ -8,9 +8,12 @@ import {
     validateProjectNumber,
     validateIssueType,
     validateStatus,
+    validatePullRequestNumber,
+    validateDiscussionNumber,
     logRequest,
     rateLimit
 } from './middleware';
+import { PullRequestReviewEvent } from '../../utils/github/types';
 import { sendSuccessResponse } from './errors';
 import { GitHubAPIError } from './types';
 
@@ -37,6 +40,19 @@ export function createGitHubRouter(client: GitHubClient): Router {
     );
 
     router.get(
+        '/pulls/:prNumber',
+        validatePullRequestNumber,
+        asyncHandler(async (req: Request, res: Response) => {
+            const prNumber = parseInt(req.params.prNumber);
+            const pr = await client.getPullRequest(prNumber);
+            if (!pr || pr === null) {
+                throw new GitHubAPIError('Pull request not found', 404);
+            }
+            sendSuccessResponse(res, pr);
+        })
+    );
+
+    router.get(
         '/projects/:projectNumber/board',
         validateProjectNumber,
         asyncHandler(async (req: Request, res: Response) => {
@@ -45,12 +61,59 @@ export function createGitHubRouter(client: GitHubClient): Router {
             sendSuccessResponse(res, board);
         })
     );
-
     router.get(
         '/projects',
         asyncHandler(async (_req: Request, res: Response) => {
             const projects = await client.listProjects();
             sendSuccessResponse(res, projects);
+        })
+    );
+
+    // Discussion endpoints
+    router.get(
+        '/discussions/categories',
+        asyncHandler(async (_req: Request, res: Response) => {
+            const categories = await client.listDiscussionCategories();
+            sendSuccessResponse(res, categories);
+        })
+    );
+
+    router.get(
+        '/discussions/:discussionNumber',
+        validateDiscussionNumber,
+        asyncHandler(async (req: Request, res: Response) => {
+            const discussionNumber = parseInt(req.params.discussionNumber);
+            const discussion = await client.getDiscussion(discussionNumber);
+            if (!discussion) {
+                throw new GitHubAPIError('Discussion not found', 404);
+            }
+            sendSuccessResponse(res, discussion);
+        })
+    );
+
+    router.post(
+        '/discussions',
+        validateAgent,
+        validateBody(['title', 'body', 'categoryId', 'projectNumber']),
+        asyncHandler(async (req: Request, res: Response) => {
+            const { title, body, categoryId, projectNumber } = req.body;
+            const metadata = await client.getProjectMetadata(projectNumber);
+            
+            // Validate category exists
+            const categories = await client.listDiscussionCategories();
+            const categoryExists = categories.some(category => category.id === categoryId);
+            if (!categoryExists) {
+                throw new GitHubAPIError('Invalid discussion category', 400);
+            }
+
+            const result = await client.createDiscussion({
+                title,
+                body,
+                categoryId,
+                repositoryId: metadata.repositoryId
+            });
+
+            sendSuccessResponse(res, result);
         })
     );
 
@@ -215,6 +278,65 @@ export function createGitHubRouter(client: GitHubClient): Router {
             });
 
             sendSuccessResponse(res, result);
+        })
+    );
+
+    // PR Reviews
+    router.get(
+        '/pulls/:prNumber/reviews',
+        validatePullRequestNumber,
+        asyncHandler(async (req: Request, res: Response) => {
+            const prNumber = parseInt(req.params.prNumber);
+            const pr = await client.getPullRequest(prNumber);
+            if (!pr) {
+                throw new GitHubAPIError('Pull request not found', 404);
+            }
+            sendSuccessResponse(res, pr.reviews || { nodes: [] });
+        })
+    );
+
+    router.post(
+        '/pulls/:prNumber/reviews',
+        validateBody(['event', 'body']),
+        asyncHandler(async (req: Request, res: Response) => {
+            const { prNumber } = req.params;
+            const { event, body } = req.body;
+
+            // Validate review event type
+            if (!Object.values(PullRequestReviewEvent).includes(event)) {
+                throw new GitHubAPIError('Invalid review event type. Must be APPROVE, REQUEST_CHANGES, or COMMENT', 400);
+            }
+
+            const pr = await client.getPullRequest(parseInt(prNumber));
+            if (!pr) {
+                throw new GitHubAPIError('Pull request not found', 404);
+            }
+
+            const result = await client.createPullRequestReview(
+                parseInt(prNumber),
+                { pullRequestId: pr.id, event, body }
+            );
+
+            sendSuccessResponse(res, result);
+        })
+    );
+
+    // Add labels to PR
+    router.post(
+        '/pulls/:prNumber/labels',
+        validatePullRequestNumber,
+        validateBody(['labels']),
+        asyncHandler(async (req: Request, res: Response) => {
+            const { labels } = req.body;
+            const { prNumber } = req.params;
+
+            const pr = await client.getPullRequest(parseInt(prNumber));
+            if (!pr) {
+                throw new GitHubAPIError('Pull request not found', 404);
+            }
+
+            await client.addLabelsToPullRequest(parseInt(prNumber), labels);
+            sendSuccessResponse(res, { added: labels });
         })
     );
 

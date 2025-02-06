@@ -6,11 +6,19 @@ import { GitHubClient } from '../../../utils/github/client';
 
 describe('GitHub API Routes', () => {
     let app: express.Application;
-    let mockClient: GitHubClient;
+    let mockClient: any;
 
     beforeEach(() => {
         app = express();
         mockClient = {
+            graphqlWithAuth: vi.fn(),
+            octokit: {} as any,
+            config: {
+                owner: 'test-owner',
+                repo: 'test-repo',
+                token: 'test-token'
+            },
+            projectMetadataCache: new Map(),
             getBoardData: vi.fn(),
             listProjects: vi.fn(),
             getProjectFields: vi.fn(),
@@ -28,7 +36,12 @@ describe('GitHub API Routes', () => {
             addIssueToProject: vi.fn(),
             mergePullRequest: vi.fn(),
             addLabelsToIssue: vi.fn(),
-            moveIssueToStatus: vi.fn()
+            moveIssueToStatus: vi.fn(),
+            createPullRequestReview: vi.fn(),
+            getDiscussion: vi.fn(),
+            listDiscussionCategories: vi.fn(),
+            createDiscussion: vi.fn(),
+            addLabelsToPullRequest: vi.fn()
         };
 
         const router = createGitHubRouter(mockClient);
@@ -91,6 +104,60 @@ describe('GitHub API Routes', () => {
 
                 expect(response.body.success).toBe(false);
                 expect(response.body.error.message).toBe('Invalid issue number');
+            });
+        });
+
+        describe('GET /pulls/:prNumber', () => {
+            it('should return pull request data', async () => {
+                const mockPR = {
+                    id: 'pr-1',
+                    number: 25,
+                    title: 'Test PR',
+                    url: 'https://github.com/org/repo/pull/25',
+                    headRefName: 'feature-branch',
+                    baseRefName: 'main',
+                    headRefOid: 'abc123',
+                    comments: {
+                        nodes: [
+                            {
+                                id: 'comment-1',
+                                body: 'Test comment',
+                                author: { login: 'user1' },
+                                createdAt: '2025-02-06T11:00:00Z'
+                            }
+                        ]
+                    }
+                };
+
+                (mockClient.getPullRequest as any).mockResolvedValue(mockPR);
+
+                const response = await request(app)
+                    .get('/pulls/25')
+                    .expect(200);
+
+                expect(response.body.success).toBe(true);
+                expect(response.body.data).toEqual(mockPR);
+                expect(mockClient.getPullRequest).toHaveBeenCalledWith(25);
+            });
+
+            it('should handle pull request not found', async () => {
+                (mockClient.getPullRequest as any).mockResolvedValue(null);
+
+                const response = await request(app)
+                    .get('/pulls/999')
+                    .expect(404);
+
+                expect(response.body.success).toBe(false);
+                expect(response.body.error.message).toBe('Pull request not found');
+            });
+
+            it('should validate pull request number format', async () => {
+                const response = await request(app)
+                    .get('/pulls/invalid')
+                    .expect(400);
+
+                expect(response.body.success).toBe(false);
+                expect(response.body.error.message).toBe('Invalid pull request number');
             });
         });
 
@@ -162,6 +229,173 @@ describe('GitHub API Routes', () => {
 
                 expect(response.body.success).toBe(false);
                 expect(response.body.error.message).toBe('Failed to fetch projects');
+            });
+        });
+
+        describe('GET /discussions/:discussionNumber', () => {
+            it('should return discussion data', async () => {
+                const mockDiscussion = {
+                    id: 'discussion-1',
+                    number: 1,
+                    title: 'Test Discussion',
+                    body: 'Discussion body',
+                    url: 'https://github.com/org/repo/discussions/1',
+                    category: {
+                        id: 'cat-1',
+                        name: 'Ideas & Proposals',
+                        emoji: '🌱'
+                    },
+                    comments: {
+                        nodes: [
+                            {
+                                id: 'comment-1',
+                                body: 'Test comment',
+                                author: { login: 'user1' },
+                                createdAt: '2025-02-06T11:00:00Z'
+                            }
+                        ]
+                    }
+                };
+
+                (mockClient.getDiscussion as any).mockResolvedValue(mockDiscussion);
+
+                const response = await request(app)
+                    .get('/discussions/1')
+                    .expect(200);
+
+                expect(response.body.success).toBe(true);
+                expect(response.body.data).toEqual(mockDiscussion);
+            });
+
+            it('should handle discussion not found', async () => {
+                (mockClient.getDiscussion as any).mockResolvedValue(null);
+
+                const response = await request(app)
+                    .get('/discussions/999')
+                    .expect(404);
+
+                expect(response.body.success).toBe(false);
+                expect(response.body.error.message).toBe('Discussion not found');
+            });
+
+            it('should validate discussion number format', async () => {
+                const response = await request(app)
+                    .get('/discussions/invalid')
+                    .expect(400);
+
+                expect(response.body.success).toBe(false);
+                expect(response.body.error.message).toBe('Invalid discussion number');
+            });
+        });
+
+        describe('GET /discussions/categories', () => {
+            it('should return discussion categories', async () => {
+                const mockCategories = [
+                    {
+                        id: 'cat-1',
+                        name: 'Ideas & Proposals',
+                        emoji: '🌱',
+                        description: 'Share and discuss new ideas'
+                    }
+                ];
+
+                (mockClient.listDiscussionCategories as any).mockResolvedValue(mockCategories);
+
+                const response = await request(app)
+                    .get('/discussions/categories')
+                    .expect(200);
+
+                expect(response.body.success).toBe(true);
+                expect(response.body.data).toEqual(mockCategories);
+            });
+        });
+
+        describe('GET /discussions/:discussionNumber', () => {
+            it('should return discussion data', async () => {
+                const mockDiscussion = {
+                    id: 'discussion-1',
+                    number: 1,
+                    title: 'Test Discussion',
+                    body: 'Discussion body',
+                    url: 'https://github.com/org/repo/discussions/1',
+                    category: {
+                        id: 'cat-1',
+                        name: 'Ideas & Proposals',
+                        emoji: '🌱'
+                    },
+                    comments: {
+                        nodes: [
+                            {
+                                id: 'comment-1',
+                                body: 'Test comment',
+                                author: { login: 'user1' },
+                                createdAt: '2025-02-06T11:00:00Z'
+                            }
+                        ]
+                    }
+                };
+
+                (mockClient.getDiscussion as any).mockResolvedValue(mockDiscussion);
+
+                const response = await request(app)
+                    .get('/discussions/1')
+                    .expect(200);
+
+                expect(response.body.success).toBe(true);
+                expect(response.body.data).toEqual(mockDiscussion);
+            });
+
+            it('should handle discussion not found', async () => {
+                (mockClient.getDiscussion as any).mockResolvedValue(null);
+
+                const response = await request(app)
+                    .get('/discussions/999')
+                    .expect(404);
+
+                expect(response.body.success).toBe(false);
+                expect(response.body.error.message).toBe('Discussion not found');
+            });
+
+            it('should validate discussion number format', async () => {
+                const response = await request(app)
+                    .get('/discussions/invalid')
+                    .expect(400);
+
+                expect(response.body.success).toBe(false);
+                expect(response.body.error.message).toBe('Invalid discussion number');
+            });
+        });
+
+        describe('GET /discussions/categories', () => {
+            it('should return discussion categories', async () => {
+                const mockCategories = [
+                    {
+                        id: 'cat-1',
+                        name: 'Ideas & Proposals',
+                        emoji: '🌱',
+                        description: 'Share and discuss new ideas'
+                    }
+                ];
+
+                (mockClient.listDiscussionCategories as any).mockResolvedValue(mockCategories);
+
+                const response = await request(app)
+                    .get('/discussions/categories')
+                    .expect(200);
+
+                expect(response.body.success).toBe(true);
+                expect(response.body.data).toEqual(mockCategories);
+            });
+
+            it('should handle GitHub API errors', async () => {
+                (mockClient.listDiscussionCategories as any).mockRejectedValue(new Error('Failed to fetch categories'));
+
+                const response = await request(app)
+                    .get('/discussions/categories')
+                    .expect(500);
+
+                expect(response.body.success).toBe(false);
+                expect(response.body.error.message).toBe('Failed to fetch categories');
             });
         });
 
@@ -463,6 +697,113 @@ describe('GitHub API Routes', () => {
             });
         });
 
+        describe('POST /pulls/:prNumber/reviews', () => {
+            it('should create a pull request review', async () => {
+                const mockPR = {
+                    id: 'pr-1',
+                    number: 123
+                };
+
+                const mockResult = {
+                    addPullRequestReview: {
+                        pullRequestReview: {
+                            id: 'review1',
+                            body: 'LGTM!',
+                            state: 'APPROVE',
+                            author: {
+                                login: 'horse21'
+                            },
+                            createdAt: '2025-02-06T12:00:00Z'
+                        }
+                    }
+                };
+
+                (mockClient.getPullRequest as any).mockResolvedValue(mockPR);
+                (mockClient.createPullRequestReview as any).mockResolvedValue(mockResult);
+
+                const response = await request(app)
+                    .post('/pulls/123/reviews')
+                    .set('x-agent-id', 'horse21')
+                    .send({
+                        event: 'APPROVE',
+                        body: 'LGTM!'
+                    })
+                    .expect(200);
+
+                expect(response.body.success).toBe(true);
+                expect(response.body.data).toEqual(mockResult);
+            });
+
+            it('should validate review event type', async () => {
+                const response = await request(app)
+                    .post('/pulls/123/reviews')
+                    .set('x-agent-id', 'horse21')
+                    .send({
+                        event: 'INVALID',
+                        body: 'Test review'
+                    })
+                    .expect(400);
+
+                expect(response.body.success).toBe(false);
+                expect(response.body.error.message).toBe('Invalid review event type. Must be APPROVE, REQUEST_CHANGES, or COMMENT');
+            });
+
+            it('should validate required fields', async () => {
+                const response = await request(app)
+                    .post('/pulls/123/reviews')
+                    .set('x-agent-id', 'horse21')
+                    .send({})
+                    .expect(400);
+
+                expect(response.body.success).toBe(false);
+                expect(response.body.error.message).toBe('Missing required fields: event, body');
+            });
+        });
+
+        describe('POST /pulls/:prNumber/labels', () => {
+            it('should add labels to a pull request', async () => {
+                const mockPR = {
+                    id: 'pr-1',
+                    number: 123
+                };
+                (mockClient.getPullRequest as any).mockResolvedValue(mockPR);
+                (mockClient.addLabelsToPullRequest as any).mockResolvedValue(undefined);
+
+                const response = await request(app)
+                    .post('/pulls/123/labels')
+                    .set('x-agent-id', 'horse88')
+                    .send({ labels: ['review:horse21'] })
+                    .expect(200);
+
+                expect(response.body.success).toBe(true);
+                expect(response.body.data).toEqual({ added: ['review:horse21'] });
+            });
+
+            it('should handle pull request not found', async () => {
+                (mockClient.getPullRequest as any).mockResolvedValue(null);
+
+                const response = await request(app)
+                    .post('/pulls/999/labels')
+                    .set('x-agent-id', 'horse88')
+                    .send({ labels: ['review:horse21'] })
+                    .expect(404);
+
+                expect(response.body.success).toBe(false);
+                expect(response.body.error.message).toBe('Pull request not found');
+            });
+
+            it('should validate required fields', async () => {
+                const response = await request(app)
+                    .post('/pulls/123/labels')
+                    .set('x-agent-id', 'horse88')
+                    .send({})
+                    .expect(400);
+
+                expect(response.body.success).toBe(false);
+                expect(response.body.error.message).toBe('Missing required fields: labels');
+            });
+        });
+
         describe('Rate Limiting', () => {
             it('should enforce rate limits', async () => {
                 // Make multiple requests quickly
@@ -473,6 +814,99 @@ describe('GitHub API Routes', () => {
                 const responses = await Promise.all(requests);
                 const tooManyRequests = responses.some(r => r.status === 429);
                 expect(tooManyRequests).toBe(true);
+            });
+        });
+
+        describe('POST /discussions', () => {
+            it('should create a discussion with valid category', async () => {
+                const mockCategories = [
+                    { id: 'cat-1', name: 'Ideas & Proposals' }
+                ];
+                const mockResult = {
+                    createDiscussion: {
+                        discussion: {
+                            id: '1',
+                            number: 123,
+                            url: 'https://github.com/org/repo/discussions/123'
+                        }
+                    }
+                };
+
+                (mockClient.listDiscussionCategories as any).mockResolvedValue(mockCategories);
+                (mockClient.getProjectMetadata as any).mockResolvedValue({ repositoryId: 'repo1' });
+                (mockClient.createDiscussion as any).mockResolvedValue(mockResult);
+
+                const response = await request(app)
+                    .post('/discussions')
+                    .set('x-agent-id', 'horse21')
+                    .send({
+                        title: 'Test Discussion',
+                        body: 'Discussion body',
+                        categoryId: 'cat-1',
+                        projectNumber: 1
+                    })
+                    .expect(200);
+
+                expect(response.body.success).toBe(true);
+                expect(response.body.data).toEqual(mockResult);
+            });
+
+            it('should validate discussion category', async () => {
+                const mockCategories = [
+                    { id: 'cat-1', name: 'Ideas & Proposals' }
+                ];
+
+                (mockClient.listDiscussionCategories as any).mockResolvedValue(mockCategories);
+                (mockClient.getProjectMetadata as any).mockResolvedValue({ repositoryId: 'repo1' });
+
+                const response = await request(app)
+                    .post('/discussions')
+                    .set('x-agent-id', 'horse21')
+                    .send({
+                        title: 'Test Discussion',
+                        body: 'Discussion body',
+                        categoryId: 'invalid-category',
+                        projectNumber: 1
+                    })
+                    .expect(400);
+
+                expect(response.body.success).toBe(false);
+                expect(response.body.error.message).toBe('Invalid discussion category');
+            });
+
+            it('should validate required fields', async () => {
+                const response = await request(app)
+                    .post('/discussions')
+                    .set('x-agent-id', 'horse21')
+                    .send({})
+                    .expect(400);
+
+                expect(response.body.success).toBe(false);
+                expect(response.body.error.message).toBe('Missing required fields: title, body, categoryId, projectNumber');
+            });
+
+            it('should handle GitHub API errors', async () => {
+                const mockCategories = [
+                    { id: 'cat-1', name: 'Ideas & Proposals' }
+                ];
+
+                (mockClient.listDiscussionCategories as any).mockResolvedValue(mockCategories);
+                (mockClient.getProjectMetadata as any).mockResolvedValue({ repositoryId: 'repo1' });
+                (mockClient.createDiscussion as any).mockRejectedValue(new Error('Failed to create discussion'));
+
+                const response = await request(app)
+                    .post('/discussions')
+                    .set('x-agent-id', 'horse21')
+                    .send({
+                        title: 'Test Discussion',
+                        body: 'Discussion body',
+                        categoryId: 'cat-1',
+                        projectNumber: 1
+                    })
+                    .expect(500);
+
+                expect(response.body.success).toBe(false);
+                expect(response.body.error.message).toBe('Failed to create discussion');
             });
         });
 

@@ -100,3 +100,21 @@ export function validateStatus(req: Request, _res: Response, next: NextFunction)
     }
     next();
 }
+
+// Validate pull request number
+export function validatePullRequestNumber(req: Request, _res: Response, next: NextFunction) {
+    const { prNumber } = req.params;
+    if (!prNumber || isNaN(parseInt(prNumber))) {
+        throw new GitHubAPIError('Invalid pull request number', 400);
+    }
+    next();
+}
+
+// Validate discussion number
+export function validateDiscussionNumber(req: Request, _res: Response, next: NextFunction) {
+    const { discussionNumber } = req.params;
+    if (!discussionNumber || isNaN(parseInt(discussionNumber))) {
+        throw new GitHubAPIError('Invalid discussion number', 400);
+    }
+    next();
+}

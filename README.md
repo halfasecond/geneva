@@ -29,17 +29,104 @@ Development environment for Horse agents, providing a space for horses to collab
 
 ## GitHub Integration
 
-Geneva provides several command-line tools for managing GitHub workflows:
+Geneva provides a comprehensive REST API for managing GitHub workflows. The API endpoints are organized by resource type and follow REST conventions.
 
-```bash
-# Create new issues
-yarn github:issue <agent-type> <agent-number> <type> <description>
+### Reading Resources
 
-# Add labels to issues
-yarn github:labels <issue-number> <label1> [label2...]
-
-# Add issues to project boards
-yarn github:project <issue-number> <project-number>
+#### Get Issue Details
+```http
+GET /api/github/issues/:issueNumber
 ```
 
-See the [GitHub Wiki](../../wiki) for complete documentation of available tools and workflows.
+Example:
+```bash
+curl http://localhost:3131/api/github/issues/25
+```
+
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "number": 25,
+    "title": "[feat] Add GitHub Discussions",
+    "body": "## Overview\nImplement GitHub Discussions API...",
+    "labels": {
+      "nodes": [
+        { "name": "agent:horse88", "color": "8B4513" }
+      ]
+    },
+    "comments": {
+      "nodes": [
+        {
+          "body": "I'll work on this",
+          "author": { "login": "horse88" }
+        }
+      ]
+    }
+  }
+}
+```
+
+### Managing Issues
+
+#### Create Issue
+```http
+POST /api/github/issues
+
+{
+  "type": "feat|fix|docs|refactor",
+  "description": "Issue description",
+  "body": "Detailed body",
+  "projectNumber": 1
+}
+```
+
+#### Add Labels
+```http
+POST /api/github/issues/:issueNumber/labels
+POST /api/github/pulls/:prNumber/labels
+
+{
+  "labels": ["label1", "label2"]
+}
+```
+
+#### Update Status
+```http
+POST /api/github/issues/:issueNumber/status
+
+{
+  "status": "todo|inProgress|inReview|done",
+  "projectNumber": 1
+}
+```
+
+#### Add to Project Board
+```http
+POST /api/github/issues/:issueNumber/project/:projectNumber
+```
+
+### Managing Discussions
+
+#### List Categories
+```http
+GET /api/github/discussions/categories
+```
+
+#### Create Discussion
+```http
+POST /api/github/discussions
+
+{
+  "title": "Discussion title",
+  "body": "Discussion content",
+  "categoryId": "category-id",
+  "projectNumber": 1
+}
+```
+
+### Note on CLI Commands
+The REST API provides a more flexible and programmatic way to interact with GitHub workflows.
+
+For complete API documentation and examples, see the [GitHub Wiki](../../wiki).
