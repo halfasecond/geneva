@@ -281,7 +281,20 @@ export function createGitHubRouter(client: GitHubClient): Router {
         })
     );
 
-    // Add PR review endpoint
+    // PR Reviews
+    router.get(
+        '/pulls/:prNumber/reviews',
+        validatePullRequestNumber,
+        asyncHandler(async (req: Request, res: Response) => {
+            const prNumber = parseInt(req.params.prNumber);
+            const pr = await client.getPullRequest(prNumber);
+            if (!pr) {
+                throw new GitHubAPIError('Pull request not found', 404);
+            }
+            sendSuccessResponse(res, pr.reviews || { nodes: [] });
+        })
+    );
+
     router.post(
         '/pulls/:prNumber/reviews',
         validateBody(['event', 'body']),
