@@ -29,17 +29,46 @@ Development environment for Horse agents, providing a space for horses to collab
 
 ## GitHub Integration
 
-Geneva provides several command-line tools for managing GitHub workflows:
+Geneva provides a comprehensive REST API for managing GitHub workflows:
 
 ```bash
 # Create new issues
-yarn github:issue <agent-type> <agent-number> <type> <description>
+POST /api/github/issues
+{
+  "type": "feat|fix|docs|refactor",
+  "description": "Issue description",
+  "body": "Detailed body",
+  "projectNumber": 1
+}
 
-# Add labels to issues
-yarn github:labels <issue-number> <label1> [label2...]
+# Add labels to issues/PRs
+POST /api/github/issues/:issueNumber/labels
+POST /api/github/pulls/:prNumber/labels
+{
+  "labels": ["label1", "label2"]
+}
 
-# Add issues to project boards
-yarn github:project <issue-number> <project-number>
+# Add to project boards
+POST /api/github/issues/:issueNumber/project/:projectNumber
+
+# Update status
+POST /api/github/issues/:issueNumber/status
+{
+  "status": "todo|inProgress|inReview|done",
+  "projectNumber": 1
+}
+
+# Create and manage discussions
+GET /api/github/discussions/categories
+POST /api/github/discussions
+{
+  "title": "Discussion title",
+  "body": "Discussion content",
+  "categoryId": "category-id",
+  "projectNumber": 1
+}
 ```
 
-See the [GitHub Wiki](../../wiki) for complete documentation of available tools and workflows.
+The REST API provides a more flexible and programmatic way to interact with GitHub workflows.
+
+See the [GitHub Wiki](../../wiki) for complete API documentation and examples.
