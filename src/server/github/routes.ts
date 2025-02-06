@@ -99,6 +99,13 @@ export function createGitHubRouter(client: GitHubClient): Router {
             const { title, body, categoryId, projectNumber } = req.body;
             const metadata = await client.getProjectMetadata(projectNumber);
             
+            // Validate category exists
+            const categories = await client.listDiscussionCategories();
+            const categoryExists = categories.some(category => category.id === categoryId);
+            if (!categoryExists) {
+                throw new GitHubAPIError('Invalid discussion category', 400);
+            }
+
             const result = await client.createDiscussion({
                 title,
                 body,

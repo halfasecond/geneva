@@ -6,11 +6,19 @@ import { GitHubClient } from '../../../utils/github/client';
 
 describe('GitHub API Routes', () => {
     let app: express.Application;
-    let mockClient: GitHubClient;
+    let mockClient: any;
 
     beforeEach(() => {
         app = express();
         mockClient = {
+            graphqlWithAuth: vi.fn(),
+            octokit: {} as any,
+            config: {
+                owner: 'test-owner',
+                repo: 'test-repo',
+                token: 'test-token'
+            },
+            projectMetadataCache: new Map(),
             getBoardData: vi.fn(),
             listProjects: vi.fn(),
             getProjectFields: vi.fn(),
@@ -377,6 +385,17 @@ describe('GitHub API Routes', () => {
 
                 expect(response.body.success).toBe(true);
                 expect(response.body.data).toEqual(mockCategories);
+            });
+
+            it('should handle GitHub API errors', async () => {
+                (mockClient.listDiscussionCategories as any).mockRejectedValue(new Error('Failed to fetch categories'));
+
+                const response = await request(app)
+                    .get('/discussions/categories')
+                    .expect(500);
+
+                expect(response.body.success).toBe(false);
+                expect(response.body.error.message).toBe('Failed to fetch categories');
             });
         });
 
@@ -790,6 +809,99 @@ describe('GitHub API Routes', () => {
                 const responses = await Promise.all(requests);
                 const tooManyRequests = responses.some(r => r.status === 429);
                 expect(tooManyRequests).toBe(true);
+            });
+        });
+
+        describe('POST /discussions', () => {
+            it('should create a discussion with valid category', async () => {
+                const mockCategories = [
+                    { id: 'cat-1', name: 'Ideas & Proposals' }
+                ];
+                const mockResult = {
+                    createDiscussion: {
+                        discussion: {
+                            id: '1',
+                            number: 123,
+                            url: 'https://github.com/org/repo/discussions/123'
+                        }
+                    }
+                };
+
+                (mockClient.listDiscussionCategories as any).mockResolvedValue(mockCategories);
+                (mockClient.getProjectMetadata as any).mockResolvedValue({ repositoryId: 'repo1' });
+                (mockClient.createDiscussion as any).mockResolvedValue(mockResult);
+
+                const response = await request(app)
+                    .post('/discussions')
+                    .set('x-agent-id', 'horse21')
+                    .send({
+                        title: 'Test Discussion',
+                        body: 'Discussion body',
+                        categoryId: 'cat-1',
+                        projectNumber: 1
+                    })
+                    .expect(200);
+
+                expect(response.body.success).toBe(true);
+                expect(response.body.data).toEqual(mockResult);
+            });
+
+            it('should validate discussion category', async () => {
+                const mockCategories = [
+                    { id: 'cat-1', name: 'Ideas & Proposals' }
+                ];
+
+                (mockClient.listDiscussionCategories as any).mockResolvedValue(mockCategories);
+                (mockClient.getProjectMetadata as any).mockResolvedValue({ repositoryId: 'repo1' });
+
+                const response = await request(app)
+                    .post('/discussions')
+                    .set('x-agent-id', 'horse21')
+                    .send({
+                        title: 'Test Discussion',
+                        body: 'Discussion body',
+                        categoryId: 'invalid-category',
+                        projectNumber: 1
+                    })
+                    .expect(400);
+
+                expect(response.body.success).toBe(false);
+                expect(response.body.error.message).toBe('Invalid discussion category');
+            });
+
+            it('should validate required fields', async () => {
+                const response = await request(app)
+                    .post('/discussions')
+                    .set('x-agent-id', 'horse21')
+                    .send({})
+                    .expect(400);
+
+                expect(response.body.success).toBe(false);
+                expect(response.body.error.message).toBe('Missing required fields: title, body, categoryId, projectNumber');
+            });
+
+            it('should handle GitHub API errors', async () => {
+                const mockCategories = [
+                    { id: 'cat-1', name: 'Ideas & Proposals' }
+                ];
+
+                (mockClient.listDiscussionCategories as any).mockResolvedValue(mockCategories);
+                (mockClient.getProjectMetadata as any).mockResolvedValue({ repositoryId: 'repo1' });
+                (mockClient.createDiscussion as any).mockRejectedValue(new Error('Failed to create discussion'));
+
+                const response = await request(app)
+                    .post('/discussions')
+                    .set('x-agent-id', 'horse21')
+                    .send({
+                        title: 'Test Discussion',
+                        body: 'Discussion body',
+                        categoryId: 'cat-1',
+                        projectNumber: 1
+                    })
+                    .expect(500);
+
+                expect(response.body.success).toBe(false);
+                expect(response.body.error.message).toBe('Failed to create discussion');
             });
         });
 
