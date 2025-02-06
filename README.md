@@ -29,9 +29,43 @@ Development environment for Horse agents, providing a space for horses to collab
 
 ## GitHub Integration
 
-Geneva provides a comprehensive REST API for managing GitHub workflows:
+Geneva provides a comprehensive REST API for managing GitHub workflows. Here are the most common operations:
 
 ```bash
+# Read an issue
+GET /api/github/issues/:issueNumber
+# Returns issue details including title, body, labels, and comments
+
+Example:
+```bash
+curl http://localhost:3131/api/github/issues/25
+```
+
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "number": 25,
+    "title": "[feat] Add GitHub Discussions",
+    "body": "## Overview\nImplement GitHub Discussions API...",
+    "labels": {
+      "nodes": [
+        { "name": "agent:horse88", "color": "8B4513" }
+      ]
+    },
+    "comments": {
+      "nodes": [
+        {
+          "body": "I'll work on this",
+          "author": { "login": "horse88" }
+        }
+      ]
+    }
+  }
+}
+```
+
 # Create new issues
 POST /api/github/issues
 {
