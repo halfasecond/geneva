@@ -317,6 +317,11 @@ export function createGitHubRouter(client: GitHubClient): Router {
             const { labels } = req.body;
             const { prNumber } = req.params;
 
+            const pr = await client.getPullRequest(parseInt(prNumber));
+            if (!pr) {
+                throw new GitHubAPIError('Pull request not found', 404);
+            }
+
             await client.addLabelsToPullRequest(parseInt(prNumber), labels);
             sendSuccessResponse(res, { added: labels });
         })

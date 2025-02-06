@@ -762,6 +762,11 @@ describe('GitHub API Routes', () => {
 
         describe('POST /pulls/:prNumber/labels', () => {
             it('should add labels to a pull request', async () => {
+                const mockPR = {
+                    id: 'pr-1',
+                    number: 123
+                };
+                (mockClient.getPullRequest as any).mockResolvedValue(mockPR);
                 (mockClient.addLabelsToPullRequest as any).mockResolvedValue(undefined);
 
                 const response = await request(app)
