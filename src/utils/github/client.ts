@@ -25,7 +25,9 @@ import type {
     GetBoardDataResult,
     Board,
     BoardCard,
-    Issue
+    Issue,
+    CreatePullRequestReviewInput,
+    CreatePullRequestReviewResult
 } from './types';
 
 /**
@@ -548,7 +550,7 @@ export class GitHubClient {
     /**
      * Get a pull request by number
      */
-    async getPullRequest(prNumber: number): Promise<PullRequest> {
+    async getPullRequest(prNumber: number): Promise<PullRequest | null> {
         const query = `
             query($owner: String!, $repo: String!, $number: Int!) {
                 repository(owner: $owner, name: $repo) {
@@ -575,13 +577,20 @@ export class GitHubClient {
             }
         `;
 
-        const response = await this.graphqlWithAuth(query, {
-            owner: this.config.owner,
-            repo: this.config.repo,
-            number: prNumber
-        });
+        try {
+            const response = await this.graphqlWithAuth(query, {
+                owner: this.config.owner,
+                repo: this.config.repo,
+                number: prNumber
+            });
 
-        return (response as any).repository.pullRequest;
+            return (response as any).repository.pullRequest;
+        } catch (error) {
+            if (error instanceof Error && error.message.includes('Could not resolve to a PullRequest')) {
+                return null;
+            }
+            throw error;
+        }
     }
 
     /**
@@ -647,6 +656,9 @@ export class GitHubClient {
      */
     async mergePullRequest(input: MergePullRequestInput): Promise<MergePullRequestResult> {
         const pr = await this.getPullRequest(input.prNumber);
+        if (!pr) {
+            throw new Error(`Pull request #${input.prNumber} not found`);
+        }
 
         try {
             const result = await this.octokit.pulls.merge({
@@ -707,5 +719,39 @@ export class GitHubClient {
                 singleSelectOptionId: statusOptionId
             }
         });
+    }
+
+    /**
+     * Create a pull request review
+     */
+    async createPullRequestReview(prNumber: number, input: CreatePullRequestReviewInput): Promise<CreatePullRequestReviewResult> {
+        const pr = await this.getPullRequest(prNumber);
+        if (!pr) {
+            throw new Error(`Pull request #${prNumber} not found`);
+        }
+        
+        const mutation = `
+            mutation($input: AddPullRequestReviewInput!) {
+                addPullRequestReview(input: $input) {
+                    pullRequestReview {
+                        id
+                        body
+                        state
+                        author {
+                            login
+                        }
+                        createdAt
+                    }
+                }
+            }
+        `;
+
+        return this.graphqlWithAuth(mutation, {
+            input: {
+                pullRequestId: pr.id,
+                event: input.event,
+                body: input.body || ''
+            }
+        }) as Promise<CreatePullRequestReviewResult>;
     }
 }

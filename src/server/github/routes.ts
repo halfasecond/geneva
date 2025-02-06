@@ -8,9 +8,11 @@ import {
     validateProjectNumber,
     validateIssueType,
     validateStatus,
+    validatePullRequestNumber,
     logRequest,
     rateLimit
 } from './middleware';
+import { PullRequestReviewEvent } from '../../utils/github/types';
 import { sendSuccessResponse } from './errors';
 import { GitHubAPIError } from './types';
 
@@ -33,6 +35,19 @@ export function createGitHubRouter(client: GitHubClient): Router {
                 throw new GitHubAPIError('Issue not found', 404);
             }
             sendSuccessResponse(res, issue);
+        })
+    );
+
+    router.get(
+        '/pulls/:prNumber',
+        validatePullRequestNumber,
+        asyncHandler(async (req: Request, res: Response) => {
+            const prNumber = parseInt(req.params.prNumber);
+            const pr = await client.getPullRequest(prNumber);
+            if (!pr || pr === null) {
+                throw new GitHubAPIError('Pull request not found', 404);
+            }
+            sendSuccessResponse(res, pr);
         })
     );
 
@@ -213,6 +228,28 @@ export function createGitHubRouter(client: GitHubClient): Router {
                 commitHeadline,
                 commitBody
             });
+
+            sendSuccessResponse(res, result);
+        })
+    );
+
+    // Add PR review endpoint
+    router.post(
+        '/pulls/:prNumber/reviews',
+        validateBody(['event', 'body']),
+        asyncHandler(async (req: Request, res: Response) => {
+            const { prNumber } = req.params;
+            const { event, body } = req.body;
+
+            // Validate review event type
+            if (!Object.values(PullRequestReviewEvent).includes(event)) {
+                throw new GitHubAPIError('Invalid review event type. Must be APPROVE, REQUEST_CHANGES, or COMMENT', 400);
+            }
+
+            const result = await client.createPullRequestReview(
+                parseInt(prNumber),
+                { event, body }
+            );
 
             sendSuccessResponse(res, result);
         })

@@ -136,6 +136,12 @@ export enum ProjectItemStatus {
     DONE = 'done'
 }
 
+export enum PullRequestReviewEvent {
+    APPROVE = 'APPROVE',
+    REQUEST_CHANGES = 'REQUEST_CHANGES',
+    COMMENT = 'COMMENT'
+}
+
 // Input types
 export interface CreateIssueInput {
     title: string;
@@ -181,6 +187,12 @@ export interface AddLabelsInput {
 export interface AddToProjectInput {
     projectId: string;
     contentId: string;
+}
+
+export interface CreatePullRequestReviewInput {
+    pullRequestId: string;
+    event: PullRequestReviewEvent;
+    body?: string;
 }
 
 // Response types
@@ -250,6 +262,20 @@ export interface AddToProjectResult {
     addProjectV2ItemById: {
         item: {
             id: string;
+        };
+    };
+}
+
+export interface CreatePullRequestReviewResult {
+    addPullRequestReview: {
+        pullRequestReview: {
+            id: string;
+            body: string;
+            state: PullRequestReviewEvent;
+            author: {
+                login: string;
+            };
+            createdAt: string;
         };
     };
 }
@@ -338,11 +364,12 @@ export interface GitHubClient {
     updateItemStatus(input: UpdateProjectItemInput): Promise<UpdateItemStatusResult>;
     findProjectItem(projectId: string, issueNumber: number): Promise<ProjectItem | null>;
     findIssue(issueNumber: number): Promise<Issue | null>;
-    getPullRequest(prNumber: number): Promise<PullRequest>;
+    getPullRequest(prNumber: number): Promise<PullRequest | null>;
     addComment(input: AddCommentInput): Promise<AddCommentResult>;
     addIssueComment(issueNumber: number, body: string): Promise<void>;
     addIssueToProject(contentId: string, projectId: string): Promise<void>;
     mergePullRequest(input: MergePullRequestInput): Promise<MergePullRequestResult>;
     addLabelsToIssue(issueNumber: number, labels: string[]): Promise<void>;
     moveIssueToStatus(projectNumber: number, issueNumber: number, status: ProjectItemStatus): Promise<UpdateItemStatusResult>;
+    createPullRequestReview(prNumber: number, input: CreatePullRequestReviewInput): Promise<CreatePullRequestReviewResult>;
 }

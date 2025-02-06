@@ -28,7 +28,8 @@ describe('GitHub API Routes', () => {
             addIssueToProject: vi.fn(),
             mergePullRequest: vi.fn(),
             addLabelsToIssue: vi.fn(),
-            moveIssueToStatus: vi.fn()
+            moveIssueToStatus: vi.fn(),
+            createPullRequestReview: vi.fn()
         };
 
         const router = createGitHubRouter(mockClient);
@@ -91,6 +92,60 @@ describe('GitHub API Routes', () => {
 
                 expect(response.body.success).toBe(false);
                 expect(response.body.error.message).toBe('Invalid issue number');
+            });
+        });
+
+        describe('GET /pulls/:prNumber', () => {
+            it('should return pull request data', async () => {
+                const mockPR = {
+                    id: 'pr-1',
+                    number: 25,
+                    title: 'Test PR',
+                    url: 'https://github.com/org/repo/pull/25',
+                    headRefName: 'feature-branch',
+                    baseRefName: 'main',
+                    headRefOid: 'abc123',
+                    comments: {
+                        nodes: [
+                            {
+                                id: 'comment-1',
+                                body: 'Test comment',
+                                author: { login: 'user1' },
+                                createdAt: '2025-02-06T11:00:00Z'
+                            }
+                        ]
+                    }
+                };
+
+                (mockClient.getPullRequest as any).mockResolvedValue(mockPR);
+
+                const response = await request(app)
+                    .get('/pulls/25')
+                    .expect(200);
+
+                expect(response.body.success).toBe(true);
+                expect(response.body.data).toEqual(mockPR);
+                expect(mockClient.getPullRequest).toHaveBeenCalledWith(25);
+            });
+
+            it('should handle pull request not found', async () => {
+                (mockClient.getPullRequest as any).mockResolvedValue(null);
+
+                const response = await request(app)
+                    .get('/pulls/999')
+                    .expect(404);
+
+                expect(response.body.success).toBe(false);
+                expect(response.body.error.message).toBe('Pull request not found');
+            });
+
+            it('should validate pull request number format', async () => {
+                const response = await request(app)
+                    .get('/pulls/invalid')
+                    .expect(400);
+
+                expect(response.body.success).toBe(false);
+                expect(response.body.error.message).toBe('Invalid pull request number');
             });
         });
 
@@ -460,6 +515,63 @@ describe('GitHub API Routes', () => {
 
                 expect(response.body.success).toBe(false);
                 expect(response.body.error.message).toBe('Missing required fields: commitHeadline, commitBody');
+            });
+        });
+
+        describe('POST /pulls/:prNumber/reviews', () => {
+            it('should create a pull request review', async () => {
+                const mockResult = {
+                    addPullRequestReview: {
+                        pullRequestReview: {
+                            id: 'review1',
+                            body: 'LGTM!',
+                            state: 'APPROVE',
+                            author: {
+                                login: 'horse21'
+                            },
+                            createdAt: '2025-02-06T12:00:00Z'
+                        }
+                    }
+                };
+
+                (mockClient.createPullRequestReview as any).mockResolvedValue(mockResult);
+
+                const response = await request(app)
+                    .post('/pulls/123/reviews')
+                    .set('x-agent-id', 'horse21')
+                    .send({
+                        event: 'APPROVE',
+                        body: 'LGTM!'
+                    })
+                    .expect(200);
+
+                expect(response.body.success).toBe(true);
+                expect(response.body.data).toEqual(mockResult);
+            });
+
+            it('should validate review event type', async () => {
+                const response = await request(app)
+                    .post('/pulls/123/reviews')
+                    .set('x-agent-id', 'horse21')
+                    .send({
+                        event: 'INVALID',
+                        body: 'Test review'
+                    })
+                    .expect(400);
+
+                expect(response.body.success).toBe(false);
+                expect(response.body.error.message).toBe('Invalid review event type. Must be APPROVE, REQUEST_CHANGES, or COMMENT');
+            });
+
+            it('should validate required fields', async () => {
+                const response = await request(app)
+                    .post('/pulls/123/reviews')
+                    .set('x-agent-id', 'horse21')
+                    .send({})
+                    .expect(400);
+
+                expect(response.body.success).toBe(false);
+                expect(response.body.error.message).toBe('Missing required fields: event, body');
             });
         });
 

@@ -100,3 +100,12 @@ export function validateStatus(req: Request, _res: Response, next: NextFunction)
     }
     next();
 }
+
+// Validate pull request number
+export function validatePullRequestNumber(req: Request, _res: Response, next: NextFunction) {
+    const { prNumber } = req.params;
+    if (!prNumber || isNaN(parseInt(prNumber))) {
+        throw new GitHubAPIError('Invalid pull request number', 400);
+    }
+    next();
+}
