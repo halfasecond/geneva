@@ -700,6 +700,18 @@ export class GitHubClient {
     }
 
     /**
+     * Add labels to a pull request using REST API
+     */
+    async addLabelsToPullRequest(prNumber: number, labels: string[]) {
+        await this.octokit.rest.issues.addLabels({
+            owner: this.config.owner,
+            repo: this.config.repo,
+            issue_number: prNumber,
+            labels
+        });
+    }
+
+    /**
      * Move an issue to a new status in a project
      */
     async moveIssueToStatus(projectNumber: number, issueNumber: number, status: ProjectItemStatus) {

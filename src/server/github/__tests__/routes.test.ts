@@ -32,7 +32,8 @@ describe('GitHub API Routes', () => {
             createPullRequestReview: vi.fn(),
             getDiscussion: vi.fn(),
             listDiscussionCategories: vi.fn(),
-            createDiscussion: vi.fn()
+            createDiscussion: vi.fn(),
+            addLabelsToPullRequest: vi.fn()
         };
 
         const router = createGitHubRouter(mockClient);
@@ -742,25 +743,7 @@ describe('GitHub API Routes', () => {
 
         describe('POST /pulls/:prNumber/labels', () => {
             it('should add labels to a pull request', async () => {
-                const mockPR = {
-                    id: 'pr-1',
-                    number: 123
-                };
-
-                const mockResult = {
-                    addLabelsToLabelable: {
-                        labelable: {
-                            labels: {
-                                nodes: [
-                                    { id: '1', name: 'review:horse21' }
-                                ]
-                            }
-                        }
-                    }
-                };
-
-                (mockClient.getPullRequest as any).mockResolvedValue(mockPR);
-                (mockClient.addLabels as any).mockResolvedValue(mockResult);
+                (mockClient.addLabelsToPullRequest as any).mockResolvedValue(undefined);
 
                 const response = await request(app)
                     .post('/pulls/123/labels')
