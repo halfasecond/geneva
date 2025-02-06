@@ -341,6 +341,46 @@ export interface GitHubErrorDetails {
     path?: string[];
 }
 
+export interface Discussion {
+    id: string;
+    number: number;
+    title: string;
+    body: string;
+    url: string;
+    category: {
+        id: string;
+        name: string;
+        emoji: string;
+    };
+    comments: {
+        nodes: Comment[];
+    };
+}
+
+export interface DiscussionCategory {
+    id: string;
+    name: string;
+    emoji: string;
+    description: string;
+}
+
+export interface CreateDiscussionInput {
+    title: string;
+    body: string;
+    categoryId: string;
+    repositoryId: string;
+}
+
+export interface CreateDiscussionResult {
+    createDiscussion: {
+        discussion: {
+            id: string;
+            number: number;
+            url: string;
+        };
+    };
+}
+
 export interface GitHubError extends Error {
     response?: {
         status?: number;
@@ -372,4 +412,9 @@ export interface GitHubClient {
     addLabelsToIssue(issueNumber: number, labels: string[]): Promise<void>;
     moveIssueToStatus(projectNumber: number, issueNumber: number, status: ProjectItemStatus): Promise<UpdateItemStatusResult>;
     createPullRequestReview(prNumber: number, input: CreatePullRequestReviewInput): Promise<CreatePullRequestReviewResult>;
+
+    // Discussion methods
+    getDiscussion(discussionNumber: number): Promise<Discussion | null>;
+    listDiscussionCategories(): Promise<DiscussionCategory[]>;
+    createDiscussion(input: CreateDiscussionInput): Promise<CreateDiscussionResult>;
 }

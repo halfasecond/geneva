@@ -27,7 +27,11 @@ import type {
     BoardCard,
     Issue,
     CreatePullRequestReviewInput,
-    CreatePullRequestReviewResult
+    CreatePullRequestReviewResult,
+    Discussion,
+    DiscussionCategory,
+    CreateDiscussionInput,
+    CreateDiscussionResult
 } from './types';
 
 /**
@@ -753,5 +757,100 @@ export class GitHubClient {
                 body: input.body || ''
             }
         }) as Promise<CreatePullRequestReviewResult>;
+    }
+
+    /**
+     * Get a discussion by number
+     */
+    async getDiscussion(discussionNumber: number): Promise<Discussion | null> {
+        const query = `
+            query($owner: String!, $repo: String!, $number: Int!) {
+                repository(owner: $owner, name: $repo) {
+                    discussion(number: $number) {
+                        id
+                        number
+                        title
+                        body
+                        url
+                        category {
+                            id
+                            name
+                            emoji
+                        }
+                        comments(first: 100) {
+                            nodes {
+                                id
+                                body
+                                author {
+                                    login
+                                }
+                                createdAt
+                            }
+                        }
+                    }
+                }
+            }
+        `;
+
+        try {
+            const response = await this.graphqlWithAuth(query, {
+                owner: this.config.owner,
+                repo: this.config.repo,
+                number: discussionNumber
+            });
+
+            return (response as any).repository.discussion;
+        } catch (error) {
+            if (error instanceof Error && error.message.includes('Could not resolve to a Discussion')) {
+                return null;
+            }
+            throw error;
+        }
+    }
+
+    /**
+     * List discussion categories
+     */
+    async listDiscussionCategories(): Promise<DiscussionCategory[]> {
+        const query = `
+            query($owner: String!, $repo: String!) {
+                repository(owner: $owner, name: $repo) {
+                    discussionCategories(first: 100) {
+                        nodes {
+                            id
+                            name
+                            emoji
+                            description
+                        }
+                    }
+                }
+            }
+        `;
+
+        const response = await this.graphqlWithAuth(query, {
+            owner: this.config.owner,
+            repo: this.config.repo
+        });
+
+        return (response as any).repository.discussionCategories.nodes;
+    }
+
+    /**
+     * Create a new discussion
+     */
+    async createDiscussion(input: CreateDiscussionInput): Promise<CreateDiscussionResult> {
+        const mutation = `
+            mutation($input: CreateDiscussionInput!) {
+                createDiscussion(input: $input) {
+                    discussion {
+                        id
+                        number
+                        url
+                    }
+                }
+            }
+        `;
+
+        return this.graphqlWithAuth(mutation, { input }) as Promise<CreateDiscussionResult>;
     }
 }

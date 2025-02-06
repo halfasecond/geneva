@@ -109,3 +109,12 @@ export function validatePullRequestNumber(req: Request, _res: Response, next: Ne
     }
     next();
 }
+
+// Validate discussion number
+export function validateDiscussionNumber(req: Request, _res: Response, next: NextFunction) {
+    const { discussionNumber } = req.params;
+    if (!discussionNumber || isNaN(parseInt(discussionNumber))) {
+        throw new GitHubAPIError('Invalid discussion number', 400);
+    }
+    next();
+}

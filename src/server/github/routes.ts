@@ -9,6 +9,7 @@ import {
     validateIssueType,
     validateStatus,
     validatePullRequestNumber,
+    validateDiscussionNumber,
     logRequest,
     rateLimit
 } from './middleware';
@@ -60,12 +61,52 @@ export function createGitHubRouter(client: GitHubClient): Router {
             sendSuccessResponse(res, board);
         })
     );
-
     router.get(
         '/projects',
         asyncHandler(async (_req: Request, res: Response) => {
             const projects = await client.listProjects();
             sendSuccessResponse(res, projects);
+        })
+    );
+
+    // Discussion endpoints
+    router.get(
+        '/discussions/categories',
+        asyncHandler(async (_req: Request, res: Response) => {
+            const categories = await client.listDiscussionCategories();
+            sendSuccessResponse(res, categories);
+        })
+    );
+
+    router.get(
+        '/discussions/:discussionNumber',
+        validateDiscussionNumber,
+        asyncHandler(async (req: Request, res: Response) => {
+            const discussionNumber = parseInt(req.params.discussionNumber);
+            const discussion = await client.getDiscussion(discussionNumber);
+            if (!discussion) {
+                throw new GitHubAPIError('Discussion not found', 404);
+            }
+            sendSuccessResponse(res, discussion);
+        })
+    );
+
+    router.post(
+        '/discussions',
+        validateAgent,
+        validateBody(['title', 'body', 'categoryId', 'projectNumber']),
+        asyncHandler(async (req: Request, res: Response) => {
+            const { title, body, categoryId, projectNumber } = req.body;
+            const metadata = await client.getProjectMetadata(projectNumber);
+            
+            const result = await client.createDiscussion({
+                title,
+                body,
+                categoryId,
+                repositoryId: metadata.repositoryId
+            });
+
+            sendSuccessResponse(res, result);
         })
     );
 
@@ -246,9 +287,14 @@ export function createGitHubRouter(client: GitHubClient): Router {
                 throw new GitHubAPIError('Invalid review event type. Must be APPROVE, REQUEST_CHANGES, or COMMENT', 400);
             }
 
+            const pr = await client.getPullRequest(parseInt(prNumber));
+            if (!pr) {
+                throw new GitHubAPIError('Pull request not found', 404);
+            }
+
             const result = await client.createPullRequestReview(
                 parseInt(prNumber),
-                { event, body }
+                { pullRequestId: pr.id, event, body }
             );
 
             sendSuccessResponse(res, result);
