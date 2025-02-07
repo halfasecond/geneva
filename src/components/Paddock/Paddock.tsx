@@ -1,33 +1,33 @@
-// @ts-nocheck
-import React, { useEffect, useRef, useCallback } from 'react'
-import * as Styled from './Paddock.style'
-import { useMovement } from './hooks/useMovement'
-import { useZoom } from './hooks/useZoom'
-import { useGameServer } from './hooks/useGameServer'
-import { Position } from '../../server/types'
-import IssuesField from '../IssuesField'
+import React, { useEffect, useRef, useCallback } from "react";
+import * as Styled from "./Paddock.style";
+import { useMovement } from "./hooks/useMovement";
+import { useZoom } from "./hooks/useZoom";
+import { useGameServer } from "./hooks/useGameServer";
+import { Position } from "../../server/types";
+import IssuesField from "../IssuesField";
+import { PathHighlight } from "../Bridleway";
 
 interface PaddockProps {
-    horseId: string
-    initialPosition?: Position
+    horseId: string;
+    initialPosition?: Position;
 }
 
 export const Paddock: React.FC<PaddockProps> = ({ 
     horseId,
-    initialPosition = { x: 200, y: 200, direction: 'right' as const }
+    initialPosition = { x: 200, y: 200, direction: "right" as const }
 }) => {
-    const containerRef = useRef<HTMLDivElement>(null)
+    const containerRef = useRef<HTMLDivElement>(null);
     const [viewportDimensions, setViewportDimensions] = React.useState({
         width: window.innerWidth,
         height: window.innerHeight
-    })
-    const [dimensionsReady, setDimensionsReady] = React.useState(false)
+    });
+    const [dimensionsReady, setDimensionsReady] = React.useState(false);
 
     // Initialize game server connection
     const { connected, players, updatePosition } = useGameServer({
         horseId,
         initialPosition
-    })
+    });
 
     // Initialize movement with current viewport dimensions
     const { position, viewportOffset } = useMovement({
@@ -37,10 +37,10 @@ export const Paddock: React.FC<PaddockProps> = ({
         initialPosition,
         onPositionChange: useCallback((pos: Position) => {
             if (connected) {
-                updatePosition(pos)
+                updatePosition(pos);
             }
         }, [connected, updatePosition])
-    })
+    });
 
     // Initialize zoom control
     const { scale, zoomOrigin } = useZoom({
@@ -49,33 +49,33 @@ export const Paddock: React.FC<PaddockProps> = ({
         position,
         viewportOffset,
         viewportDimensions
-    })
+    });
 
     // Update viewport dimensions on resize and initial mount
     useEffect(() => {
         const updateDimensions = () => {
             if (containerRef.current) {
-                const { clientWidth, clientHeight } = containerRef.current
+                const { clientWidth, clientHeight } = containerRef.current;
                 if (clientWidth > 0 && clientHeight > 0) {
                     setViewportDimensions({
                         width: clientWidth,
                         height: clientHeight
-                    })
-                    setDimensionsReady(true)
+                    });
+                    setDimensionsReady(true);
                 }
             }
-        }
+        };
 
         // Initial update
-        updateDimensions()
+        updateDimensions();
         
         // Update on resize
-        window.addEventListener('resize', updateDimensions)
-        return () => window.removeEventListener('resize', updateDimensions)
-    }, [])
+        window.addEventListener("resize", updateDimensions);
+        return () => window.removeEventListener("resize", updateDimensions);
+    }, []);
 
     if (!dimensionsReady) {
-        return <Styled.Container ref={containerRef} />
+        return <Styled.Container ref={containerRef} />;
     }
 
     return (
@@ -86,6 +86,9 @@ export const Paddock: React.FC<PaddockProps> = ({
                     transformOrigin: `${zoomOrigin.x}% ${zoomOrigin.y}%`
                 }}
             >
+                {/* Bridleway Path */}
+                <PathHighlight active />
+
                 {/* Issues Field */}
                 <Styled.IssuesFieldContainer scale={scale}>
                     <IssuesField />
@@ -96,7 +99,7 @@ export const Paddock: React.FC<PaddockProps> = ({
                     style={{
                         left: `${position.x}px`,
                         top: `${position.y}px`,
-                        transform: `scaleX(${position.direction === 'right' ? 1 : -1})`
+                        transform: `scaleX(${position.direction === "right" ? 1 : -1})`
                     }}
                 >
                     <img src={`/horse/${horseId}.svg`} alt={`#${horseId}`} />
@@ -104,51 +107,52 @@ export const Paddock: React.FC<PaddockProps> = ({
 
                 {/* Other players */}
                 {Array.from(players.entries()).map(([id, player]) => {
-                    if (id === horseId) return null // Skip current player
+                    if (id === horseId) return null; // Skip current player
                     return (
                         <Styled.Horse
+                            key={id}
                             style={{
                                 left: `${player.position.x}px`,
                                 top: `${player.position.y}px`,
-                                transform: `scaleX(${player.position.direction === 'right' ? 1 : -1})`
+                                transform: `scaleX(${player.position.direction === "right" ? 1 : -1})`
                             }}
                         >
                             <img src={`/horse/${id}.svg`} alt={`Horse ${id}`} />
                         </Styled.Horse>
-                    )
+                    );
                 })}
             </Styled.GameSpace>
 
             {/* Minimap */}
             <Styled.Minimap>
-                    {/* Current player */}
-                    <Styled.MinimapHorse
-                        style={{
-                            left: `${(position.x / 5000) * 200}px`,
-                            top: `${(position.y / 5000) * 200}px`,
-                        }}
-                    />
+                {/* Current player */}
+                <Styled.MinimapHorse
+                    style={{
+                        left: `${(position.x / 5000) * 200}px`,
+                        top: `${(position.y / 5000) * 200}px`,
+                    }}
+                />
 
-                    {/* Other players */}
-                    {Array.from(players.entries()).map(([id, player]) => {
-                        if (id === horseId) return null
-                        return (
-                            <Styled.MinimapHorse
-                                key={id}
-                                x={player.position.x}
-                                y={player.position.y}
-                            />
-                        )
-                    })}
+                {/* Other players */}
+                {Array.from(players.entries()).map(([id, player]) => {
+                    if (id === horseId) return null;
+                    return (
+                        <Styled.MinimapHorse
+                            key={id}
+                            x={player.position.x}
+                            y={player.position.y}
+                        />
+                    );
+                })}
 
-                    <Styled.ViewportIndicator
-                        x={viewportOffset.x}
-                        y={viewportOffset.y}
-                        width={viewportDimensions.width}
-                        height={viewportDimensions.height}
-                        scale={scale}
-                    />
-                </Styled.Minimap>
+                <Styled.ViewportIndicator
+                    x={viewportOffset.x}
+                    y={viewportOffset.y}
+                    width={viewportDimensions.width}
+                    height={viewportDimensions.height}
+                    scale={scale}
+                />
+            </Styled.Minimap>
         </Styled.Container>
-    )
-}
+    );
+};
