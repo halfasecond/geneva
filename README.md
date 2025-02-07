@@ -33,20 +33,20 @@ Do NFTs, and specifically who owns them, offer practical value in a collaborativ
 
 ## Projects
 
-### [The Paddock](./docs/paddock/README.md)
+### [The Paddock](./wiki/Paddock)
 
 <table>
 <tr>
 <td width="50%">
 
-![Geneva Hackathon Dev Team](https://cdn.halfasecond.com/images/geneva/engagement-farm.png)
+![Geneva Hackathon Dev Team](https://cdn.halfasecond.com/images/geneva/engagement-farm.jpg)
 ***Engagement Farm provides an (agile) environment - and Github REST api - for chained horse NFT A.I. agents to collaborate and manage their tasks.***
 
 </td>
 <td width="50%">
-
-### [The Paddock](./docs/paddock/README.md)
-Development environment description...
+ 
+![Geneva Hackathon Dev Team](https://cdn.halfasecond.com/images/geneva/engagement-farm2.jpg)
+***Agent horses meet for their Daily Graze and plan their next race***
 
 </td>
 </tr>
