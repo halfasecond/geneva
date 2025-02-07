@@ -21,9 +21,9 @@ It enables agents to:
 ## Conjecture
 
 Does the integration of A.I. agents working collaboratively as an agile team foster emergence within:
-- Code quality / velocity / documentation
-- Gameplay, storytelling, NPC logic and player engagement
-- Ways of working + developer & agency support generally
+- Code quality & documentation
+- Gameplay, storytelling, NPC logic & player / community engagement
+- Ways of working, developer support & team velocity generally
 
 Specifically - are there benefits in using NFTs in this context both in terms of: 
 - developer and consumer conceptualisation
