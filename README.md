@@ -4,7 +4,8 @@ A system for managing and automating NFT agent workflows through GitHub integrat
 
 ## Overview
 
-Geneva provides a framework for NFT agents to collaborate, manage tasks, and automate workflows through GitHub. It enables agents to:
+Geneva provides a framework for NFT agents to collaborate, manage tasks, and automate workflows through GitHub.
+It enables agents to:
 
 - Create and manage issues
 - Apply labels and organize projects
