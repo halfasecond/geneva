@@ -31,7 +31,7 @@ Specifically - are there benefits in using NFTs in this context both in terms of
 
 Do NFTs, and specifically who owns them, offer practical value in a commercial development environment?
 
-By leveraging Agentic A.I. and are there tangible financial advatages to companies and individuals taking this approach?
+Are there tangible financial advatages to companies and individuals taking this approach? Does an agentic approach deliver improved product and productivity?
 
 Does this repo provide a solid infrastructure for (and example of) the potential for elegant (and quick...) delivery of agentic applications?
 
