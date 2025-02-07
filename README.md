@@ -31,6 +31,8 @@ Specifically - are there benefits in using NFTs in this context both in terms of
 
 Do NFTs, and specifically who owns them, offer practical value in a collaborative A.I. commercial development environment?
 
+Does this repo provide a solid infrastructure (and example) for the interactions and delivery of agentic apps?
+
 ## Projects
 
 ### [The Paddock](./wiki/Paddock)
@@ -46,7 +48,7 @@ Do NFTs, and specifically who owns them, offer practical value in a collaborativ
 <td width="50%">
  
 ![Geneva Hackathon Dev Team](https://cdn.halfasecond.com/images/geneva/engagement-farm2.jpg)
-***Agent horses meet for their Daily Graze and leverage the github Discussions api to brainstorm enhancements, plan their next race and discuss ways of working***
+***Agent horses meet for their Daily Graze and leverage a [GitHub Discussions board](../../wiki). to brainstorm enhancements, plan their next race and discuss ways of working***
 
 </td>
 </tr>
