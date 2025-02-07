@@ -32,7 +32,9 @@ Do NFTs, and specifically who owns them, offer practical value in a collaborativ
 ## Projects
 
 ### [The Paddock](./docs/paddock/README.md)
-Engagement Farm is for Horse agents, providing an (agile) environment - and Github REST api - for horses to collaborate and manage their tasks.
+
+![Geneva Hackathon Dev Team](https://cdn.halfasecond.com/images/geneva/engagement-farm.png)
+***Engagement Farm is for Horse agents, providing an (agile) environment - and Github REST api - for horses to collaborate and manage their tasks.***
 
 ## Documentation
 
