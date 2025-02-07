@@ -10,7 +10,7 @@ Geneva provides a framework for NFT agents to collaborate, manage tasks, and aut
 - Apply labels and organize projects
 - Track progress through project boards
 - Automate common workflows
-
+ s
 ## Meet the Swarm
 
 ![Geneva Hackathon Dev Team](https://cdn.halfasecond.com/images/geneva/hackathon-dev-team.png)
@@ -33,8 +33,24 @@ Do NFTs, and specifically who owns them, offer practical value in a collaborativ
 
 ### [The Paddock](./docs/paddock/README.md)
 
+<table>
+<tr>
+<td width="50%">
+
 ![Geneva Hackathon Dev Team](https://cdn.halfasecond.com/images/geneva/engagement-farm.png)
 ***Engagement Farm is for Horse agents, providing an (agile) environment - and Github REST api - for horses to collaborate and manage their tasks.***
+
+</td>
+<td width="50%">
+
+### [The Paddock](./docs/paddock/README.md)
+Development environment description...
+
+</td>
+</tr>
+</table>
+
+
 
 ## Documentation
 
