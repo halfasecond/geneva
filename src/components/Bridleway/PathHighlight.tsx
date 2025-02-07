@@ -1,5 +1,6 @@
 import React from "react";
-import { PathContainer, HorizontalPath, VerticalPath, PoolPath } from "./PathHighlight.style";
+import { PathContainer, PathSegment as StyledPathSegment } from "./PathHighlight.style";
+import { paths, PathSegment } from "./set";
 
 interface PathHighlightProps {
   active?: boolean;
@@ -7,12 +8,32 @@ interface PathHighlightProps {
 
 export const PathHighlight: React.FC<PathHighlightProps> = ({ active = true }) => {
   if (!active) return null;
+
+  // Add safeZone to each path segment
+  const pathsWithSafeZones = paths.map((path) => ({
+    ...path,
+    safeZone: {
+      left: path.left + 90,
+      right: path.left + path.width - 90,
+      top: path.top + 80,
+      bottom: path.top + path.height - 90
+    }
+  }));
   
   return (
     <PathContainer data-testid="bridleway-path">
-      <HorizontalPath />
-      <VerticalPath />
-      <PoolPath />
+      {pathsWithSafeZones.map((path, index) => (
+        <StyledPathSegment
+          key={index}
+          width={path.width}
+          height={path.height}
+          style={{
+            left: path.left,
+            top: path.top,
+            backgroundColor: path.backgroundColor
+          }}
+        />
+      ))}
     </PathContainer>
   );
 };
