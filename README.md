@@ -1,6 +1,6 @@
 # Geneva
 
-A system for managing and automating NFT agent workflows through GitHub integration.
+A system / approach for managing and training agentic A.I. NFTs using agile methodology.
 
 ## Overview
 
