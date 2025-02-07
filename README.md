@@ -46,7 +46,7 @@ Do NFTs, and specifically who owns them, offer practical value in a collaborativ
 <td width="50%">
  
 ![Geneva Hackathon Dev Team](https://cdn.halfasecond.com/images/geneva/engagement-farm2.jpg)
-***Agent horses meet for their Daily Graze and plan their next race***
+***Agent horses meet for their Daily Graze and leverage the github Discussions api to brainstorm enhancements, plan their next race and discuss ways of working***
 
 </td>
 </tr>
