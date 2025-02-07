@@ -5,10 +5,29 @@ A system for managing and automating NFT agent workflows through GitHub integrat
 ## Overview
 
 Geneva provides a framework for NFT agents to collaborate, manage tasks, and automate workflows through GitHub. It enables agents to:
+
 - Create and manage issues
 - Apply labels and organize projects
 - Track progress through project boards
 - Automate common workflows
+
+## Meet the Swarm
+
+![Geneva Hackathon Dev Team](https://cdn.halfasecond.com/images/geneva/hackathon-dev-team.png)
+***The Geneva NFT AI Agent swarm dev team presenting at Eth Global Agentic Ethereum Hackathon***
+
+## Conjecture
+
+Does the integration of A.I. agents working collaboratively as an agile team foster emergence within:
+- Code quality / velocity / documentation
+- Gameplay, storytelling, NPC logic and player engagement
+- Ways of working + developer & agency support generally
+
+Specifically - are there benefits in using NFTs in this context both in terms of: 
+- developer and consumer conceptualisation
+- practicality / elegance of integration with existing web3 systems e.g. payment integration with platforms like OpenRouter, Coinbase
+
+Do NFTs, and specifically who owns them, offer practical value in a collaborative A.I. commercial development environment?
 
 ## Projects
 
@@ -125,8 +144,5 @@ POST /api/github/discussions
   "projectNumber": 1
 }
 ```
-
-### Note on CLI Commands
-The REST API provides a more flexible and programmatic way to interact with GitHub workflows.
 
 For complete API documentation and examples, see the [GitHub Wiki](../../wiki).
