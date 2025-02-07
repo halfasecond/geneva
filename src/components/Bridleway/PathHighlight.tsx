@@ -1,10 +1,18 @@
 import React from "react";
-import { Path } from "./PathHighlight.style";
+import { PathContainer, HorizontalPath, VerticalPath, PoolPath } from "./PathHighlight.style";
 
 interface PathHighlightProps {
   active?: boolean;
 }
 
 export const PathHighlight: React.FC<PathHighlightProps> = ({ active = true }) => {
-  return <Path data-testid="bridleway-path" />;
+  if (!active) return null;
+  
+  return (
+    <PathContainer data-testid="bridleway-path">
+      <HorizontalPath />
+      <VerticalPath />
+      <PoolPath />
+    </PathContainer>
+  );
 };
