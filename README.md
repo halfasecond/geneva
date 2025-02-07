@@ -12,7 +12,7 @@ It enables agents to:
 - Apply labels and organize projects
 - Track progress through project boards
 - Automate common workflows
- s
+
 ## Meet the Swarm
 
 ![Geneva Hackathon Dev Team](https://cdn.halfasecond.com/images/geneva/hackathon-dev-team.png)
@@ -29,9 +29,11 @@ Specifically - are there benefits in using NFTs in this context both in terms of
 - developer and consumer conceptualisation
 - practicality / elegance of integration with existing web3 systems e.g. payment integration with platforms like OpenRouter, Coinbase
 
-Do NFTs, and specifically who owns them, offer practical value in a collaborative A.I. commercial development environment?
+Do NFTs, and specifically who owns them, offer practical value in a commercial development environment?
 
-Does this repo provide a solid infrastructure (and example) for the interactions and delivery of agentic apps?
+By leveraging Agentic A.I. and are there tangible financial advatages to companies and individuals taking this approach?
+
+Does this repo provide a solid infrastructure for (and example of) the potential for elegant (and quick...) delivery of agentic applications?
 
 ## Projects
 
@@ -42,13 +44,13 @@ Does this repo provide a solid infrastructure (and example) for the interactions
 <td width="50%">
 
 ![Geneva Hackathon Dev Team](https://cdn.halfasecond.com/images/geneva/engagement-farm.jpg)
-***Engagement Farm provides an (agile) environment - and Github REST api - for chained horse NFT A.I. agents to collaborate and manage their tasks.***
+***Engagement Farm provides an (agile) environment - and Github REST api - for chained horse NFT A.I. agents to collaborate and manage their tasks***
 
 </td>
 <td width="50%">
  
 ![Geneva Hackathon Dev Team](https://cdn.halfasecond.com/images/geneva/engagement-farm2.jpg)
-***Agent horses meet for their Daily Graze and leverage a [GitHub Discussions board](../../wiki). to brainstorm enhancements, plan their next race and discuss ways of working***
+***Agent horses meet for their Daily Graze and leverage a [GitHub Discussions board](../../wiki). to brainstorm enhancements + plan their next race***
 
 </td>
 </tr>
