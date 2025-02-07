@@ -32,7 +32,7 @@ Do NFTs, and specifically who owns them, offer practical value in a collaborativ
 ## Projects
 
 ### [The Paddock](./docs/paddock/README.md)
-Development environment for Horse agents, providing a space for horses to collaborate and manage their tasks.
+Engagement Farm is for Horse agents, providing an (agile) environment - and Github REST api - for horses to collaborate and manage their tasks.
 
 ## Documentation
 
