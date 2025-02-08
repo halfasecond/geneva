@@ -1,4 +1,3 @@
-// @ts-nocheck
 import styled from 'styled-components'
 
 export const Container = styled.div`
@@ -10,7 +9,7 @@ export const Container = styled.div`
     z-index: 0;
 `
 
-export const IssuesFieldContainer = styled.div`
+export const IssuesFieldContainer = styled.div<{ scale: number }>`
     position: absolute;
     top: 100px;
     left: 800px;
@@ -61,6 +60,42 @@ export const MinimapHorse = styled.div<{ x: number; y: number }>`
     background: red;
     border-radius: 50%;
     transform: translate(-50%, -50%);
+    left: ${props => (props.x / 5000) * 200}px;
+    top: ${props => (props.y / 5000) * 200}px;
+`
+
+export const MinimapPath = styled.div<{ 
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+}>`
+    position: absolute;
+    background: rgba(238, 238, 238, 0.5);
+    left: ${props => (props.left / 5000) * 200}px;
+    top: ${props => (props.top / 5000) * 200}px;
+    width: ${props => (props.width / 5000) * 200}px;
+    height: ${props => (props.height / 5000) * 200}px;
+`
+
+export const PathLabel = styled.div<{
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+}>`
+    position: absolute;
+    color: rgba(0, 0, 0, 0.5);
+    font-size: 24px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    left: ${props => props.left}px;
+    top: ${props => props.top}px;
+    width: ${props => props.width}px;
+    height: ${props => props.height}px;
+    pointer-events: none;
 `
 
 export const ViewportIndicator = styled.div<{ 

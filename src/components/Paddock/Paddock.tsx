@@ -6,15 +6,18 @@ import { useGameServer } from "./hooks/useGameServer";
 import { Position } from "../../server/types";
 import IssuesField from "../IssuesField";
 import { PathHighlight } from "../Bridleway";
+import { paths } from "../Bridleway/set";
 
 interface PaddockProps {
     horseId: string;
     initialPosition?: Position;
+    introActive?: boolean;
 }
 
 export const Paddock: React.FC<PaddockProps> = ({ 
     horseId,
-    initialPosition = { x: 200, y: 200, direction: "right" as const }
+    initialPosition = { x: 60, y: 140, direction: "right" as const },
+    introActive = true
 }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [viewportDimensions, setViewportDimensions] = React.useState({
@@ -35,6 +38,7 @@ export const Paddock: React.FC<PaddockProps> = ({
         viewportHeight: viewportDimensions.height,
         scale: 1,
         initialPosition,
+        introActive,
         onPositionChange: useCallback((pos: Position) => {
             if (connected) {
                 updatePosition(pos);
@@ -86,8 +90,21 @@ export const Paddock: React.FC<PaddockProps> = ({
                     transformOrigin: `${zoomOrigin.x}% ${zoomOrigin.y}%`
                 }}
             >
-                {/* Bridleway Path */}
-                <PathHighlight active />
+                {/* Bridleway Path - only show when intro is active */}
+                <PathHighlight active={introActive} />
+
+                {/* Path Labels - show regardless of intro state */}
+                {paths.map((path, index) => (
+                    <Styled.PathLabel
+                        key={`label-${index}`}
+                        left={path.left}
+                        top={path.top}
+                        width={path.width}
+                        height={path.height}
+                    >
+                        {index + 1}
+                    </Styled.PathLabel>
+                ))}
 
                 {/* Issues Field */}
                 <Styled.IssuesFieldContainer scale={scale}>
@@ -125,12 +142,21 @@ export const Paddock: React.FC<PaddockProps> = ({
 
             {/* Minimap */}
             <Styled.Minimap>
+                {/* Bridleway paths on minimap - always visible */}
+                {paths.map((path, index) => (
+                    <Styled.MinimapPath
+                        key={index}
+                        left={path.left}
+                        top={path.top}
+                        width={path.width}
+                        height={path.height}
+                    />
+                ))}
+
                 {/* Current player */}
                 <Styled.MinimapHorse
-                    style={{
-                        left: `${(position.x / 5000) * 200}px`,
-                        top: `${(position.y / 5000) * 200}px`,
-                    }}
+                    x={position.x}
+                    y={position.y}
                 />
 
                 {/* Other players */}

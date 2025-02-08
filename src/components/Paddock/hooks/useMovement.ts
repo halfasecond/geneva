@@ -1,6 +1,7 @@
-// @ts-nocheck
 import { useState, useEffect, useCallback } from 'react'
 import { Position } from '../../../server/types'
+import { paths } from '../../Bridleway/set'
+import { isOnPath } from '../../Bridleway/utils'
 
 interface UseMovementProps {
     viewportWidth: number
@@ -8,6 +9,7 @@ interface UseMovementProps {
     scale: number
     initialPosition: Position
     onPositionChange: (position: Position) => void
+    introActive?: boolean
 }
 
 interface ViewportOffset {
@@ -20,7 +22,8 @@ export function useMovement({
     viewportHeight,
     scale,
     initialPosition,
-    onPositionChange
+    onPositionChange,
+    introActive = false
 }: UseMovementProps) {
     const [position, setPosition] = useState<Position>(initialPosition)
     const [viewportOffset, setViewportOffset] = useState<ViewportOffset>({ x: 0, y: 0 })
@@ -57,29 +60,69 @@ export function useMovement({
                 let x = prev.x
                 let y = prev.y
                 let direction = prev.direction
+                let moved = false
 
+                // Calculate potential new position
                 if (keys.has('ArrowLeft') || keys.has('a')) {
                     x -= speed
                     direction = 'left'
+                    moved = true
                 }
                 if (keys.has('ArrowRight') || keys.has('d')) {
                     x += speed
                     direction = 'right'
+                    moved = true
                 }
                 if (keys.has('ArrowUp') || keys.has('w')) {
                     y -= speed
+                    moved = true
                 }
                 if (keys.has('ArrowDown') || keys.has('s')) {
                     y += speed
+                    moved = true
                 }
 
-                // Only update if position changed
-                if (x !== prev.x || y !== prev.y || direction !== prev.direction) {
-                    const newPosition = { x, y, direction }
-                    onPositionChange(newPosition)
-                    return newPosition
+                // If no movement, return previous state
+                if (!moved && direction === prev.direction) {
+                    return prev
                 }
-                return prev
+
+                // If intro is active, validate position against paths
+                if (introActive) {
+                    const horseBox = {
+                        left: x,
+                        right: x + 120, // horse width
+                        top: y,
+                        bottom: y + 120 // horse height
+                    }
+
+                    // Add safeZone to each path segment using exact legacy padding values
+                    const pathsWithSafeZones = paths.map(path => ({
+                        ...path,
+                        safeZone: {
+                            left: path.left + 90,
+                            right: path.left + path.width - 90,
+                            top: path.top + 80,
+                            bottom: path.top + path.height - 90
+                        }
+                    }))
+                    
+                    // Only allow movement if new position is on path
+                    if (!isOnPath(horseBox, pathsWithSafeZones)) {
+                        // If only direction changed, allow that
+                        if (x === prev.x && y === prev.y && direction !== prev.direction) {
+                            const newPosition = { ...prev, direction }
+                            onPositionChange(newPosition)
+                            return newPosition
+                        }
+                        return prev // Keep previous position if invalid
+                    }
+                }
+
+                // Position is valid or intro is inactive
+                const newPosition = { x, y, direction }
+                onPositionChange(newPosition)
+                return newPosition
             })
 
             animationFrameId = requestAnimationFrame(updatePosition)
@@ -94,7 +137,7 @@ export function useMovement({
                 cancelAnimationFrame(animationFrameId)
             }
         }
-    }, [keys, onPositionChange])
+    }, [keys, onPositionChange, introActive])
 
     // Update viewport when horse approaches edges
     useEffect(() => {
