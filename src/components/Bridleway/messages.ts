@@ -30,17 +30,24 @@ export const introMessages: IntroMessage[] = [
         message: 'So what can you do in the Paddock? The choice is yours: you could chat to other Chained Horse owners at <b>Engagement Farm</b>, enjoy some solitude at <b>RainbowPuke Falls</b> or maybe participate in some daily challenges to earn some useful <b>$HAY</b>'
     },
     {
+        left: 1670,  // Fine-tuned position for readability
+        top: 1280,
+        width: 900,  // Tripled width for better text layout
+        triggerSegment: 6,  // Intersection segment
+        message: 'This intersection connects the main path to <b>Engagement Farm</b> and the <b>Race Track</b>'
+    },
+    {
         left: 1040,
         top: 960,
         width: 360,
-        triggerSegment: 6,  // Adjusted for new segment numbering
+        triggerSegment: 7,  // Adjusted for new intersection segment
         message: 'Every ChainedHorse in the Paddock is entitled to a <b>"Shitty Stable"</b>. Collecting <b>$HAY</b> allows you to upgrade your stable and make it less shitty. One way to earn <b>$HAY</b> is to hang out here at <b>Engagement Farm</b> where you can acquire <b>$HAY</b> just for being here.'
     },
     {
         left: 340,
         top: 1120,
         width: 510,
-        triggerSegment: 8,  // Adjusted for new segment numbering
+        triggerSegment: 9,  // Adjusted for new intersection segment
         message: 'Some horses are born to compete and enjoy putting their jockeying skills to the test at the various Race Tracks that can be found throughout the Paddock. <br /><br />Start a <b>Race</b> by going to your start position in the bottom stall'
     }
     // "Well done" message removed - will be handled by race completion logic

@@ -7,6 +7,8 @@ export const paths = [
   { left: 900, top: 390, width: 1920, height: 80, backgroundColor: "#EEE" },
   // Vertical segment
   { left: 2720, top: 400, width: 100, height: 1200, backgroundColor: "#EEE" },
+  // Intersection segment at vertical and horizontal crossing
+  { left: 2720, top: 1520, width: 100, height: 80, backgroundColor: "#EEE" },
   // All segments from 7 onwards moved down 20px total
   { left: 900, top: 1520, width: 1920, height: 80, backgroundColor: "#EEE" },
   { left: 900, top: 1290, width: 100, height: 300, backgroundColor: "#EEE" },
