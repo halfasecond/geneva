@@ -1,18 +1,27 @@
 # Deployment Guide
 
-## MVP Deployment with OneSec
+## Decentralized Paddock Deployment with OpSec
 
-This guide outlines the steps to deploy the Paddock MVP using OneSec's decentralized hosting platform.
+This guide outlines the steps to deploy decentralized Paddock instances using OpSec's peer-to-peer hosting platform (https://www.opsec.computer/).
+
+### Vision
+
+The Paddock is designed to be fully decentralized:
+- Horse NFTs and SVGs are stored on-chain
+- Frontend and game server hosted across OpSec's peer-to-peer network
+- Local paddock instances can be run independently
+- Real-time communication through Socket.io
 
 ### Prerequisites
 
 1. GitHub repository with the Paddock codebase
 2. GitHub Personal Access Token with required permissions
-3. OneSec account and access to their dashboard
+3. OpSec account and access to their dashboard
+4. (Optional) Local environment for running personal paddock instance
 
 ### Environment Configuration
 
-Create the following environment variables in OneSec's dashboard:
+Create the following environment variables in OpSec's dashboard:
 
 ```env
 # GitHub Integration
@@ -24,28 +33,30 @@ GITHUB_REPO=your_repository_name
 VITE_GAME_SERVER_URL=your_game_server_url
 ```
 
-### Deployment Steps
+### Deployment Options
 
-1. **Game Server Setup**
-   - Deploy the game server component to your preferred hosting platform
-   - Configure CORS to allow requests from your OneSec domain
-   - Update VITE_GAME_SERVER_URL to point to your deployed game server
+#### 1. OpSec Peer-to-Peer Deployment
+- Connect your GitHub repository to OpSec
+- Configure environment variables
+- OpSec auto-detects Vite configuration and Socket.io server
+- Both frontend and game server distributed across peer-to-peer network
 
-2. **Frontend Deployment**
-   - Connect your GitHub repository to OneSec
-   - OneSec will automatically detect the Vite configuration
-   - Configure environment variables in OneSec dashboard
-   - Push changes to trigger automatic deployment
+#### 2. Local Paddock Instance
+- Clone the repository
+- Copy .env.production.example to .env.production
+- Configure local environment variables
+- Run development server: `yarn dev`
+- Connect to other paddock instances through peer network
 
-3. **Verify Deployment**
-   - Check WebSocket connections are working
-   - Verify GitHub integration functionality
-   - Test multiplayer features
-   - Confirm environment variables are properly set
+### Real-time Communication
+
+Socket.io Implementation:
+- Leverages OpSec's Next.js support for Socket.io capabilities
+- Real-time updates through distributed network
+- Seamless multiplayer interactions
+- Automatic scaling across peer-to-peer nodes
 
 ### Development vs Production
-
-The application is configured to handle different environments:
 
 - **Development**: 
   - Runs both frontend and game server locally
@@ -53,55 +64,56 @@ The application is configured to handle different environments:
   - Uses local .env file
 
 - **Production**:
-  - Frontend hosted on OneSec's decentralized network
-  - Game server runs as separate service
-  - Uses production environment variables from OneSec
+  - Frontend and game server distributed across OpSec's network
+  - Socket.io connections managed by OpSec's platform
+  - Environment variables from OpSec dashboard
 
 ### Monitoring and Maintenance
 
 1. **Health Checks**
-   - Monitor WebSocket connections
+   - Monitor Socket.io connections
    - Check GitHub API rate limits
    - Verify real-time updates
 
 2. **Updates and Rollbacks**
-   - OneSec handles automatic deployments on push
+   - OpSec handles automatic deployments
    - Use GitHub releases for version control
-   - Monitor deployment logs in OneSec dashboard
-
-### Troubleshooting
-
-Common issues and solutions:
-
-1. **WebSocket Connection Failures**
-   - Verify VITE_GAME_SERVER_URL is correct
-   - Check CORS configuration on game server
-   - Ensure WebSocket port is open and accessible
-
-2. **GitHub Integration Issues**
-   - Verify GitHub token permissions
-   - Check rate limit usage
-   - Confirm environment variables are set
-
-3. **Build Failures**
-   - Review OneSec build logs
-   - Verify vite.config.ts settings
-   - Check for missing dependencies
+   - Monitor deployment logs
 
 ### Security Considerations
 
 1. **Environment Variables**
-   - Never commit sensitive values to repository
-   - Use OneSec's secure environment variable storage
+   - Never commit sensitive values
+   - Use OpSec's secure storage
    - Rotate GitHub tokens periodically
 
 2. **Access Control**
-   - Implement proper CORS policies
+   - Implement proper Socket.io authentication
    - Secure WebSocket connections
    - Monitor GitHub webhook events
 
 ### Support and Resources
 
-- [OneSec Documentation](https://docs.onesec.dev)
+- [OpSec Documentation](https://www.opsec.computer/docs)
 - [GitHub API Documentation](https://docs.github.com/en/rest)
 - [Vite Deployment Guide](https://vitejs.dev/guide/build.html)
+- [Socket.io Documentation](https://socket.io/docs/v4)
+
+### Troubleshooting
+
+Common issues and solutions:
+
+1. **Socket.io Connection Issues**
+   - Verify OpSec WebSocket configuration
+   - Check Socket.io server settings
+   - Ensure proper connection URLs
+
+2. **GitHub Integration Issues**
+   - Verify token permissions
+   - Check rate limit usage
+   - Confirm environment variables
+
+3. **Build Failures**
+   - Review OpSec build logs
+   - Verify vite.config.ts settings
+   - Check for missing dependencies
