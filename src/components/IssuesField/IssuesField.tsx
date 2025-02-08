@@ -19,8 +19,8 @@ const PROJECT_NUMBER = parseInt(import.meta.env.VITE_APP_GITHUB_PROJECT_NUMBER |
 // Agent configuration
 const AGENT_ID = 'horse21'; // Using Horse #21 as the lead developer
 
-// Environment configuration
-const IS_SERVERLESS = import.meta.env.VITE_SERVERLESS === 'true';
+// Environment configuration - handle various falsy values
+const IS_SERVERLESS = import.meta.env.VITE_SERVERLESS?.toLowerCase() === 'true';
 
 interface CardLabel {
     id: string;
@@ -180,6 +180,7 @@ const DynamicIssuesField: React.FC = () => {
 
 // Main component that conditionally renders serverless or dynamic version
 const IssuesField: React.FC = () => {
+    console.log('VITE_SERVERLESS:', import.meta.env.VITE_SERVERLESS);
     return IS_SERVERLESS ? <StaticIssuesField /> : <DynamicIssuesField />;
 };
 

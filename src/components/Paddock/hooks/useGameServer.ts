@@ -13,8 +13,8 @@ interface UseGameServerProps {
     initialPosition: Position
 }
 
-// Environment configuration
-const IS_SERVERLESS = import.meta.env.VITE_SERVERLESS === 'true'
+// Environment configuration - handle various falsy values
+const IS_SERVERLESS = import.meta.env.VITE_SERVERLESS?.toLowerCase() === 'true';
 
 export function useGameServer({ horseId, initialPosition }: UseGameServerProps) {
     const socketRef = useRef<any>(null)
