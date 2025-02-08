@@ -23,8 +23,8 @@ export default defineConfig(({ command, mode }) => ({
       utils: "/src/utils"
     },
   },
-  // Set base URL for GitHub Pages when in production
-  base: mode === 'production' ? '/paddock/' : '/',
+  // Set base URL based on deployment mode
+  base: process.env.VITE_SERVERLESS === 'true' ? '/paddock/' : '/',
   build: {
     outDir: 'dist',
     sourcemap: true,
@@ -45,6 +45,8 @@ export default defineConfig(({ command, mode }) => ({
   envPrefix: 'VITE_',
   // Define any fallback values for required env vars
   define: {
-    'process.env.NODE_ENV': JSON.stringify(mode)
+    'process.env.NODE_ENV': JSON.stringify(mode),
+    // Make environment variables available at build time
+    'process.env.VITE_SERVERLESS': JSON.stringify(process.env.VITE_SERVERLESS)
   }
 }))
