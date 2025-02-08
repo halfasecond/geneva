@@ -1,19 +1,13 @@
-name: Deploy to GitHub Pages
+name: CI
 
 on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
-
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
 
 jobs:
   build:
@@ -34,23 +28,12 @@ jobs:
       - name: Build
         run: yarn build
         env:
-          VITE_GAME_SERVER_URL: ${{ secrets.VITE_GAME_SERVER_URL }}
+          VITE_SERVERLESS: 'false'
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_OWNER: ${{ secrets.GITHUB_OWNER }}
           GITHUB_REPO: ${{ secrets.GITHUB_REPO }}
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./dist
-
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Run tests
+        run: |
+          yarn test:browser
+          yarn test:node
