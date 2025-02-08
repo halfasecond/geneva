@@ -6,7 +6,7 @@ import { useGameServer } from "./hooks/useGameServer";
 import { Position } from "../../server/types";
 import IssuesField from "../IssuesField";
 import { PathHighlight } from "../Bridleway";
-import { paths } from "../Bridleway/set";
+import { paths, raceElements } from "../Bridleway/set";
 import { introMessages } from "../Bridleway/messages";
 import Pond from "../Pond";
 import Race from "../Race";
@@ -250,12 +250,29 @@ export const Paddock: React.FC<PaddockProps> = ({
             <Styled.Minimap>
                 {/* Bridleway paths on minimap - always visible */}
                 {paths.map((path, index) => (
-                    <Styled.MinimapPath
+                    <Styled.MinimapElement
                         key={index}
-                        left={path.left}
-                        top={path.top}
-                        width={path.width}
-                        height={path.height}
+                        style={{
+                            background: 'rgba(238, 238, 238, 0.5)',
+                            left: `${(path.left / 5000) * 200}px`,
+                            top: `${(path.top / 5000) * 200}px`,
+                            width: `${(path.width / 5000) * 200}px`,
+                            height: `${(path.height / 5000) * 200}px`
+                        }}
+                    />
+                ))}
+
+                {/* Race Track Elements */}
+                {raceElements.map((element, index) => (
+                    <Styled.MinimapElement
+                        key={`race-${index}`}
+                        style={{
+                            background: element.backgroundColor,
+                            left: `${(element.left / 5000) * 200}px`,
+                            top: `${(element.top / 5000) * 200}px`,
+                            width: `${(element.width / 5000) * 200}px`,
+                            height: `${(element.height / 5000) * 200}px`
+                        }}
                     />
                 ))}
 

@@ -64,18 +64,9 @@ export const MinimapHorse = styled.div<{ x: number; y: number }>`
     top: ${props => (props.y / 5000) * 200}px;
 `
 
-export const MinimapPath = styled.div<{ 
-    left: number;
-    top: number;
-    width: number;
-    height: number;
-}>`
+// Base styles for minimap elements
+export const MinimapElement = styled.div`
     position: absolute;
-    background: rgba(238, 238, 238, 0.5);
-    left: ${props => (props.left / 5000) * 200}px;
-    top: ${props => (props.top / 5000) * 200}px;
-    width: ${props => (props.width / 5000) * 200}px;
-    height: ${props => (props.height / 5000) * 200}px;
 `
 
 export const PathLabel = styled.div<{
