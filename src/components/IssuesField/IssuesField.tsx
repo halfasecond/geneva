@@ -11,12 +11,16 @@ import {
     LoadingSpinner,
     LoadingText
 } from './IssuesField.style';
+import StaticIssuesField from './StaticIssuesField';
 
 // Project configuration
 const PROJECT_NUMBER = parseInt(import.meta.env.VITE_APP_GITHUB_PROJECT_NUMBER || '1', 10);
 
 // Agent configuration
-const AGENT_ID = 'horse21'; // Using Horse #21 as the viewer since it's the lead developer
+const AGENT_ID = 'horse21'; // Using Horse #21 as the lead developer
+
+// Environment configuration
+const IS_SERVERLESS = import.meta.env.VITE_SERVERLESS === 'true';
 
 interface CardLabel {
     id: string;
@@ -47,7 +51,7 @@ interface KanbanBoard {
     columns: KanbanColumn[];
 }
 
-const IssuesField: React.FC = () => {
+const DynamicIssuesField: React.FC = () => {
     const [board, setBoard] = useState<KanbanBoard | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -132,7 +136,7 @@ const IssuesField: React.FC = () => {
     useEffect(() => {
         mountedRef.current = true;
         fetchProjectItems();
-        const interval = setInterval(fetchProjectItems, 90000); // Refresh every 90 seconds (tripled from 30)
+        const interval = setInterval(fetchProjectItems, 90000); // Refresh every 90 seconds
         return () => {
             mountedRef.current = false;
             clearInterval(interval);
@@ -172,6 +176,11 @@ const IssuesField: React.FC = () => {
             </Board>
         </FieldContainer>
     );
+};
+
+// Main component that conditionally renders serverless or dynamic version
+const IssuesField: React.FC = () => {
+    return IS_SERVERLESS ? <StaticIssuesField /> : <DynamicIssuesField />;
 };
 
 export default React.memo(IssuesField);
