@@ -24,8 +24,12 @@ interface ViewportOffset {
 
 // Horse dimensions and movement
 const HORSE_SIZE = 120; // pixels
-// TODO: Consider adding a speed UI control that adjusts this fraction (e.g., walk = 1/16, trot = 1/8, canter = 1/4)
-const MOVEMENT_SPEED = HORSE_SIZE / 16; // 7.5 pixels per frame = ~450 pixels/second at 60fps
+// TODO: Consider adding a speed UI control that adjusts this fraction:
+// - walk = 1/64 horse length (~112px/sec)
+// - trot = 1/32 horse length (~225px/sec)
+// - canter = 1/16 horse length (~450px/sec)
+// - gallop = 1/8 horse length (~900px/sec)
+const MOVEMENT_SPEED = HORSE_SIZE / 32; // Trotting speed: 3.75 pixels per frame = ~225 pixels/second at 60fps
 
 export function useMovement({
     viewportWidth,
