@@ -40,18 +40,20 @@ export const StartingStall = styled.div`
 `
 
 export const CountdownDisplay = styled.div`
-    position: absolute;
-    left: 800px;
-    top: 1930px;  // 1660 + 270
+    position: absolute;  // Changed to absolute to position relative to race track
+    left: 800px;        // Position near start line
+    top: 1930px;        // Vertically centered in race area
     width: 80px;
     height: 80px;
     background-color: #FFF;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 28px;
+    font-size: 48px;    // Increased size for better visibility
     font-weight: bold;
     z-index: 2;
+    border-radius: 8px;  // Rounded corners
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);  // Add shadow for depth
 `
 
 export const Podium = styled.div`
@@ -93,9 +95,9 @@ export const PodiumPlatform = styled.div`
 `
 
 export const LeaderBoard = styled.div`
-    position: absolute;
-    left: 1200px;
-    top: 1625px;  // 1355 + 270
+    position: fixed;  // Fixed position relative to viewport
+    right: 20px;
+    top: 20px;
     width: 380px;
     height: 120px;
     z-index: 1;

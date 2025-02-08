@@ -20,7 +20,7 @@ export const Race: React.FC<RaceProps> = ({
     playerHorse,
     aiHorses,
     onStateChange
-}) => {
+}): JSX.Element => {
     const [raceState, setRaceState] = useState<RaceState>('not_started');
     const [countdown, setCountdown] = useState<number | null>(null);
     const [startTime, setStartTime] = useState<number | null>(null);
@@ -30,13 +30,10 @@ export const Race: React.FC<RaceProps> = ({
     );
     const [racingHorsePosition, setRacingHorsePosition] = useState({ x: 580, y: 2070 });
 
-    // Check if player is in starting position - check if horse is in stall
+    // Check if player is in starting position
     const checkStartPosition = useCallback(() => {
-        // Only check if we're not already in a race state
         if (raceState !== 'not_started') return false;
-
         const { x } = playerHorse.position;
-        // Check if horse is between stall start and end
         return x >= 580 && x <= 700;
     }, [playerHorse.position, raceState]);
 
@@ -46,7 +43,7 @@ export const Race: React.FC<RaceProps> = ({
             const isInStartPosition = checkStartPosition();
             if (isInStartPosition) {
                 setRaceState('countdown');
-                onStateChange('countdown');  // This will hide player's horse
+                onStateChange('countdown');
                 setCountdown(3);
             }
         }
@@ -129,7 +126,7 @@ export const Race: React.FC<RaceProps> = ({
             
             if (allFinished) {
                 setRaceState('finished');
-                onStateChange('finished');  // This will show player's horse at finish line
+                onStateChange('finished');
             }
         }
     }, [raceState, startTime, finishTimes, playerHorse, aiHorses, onStateChange]);
@@ -149,9 +146,9 @@ export const Race: React.FC<RaceProps> = ({
             <Styled.FinishLine />
             
             {/* Starting Stalls */}
-            <Styled.StartingStall style={{ left: 580, top: 1800 }} />  {/* Stall 1 (1530 + 270) */}
-            <Styled.StartingStall style={{ left: 580, top: 1930 }} />  {/* Stall 2 (1660 + 270) */}
-            <Styled.StartingStall style={{ left: 580, top: 2070 }} />  {/* Start Box (1800 + 270) */}
+            <Styled.StartingStall style={{ left: 580, top: 1800 }} />  {/* Stall 1 */}
+            <Styled.StartingStall style={{ left: 580, top: 1930 }} />  {/* Stall 2 */}
+            <Styled.StartingStall style={{ left: 580, top: 2070 }} />  {/* Start Box */}
 
             {/* Fences */}
             <Styled.Fence className="top" />
@@ -167,8 +164,8 @@ export const Race: React.FC<RaceProps> = ({
                         style={{
                             position: 'absolute',
                             left: `${position.x}px`,
-                            top: `${1800 + (index * 130)}px`,  // Staggered vertically (1530 + 270)
-                            transform: 'scaleX(1)'  // Always facing right
+                            top: `${1800 + (index * 130)}px`,
+                            transform: 'scaleX(1)'
                         }}
                         horseId={horse.tokenId}
                     />
@@ -182,17 +179,10 @@ export const Race: React.FC<RaceProps> = ({
                         position: 'absolute',
                         left: `${racingHorsePosition.x}px`,
                         top: `${racingHorsePosition.y}px`,
-                        transform: 'scaleX(1)'  // Always facing right during race
+                        transform: 'scaleX(1)'
                     }}
                     horseId={playerHorse.tokenId}
                 />
-            )}
-
-            {/* Countdown Display */}
-            {raceState === 'countdown' && countdown !== null && (
-                <Styled.CountdownDisplay>
-                    {countdown === 0 ? 'GO!' : countdown}
-                </Styled.CountdownDisplay>
             )}
 
             {/* Podium */}
@@ -216,8 +206,15 @@ export const Race: React.FC<RaceProps> = ({
                     <Styled.PodiumPlatform className="third" />
                 </Styled.Podium>
             )}
+
+            {/* Fixed UI Elements */}
+            {raceState === 'countdown' && countdown !== null && (
+                <Styled.CountdownDisplay>
+                    {countdown === 0 ? 'GO!' : countdown}
+                </Styled.CountdownDisplay>
+            )}
         </>
     );
 };
 
-export default Race;
+export { Race as default };
