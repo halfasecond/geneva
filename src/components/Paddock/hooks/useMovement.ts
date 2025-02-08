@@ -14,13 +14,18 @@ interface UseMovementProps {
     movementDisabled?: boolean
     onMessageTrigger?: (messageIndex: number) => void
     forcePosition?: Position
-    racingHorsePosition?: { x: number; y: number }  // Add racing horse position for viewport tracking
+    racingHorsePosition?: { x: number; y: number }
 }
 
 interface ViewportOffset {
     x: number
     y: number
 }
+
+// Horse dimensions and movement
+const HORSE_SIZE = 120; // pixels
+// TODO: Consider adding a speed UI control that adjusts this fraction (e.g., walk = 1/16, trot = 1/8, canter = 1/4)
+const MOVEMENT_SPEED = HORSE_SIZE / 16; // 7.5 pixels per frame = ~450 pixels/second at 60fps
 
 export function useMovement({
     viewportWidth,
@@ -80,7 +85,6 @@ export function useMovement({
             if (movementDisabled || forcePosition) return;
 
             setPosition(prev => {
-                const speed = 5
                 let x = prev.x
                 let y = prev.y
                 let direction = prev.direction
@@ -88,21 +92,21 @@ export function useMovement({
 
                 // Calculate potential new position
                 if (keys.has('ArrowLeft') || keys.has('a')) {
-                    x -= speed
+                    x -= MOVEMENT_SPEED
                     direction = 'left'
                     moved = true
                 }
                 if (keys.has('ArrowRight') || keys.has('d')) {
-                    x += speed
+                    x += MOVEMENT_SPEED
                     direction = 'right'
                     moved = true
                 }
                 if (keys.has('ArrowUp') || keys.has('w')) {
-                    y -= speed
+                    y -= MOVEMENT_SPEED
                     moved = true
                 }
                 if (keys.has('ArrowDown') || keys.has('s')) {
-                    y += speed
+                    y += MOVEMENT_SPEED
                     moved = true
                 }
 
@@ -125,9 +129,9 @@ export function useMovement({
                 if (introActive) {
                     const horseBox = {
                         left: x,
-                        right: x + 120, // horse width
+                        right: x + HORSE_SIZE, // horse width
                         top: y,
-                        bottom: y + 120 // horse height
+                        bottom: y + HORSE_SIZE // horse height
                     }
 
                     // Add safeZone to each path segment
@@ -168,7 +172,7 @@ export function useMovement({
         }
 
         if (keys.size > 0) {
-            updatePosition()
+            animationFrameId = requestAnimationFrame(updatePosition)
         }
 
         return () => {
