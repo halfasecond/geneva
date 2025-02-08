@@ -277,19 +277,33 @@ export const Paddock: React.FC<PaddockProps> = ({
                 ))}
 
                 {/* Current player */}
-                <Styled.MinimapHorse
-                    x={position.x}
-                    y={position.y}
+                <Styled.MinimapElement
+                    style={{
+                        width: '4px',
+                        height: '4px',
+                        background: 'red',
+                        borderRadius: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        left: `${(position.x / 5000) * 200}px`,
+                        top: `${(position.y / 5000) * 200}px`
+                    }}
                 />
 
                 {/* Other players */}
                 {Array.from(players.entries()).map(([id, player]) => {
                     if (id === horseId) return null;
                     return (
-                        <Styled.MinimapHorse
+                        <Styled.MinimapElement
                             key={id}
-                            x={player.position.x}
-                            y={player.position.y}
+                            style={{
+                                width: '4px',
+                                height: '4px',
+                                background: 'red',
+                                borderRadius: '50%',
+                                transform: 'translate(-50%, -50%)',
+                                left: `${(player.position.x / 5000) * 200}px`,
+                                top: `${(player.position.y / 5000) * 200}px`
+                            }}
                         />
                     );
                 })}

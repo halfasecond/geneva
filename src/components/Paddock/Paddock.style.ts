@@ -53,17 +53,6 @@ export const Minimap = styled.div`
     overflow: hidden;
 `
 
-export const MinimapHorse = styled.div<{ x: number; y: number }>`
-    position: absolute;
-    width: 4px;
-    height: 4px;
-    background: red;
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    left: ${props => (props.x / 5000) * 200}px;
-    top: ${props => (props.y / 5000) * 200}px;
-`
-
 // Base styles for minimap elements
 export const MinimapElement = styled.div`
     position: absolute;
