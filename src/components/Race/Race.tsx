@@ -31,7 +31,7 @@ const Race = ({
     const [aiPositions, setAiPositions] = useState<Map<string, { x: number; y: number }>>(
         new Map(aiHorses.map(horse => [horse.tokenId, horse.position]))
     );
-    const [racingHorsePosition, setRacingHorsePosition] = useState({ x: 580, y: 2070 });
+    const [racingHorsePosition, setRacingHorsePosition] = useState({ x: 580, y: 2050 });  // -20px
     const [hasStarted, setHasStarted] = useState(false);  // Track if race has started
 
     // Check if player is in starting position - only check once
@@ -167,13 +167,13 @@ const Race = ({
             <Styled.FinishLine />
             
             {/* Starting Stalls */}
-            <Styled.StartingStall style={{ left: 580, top: 1800 }} />  {/* Stall 1 */}
-            <Styled.StartingStall style={{ left: 580, top: 1930 }} />  {/* Stall 2 */}
-            <Styled.StartingStall style={{ left: 580, top: 2070 }} />  {/* Start Box */}
+            <Styled.StartingStall style={{ left: 580, top: 1780 }} />  {/* Stall 1 (-20px) */}
+            <Styled.StartingStall style={{ left: 580, top: 1910 }} />  {/* Stall 2 (-20px) */}
+            <Styled.StartingStall style={{ left: 580, top: 2050 }} />  {/* Start Box (-20px) */}
 
             {/* Fences */}
-            <Styled.Fence className="top" />
-            <Styled.Fence className="bottom" />
+            <Styled.Fence className="top" style={{ top: -20 }} />  {/* Adjust fence position */}
+            <Styled.Fence className="bottom" style={{ bottom: -20 }} />  {/* Adjust fence position */}
 
             {/* AI Horses */}
             {aiHorses.map((horse, index) => {
@@ -185,7 +185,7 @@ const Race = ({
                         style={{
                             position: 'absolute',
                             left: `${position.x}px`,
-                            top: `${1800 + (index * 130)}px`,
+                            top: `${1780 + (index * 130)}px`,  // -20px from base position
                             transform: 'scaleX(1)'
                         }}
                         horseId={horse.tokenId}
