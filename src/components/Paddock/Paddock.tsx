@@ -25,8 +25,7 @@ const AI_HORSES = [
 
 export const Paddock: React.FC<PaddockProps> = ({ 
     horseId,
-    // Position near the end of the last bridleway section for faster testing
-    initialPosition = { x: 300, y: 2068, direction: "right" as const },
+    initialPosition = { x: 100, y: 150, direction: "right" as const },  // Default game start position
     introActive = true
 }) => {
     const containerRef = useRef<HTMLDivElement>(null);
