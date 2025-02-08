@@ -28,32 +28,25 @@ export const Race: React.FC<RaceProps> = ({
     const [aiPositions, setAiPositions] = useState<Map<string, { x: number; y: number }>>(
         new Map(aiHorses.map(horse => [horse.tokenId, horse.position]))
     );
-    const [playerPosition, setPlayerPosition] = useState({ x: 580, y: 2070 });  // Start at stall position
+    const [racingHorsePosition, setRacingHorsePosition] = useState({ x: 580, y: 2070 });
 
-    // Check if player is in starting position
+    // Check if player is in starting position - check if horse is in stall
     const checkStartPosition = useCallback(() => {
         // Only check if we're not already in a race state
         if (raceState !== 'not_started') return false;
 
-        const { x, y } = playerHorse.position;
-        console.log('Horse x position:', x);
-        
-        // Check if horse is in start box
-        const isInStartPosition = x <= 580 && y >= 2070 && y <= 2150;
-
-        console.log('Is in start position:', isInStartPosition);
-        return isInStartPosition;
+        const { x } = playerHorse.position;
+        // Check if horse is between stall start and end
+        return x >= 580 && x <= 700;
     }, [playerHorse.position, raceState]);
 
     // Start countdown when player enters start box
     useEffect(() => {
         if (raceState === 'not_started') {
             const isInStartPosition = checkStartPosition();
-            console.log('Checking start position:', isInStartPosition);
             if (isInStartPosition) {
-                console.log('Starting countdown!');
                 setRaceState('countdown');
-                onStateChange('countdown');
+                onStateChange('countdown');  // This will hide player's horse
                 setCountdown(3);
             }
         }
@@ -77,9 +70,9 @@ export const Race: React.FC<RaceProps> = ({
     useEffect(() => {
         if (raceState === 'racing') {
             const moveInterval = setInterval(() => {
-                // Move player horse
-                setPlayerPosition(prev => {
-                    const newX = prev.x + 5;  // Constant speed for player
+                // Move racing horse
+                setRacingHorsePosition(prev => {
+                    const newX = prev.x + 5;  // Constant speed
                     if (newX >= 1990 && !finishTimes.has(playerHorse.tokenId)) {
                         setFinishTimes(times => 
                             new Map(times).set(playerHorse.tokenId, Date.now())
@@ -129,7 +122,7 @@ export const Race: React.FC<RaceProps> = ({
             
             if (allFinished) {
                 setRaceState('finished');
-                onStateChange('finished');
+                onStateChange('finished');  // This will show player's horse at finish line
             }
         }
     }, [raceState, startTime, finishTimes, playerHorse, aiHorses, onStateChange]);
@@ -175,13 +168,13 @@ export const Race: React.FC<RaceProps> = ({
                 );
             })}
 
-            {/* Player Horse (only during countdown and racing) */}
+            {/* Racing Horse (only during countdown and racing) */}
             {(raceState === 'racing' || raceState === 'countdown') && (
                 <Horse
                     style={{
                         position: 'absolute',
-                        left: playerPosition.x,
-                        top: playerPosition.y,
+                        left: racingHorsePosition.x,
+                        top: racingHorsePosition.y,
                         transform: 'scaleX(1)'  // Always facing right during race
                     }}
                     horseId={playerHorse.tokenId}
@@ -197,7 +190,7 @@ export const Race: React.FC<RaceProps> = ({
 
             {/* Podium */}
             {raceState === 'finished' && (
-                <Styled.Podium style={{ opacity: 1 }}>
+                <Styled.Podium data-testid="podium" style={{ opacity: 1 }}>
                     {getRaceResults().slice(0, 3).map((tokenId, index) => (
                         <Horse
                             key={tokenId}

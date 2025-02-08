@@ -61,9 +61,11 @@ export const Paddock: React.FC<PaddockProps> = ({
         if (state === 'countdown' || state === 'racing') {
             setIsRacing(true);  // Disable movement during countdown and race
         } else if (state === 'finished') {
-            setIsRacing(false);  // Re-enable movement after race
+            // Move horse to finish line
+            updatePosition({ x: 1990, y: 2070, direction: 'right' });
+            setIsRacing(false);  // Re-enable movement
         }
-    }, []);
+    }, [updatePosition]);
 
     // Initialize movement with current viewport dimensions
     const { position, viewportOffset } = useMovement({
@@ -173,16 +175,18 @@ export const Paddock: React.FC<PaddockProps> = ({
                     <IssuesField />
                 </Styled.IssuesFieldContainer>
 
-                {/* Current player - always visible */}
-                <Styled.Horse
-                    style={{
-                        left: `${position.x}px`,
-                        top: `${position.y}px`,
-                        transform: `scaleX(${position.direction === "right" ? 1 : -1})`
-                    }}
-                >
-                    <img src={`/horse/${horseId}.svg`} alt={`#${horseId}`} />
-                </Styled.Horse>
+                {/* Current player - hide during racing */}
+                {!isRacing && (
+                    <Styled.Horse
+                        style={{
+                            left: `${position.x}px`,
+                            top: `${position.y}px`,
+                            transform: `scaleX(${position.direction === "right" ? 1 : -1})`
+                        }}
+                    >
+                        <img src={`/horse/${horseId}.svg`} alt={`#${horseId}`} />
+                    </Styled.Horse>
+                )}
 
                 {/* Other players */}
                 {Array.from(players.entries()).map(([id, player]) => {
