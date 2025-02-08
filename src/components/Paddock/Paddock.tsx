@@ -6,7 +6,7 @@ import { useGameServer } from "./hooks/useGameServer";
 import { Position } from "../../server/types";
 import IssuesField from "../IssuesField";
 import { PathHighlight } from "../Bridleway";
-import { paths, raceElements } from "../Bridleway/set";
+import { paths, raceElements, pond, issuesColumns } from "../Bridleway/set";
 import { introMessages } from "../Bridleway/messages";
 import Pond from "../Pond";
 import Race from "../Race";
@@ -258,6 +258,31 @@ export const Paddock: React.FC<PaddockProps> = ({
                             top: `${(path.top / 5000) * 200}px`,
                             width: `${(path.width / 5000) * 200}px`,
                             height: `${(path.height / 5000) * 200}px`
+                        }}
+                    />
+                ))}
+
+                {/* Pond */}
+                <Styled.MinimapElement
+                    style={{
+                        background: pond.backgroundColor,
+                        left: `${(pond.left / 5000) * 200}px`,
+                        top: `${(pond.top / 5000) * 200}px`,
+                        width: `${(pond.width / 5000) * 200}px`,
+                        height: `${(pond.height / 5000) * 200}px`
+                    }}
+                />
+
+                {/* Issues Field Columns */}
+                {issuesColumns.map((column, index) => (
+                    <Styled.MinimapElement
+                        key={`column-${index}`}
+                        style={{
+                            background: column.backgroundColor,
+                            left: `${(column.left / 5000) * 200}px`,
+                            top: `${(column.top / 5000) * 200}px`,
+                            width: `${(column.width / 5000) * 200}px`,
+                            height: `${(column.height / 5000) * 200}px`
                         }}
                     />
                 ))}

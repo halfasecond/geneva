@@ -17,6 +17,23 @@ export const paths = [
   { left: 200, top: 2070, width: 500, height: 80, backgroundColor: "#EEE" }
 ];
 
+// Pond dimensions
+export const pond = {
+  left: 1040,
+  top: 510,
+  width: 500,
+  height: 340,
+  backgroundColor: "#37d7ff"
+};
+
+// Issues Field columns
+export const issuesColumns = [
+  { left: 2200, top: 510, width: 200, height: 850, backgroundColor: "#8b4513" },  // Column 1
+  { left: 2400, top: 510, width: 200, height: 850, backgroundColor: "#8b4513" },  // Column 2
+  { left: 2600, top: 510, width: 200, height: 850, backgroundColor: "#8b4513" },  // Column 3
+  { left: 2800, top: 510, width: 200, height: 850, backgroundColor: "#8b4513" }   // Column 4
+];
+
 export interface PathSegment {
   left: number;
   top: number;
