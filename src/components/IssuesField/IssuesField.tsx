@@ -161,7 +161,7 @@ const IssuesField: React.FC = () => {
     return (
         <FieldContainer loading={loading}>
             <FieldHeader>
-                <FieldTitle>🌾 Engagement Farm</FieldTitle>
+                <FieldTitle>🚜 Issue Tractor</FieldTitle>
             </FieldHeader>
             <Board
                 disableColumnDrag

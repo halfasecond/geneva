@@ -3,7 +3,7 @@ import styled from 'styled-components';
 export const FieldContainer = styled.div<{ loading?: boolean }>`
   padding: 20px;
   background: transparent;
-  height: 600px; // Fixed height for consistency
+  height: 720px; // Fixed height for consistency
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   display: flex;
