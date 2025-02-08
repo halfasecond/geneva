@@ -2,21 +2,19 @@
 
 ## Deployment Options
 
-This guide outlines two deployment options for the Paddock:
-1. OneSec: Full-stack deployment with real-time features
-2. GitHub Pages: Static deployment for frontend-only scenarios
+This guide outlines deployment options for the Paddock, with recommendations based on feature requirements.
 
-## 1. OneSec Deployment
+## 1. OneSec Deployment (Recommended)
 
-OneSec is OpSec's peer-to-peer deployment service (https://docs.opsec.computer/getting-started/onesec).
+OneSec is OpSec's peer-to-peer deployment service (https://docs.opsec.computer/getting-started/onesec) that provides full support for our real-time features.
 
-### Vision
+### Why OneSec?
 
-The Paddock is designed to be fully decentralized:
-- Horse NFTs and SVGs are stored on-chain
-- Frontend and game server hosted across OpSec's peer-to-peer network
-- Local paddock instances can be run independently
-- Real-time communication through Socket.io
+- Full WebSocket support through Next.js integration
+- Complete peer-to-peer deployment
+- Maintains decentralized vision
+- All features work out of the box
+- No additional infrastructure needed
 
 ### Prerequisites
 
@@ -46,15 +44,23 @@ VITE_GAME_SERVER_URL=your_game_server_url
 3. OneSec auto-detects Vite configuration and Socket.io server
 4. Both frontend and game server distributed across peer-to-peer network
 
-## 2. GitHub Pages Deployment
+## 2. GitHub Pages Deployment (Limited Support)
 
-GitHub Pages provides a simpler deployment option for static content.
+GitHub Pages provides static file hosting only. **Important Note:** This option requires additional infrastructure for real-time features.
+
+### Limitations
+
+- No WebSocket server support (static hosting only)
+- Requires external game server for multiplayer
+- Introduces centralization through external dependencies
+- Not recommended for full feature deployment
 
 ### Prerequisites
 
 1. GitHub repository with the Paddock codebase
 2. GitHub Pages enabled in repository settings
 3. GitHub Personal Access Token with required permissions
+4. External server for WebSocket support (if needed)
 
 ### Environment Configuration
 
@@ -66,8 +72,8 @@ GITHUB_TOKEN=your_github_token
 GITHUB_OWNER=your_org_or_username
 GITHUB_REPO=your_repository_name
 
-# Game Server (if using external server)
-VITE_GAME_SERVER_URL=your_game_server_url
+# Game Server (required for multiplayer)
+VITE_GAME_SERVER_URL=your_external_server_url
 ```
 
 ### Deployment Steps
@@ -81,16 +87,10 @@ VITE_GAME_SERVER_URL=your_game_server_url
    - Deploy to GitHub Pages
    - Provide deployment URL
 
-3. Deployments trigger on:
-   - Push to main branch
-   - Manual workflow dispatch
-
-### Limitations
-
-GitHub Pages deployment has some limitations:
-- Static content only
-- No built-in WebSocket support
-- Requires external game server for multiplayer features
+3. For multiplayer support:
+   - Deploy game server separately
+   - Configure VITE_GAME_SERVER_URL to point to your server
+   - Update CORS settings on the server
 
 ## Development Environment
 
@@ -104,8 +104,16 @@ GitHub Pages deployment has some limitations:
 
 Socket.io Implementation:
 - OneSec: Full WebSocket support through platform
-- GitHub Pages: Requires external WebSocket server
+- GitHub Pages: Requires external server setup
 - Local: Uses localhost:3131 for development
+
+## Future Considerations
+
+### WebRTC Integration
+- Potential for true peer-to-peer connections
+- No central server requirement
+- Would require architecture changes
+- Could enable fully decentralized multiplayer
 
 ## Monitoring and Maintenance
 
