@@ -34,11 +34,21 @@ export const Paddock: React.FC<PaddockProps> = ({
         height: window.innerHeight
     });
     const [dimensionsReady, setDimensionsReady] = React.useState(false);
-    const [visibleMessages, setVisibleMessages] = React.useState<boolean[]>(() => {
-        const messages = new Array(introMessages.length).fill(false);
-        messages[0] = true;  // First message always visible
-        return messages;
-    });
+    const [visibleMessages, setVisibleMessages] = React.useState<boolean[]>(
+        new Array(introMessages.length).fill(false)
+    );
+
+    // Fade in first message after mount
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setVisibleMessages(prev => {
+                const next = [...prev];
+                next[0] = true;
+                return next;
+            });
+        }, 500);  // Small delay before fade in
+        return () => clearTimeout(timer);
+    }, []);
     const [isRacing, setIsRacing] = useState(false);
     const [forcedPosition, setForcedPosition] = useState<Position | undefined>();
     const [racingPosition, setRacingPosition] = useState<{ x: number; y: number } | undefined>();
