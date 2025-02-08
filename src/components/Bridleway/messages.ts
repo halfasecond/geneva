@@ -49,6 +49,12 @@ export const introMessages: IntroMessage[] = [
         width: 510,
         triggerSegment: 9,  // Adjusted for new intersection segment
         message: 'Some horses are born to compete and enjoy putting their jockeying skills to the test at the various Race Tracks that can be found throughout the Paddock. <br /><br />Start a <b>Race</b> by going to your start position in the bottom stall'
+    },
+    {
+        left: 2500,  // Fine-tuned position
+        top: 1770,   // Fine-tuned position
+        width: 500,  // Wider for better text layout
+        triggerSegment: -2,  // Special value for race completion
+        message: '<b>Well Done!</b><br />You took part in a race.<br /><br />You are now free to roam around the Paddock. From now on the path you take is up to you.'
     }
-    // "Well done" message removed - will be handled by race completion logic
 ];
