@@ -11,6 +11,7 @@ interface UseMovementProps {
     initialPosition: Position
     onPositionChange: (position: Position) => void
     introActive?: boolean
+    movementDisabled?: boolean
     onMessageTrigger?: (messageIndex: number) => void
 }
 
@@ -26,6 +27,7 @@ export function useMovement({
     initialPosition,
     onPositionChange,
     introActive = false,
+    movementDisabled = false,
     onMessageTrigger
 }: UseMovementProps) {
     const [position, setPosition] = useState<Position>(initialPosition)
@@ -33,9 +35,9 @@ export function useMovement({
     const [keys, setKeys] = useState<Set<string>>(new Set())
 
     const handleKeyDown = useCallback((e: KeyboardEvent) => {
-        if (e.repeat) return // Ignore key repeat events
+        if (e.repeat || movementDisabled) return // Ignore key repeat events and when movement is disabled
         setKeys(prev => new Set(prev).add(e.key))
-    }, [])
+    }, [movementDisabled])
 
     const handleKeyUp = useCallback((e: KeyboardEvent) => {
         setKeys(prev => {
@@ -58,6 +60,8 @@ export function useMovement({
         let animationFrameId: number
 
         const updatePosition = () => {
+            if (movementDisabled) return;  // Skip position update if movement is disabled
+
             setPosition(prev => {
                 const speed = 5
                 let x = prev.x
@@ -145,7 +149,7 @@ export function useMovement({
                 cancelAnimationFrame(animationFrameId)
             }
         }
-    }, [keys, onPositionChange, introActive, onMessageTrigger])
+    }, [keys, onPositionChange, introActive, onMessageTrigger, movementDisabled])
 
     // Update viewport when horse approaches edges
     useEffect(() => {

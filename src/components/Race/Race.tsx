@@ -59,9 +59,12 @@ export const Race: React.FC<RaceProps> = ({
                 const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
                 return () => clearTimeout(timer);
             } else {
-                setRaceState('racing');
-                onStateChange('racing');
-                setStartTime(Date.now());
+                const timer = setTimeout(() => {
+                    setRaceState('racing');
+                    onStateChange('racing');
+                    setStartTime(Date.now());
+                }, 1000);  // Show GO! for 1 second
+                return () => clearTimeout(timer);
             }
         }
     }, [raceState, countdown, onStateChange]);
@@ -78,7 +81,7 @@ export const Race: React.FC<RaceProps> = ({
                             new Map(times).set(playerHorse.tokenId, Date.now())
                         );
                     }
-                    return { ...prev, x: newX };
+                    return { ...prev, x: Math.min(newX, 1990) };  // Cap at finish line
                 });
 
                 // Move AI horses
@@ -97,6 +100,10 @@ export const Race: React.FC<RaceProps> = ({
                                     setFinishTimes(times => 
                                         new Map(times).set(horse.tokenId, Date.now())
                                     );
+                                    next.set(horse.tokenId, {
+                                        ...currentPos,
+                                        x: 1990  // Cap at finish line
+                                    });
                                 } else {
                                     next.set(horse.tokenId, {
                                         ...currentPos,
@@ -159,8 +166,8 @@ export const Race: React.FC<RaceProps> = ({
                         key={horse.tokenId}
                         style={{
                             position: 'absolute',
-                            left: position.x,
-                            top: 1800 + (index * 130),  // Staggered vertically (1530 + 270)
+                            left: `${position.x}px`,
+                            top: `${1800 + (index * 130)}px`,  // Staggered vertically (1530 + 270)
                             transform: 'scaleX(1)'  // Always facing right
                         }}
                         horseId={horse.tokenId}
@@ -173,8 +180,8 @@ export const Race: React.FC<RaceProps> = ({
                 <Horse
                     style={{
                         position: 'absolute',
-                        left: racingHorsePosition.x,
-                        top: racingHorsePosition.y,
+                        left: `${racingHorsePosition.x}px`,
+                        top: `${racingHorsePosition.y}px`,
                         transform: 'scaleX(1)'  // Always facing right during race
                     }}
                     horseId={playerHorse.tokenId}
