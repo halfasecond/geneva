@@ -3,7 +3,6 @@
   "private": true,
   "version": "2.0.0",
   "type": "module",
-  "homepage": "https://paddock.chainedhorse.com",
   "scripts": {
     "dev": "yarn vite",
     "build": "yarn tsc -b && yarn vite build",
