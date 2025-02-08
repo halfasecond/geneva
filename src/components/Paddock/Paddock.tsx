@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback } from "react";
+import React, { useEffect, useRef, useCallback, useState } from "react";
 import * as Styled from "./Paddock.style";
 import { useMovement } from "./hooks/useMovement";
 import { useZoom } from "./hooks/useZoom";
@@ -9,6 +9,7 @@ import { PathHighlight } from "../Bridleway";
 import { paths } from "../Bridleway/set";
 import { introMessages } from "../Bridleway/messages";
 import Pond from "../Pond";
+import Race from "../Race";
 
 interface PaddockProps {
     horseId: string;
@@ -16,9 +17,16 @@ interface PaddockProps {
     introActive?: boolean;
 }
 
+// AI horses for the race
+const AI_HORSES = [
+    { tokenId: "30", position: { x: 580, y: 1800 } },  // Stall 1 (1530 + 270)
+    { tokenId: "31", position: { x: 580, y: 1930 } }   // Stall 2 (1660 + 270)
+];
+
 export const Paddock: React.FC<PaddockProps> = ({ 
     horseId,
-    initialPosition = { x: 60, y: 140, direction: "right" as const },
+    // Position near the end of the last bridleway section for faster testing
+    initialPosition = { x: 300, y: 2068, direction: "right" as const },
     introActive = true
 }) => {
     const containerRef = useRef<HTMLDivElement>(null);
@@ -30,6 +38,7 @@ export const Paddock: React.FC<PaddockProps> = ({
     const [visibleMessages, setVisibleMessages] = React.useState<boolean[]>(
         new Array(introMessages.length).fill(false)
     );
+    const [isRacing, setIsRacing] = useState(false);
 
     // Initialize game server connection
     const { connected, players, updatePosition } = useGameServer({
@@ -47,13 +56,23 @@ export const Paddock: React.FC<PaddockProps> = ({
         });
     }, []);
 
+    // Handle race state changes
+    const handleRaceStateChange = useCallback((state: 'countdown' | 'racing' | 'finished') => {
+        if (state === 'countdown' || state === 'racing') {
+            setIsRacing(true);  // Disable movement during countdown and race
+        } else if (state === 'finished') {
+            setIsRacing(false);  // Re-enable movement after race
+        }
+    }, []);
+
     // Initialize movement with current viewport dimensions
     const { position, viewportOffset } = useMovement({
         viewportWidth: viewportDimensions.width,
         viewportHeight: viewportDimensions.height,
         scale: 1,
         initialPosition,
-        introActive,
+        introActive: introActive,
+        movementDisabled: isRacing,  // Disable movement during race
         onPositionChange: useCallback((pos: Position) => {
             if (connected) {
                 updatePosition(pos);
@@ -135,14 +154,26 @@ export const Paddock: React.FC<PaddockProps> = ({
                 ))}
 
                 {/* Farm Pond */}
-                <Pond left={1040} top={570} />
+                <Pond left={1040} top={510} />
+
+                {/* Race Track */}
+                {introActive && (
+                    <Race
+                        playerHorse={{
+                            tokenId: horseId,
+                            position: { x: position.x, y: position.y }
+                        }}
+                        aiHorses={AI_HORSES}
+                        onStateChange={handleRaceStateChange}
+                    />
+                )}
 
                 {/* Issues Field */}
                 <Styled.IssuesFieldContainer scale={scale}>
                     <IssuesField />
                 </Styled.IssuesFieldContainer>
 
-                {/* Current player */}
+                {/* Current player - always visible */}
                 <Styled.Horse
                     style={{
                         left: `${position.x}px`,
