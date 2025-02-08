@@ -26,8 +26,7 @@ GITHUB_TOKEN=your_github_token
 GITHUB_OWNER=your_org_or_username
 GITHUB_REPO=your_repository_name
 
-# Feature Flags
-VITE_ENABLE_MULTIPLAYER=true
+# Deployment Mode
 VITE_SERVERLESS=false
 
 # Game Server
@@ -63,8 +62,7 @@ GITHUB_TOKEN=your_github_token
 GITHUB_OWNER=your_org_or_username
 GITHUB_REPO=your_repository_name
 
-# Feature Flags
-VITE_ENABLE_MULTIPLAYER=false
+# Deployment Mode
 VITE_SERVERLESS=true
 ```
 
@@ -111,7 +109,7 @@ Serverless deployment has some limitations:
 
 ### Local Development
 - Clone the repository
-- Copy .env.production.example to .env.production
+- Copy .env.example to .env
 - Configure environment variables
 - Run development server: `yarn dev`
 
@@ -119,15 +117,28 @@ Serverless deployment has some limitations:
 
 1. Full Stack Mode:
 ```env
-VITE_ENABLE_MULTIPLAYER=true
 VITE_SERVERLESS=false
 ```
 
 2. Serverless Mode:
 ```env
-VITE_ENABLE_MULTIPLAYER=false
 VITE_SERVERLESS=true
 ```
+
+**Important**: Always restart the development server after changing environment variables for the changes to take effect.
+
+### Common Issues
+
+1. **Environment Changes Not Reflected**
+   - Ensure you've restarted the development server
+   - Check .env file values are correct
+   - Verify no conflicting values in other .env files
+
+2. **Mode Switching**
+   - Stop the development server
+   - Update VITE_SERVERLESS value
+   - Start the server again
+   - Clear browser cache if needed
 
 ## Monitoring and Maintenance
 
