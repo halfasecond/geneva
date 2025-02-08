@@ -63,7 +63,7 @@ export const Paddock: React.FC<PaddockProps> = ({
         if (state === 'countdown') {
             setIsRacing(true);  // Disable movement during countdown
             // Set position to finish line immediately since horse is hidden anyway
-            const finishPosition = { x: 1990, y: 2050, direction: 'right' as const };  // -20px
+            const finishPosition = { x: 1990, y: 2060, direction: 'right' as const };  // -10px
             setForcedPosition(finishPosition);
             updatePosition(finishPosition);
         } else if (state === 'racing') {

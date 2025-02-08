@@ -31,7 +31,7 @@ const Race = ({
     const [aiPositions, setAiPositions] = useState<Map<string, { x: number; y: number }>>(
         new Map(aiHorses.map(horse => [horse.tokenId, horse.position]))
     );
-    const [racingHorsePosition, setRacingHorsePosition] = useState({ x: 580, y: 2060 });  // -10px
+    const [racingHorsePosition, setRacingHorsePosition] = useState({ x: 580, y: 2060 });  // Match stall position
     const [hasStarted, setHasStarted] = useState(false);  // Track if race has started
 
     // Check if player is in starting position - only check once
@@ -50,8 +50,8 @@ const Race = ({
         const startStall = {
             left: 580,
             right: 700,
-            top: 2060,  // Elevated stall position (-10px)
-            bottom: 2060 + 100  // Reduced stall height (100px)
+            top: 2060,  // Match stall position
+            bottom: 2060 + 100  // 100px height
         };
 
         // Check for overlap
