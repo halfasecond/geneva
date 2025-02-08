@@ -31,7 +31,7 @@ const Race = ({
     const [aiPositions, setAiPositions] = useState<Map<string, { x: number; y: number }>>(
         new Map(aiHorses.map(horse => [horse.tokenId, horse.position]))
     );
-    const [racingHorsePosition, setRacingHorsePosition] = useState({ x: 580, y: 2050 });  // -20px
+    const [racingHorsePosition, setRacingHorsePosition] = useState({ x: 580, y: 2060 });  // -10px
     const [hasStarted, setHasStarted] = useState(false);  // Track if race has started
 
     // Check if player is in starting position - only check once
@@ -50,8 +50,8 @@ const Race = ({
         const startStall = {
             left: 580,
             right: 700,
-            top: 2050,  // Elevated stall position
-            bottom: 2050 + 120  // Stall height
+            top: 2060,  // Elevated stall position (-10px)
+            bottom: 2060 + 100  // Reduced stall height (100px)
         };
 
         // Check for overlap
@@ -189,9 +189,9 @@ const Race = ({
             <Styled.FinishLine />
             
             {/* Starting Stalls */}
-            <Styled.StartingStall style={{ left: 580, top: 1780 }} />  {/* Stall 1 (-20px) */}
-            <Styled.StartingStall style={{ left: 580, top: 1910 }} />  {/* Stall 2 (-20px) */}
-            <Styled.StartingStall style={{ left: 580, top: 2050 }} />  {/* Start Box (-20px) */}
+            <Styled.StartingStall style={{ left: 580, top: 1790 }} />  {/* Stall 1 (-10px) */}
+            <Styled.StartingStall style={{ left: 580, top: 1920 }} />  {/* Stall 2 (-10px) */}
+            <Styled.StartingStall style={{ left: 580, top: 2060 }} />  {/* Start Box (-10px) */}
 
             {/* Fences */}
             <Styled.Fence className="top" style={{ top: -20 }} />  {/* Adjust fence position */}

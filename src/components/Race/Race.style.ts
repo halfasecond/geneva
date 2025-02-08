@@ -33,8 +33,8 @@ export const FinishLine = styled.div`
 export const StartingStall = styled.div`
     position: absolute;
     width: 120px;
-    height: 120px;  // Match horse height
-    background-color: rgba(204, 204, 204, 0.5);  // Semi-transparent
+    height: 100px;  // Reduced height by 20px
+    background-color: #cccccc;  // Solid color without opacity
     border: 1px solid #CCC;  // Added border for better visibility
     z-index: 1;
 `
