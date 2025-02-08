@@ -37,12 +37,34 @@ const Race = ({
     // Check if player is in starting position - only check once
     const checkStartPosition = useCallback(() => {
         if (hasStarted || raceState !== 'not_started') return false;
-        const { x } = playerPosition;
-        const isInPosition = x >= 580 && x <= 700;
-        if (isInPosition) {
+
+        // Define horse hitbox
+        const horseBox = {
+            left: playerPosition.x,
+            right: playerPosition.x + 120,  // horse width
+            top: playerPosition.y,
+            bottom: playerPosition.y + 120  // horse height
+        };
+
+        // Define start stall hitbox
+        const startStall = {
+            left: 580,
+            right: 700,
+            top: 2050,  // Elevated stall position
+            bottom: 2050 + 120  // Stall height
+        };
+
+        // Check for overlap
+        const isOverlapping =
+            horseBox.left < startStall.right &&
+            horseBox.right > startStall.left &&
+            horseBox.top < startStall.bottom &&
+            horseBox.bottom > startStall.top;
+
+        if (isOverlapping) {
             setHasStarted(true);  // Lock the start check
         }
-        return isInPosition;
+        return isOverlapping;
     }, [hasStarted, raceState, playerPosition]);
 
     // Start countdown when player enters start box
@@ -185,7 +207,7 @@ const Race = ({
                         style={{
                             position: 'absolute',
                             left: `${position.x}px`,
-                            top: `${1780 + (index * 130)}px`,  // -20px from base position
+                            top: `${1790 + (index * 130)}px`,  // -10px from base position for vertical centering
                             transform: 'scaleX(1)'
                         }}
                         horseId={horse.tokenId}
