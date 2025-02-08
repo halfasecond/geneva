@@ -90,6 +90,17 @@ export const Paddock: React.FC<PaddockProps> = ({
                 next[next.length - 1] = true;  // Show last message (completion)
                 return next;
             });
+            // Fade out all messages except first one after 10 seconds
+            setTimeout(() => {
+                setVisibleMessages(prev => {
+                    const next = [...prev];
+                    // Keep first message (index 0) visible
+                    for (let i = 1; i < next.length; i++) {
+                        next[i] = false;
+                    }
+                    return next;
+                });
+            }, 10000);
         }
     }, [updatePosition, setVisibleMessages]);
 
