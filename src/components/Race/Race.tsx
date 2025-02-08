@@ -28,6 +28,7 @@ const Race = ({
     const [countdown, setCountdown] = useState<number | null>(null);
     const [startTime, setStartTime] = useState<number | null>(null);
     const [finishTimes, setFinishTimes] = useState<Map<string, number>>(new Map());
+    const [showPodium, setShowPodium] = useState(false);
     const [aiPositions, setAiPositions] = useState<Map<string, { x: number; y: number }>>(
         new Map(aiHorses.map(horse => [horse.tokenId, horse.position]))
     );
@@ -108,9 +109,11 @@ const Race = ({
                     const newX = prev.x + speed;
                     if (newX >= 1990) {
                         if (!finishTimes.has(playerTokenId)) {
-                            setFinishTimes(times =>
-                                new Map(times).set(playerTokenId, Date.now())
-                            );
+                            setFinishTimes(times => {
+                                const newTimes = new Map(times).set(playerTokenId, Date.now());
+                                if (newTimes.size === 1) setShowPodium(true); // Show podium on first finish
+                                return newTimes;
+                            });
                         }
                         return { ...prev, x: 1990 };  // Cap at finish line
                     }
@@ -130,9 +133,11 @@ const Race = ({
                                 
                                 // Check if horse finished
                                 if (newX >= 1990) {
-                                    setFinishTimes(times =>
-                                        new Map(times).set(horse.tokenId, Date.now())
-                                    );
+                                    setFinishTimes(times => {
+                                        const newTimes = new Map(times).set(horse.tokenId, Date.now());
+                                        if (newTimes.size === 1) setShowPodium(true); // Show podium on first finish
+                                        return newTimes;
+                                    });
                                     next.set(horse.tokenId, {
                                         ...currentPos,
                                         x: 1990  // Cap at finish line
@@ -230,7 +235,7 @@ const Race = ({
             )}
 
             {/* Podium */}
-            {raceState === 'finished' && (
+            {showPodium && (
                 <Styled.Podium data-testid="podium" style={{ opacity: 1 }}>
                     {getRaceResults().slice(0, 3).map((tokenId, index) => (
                         <Horse
