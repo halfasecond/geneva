@@ -17,6 +17,9 @@ interface PaddockProps {
     introActive?: boolean;
 }
 
+// Environment configuration
+const IS_SERVERLESS = import.meta.env.VITE_SERVERLESS === 'true'
+
 // AI horses for the race
 const AI_HORSES = [
     { tokenId: "30", position: { x: 580, y: 1800 } },  // Stall 1 (1530 + 270)
@@ -76,7 +79,9 @@ export const Paddock: React.FC<PaddockProps> = ({
             // Set position to finish line immediately since horse is hidden anyway
             const finishPosition = { x: 1990, y: 2060, direction: 'right' as const };  // -10px
             setForcedPosition(finishPosition);
-            updatePosition(finishPosition);
+            if (!IS_SERVERLESS) {
+                updatePosition(finishPosition);
+            }
         } else if (state === 'racing') {
             setIsRacing(true);  // Keep movement disabled during race
         } else if (state === 'finished') {
@@ -102,7 +107,7 @@ export const Paddock: React.FC<PaddockProps> = ({
                 });
             }, 10000);
         }
-    }, [updatePosition, setVisibleMessages]);
+    }, [IS_SERVERLESS, updatePosition, setVisibleMessages]);
 
     // Initialize movement with current viewport dimensions
     const { position, viewportOffset } = useMovement({
@@ -113,10 +118,10 @@ export const Paddock: React.FC<PaddockProps> = ({
         introActive: introActive,
         movementDisabled: isRacing,  // Disable movement during race
         onPositionChange: useCallback((pos: Position) => {
-            if (connected) {
+            if (!IS_SERVERLESS && connected) {
                 updatePosition(pos);
             }
-        }, [connected, updatePosition]),
+        }, [IS_SERVERLESS, connected, updatePosition]),
         onMessageTrigger: introActive ? handleMessageTrigger : undefined,
         forcePosition: forcedPosition,
         racingHorsePosition: racingPosition  // Pass racing position for viewport tracking
@@ -228,8 +233,8 @@ export const Paddock: React.FC<PaddockProps> = ({
                     </Styled.Horse>
                 )}
 
-                {/* Other players */}
-                {Array.from(players.entries()).map(([id, player]) => {
+                {/* Other players - only show in non-serverless mode */}
+                {!IS_SERVERLESS && Array.from(players.entries()).map(([id, player]) => {
                     if (id === horseId) return null; // Skip current player
                     return (
                         <Styled.Horse
@@ -314,8 +319,8 @@ export const Paddock: React.FC<PaddockProps> = ({
                     }}
                 />
 
-                {/* Other players */}
-                {Array.from(players.entries()).map(([id, player]) => {
+                {/* Other players - only show in non-serverless mode */}
+                {!IS_SERVERLESS && Array.from(players.entries()).map(([id, player]) => {
                     if (id === horseId) return null;
                     return (
                         <Styled.MinimapElement

@@ -13,12 +13,17 @@ interface UseGameServerProps {
     initialPosition: Position
 }
 
+// Environment configuration
+const IS_SERVERLESS = import.meta.env.VITE_SERVERLESS === 'true'
+
 export function useGameServer({ horseId, initialPosition }: UseGameServerProps) {
     const socketRef = useRef<any>(null)
     const [players, setPlayers] = useState<Map<string, Player>>(new Map())
     const [connected, setConnected] = useState(false)
 
     useEffect(() => {
+        if (IS_SERVERLESS) return;
+
         // Use environment variable with fallback for development
         const serverUrl = import.meta.env.VITE_GAME_SERVER_URL || 'http://localhost:3131'
         const socket = io(serverUrl)
@@ -48,8 +53,10 @@ export function useGameServer({ horseId, initialPosition }: UseGameServerProps) 
         })
 
         return () => {
-            socket.disconnect()
-            socketRef.current = null
+            if (socket) {
+                socket.disconnect()
+                socketRef.current = null
+            }
         }
     }, [])
 
@@ -58,6 +65,15 @@ export function useGameServer({ horseId, initialPosition }: UseGameServerProps) 
             socketRef.current.emit('horse:move', { id: horseId, position })
         }
     }, [horseId, connected])
+
+    // If in serverless mode, return empty state
+    if (IS_SERVERLESS) {
+        return {
+            connected: false,
+            updatePosition: () => {},
+            players: new Map()
+        }
+    }
 
     return {
         connected,
