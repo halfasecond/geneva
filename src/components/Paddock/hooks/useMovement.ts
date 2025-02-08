@@ -181,42 +181,43 @@ export function useMovement({
     // Update viewport when horse approaches edges
     useEffect(() => {
         if (viewportWidth > 0 && viewportHeight > 0) {
-            const viewportRight = viewportOffset.x + viewportWidth
-            const viewportBottom = viewportOffset.y + viewportHeight
-            
-            // Only scroll if horse is near viewport edges
-            let newX = viewportOffset.x
-            let newY = viewportOffset.y
+            let newX = viewportOffset.x;
+            let newY = viewportOffset.y;
 
-            // Use racing horse position during race, otherwise use player position
-            const trackPosition = movementDisabled && racingHorsePosition
-                ? racingHorsePosition
-                : position
-            
-            // Check if horse is too close to right/left edges
-            const rightEdge = viewportRight - (viewportWidth * 0.1)
-            const leftEdge = viewportOffset.x + (viewportWidth * 0.1)
-            if (trackPosition.x > rightEdge) {
-                newX = trackPosition.x - (viewportWidth * 0.9)
-            } else if (trackPosition.x < leftEdge) {
-                newX = trackPosition.x - (viewportWidth * 0.1)
-            }
-            
-            // Same for top/bottom
-            const bottomEdge = viewportBottom - (viewportHeight * 0.1)
-            const topEdge = viewportOffset.y + (viewportHeight * 0.1)
-            if (trackPosition.y > bottomEdge) {
-                newY = trackPosition.y - (viewportHeight * 0.9)
-            } else if (trackPosition.y < topEdge) {
-                newY = trackPosition.y - (viewportHeight * 0.1)
+            if (movementDisabled && racingHorsePosition) {
+                // During race: directly track racing horse position
+                newX = racingHorsePosition.x - (viewportWidth * 0.2);  // 20% from left
+                newY = racingHorsePosition.y - (viewportHeight * 0.7);  // 70% from top
+            } else {
+                // Normal gameplay: use edge detection for smooth scrolling
+                const viewportRight = viewportOffset.x + viewportWidth;
+                const viewportBottom = viewportOffset.y + viewportHeight;
+                
+                // Check if horse is too close to right/left edges
+                const rightEdge = viewportRight - (viewportWidth * 0.1);
+                const leftEdge = viewportOffset.x + (viewportWidth * 0.1);
+                if (position.x > rightEdge) {
+                    newX = position.x - (viewportWidth * 0.9);
+                } else if (position.x < leftEdge) {
+                    newX = position.x - (viewportWidth * 0.1);
+                }
+                
+                // Same for top/bottom
+                const bottomEdge = viewportBottom - (viewportHeight * 0.1);
+                const topEdge = viewportOffset.y + (viewportHeight * 0.1);
+                if (position.y > bottomEdge) {
+                    newY = position.y - (viewportHeight * 0.9);
+                } else if (position.y < topEdge) {
+                    newY = position.y - (viewportHeight * 0.1);
+                }
             }
             
             // Keep viewport within GameSpace bounds (5000x8000)
-            newX = Math.max(0, Math.min(newX, 5000 - viewportWidth))
-            newY = Math.max(0, Math.min(newY, 8000 - viewportHeight))
+            newX = Math.max(0, Math.min(newX, 5000 - viewportWidth));
+            newY = Math.max(0, Math.min(newY, 8000 - viewportHeight));
             
             if (newX !== viewportOffset.x || newY !== viewportOffset.y) {
-                setViewportOffset({ x: newX, y: newY })
+                setViewportOffset({ x: newX, y: newY });
             }
         }
     }, [position.x, position.y, viewportWidth, viewportHeight, viewportOffset, movementDisabled, racingHorsePosition])
