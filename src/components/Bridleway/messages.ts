@@ -18,7 +18,7 @@ export const introMessages: IntroMessage[] = [
         left: 70,
         top: 470,
         width: 280,
-        triggerSegment: 3,
+        triggerSegment: 1,  // Show when leaving first path
         message: 'please stay on the path<br />while we show you around'
     },
     {
