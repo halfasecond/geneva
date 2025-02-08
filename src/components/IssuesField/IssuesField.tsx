@@ -132,7 +132,7 @@ const IssuesField: React.FC = () => {
     useEffect(() => {
         mountedRef.current = true;
         fetchProjectItems();
-        const interval = setInterval(fetchProjectItems, 30000); // Refresh every 30 seconds
+        const interval = setInterval(fetchProjectItems, 90000); // Refresh every 90 seconds (tripled from 30)
         return () => {
             mountedRef.current = false;
             clearInterval(interval);
