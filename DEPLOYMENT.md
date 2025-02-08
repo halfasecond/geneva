@@ -2,30 +2,23 @@
 
 ## Deployment Options
 
-This guide outlines deployment options for the Paddock, with recommendations based on feature requirements.
+This guide outlines deployment options for the Paddock:
+1. OneSec: Full-stack deployment with real-time features
+2. GitHub Pages: Serverless deployment for static content
 
-## 1. OneSec Deployment (Recommended)
+## 1. OneSec Deployment (Full Stack)
 
-OneSec is OpSec's peer-to-peer deployment service (https://docs.opsec.computer/getting-started/onesec) that provides full support for our real-time features.
-
-### Why OneSec?
-
-- Full WebSocket support through Next.js integration
-- Complete peer-to-peer deployment
-- Maintains decentralized vision
-- All features work out of the box
-- No additional infrastructure needed
+OneSec is OpSec's peer-to-peer deployment service (https://docs.opsec.computer/getting-started/onesec).
 
 ### Prerequisites
 
 1. GitHub repository with the Paddock codebase
-2. GitHub Personal Access Token with required permissions
-3. OpSec account with access to OneSec deployment service
-4. (Optional) Local environment for running personal paddock instance
+2. OpSec account with access to OneSec deployment service
+3. GitHub Personal Access Token with required permissions
 
 ### Environment Configuration
 
-Create the following environment variables in the OneSec deployment dashboard:
+Configure in OneSec's dashboard:
 
 ```env
 # GitHub Integration
@@ -33,47 +26,46 @@ GITHUB_TOKEN=your_github_token
 GITHUB_OWNER=your_org_or_username
 GITHUB_REPO=your_repository_name
 
+# Feature Flags
+VITE_ENABLE_MULTIPLAYER=true
+VITE_SERVERLESS=false
+
 # Game Server
 VITE_GAME_SERVER_URL=your_game_server_url
+
+# GitHub Project
+VITE_APP_GITHUB_PROJECT_NUMBER=1
 ```
 
 ### Deployment Steps
 
 1. Connect your GitHub repository to OneSec
 2. Configure environment variables
-3. OneSec auto-detects Vite configuration and Socket.io server
+3. OneSec auto-detects Vite configuration
 4. Both frontend and game server distributed across peer-to-peer network
 
-## 2. GitHub Pages Deployment (Limited Support)
+## 2. GitHub Pages Deployment (Serverless)
 
-GitHub Pages provides static file hosting only. **Important Note:** This option requires additional infrastructure for real-time features.
-
-### Limitations
-
-- No WebSocket server support (static hosting only)
-- Requires external game server for multiplayer
-- Introduces centralization through external dependencies
-- Not recommended for full feature deployment
+For a serverless deployment without backend dependencies.
 
 ### Prerequisites
 
 1. GitHub repository with the Paddock codebase
 2. GitHub Pages enabled in repository settings
-3. GitHub Personal Access Token with required permissions
-4. External server for WebSocket support (if needed)
 
 ### Environment Configuration
 
-Configure the following secrets in your GitHub repository:
+Configure the following in your GitHub repository secrets:
 
 ```env
-# GitHub Integration
+# GitHub Integration (for build process)
 GITHUB_TOKEN=your_github_token
 GITHUB_OWNER=your_org_or_username
 GITHUB_REPO=your_repository_name
 
-# Game Server (required for multiplayer)
-VITE_GAME_SERVER_URL=your_external_server_url
+# Feature Flags
+VITE_ENABLE_MULTIPLAYER=false
+VITE_SERVERLESS=true
 ```
 
 ### Deployment Steps
@@ -87,45 +79,67 @@ VITE_GAME_SERVER_URL=your_external_server_url
    - Deploy to GitHub Pages
    - Provide deployment URL
 
-3. For multiplayer support:
-   - Deploy game server separately
-   - Configure VITE_GAME_SERVER_URL to point to your server
-   - Update CORS settings on the server
+3. Deployments trigger on:
+   - Push to main branch
+   - Manual workflow dispatch
+
+### Limitations
+
+Serverless deployment has some limitations:
+- No real-time multiplayer
+- Uses demo data for Issues Board
+- No WebSocket features
+
+## Feature Comparison
+
+### OneSec Deployment
+✅ Full multiplayer support
+✅ Real-time issue updates
+✅ WebSocket features
+✅ Peer-to-peer networking
+✅ Auto-scaling
+
+### GitHub Pages (Serverless)
+✅ Simple deployment
+✅ No external dependencies
+✅ Fast page loads
+✅ Demo issue board
+❌ No multiplayer
+❌ No real-time updates
 
 ## Development Environment
 
 ### Local Development
 - Clone the repository
 - Copy .env.production.example to .env.production
-- Configure local environment variables
+- Configure environment variables
 - Run development server: `yarn dev`
 
-### Real-time Features
+### Testing Different Modes
 
-Socket.io Implementation:
-- OneSec: Full WebSocket support through platform
-- GitHub Pages: Requires external server setup
-- Local: Uses localhost:3131 for development
+1. Full Stack Mode:
+```env
+VITE_ENABLE_MULTIPLAYER=true
+VITE_SERVERLESS=false
+```
 
-## Future Considerations
-
-### WebRTC Integration
-- Potential for true peer-to-peer connections
-- No central server requirement
-- Would require architecture changes
-- Could enable fully decentralized multiplayer
+2. Serverless Mode:
+```env
+VITE_ENABLE_MULTIPLAYER=false
+VITE_SERVERLESS=true
+```
 
 ## Monitoring and Maintenance
 
 1. **Health Checks**
-   - Monitor Socket.io connections
+   - Monitor build status
    - Check GitHub API rate limits
-   - Verify real-time updates
+   - Verify deployment URLs
 
 2. **Updates and Rollbacks**
-   - OneSec: Automatic deployments
-   - GitHub Pages: Through Actions workflow
    - Use GitHub releases for version control
+   - Monitor deployment logs
+   - GitHub Actions provides deployment history
 
 ## Security Considerations
 
@@ -135,8 +149,8 @@ Socket.io Implementation:
    - Rotate GitHub tokens periodically
 
 2. **Access Control**
-   - Implement proper Socket.io authentication
-   - Secure WebSocket connections
+   - Configure proper CORS settings
+   - Secure API endpoints
    - Monitor GitHub webhook events
 
 ## Support and Resources
@@ -146,23 +160,3 @@ Socket.io Implementation:
 - [GitHub Pages Documentation](https://docs.github.com/en/pages)
 - [GitHub Actions Documentation](https://docs.github.com/en/actions)
 - [Vite Deployment Guide](https://vitejs.dev/guide/build.html)
-- [Socket.io Documentation](https://socket.io/docs/v4)
-
-## Troubleshooting
-
-Common issues and solutions:
-
-1. **Socket.io Connection Issues**
-   - Verify WebSocket configuration
-   - Check server settings
-   - Ensure proper connection URLs
-
-2. **GitHub Integration Issues**
-   - Verify token permissions
-   - Check rate limit usage
-   - Confirm environment variables
-
-3. **Build Failures**
-   - Review build logs
-   - Verify vite.config.ts settings
-   - Check for missing dependencies
