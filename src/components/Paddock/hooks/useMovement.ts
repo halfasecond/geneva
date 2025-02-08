@@ -13,6 +13,7 @@ interface UseMovementProps {
     introActive?: boolean
     movementDisabled?: boolean
     onMessageTrigger?: (messageIndex: number) => void
+    forcePosition?: Position
 }
 
 interface ViewportOffset {
@@ -28,14 +29,28 @@ export function useMovement({
     onPositionChange,
     introActive = false,
     movementDisabled = false,
-    onMessageTrigger
+    onMessageTrigger,
+    forcePosition
 }: UseMovementProps) {
     const [position, setPosition] = useState<Position>(initialPosition)
     const [viewportOffset, setViewportOffset] = useState<ViewportOffset>({ x: 0, y: 0 })
     const [keys, setKeys] = useState<Set<string>>(new Set())
+    const [hasFinishedRace, setHasFinishedRace] = useState(false)
+
+    // Force position update when provided
+    useEffect(() => {
+        if (forcePosition) {
+            setPosition(forcePosition);
+            onPositionChange(forcePosition);
+            // If position is at finish line, mark race as finished
+            if (forcePosition.x >= 1990) {
+                setHasFinishedRace(true);
+            }
+        }
+    }, [forcePosition, onPositionChange]);
 
     const handleKeyDown = useCallback((e: KeyboardEvent) => {
-        if (e.repeat || movementDisabled) return // Ignore key repeat events and when movement is disabled
+        if (e.repeat || movementDisabled) return;
         setKeys(prev => new Set(prev).add(e.key))
     }, [movementDisabled])
 
@@ -60,7 +75,7 @@ export function useMovement({
         let animationFrameId: number
 
         const updatePosition = () => {
-            if (movementDisabled) return;  // Skip position update if movement is disabled
+            if (movementDisabled || forcePosition) return;
 
             setPosition(prev => {
                 const speed = 5
@@ -92,6 +107,16 @@ export function useMovement({
                 // If no movement, return previous state
                 if (!moved && direction === prev.direction) {
                     return prev
+                }
+
+                // After race, allow free movement
+                if (hasFinishedRace) {
+                    // Just keep within game bounds
+                    x = Math.max(0, Math.min(x, 5000));
+                    y = Math.max(0, Math.min(y, 8000));
+                    const newPosition = { x, y, direction };
+                    onPositionChange(newPosition);
+                    return newPosition;
                 }
 
                 // If intro is active, validate position against paths
@@ -149,7 +174,7 @@ export function useMovement({
                 cancelAnimationFrame(animationFrameId)
             }
         }
-    }, [keys, onPositionChange, introActive, onMessageTrigger, movementDisabled])
+    }, [keys, onPositionChange, introActive, onMessageTrigger, movementDisabled, forcePosition, hasFinishedRace])
 
     // Update viewport when horse approaches edges
     useEffect(() => {

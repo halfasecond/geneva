@@ -14,9 +14,9 @@ interface RaceProps {
     onStateChange: (state: 'countdown' | 'racing' | 'finished') => void;
 }
 
-type RaceState = 'not_started' | 'countdown' | 'racing' | 'finished';
+type RaceState = 'not_started' | 'countdown' | 'racing' | 'finishing' | 'finished';
 
-export const Race: React.FC<RaceProps> = ({ 
+const Race: React.FC<RaceProps> = ({ 
     playerHorse,
     aiHorses,
     onStateChange
@@ -29,13 +29,18 @@ export const Race: React.FC<RaceProps> = ({
         new Map(aiHorses.map(horse => [horse.tokenId, horse.position]))
     );
     const [racingHorsePosition, setRacingHorsePosition] = useState({ x: 580, y: 2070 });
+    const [hasStarted, setHasStarted] = useState(false);  // Track if race has started
 
-    // Check if player is in starting position
+    // Check if player is in starting position - only check once
     const checkStartPosition = useCallback(() => {
-        if (raceState !== 'not_started') return false;
+        if (hasStarted || raceState !== 'not_started') return false;
         const { x } = playerHorse.position;
-        return x >= 580 && x <= 700;
-    }, [playerHorse.position, raceState]);
+        const isInPosition = x >= 580 && x <= 700;
+        if (isInPosition) {
+            setHasStarted(true);  // Lock the start check
+        }
+        return isInPosition;
+    }, [hasStarted, raceState, playerHorse.position]);
 
     // Start countdown when player enters start box
     useEffect(() => {
@@ -68,17 +73,20 @@ export const Race: React.FC<RaceProps> = ({
 
     // Move horses during race
     useEffect(() => {
-        if (raceState === 'racing') {
+        if (raceState === 'racing' || raceState === 'finishing') {
             const moveInterval = setInterval(() => {
                 // Move racing horse
                 setRacingHorsePosition(prev => {
                     const newX = prev.x + 5;  // Constant speed
-                    if (newX >= 1990 && !finishTimes.has(playerHorse.tokenId)) {
-                        setFinishTimes(times => 
-                            new Map(times).set(playerHorse.tokenId, Date.now())
-                        );
+                    if (newX >= 1990) {
+                        if (!finishTimes.has(playerHorse.tokenId)) {
+                            setFinishTimes(times => 
+                                new Map(times).set(playerHorse.tokenId, Date.now())
+                            );
+                        }
+                        return { ...prev, x: 1990 };  // Cap at finish line
                     }
-                    return { ...prev, x: Math.min(newX, 1990) };  // Cap at finish line
+                    return { ...prev, x: newX };
                 });
 
                 // Move AI horses
@@ -124,12 +132,13 @@ export const Race: React.FC<RaceProps> = ({
             const allFinished = [playerHorse, ...aiHorses]
                 .every(horse => finishTimes.has(horse.tokenId));
             
-            if (allFinished) {
+            if (allFinished && racingHorsePosition.x >= 1990) {
+                // Signal race completion - Paddock will handle position update
                 setRaceState('finished');
                 onStateChange('finished');
             }
         }
-    }, [raceState, startTime, finishTimes, playerHorse, aiHorses, onStateChange]);
+    }, [raceState, startTime, finishTimes, playerHorse, aiHorses, onStateChange, racingHorsePosition.x]);
 
     // Get sorted race results
     const getRaceResults = useCallback(() => {
@@ -172,8 +181,8 @@ export const Race: React.FC<RaceProps> = ({
                 );
             })}
 
-            {/* Racing Horse (only during countdown and racing) */}
-            {(raceState === 'racing' || raceState === 'countdown') && (
+            {/* Racing Horse (during countdown, racing, and finishing) */}
+            {(raceState === 'racing' || raceState === 'countdown' || raceState === 'finishing') && (
                 <Horse
                     style={{
                         position: 'absolute',
@@ -207,7 +216,7 @@ export const Race: React.FC<RaceProps> = ({
                 </Styled.Podium>
             )}
 
-            {/* Fixed UI Elements */}
+            {/* Countdown Display */}
             {raceState === 'countdown' && countdown !== null && (
                 <Styled.CountdownDisplay>
                     {countdown === 0 ? 'GO!' : countdown}
@@ -217,4 +226,4 @@ export const Race: React.FC<RaceProps> = ({
     );
 };
 
-export { Race as default };
+export default Race;

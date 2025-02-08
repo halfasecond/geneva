@@ -39,6 +39,7 @@ export const Paddock: React.FC<PaddockProps> = ({
         new Array(introMessages.length).fill(false)
     );
     const [isRacing, setIsRacing] = useState(false);
+    const [forcedPosition, setForcedPosition] = useState<Position | undefined>();
 
     // Initialize game server connection
     const { connected, players, updatePosition } = useGameServer({
@@ -58,12 +59,18 @@ export const Paddock: React.FC<PaddockProps> = ({
 
     // Handle race state changes
     const handleRaceStateChange = useCallback((state: 'countdown' | 'racing' | 'finished') => {
-        if (state === 'countdown' || state === 'racing') {
-            setIsRacing(true);  // Disable movement during countdown and race
+        if (state === 'countdown') {
+            setIsRacing(true);  // Disable movement during countdown
+            // Set position to finish line immediately since horse is hidden anyway
+            const finishPosition = { x: 1990, y: 2070, direction: 'right' as const };
+            setForcedPosition(finishPosition);
+            updatePosition(finishPosition);
+        } else if (state === 'racing') {
+            setIsRacing(true);  // Keep movement disabled during race
         } else if (state === 'finished') {
-            // Move horse to finish line
-            updatePosition({ x: 1990, y: 2070, direction: 'right' });
-            setIsRacing(false);  // Re-enable movement
+            // Clear forced position and re-enable movement
+            setForcedPosition(undefined);
+            setIsRacing(false);
         }
     }, [updatePosition]);
 
@@ -80,7 +87,8 @@ export const Paddock: React.FC<PaddockProps> = ({
                 updatePosition(pos);
             }
         }, [connected, updatePosition]),
-        onMessageTrigger: introActive ? handleMessageTrigger : undefined
+        onMessageTrigger: introActive ? handleMessageTrigger : undefined,
+        forcePosition: forcedPosition
     });
 
     // Initialize zoom control
