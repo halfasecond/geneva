@@ -11,16 +11,19 @@ interface RaceProps {
         tokenId: string;
         position: { x: number; y: number };
     }>;
-    onStateChange: (state: 'countdown' | 'racing' | 'finished') => void;
+    onStateChange?: (state: 'countdown' | 'racing' | 'finished') => void;
+    onRacingPositionChange?: (position: { x: number; y: number }) => void;
 }
 
 type RaceState = 'not_started' | 'countdown' | 'racing' | 'finishing' | 'finished';
-
-const Race: React.FC<RaceProps> = ({ 
+const Race = ({
     playerHorse,
     aiHorses,
-    onStateChange
-}): JSX.Element => {
+    onStateChange,
+    onRacingPositionChange
+}: RaceProps): React.ReactElement => {
+    // Destructure props to make them available in scope
+    const { tokenId: playerTokenId, position: playerPosition } = playerHorse;
     const [raceState, setRaceState] = useState<RaceState>('not_started');
     const [countdown, setCountdown] = useState<number | null>(null);
     const [startTime, setStartTime] = useState<number | null>(null);
@@ -34,13 +37,13 @@ const Race: React.FC<RaceProps> = ({
     // Check if player is in starting position - only check once
     const checkStartPosition = useCallback(() => {
         if (hasStarted || raceState !== 'not_started') return false;
-        const { x } = playerHorse.position;
+        const { x } = playerPosition;
         const isInPosition = x >= 580 && x <= 700;
         if (isInPosition) {
             setHasStarted(true);  // Lock the start check
         }
         return isInPosition;
-    }, [hasStarted, raceState, playerHorse.position]);
+    }, [hasStarted, raceState, playerPosition]);
 
     // Start countdown when player enters start box
     useEffect(() => {
@@ -48,7 +51,7 @@ const Race: React.FC<RaceProps> = ({
             const isInStartPosition = checkStartPosition();
             if (isInStartPosition) {
                 setRaceState('countdown');
-                onStateChange('countdown');
+                if (onStateChange) onStateChange('countdown');
                 setCountdown(3);
             }
         }
@@ -56,19 +59,21 @@ const Race: React.FC<RaceProps> = ({
 
     // Handle countdown
     useEffect(() => {
+        let timer: NodeJS.Timeout;
         if (raceState === 'countdown' && countdown !== null) {
             if (countdown > 0) {
-                const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-                return () => clearTimeout(timer);
+                timer = setTimeout(() => setCountdown(countdown - 1), 1000);
             } else {
-                const timer = setTimeout(() => {
+                timer = setTimeout(() => {
                     setRaceState('racing');
-                    onStateChange('racing');
+                    if (onStateChange) onStateChange('racing');
                     setStartTime(Date.now());
                 }, 1000);  // Show GO! for 1 second
-                return () => clearTimeout(timer);
             }
         }
+        return () => {
+            if (timer) clearTimeout(timer);
+        };
     }, [raceState, countdown, onStateChange]);
 
     // Move horses during race
@@ -79,9 +84,9 @@ const Race: React.FC<RaceProps> = ({
                 setRacingHorsePosition(prev => {
                     const newX = prev.x + 5;  // Constant speed
                     if (newX >= 1990) {
-                        if (!finishTimes.has(playerHorse.tokenId)) {
-                            setFinishTimes(times => 
-                                new Map(times).set(playerHorse.tokenId, Date.now())
+                        if (!finishTimes.has(playerTokenId)) {
+                            setFinishTimes(times =>
+                                new Map(times).set(playerTokenId, Date.now())
                             );
                         }
                         return { ...prev, x: 1990 };  // Cap at finish line
@@ -102,7 +107,7 @@ const Race: React.FC<RaceProps> = ({
                                 
                                 // Check if horse finished
                                 if (newX >= 1990) {
-                                    setFinishTimes(times => 
+                                    setFinishTimes(times =>
                                         new Map(times).set(horse.tokenId, Date.now())
                                     );
                                     next.set(horse.tokenId, {
@@ -126,19 +131,26 @@ const Race: React.FC<RaceProps> = ({
         }
     }, [raceState, aiHorses, finishTimes, playerHorse.tokenId]);
 
+    // Notify parent of racing position changes
+    useEffect(() => {
+        if (onRacingPositionChange && (raceState === 'countdown' || raceState === 'racing' || raceState === 'finishing')) {
+            onRacingPositionChange(racingHorsePosition);
+        }
+    }, [onRacingPositionChange, racingHorsePosition, raceState]);
+
     // Check race completion
     useEffect(() => {
         if (raceState === 'racing' && startTime) {
-            const allFinished = [playerHorse, ...aiHorses]
+            const allFinished = [{ tokenId: playerTokenId }, ...aiHorses]
                 .every(horse => finishTimes.has(horse.tokenId));
             
             if (allFinished && racingHorsePosition.x >= 1990) {
                 // Signal race completion - Paddock will handle position update
                 setRaceState('finished');
-                onStateChange('finished');
+                if (onStateChange) onStateChange('finished');
             }
         }
-    }, [raceState, startTime, finishTimes, playerHorse, aiHorses, onStateChange, racingHorsePosition.x]);
+    }, [raceState, startTime, finishTimes, playerTokenId, aiHorses, onStateChange, racingHorsePosition.x]);
 
     // Get sorted race results
     const getRaceResults = useCallback(() => {

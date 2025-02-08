@@ -40,6 +40,7 @@ export const Paddock: React.FC<PaddockProps> = ({
     );
     const [isRacing, setIsRacing] = useState(false);
     const [forcedPosition, setForcedPosition] = useState<Position | undefined>();
+    const [racingPosition, setRacingPosition] = useState<{ x: number; y: number } | undefined>();
 
     // Initialize game server connection
     const { connected, players, updatePosition } = useGameServer({
@@ -68,8 +69,9 @@ export const Paddock: React.FC<PaddockProps> = ({
         } else if (state === 'racing') {
             setIsRacing(true);  // Keep movement disabled during race
         } else if (state === 'finished') {
-            // Clear forced position and re-enable movement
+            // Clear forced position, racing position, and re-enable movement
             setForcedPosition(undefined);
+            setRacingPosition(undefined);
             setIsRacing(false);
         }
     }, [updatePosition]);
@@ -88,7 +90,8 @@ export const Paddock: React.FC<PaddockProps> = ({
             }
         }, [connected, updatePosition]),
         onMessageTrigger: introActive ? handleMessageTrigger : undefined,
-        forcePosition: forcedPosition
+        forcePosition: forcedPosition,
+        racingHorsePosition: racingPosition  // Pass racing position for viewport tracking
     });
 
     // Initialize zoom control
@@ -175,6 +178,7 @@ export const Paddock: React.FC<PaddockProps> = ({
                         }}
                         aiHorses={AI_HORSES}
                         onStateChange={handleRaceStateChange}
+                        onRacingPositionChange={setRacingPosition}
                     />
                 )}
 

@@ -14,6 +14,7 @@ interface UseMovementProps {
     movementDisabled?: boolean
     onMessageTrigger?: (messageIndex: number) => void
     forcePosition?: Position
+    racingHorsePosition?: { x: number; y: number }  // Add racing horse position for viewport tracking
 }
 
 interface ViewportOffset {
@@ -21,7 +22,7 @@ interface ViewportOffset {
     y: number
 }
 
-export function useMovement({ 
+export function useMovement({
     viewportWidth,
     viewportHeight,
     scale,
@@ -30,7 +31,8 @@ export function useMovement({
     introActive = false,
     movementDisabled = false,
     onMessageTrigger,
-    forcePosition
+    forcePosition,
+    racingHorsePosition
 }: UseMovementProps) {
     const [position, setPosition] = useState<Position>(initialPosition)
     const [viewportOffset, setViewportOffset] = useState<ViewportOffset>({ x: 0, y: 0 })
@@ -185,23 +187,28 @@ export function useMovement({
             // Only scroll if horse is near viewport edges
             let newX = viewportOffset.x
             let newY = viewportOffset.y
+
+            // Use racing horse position during race, otherwise use player position
+            const trackPosition = movementDisabled && racingHorsePosition
+                ? racingHorsePosition
+                : position
             
             // Check if horse is too close to right/left edges
             const rightEdge = viewportRight - (viewportWidth * 0.1)
             const leftEdge = viewportOffset.x + (viewportWidth * 0.1)
-            if (position.x > rightEdge) {
-                newX = position.x - (viewportWidth * 0.9)
-            } else if (position.x < leftEdge) {
-                newX = position.x - (viewportWidth * 0.1)
+            if (trackPosition.x > rightEdge) {
+                newX = trackPosition.x - (viewportWidth * 0.9)
+            } else if (trackPosition.x < leftEdge) {
+                newX = trackPosition.x - (viewportWidth * 0.1)
             }
             
             // Same for top/bottom
             const bottomEdge = viewportBottom - (viewportHeight * 0.1)
             const topEdge = viewportOffset.y + (viewportHeight * 0.1)
-            if (position.y > bottomEdge) {
-                newY = position.y - (viewportHeight * 0.9)
-            } else if (position.y < topEdge) {
-                newY = position.y - (viewportHeight * 0.1)
+            if (trackPosition.y > bottomEdge) {
+                newY = trackPosition.y - (viewportHeight * 0.9)
+            } else if (trackPosition.y < topEdge) {
+                newY = trackPosition.y - (viewportHeight * 0.1)
             }
             
             // Keep viewport within GameSpace bounds (5000x8000)
@@ -212,7 +219,7 @@ export function useMovement({
                 setViewportOffset({ x: newX, y: newY })
             }
         }
-    }, [position.x, position.y, viewportWidth, viewportHeight, viewportOffset])
+    }, [position.x, position.y, viewportWidth, viewportHeight, viewportOffset, movementDisabled, racingHorsePosition])
 
     return {
         position,
