@@ -173,7 +173,7 @@ const Race = ({
                 .every(horse => finishTimes.has(horse.tokenId));
             
             if (allFinished && racingHorsePosition.x >= 1990) {
-                // Signal race completion - Paddock will handle position update
+                // Signal race completion
                 setRaceState('finished');
                 if (onStateChange) onStateChange('finished');
             }
@@ -200,8 +200,8 @@ const Race = ({
             <Styled.StartingStall style={{ left: 580, top: 2060 }} />  {/* Start Box (-10px) */}
 
             {/* Fences */}
-            <Styled.Fence className="top" style={{ top: -20 }} />  {/* Adjust fence position */}
-            <Styled.Fence className="bottom" style={{ bottom: -20 }} />  {/* Adjust fence position */}
+            <Styled.Fence className="top" />
+            <Styled.Fence className="bottom" />
 
             {/* AI Horses */}
             {aiHorses.map((horse, index) => {
