@@ -1,8 +1,14 @@
 # Deployment Guide
 
-## Decentralized Paddock Deployment with OneSec
+## Deployment Options
 
-This guide outlines the steps to deploy decentralized Paddock instances using OneSec, OpSec's peer-to-peer deployment service (https://docs.opsec.computer/getting-started/onesec).
+This guide outlines two deployment options for the Paddock:
+1. OneSec: Full-stack deployment with real-time features
+2. GitHub Pages: Static deployment for frontend-only scenarios
+
+## 1. OneSec Deployment
+
+OneSec is OpSec's peer-to-peer deployment service (https://docs.opsec.computer/getting-started/onesec).
 
 ### Vision
 
@@ -33,42 +39,75 @@ GITHUB_REPO=your_repository_name
 VITE_GAME_SERVER_URL=your_game_server_url
 ```
 
-### Deployment Options
+### Deployment Steps
 
-#### 1. OneSec Peer-to-Peer Deployment
-- Connect your GitHub repository to OneSec
-- Configure environment variables
-- OneSec auto-detects Vite configuration and Socket.io server
-- Both frontend and game server distributed across peer-to-peer network
+1. Connect your GitHub repository to OneSec
+2. Configure environment variables
+3. OneSec auto-detects Vite configuration and Socket.io server
+4. Both frontend and game server distributed across peer-to-peer network
 
-#### 2. Local Paddock Instance
+## 2. GitHub Pages Deployment
+
+GitHub Pages provides a simpler deployment option for static content.
+
+### Prerequisites
+
+1. GitHub repository with the Paddock codebase
+2. GitHub Pages enabled in repository settings
+3. GitHub Personal Access Token with required permissions
+
+### Environment Configuration
+
+Configure the following secrets in your GitHub repository:
+
+```env
+# GitHub Integration
+GITHUB_TOKEN=your_github_token
+GITHUB_OWNER=your_org_or_username
+GITHUB_REPO=your_repository_name
+
+# Game Server (if using external server)
+VITE_GAME_SERVER_URL=your_game_server_url
+```
+
+### Deployment Steps
+
+1. Enable GitHub Pages in repository settings:
+   - Go to Settings > Pages
+   - Set source to "GitHub Actions"
+
+2. The workflow will automatically:
+   - Build the project
+   - Deploy to GitHub Pages
+   - Provide deployment URL
+
+3. Deployments trigger on:
+   - Push to main branch
+   - Manual workflow dispatch
+
+### Limitations
+
+GitHub Pages deployment has some limitations:
+- Static content only
+- No built-in WebSocket support
+- Requires external game server for multiplayer features
+
+## Development Environment
+
+### Local Development
 - Clone the repository
 - Copy .env.production.example to .env.production
 - Configure local environment variables
 - Run development server: `yarn dev`
-- Connect to other paddock instances through peer network
 
-### Real-time Communication
+### Real-time Features
 
 Socket.io Implementation:
-- Leverages OneSec's Next.js support for Socket.io capabilities
-- Real-time updates through distributed network
-- Seamless multiplayer interactions
-- Automatic scaling across peer-to-peer nodes
+- OneSec: Full WebSocket support through platform
+- GitHub Pages: Requires external WebSocket server
+- Local: Uses localhost:3131 for development
 
-### Development vs Production
-
-- **Development**: 
-  - Runs both frontend and game server locally
-  - Uses localhost:3131 for WebSocket connections
-  - Uses local .env file
-
-- **Production**:
-  - Frontend and game server distributed across OneSec's network
-  - Socket.io connections managed by OneSec's platform
-  - Environment variables from OneSec dashboard
-
-### Monitoring and Maintenance
+## Monitoring and Maintenance
 
 1. **Health Checks**
    - Monitor Socket.io connections
@@ -76,15 +115,15 @@ Socket.io Implementation:
    - Verify real-time updates
 
 2. **Updates and Rollbacks**
-   - OneSec handles automatic deployments
+   - OneSec: Automatic deployments
+   - GitHub Pages: Through Actions workflow
    - Use GitHub releases for version control
-   - Monitor deployment logs
 
-### Security Considerations
+## Security Considerations
 
 1. **Environment Variables**
    - Never commit sensitive values
-   - Use OneSec's secure storage
+   - Use platform-specific secure storage
    - Rotate GitHub tokens periodically
 
 2. **Access Control**
@@ -92,21 +131,22 @@ Socket.io Implementation:
    - Secure WebSocket connections
    - Monitor GitHub webhook events
 
-### Support and Resources
+## Support and Resources
 
 - [OpSec Platform Documentation](https://www.opsec.computer/docs)
 - [OneSec Deployment Guide](https://docs.opsec.computer/getting-started/onesec)
-- [GitHub API Documentation](https://docs.github.com/en/rest)
+- [GitHub Pages Documentation](https://docs.github.com/en/pages)
+- [GitHub Actions Documentation](https://docs.github.com/en/actions)
 - [Vite Deployment Guide](https://vitejs.dev/guide/build.html)
 - [Socket.io Documentation](https://socket.io/docs/v4)
 
-### Troubleshooting
+## Troubleshooting
 
 Common issues and solutions:
 
 1. **Socket.io Connection Issues**
-   - Verify OneSec WebSocket configuration
-   - Check Socket.io server settings
+   - Verify WebSocket configuration
+   - Check server settings
    - Ensure proper connection URLs
 
 2. **GitHub Integration Issues**
@@ -115,6 +155,6 @@ Common issues and solutions:
    - Confirm environment variables
 
 3. **Build Failures**
-   - Review OneSec build logs
+   - Review build logs
    - Verify vite.config.ts settings
    - Check for missing dependencies
