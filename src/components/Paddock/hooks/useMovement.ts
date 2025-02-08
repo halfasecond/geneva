@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Position } from '../../../server/types'
 import { paths } from '../../Bridleway/set'
-import { isOnPath } from '../../Bridleway/utils'
+import { isOnPath, getSafeZone } from '../../Bridleway/utils'
 
 interface UseMovementProps {
     viewportWidth: number
@@ -96,15 +96,10 @@ export function useMovement({
                         bottom: y + 120 // horse height
                     }
 
-                    // Add safeZone to each path segment using exact legacy padding values
+                    // Add safeZone to each path segment using the utility function
                     const pathsWithSafeZones = paths.map(path => ({
                         ...path,
-                        safeZone: {
-                            left: path.left + 90,
-                            right: path.left + path.width - 90,
-                            top: path.top + 80,
-                            bottom: path.top + path.height - 90
-                        }
+                        safeZone: getSafeZone(path)
                     }))
                     
                     // Only allow movement if new position is on path
