@@ -104,7 +104,8 @@ const Race = ({
             const moveInterval = setInterval(() => {
                 // Move racing horse
                 setRacingHorsePosition(prev => {
-                    const newX = prev.x + 5;  // Constant speed
+                    const speed = 2 + Math.random() * 7;  // Random speed between 2-9px like legacy code
+                    const newX = prev.x + speed;
                     if (newX >= 1990) {
                         if (!finishTimes.has(playerTokenId)) {
                             setFinishTimes(times =>
@@ -123,8 +124,8 @@ const Race = ({
                         if (!finishTimes.has(horse.tokenId)) {
                             const currentPos = next.get(horse.tokenId);
                             if (currentPos) {
-                                // Random speed between 3-7 pixels per tick
-                                const speed = 3 + Math.random() * 4;
+                                // Random speed between 2-8 pixels per tick (matching legacy code)
+                                const speed = 2 + Math.random() * 6;
                                 const newX = currentPos.x + speed;
                                 
                                 // Check if horse finished
