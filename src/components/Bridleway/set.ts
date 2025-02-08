@@ -28,10 +28,10 @@ export const pond = {
 
 // Issues Field columns
 export const issuesColumns = [
-  { left: 2200, top: 510, width: 200, height: 850, backgroundColor: "#8b4513" },  // Column 1
-  { left: 2400, top: 510, width: 200, height: 850, backgroundColor: "#8b4513" },  // Column 2
-  { left: 2600, top: 510, width: 200, height: 850, backgroundColor: "#8b4513" },  // Column 3
-  { left: 2800, top: 510, width: 200, height: 850, backgroundColor: "#8b4513" }   // Column 4
+  { left: 2200, top: 510, width: 236, height: 720, backgroundColor: "rgb(139, 69, 19)" },  // Column 1
+  { left: 2460, top: 510, width: 236, height: 720, backgroundColor: "rgb(139, 69, 19)" },  // Column 2 (left + width + gap)
+  { left: 2720, top: 510, width: 236, height: 720, backgroundColor: "rgb(139, 69, 19)" },  // Column 3 (prev + width + gap)
+  { left: 2980, top: 510, width: 236, height: 720, backgroundColor: "rgb(139, 69, 19)" }   // Column 4 (prev + width + gap)
 ];
 
 export interface PathSegment {
