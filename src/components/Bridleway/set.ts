@@ -30,3 +30,13 @@ export interface PathSegment {
     bottom: number;
   };
 }
+
+export const raceElements = [
+  { left: 700, top: 1739, width: 1300, height: 40, backgroundColor: "#888" },  // Top fence
+  { left: 700, top: 2150, width: 1300, height: 40, backgroundColor: "#888" },  // Bottom fence
+  { left: 700, top: 1770, width: 10, height: 420, backgroundColor: "#888" },   // Start line
+  { left: 1990, top: 1770, width: 10, height: 420, backgroundColor: "#888" },  // Finish line
+  { left: 580, top: 1790, width: 120, height: 80, backgroundColor: "#CCC" },   // Stall 1
+  { left: 580, top: 1920, width: 120, height: 80, backgroundColor: "#CCC" },   // Stall 2
+  { left: 580, top: 2060, width: 120, height: 80, backgroundColor: "#CCC" }    // Start box
+];
