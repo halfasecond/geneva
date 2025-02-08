@@ -19,7 +19,9 @@ export function useGameServer({ horseId, initialPosition }: UseGameServerProps) 
     const [connected, setConnected] = useState(false)
 
     useEffect(() => {
-        const socket = io('http://localhost:3131')
+        // Use environment variable with fallback for development
+        const serverUrl = import.meta.env.VITE_GAME_SERVER_URL || 'http://localhost:3131'
+        const socket = io(serverUrl)
         socketRef.current = socket
 
         socket.on('connect', () => {
