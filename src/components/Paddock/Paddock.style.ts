@@ -11,8 +11,8 @@ export const Container = styled.div`
 
 export const IssuesFieldContainer = styled.div<{ scale: number }>`
     position: absolute;
-    top: 100px;
-    left: 800px;
+    top: 500px;  // Align with pond's top
+    left: 1600px;  // Position to the right of pond (1040 + 500 + spacing)
     max-height: 80vh;
     overflow: auto;
     transform: ${props => `scale(${1 / props.scale})`}; // Counter parent scale

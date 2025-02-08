@@ -8,6 +8,7 @@ import IssuesField from "../IssuesField";
 import { PathHighlight } from "../Bridleway";
 import { paths } from "../Bridleway/set";
 import { introMessages } from "../Bridleway/messages";
+import Pond from "../Pond/Pond";
 
 interface PaddockProps {
     horseId: string;
@@ -132,6 +133,9 @@ export const Paddock: React.FC<PaddockProps> = ({
                         dangerouslySetInnerHTML={{ __html: message.message }}
                     />
                 ))}
+
+                {/* Farm Pond */}
+                <Pond left={1040} top={500} />
 
                 {/* Issues Field */}
                 <Styled.IssuesFieldContainer scale={scale}>
