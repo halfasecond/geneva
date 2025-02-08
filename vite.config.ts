@@ -23,8 +23,6 @@ export default defineConfig(({ command, mode }) => ({
       utils: "/src/utils"
     },
   },
-  // Set base URL for GitHub Pages when in production
-  base: mode === 'production' ? '/paddock/' : '/',
   build: {
     outDir: 'dist',
     sourcemap: true,
