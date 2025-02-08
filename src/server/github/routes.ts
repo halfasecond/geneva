@@ -1,6 +1,6 @@
-import express, { Router, Request, Response, NextFunction } from 'express';
+import express, { Request, Response, NextFunction, RequestHandler } from 'express';
 import { GitHubClient } from '../../utils/github/client';
-import { asyncHandler } from './errors';
+import { ProjectItemStatus, PullRequestReviewEvent } from '../../utils/github/types';
 import {
     validateAgent,
     validateBody,
@@ -11,358 +11,159 @@ import {
     validatePullRequestNumber,
     validateDiscussionNumber,
     logRequest,
-    rateLimit
+    rateLimiter
 } from './middleware';
-import { PullRequestReviewEvent } from '../../utils/github/types';
-import { sendSuccessResponse } from './errors';
-import { GitHubAPIError } from './types';
 
-export function createGitHubRouter(client: GitHubClient): Router {
-    const router = express.Router();
+const router = express.Router();
 
-    // Apply common middleware
-    router.use(express.json());
-    router.use(logRequest);
-    router.use(rateLimit());
+// Apply middleware to all routes
+router.use(logRequest);
+router.use(rateLimiter);
+router.use(validateAgent);
 
-    // Public endpoints (no agent validation required)
-    router.get(
-        '/issues/:issueNumber',
-        validateIssueNumber,
-        asyncHandler(async (req: Request, res: Response) => {
-            const issueNumber = parseInt(req.params.issueNumber);
-            const issue = await client.findIssue(issueNumber);
-            if (!issue) {
-                throw new GitHubAPIError('Issue not found', 404);
-            }
-            sendSuccessResponse(res, issue);
-        })
-    );
+// Helper to create GitHub client
+const createClient = () => new GitHubClient({
+    token: process.env.GITHUB_TOKEN!,
+    owner: process.env.GITHUB_OWNER!,
+    repo: process.env.GITHUB_REPO!
+});
 
-    router.get(
-        '/pulls/:prNumber',
-        validatePullRequestNumber,
-        asyncHandler(async (req: Request, res: Response) => {
-            const prNumber = parseInt(req.params.prNumber);
-            const pr = await client.getPullRequest(prNumber);
-            if (!pr || pr === null) {
-                throw new GitHubAPIError('Pull request not found', 404);
-            }
-            sendSuccessResponse(res, pr);
-        })
-    );
+// Project board routes
+const getProjectBoard: RequestHandler = async (req, res, next) => {
+    try {
+        const projectNumber = parseInt(req.params.projectNumber);
+        const client = createClient();
+        const board = await client.getBoardData(projectNumber);
+        res.json({ success: true, data: board });
+    } catch (error) {
+        next(error);
+    }
+};
 
-    router.get(
-        '/projects/:projectNumber/board',
-        validateProjectNumber,
-        asyncHandler(async (req: Request, res: Response) => {
-            const projectNumber = parseInt(req.params.projectNumber);
-            const board = await client.getBoardData(projectNumber);
-            sendSuccessResponse(res, board);
-        })
-    );
-    router.get(
-        '/projects',
-        asyncHandler(async (_req: Request, res: Response) => {
-            const projects = await client.listProjects();
-            sendSuccessResponse(res, projects);
-        })
-    );
+router.get('/projects/:projectNumber/board',
+    validateProjectNumber,
+    getProjectBoard
+);
 
-    // Discussion endpoints
-    router.get(
-        '/discussions/categories',
-        asyncHandler(async (_req: Request, res: Response) => {
-            const categories = await client.listDiscussionCategories();
-            sendSuccessResponse(res, categories);
-        })
-    );
+// Issue routes
+const createIssue: RequestHandler = async (req, res, next) => {
+    try {
+        const { title, body } = req.body;
+        const client = createClient();
+        // Get repository ID first
+        const metadata = await client.getProjectMetadata(1);
+        const issue = await client.createIssue({
+            title,
+            body,
+            repositoryId: metadata.repositoryId
+        });
+        res.json({ success: true, data: issue });
+    } catch (error) {
+        next(error);
+    }
+};
 
-    router.get(
-        '/discussions/:discussionNumber',
-        validateDiscussionNumber,
-        asyncHandler(async (req: Request, res: Response) => {
-            const discussionNumber = parseInt(req.params.discussionNumber);
-            const discussion = await client.getDiscussion(discussionNumber);
-            if (!discussion) {
-                throw new GitHubAPIError('Discussion not found', 404);
-            }
-            sendSuccessResponse(res, discussion);
-        })
-    );
+router.post('/issues',
+    validateBody,
+    validateIssueType,
+    createIssue
+);
 
-    router.post(
-        '/discussions',
-        validateAgent,
-        validateBody(['title', 'body', 'categoryId', 'projectNumber']),
-        asyncHandler(async (req: Request, res: Response) => {
-            const { title, body, categoryId, projectNumber } = req.body;
-            const metadata = await client.getProjectMetadata(projectNumber);
-            
-            // Validate category exists
-            const categories = await client.listDiscussionCategories();
-            const categoryExists = categories.some(category => category.id === categoryId);
-            if (!categoryExists) {
-                throw new GitHubAPIError('Invalid discussion category', 400);
-            }
+const addIssueComment: RequestHandler = async (req, res, next) => {
+    try {
+        const issueNumber = parseInt(req.params.issueNumber);
+        const { body } = req.body;
+        const client = createClient();
+        await client.addIssueComment(issueNumber, body);
+        res.json({ success: true });
+    } catch (error) {
+        next(error);
+    }
+};
 
-            const result = await client.createDiscussion({
-                title,
-                body,
-                categoryId,
-                repositoryId: metadata.repositoryId
-            });
+router.post('/issues/:issueNumber/comments',
+    validateIssueNumber,
+    validateBody,
+    addIssueComment
+);
 
-            sendSuccessResponse(res, result);
-        })
-    );
+const updateIssueStatus: RequestHandler = async (req, res, next) => {
+    try {
+        const issueNumber = parseInt(req.params.issueNumber);
+        const { status } = req.body;
+        const client = createClient();
+        await client.moveIssueToStatus(1, issueNumber, status as ProjectItemStatus);
+        res.json({ success: true });
+    } catch (error) {
+        next(error);
+    }
+};
 
-    // Protected endpoints (require agent validation)
-    router.use(validateAgent);
+router.patch('/issues/:issueNumber/status',
+    validateIssueNumber,
+    validateStatus,
+    updateIssueStatus
+);
 
-    // Get Project Fields
-    router.get(
-        '/projects/:projectId/fields',
-        asyncHandler(async (req: Request, res: Response) => {
-            const { projectId } = req.params;
-            const fields = await client.getProjectFields(projectId);
-            sendSuccessResponse(res, fields);
-        })
-    );
-
-    // Issues
-    router.post(
-        '/issues',
-        validateBody(['type', 'description', 'body', 'projectNumber']),
-        validateIssueType,
-        asyncHandler(async (req: Request, res: Response) => {
-            const { type, description, body, projectNumber } = req.body;
-
-            try {
-                const metadata = await client.getProjectMetadata(projectNumber);
-                if (!metadata) {
-                    throw new GitHubAPIError('Project not found', 404);
-                }
-
-                const result = await client.createIssue({
-                    title: `[${type}] ${description}`,
-                    body,
-                    repositoryId: metadata.repositoryId
-                });
-
-                sendSuccessResponse(res, result);
-            } catch (error) {
-                if (error instanceof GitHubAPIError) {
-                    throw error;
-                }
-                throw new GitHubAPIError('Project not found', 404);
-            }
-        })
-    );
-
-    // Labels
-    router.post(
-        '/issues/:issueNumber/labels',
-        validateIssueNumber,
-        validateBody(['labels']),
-        asyncHandler(async (req: Request, res: Response) => {
-            const { labels } = req.body;
-            const { issueNumber } = req.params;
-
-            await client.addLabelsToIssue(parseInt(issueNumber), labels);
-            sendSuccessResponse(res, { added: labels });
-        })
-    );
-
-    // Projects
-    router.post(
-        '/issues/:issueNumber/project/:projectNumber',
-        validateIssueNumber,
-        validateProjectNumber,
-        asyncHandler(async (req: Request, res: Response) => {
-            const { issueNumber, projectNumber } = req.params;
-            const projectNum = parseInt(projectNumber);
-
-            const metadata = await client.getProjectMetadata(projectNum);
-            const item = await client.findProjectItem(metadata.projectId, parseInt(issueNumber));
-
-            if (!item?.content?.id) {
-                throw new GitHubAPIError('Issue not found', 404);
-            }
-
-            const result = await client.addIssueToProject(
-                item.content.id,
-                metadata.projectId
-            );
-            sendSuccessResponse(res, result);
-        })
-    );
-
-    // Status Updates
-    router.post(
-        '/issues/:issueNumber/status',
-        validateIssueNumber,
-        validateBody(['status', 'projectNumber']),
-        validateStatus,
-        asyncHandler(async (req: Request, res: Response) => {
-            const { status, projectNumber } = req.body;
-            const { issueNumber } = req.params;
-
-            const result = await client.moveIssueToStatus(
-                projectNumber,
-                parseInt(issueNumber),
-                status
-            );
-            sendSuccessResponse(res, result);
-        })
-    );
-
-    // Pull Requests
-    router.post(
-        '/pulls',
-        validateBody(['type', 'description', 'issueNumber', 'headBranch', 'baseBranch', 'body', 'projectNumber']),
-        validateIssueType,
-        asyncHandler(async (req: Request, res: Response) => {
-            const {
-                type,
-                description,
-                headBranch,
-                baseBranch,
-                body,
-                projectNumber
-            } = req.body;
-
-            const metadata = await client.getProjectMetadata(projectNumber);
-            if (!metadata) {
-                throw new GitHubAPIError('Project not found', 404);
-            }
-
-            const result = await client.createPullRequest({
-                title: `[${type}] ${description}`,
-                body,
-                repositoryId: metadata.repositoryId,
-                headRefName: headBranch,
-                baseRefName: baseBranch
-            });
-
-            sendSuccessResponse(res, result);
-        })
-    );
-
-    // Comments
-    router.post(
-        '/issues/:issueNumber/comments',
-        validateIssueNumber,
-        validateBody(['body']),
-        asyncHandler(async (req: Request, res: Response) => {
-            const { body } = req.body;
-            const { issueNumber } = req.params;
-
-            await client.addIssueComment(parseInt(issueNumber), body);
-            sendSuccessResponse(res, { added: true });
-        })
-    );
-
-    // Merge PRs
-    router.post(
-        '/pulls/:prNumber/merge',
-        validateBody(['commitHeadline', 'commitBody']),
-        asyncHandler(async (req: Request, res: Response) => {
-            const { prNumber } = req.params;
-            const { commitHeadline, commitBody } = req.body;
-
-            const result = await client.mergePullRequest({
-                prNumber: parseInt(prNumber),
-                commitHeadline,
-                commitBody
-            });
-
-            sendSuccessResponse(res, result);
-        })
-    );
-
-    // PR Reviews
-    router.get(
-        '/pulls/:prNumber/reviews',
-        validatePullRequestNumber,
-        asyncHandler(async (req: Request, res: Response) => {
-            const prNumber = parseInt(req.params.prNumber);
-            const pr = await client.getPullRequest(prNumber);
-            if (!pr) {
-                throw new GitHubAPIError('Pull request not found', 404);
-            }
-            sendSuccessResponse(res, pr.reviews || { nodes: [] });
-        })
-    );
-
-    router.post(
-        '/pulls/:prNumber/reviews',
-        validateBody(['event', 'body']),
-        asyncHandler(async (req: Request, res: Response) => {
-            const { prNumber } = req.params;
-            const { event, body } = req.body;
-
-            // Validate review event type
-            if (!Object.values(PullRequestReviewEvent).includes(event)) {
-                throw new GitHubAPIError('Invalid review event type. Must be APPROVE, REQUEST_CHANGES, or COMMENT', 400);
-            }
-
-            const pr = await client.getPullRequest(parseInt(prNumber));
-            if (!pr) {
-                throw new GitHubAPIError('Pull request not found', 404);
-            }
-
-            const result = await client.createPullRequestReview(
-                parseInt(prNumber),
-                { pullRequestId: pr.id, event, body }
-            );
-
-            sendSuccessResponse(res, result);
-        })
-    );
-
-    // Add labels to PR
-    router.post(
-        '/pulls/:prNumber/labels',
-        validatePullRequestNumber,
-        validateBody(['labels']),
-        asyncHandler(async (req: Request, res: Response) => {
-            const { labels } = req.body;
-            const { prNumber } = req.params;
-
-            const pr = await client.getPullRequest(parseInt(prNumber));
-            if (!pr) {
-                throw new GitHubAPIError('Pull request not found', 404);
-            }
-
-            await client.addLabelsToPullRequest(parseInt(prNumber), labels);
-            sendSuccessResponse(res, { added: labels });
-        })
-    );
-
-    // Error handling middleware must be last
-    router.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
-        console.error('Error in router:', err);
-        
-        res.setHeader('Content-Type', 'application/json');
-        
-        if (err instanceof GitHubAPIError) {
-            res.status(err.statusCode).json({
-                success: false,
-                error: {
-                    message: err.message,
-                    details: err.details
-                }
-            });
-        } else {
-            res.status(500).json({
-                success: false,
-                error: {
-                    message: err instanceof Error ? err.message : 'Internal server error'
-                }
-            });
+// Pull request routes
+const createPullRequestReview: RequestHandler = async (req, res, next) => {
+    try {
+        const pullNumber = parseInt(req.params.pullNumber);
+        const { event, body } = req.body;
+        const client = createClient();
+        const pr = await client.getPullRequest(pullNumber);
+        if (!pr) {
+            res.status(404).json({ success: false, error: 'Pull request not found' });
+            return;
         }
-    });
+        const review = await client.createPullRequestReview(pullNumber, {
+            pullRequestId: pr.id,
+            event: event as PullRequestReviewEvent,
+            body
+        });
+        res.json({ success: true, data: review });
+    } catch (error) {
+        next(error);
+    }
+};
 
-    return router;
-}
+router.post('/pulls/:pullNumber/reviews',
+    validatePullRequestNumber,
+    validateBody,
+    createPullRequestReview
+);
+
+// Discussion routes
+const addDiscussionComment: RequestHandler = async (req, res, next) => {
+    try {
+        const discussionNumber = parseInt(req.params.discussionNumber);
+        const { body } = req.body;
+        const client = createClient();
+        const discussion = await client.getDiscussion(discussionNumber);
+        if (!discussion) {
+            res.status(404).json({ success: false, error: 'Discussion not found' });
+            return;
+        }
+        const comment = await client.addComment({
+            subjectId: discussion.id,
+            body
+        });
+        res.json({ success: true, data: comment });
+    } catch (error) {
+        next(error);
+    }
+};
+
+router.post('/discussions/:discussionNumber/comments',
+    validateDiscussionNumber,
+    validateBody,
+    addDiscussionComment
+);
+
+// Error handler
+router.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+    console.error('API Error:', err);
+    res.status(500).json({ success: false, error: err.message });
+});
+
+export default router;
