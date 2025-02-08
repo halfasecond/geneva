@@ -17,8 +17,9 @@ interface PaddockProps {
     introActive?: boolean;
 }
 
-// Environment configuration
-const IS_SERVERLESS = import.meta.env.VITE_SERVERLESS === 'true'
+// Environment configuration - handle various falsy values
+const IS_SERVERLESS = import.meta.env.VITE_SERVERLESS?.toLowerCase() === 'true';
+console.log('Paddock VITE_SERVERLESS:', import.meta.env.VITE_SERVERLESS);
 
 // AI horses for the race
 const AI_HORSES = [
