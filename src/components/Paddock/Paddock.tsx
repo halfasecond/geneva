@@ -80,12 +80,18 @@ export const Paddock: React.FC<PaddockProps> = ({
         } else if (state === 'racing') {
             setIsRacing(true);  // Keep movement disabled during race
         } else if (state === 'finished') {
-            // Clear forced position, racing position, and re-enable movement
+            // Clear forced position, racing position, re-enable movement, and show completion
             setForcedPosition(undefined);
             setRacingPosition(undefined);
             setIsRacing(false);
+            // Show completion message when movement and path restrictions are lifted
+            setVisibleMessages(prev => {
+                const next = [...prev];
+                next[next.length - 1] = true;  // Show last message (completion)
+                return next;
+            });
         }
-    }, [updatePosition]);
+    }, [updatePosition, setVisibleMessages]);
 
     // Initialize movement with current viewport dimensions
     const { position, viewportOffset } = useMovement({
