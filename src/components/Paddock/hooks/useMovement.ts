@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Position } from '../../../server/types'
 import { paths } from '../../Bridleway/set'
 import { isOnPath, getSafeZone } from '../../Bridleway/utils'
+import { introMessages } from '../../Bridleway/messages'
 
 interface UseMovementProps {
     viewportWidth: number
@@ -10,6 +11,7 @@ interface UseMovementProps {
     initialPosition: Position
     onPositionChange: (position: Position) => void
     introActive?: boolean
+    onMessageTrigger?: (messageIndex: number) => void
 }
 
 interface ViewportOffset {
@@ -23,7 +25,8 @@ export function useMovement({
     scale,
     initialPosition,
     onPositionChange,
-    introActive = false
+    introActive = false,
+    onMessageTrigger
 }: UseMovementProps) {
     const [position, setPosition] = useState<Position>(initialPosition)
     const [viewportOffset, setViewportOffset] = useState<ViewportOffset>({ x: 0, y: 0 })
@@ -96,7 +99,7 @@ export function useMovement({
                         bottom: y + 120 // horse height
                     }
 
-                    // Add safeZone to each path segment using the utility function
+                    // Add safeZone to each path segment
                     const pathsWithSafeZones = paths.map(path => ({
                         ...path,
                         safeZone: getSafeZone(path)
@@ -111,6 +114,16 @@ export function useMovement({
                             return newPosition
                         }
                         return prev // Keep previous position if invalid
+                    }
+
+                    // Check for message triggers
+                    if (onMessageTrigger) {
+                        pathsWithSafeZones.forEach((path, index) => {
+                            const message = introMessages.find(msg => msg.triggerSegment === index)
+                            if (message && isOnPath(horseBox, [path])) {
+                                onMessageTrigger(introMessages.indexOf(message))
+                            }
+                        })
                     }
                 }
 
@@ -132,7 +145,7 @@ export function useMovement({
                 cancelAnimationFrame(animationFrameId)
             }
         }
-    }, [keys, onPositionChange, introActive])
+    }, [keys, onPositionChange, introActive, onMessageTrigger])
 
     // Update viewport when horse approaches edges
     useEffect(() => {

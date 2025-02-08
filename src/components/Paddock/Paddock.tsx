@@ -7,6 +7,7 @@ import { Position } from "../../server/types";
 import IssuesField from "../IssuesField";
 import { PathHighlight } from "../Bridleway";
 import { paths } from "../Bridleway/set";
+import { introMessages } from "../Bridleway/messages";
 
 interface PaddockProps {
     horseId: string;
@@ -25,12 +26,25 @@ export const Paddock: React.FC<PaddockProps> = ({
         height: window.innerHeight
     });
     const [dimensionsReady, setDimensionsReady] = React.useState(false);
+    const [visibleMessages, setVisibleMessages] = React.useState<boolean[]>(
+        new Array(introMessages.length).fill(false)
+    );
 
     // Initialize game server connection
     const { connected, players, updatePosition } = useGameServer({
         horseId,
         initialPosition
     });
+
+    // Handle message triggers
+    const handleMessageTrigger = useCallback((messageIndex: number) => {
+        setVisibleMessages(prev => {
+            if (prev[messageIndex]) return prev; // Already visible
+            const next = [...prev];
+            next[messageIndex] = true;
+            return next;
+        });
+    }, []);
 
     // Initialize movement with current viewport dimensions
     const { position, viewportOffset } = useMovement({
@@ -43,7 +57,8 @@ export const Paddock: React.FC<PaddockProps> = ({
             if (connected) {
                 updatePosition(pos);
             }
-        }, [connected, updatePosition])
+        }, [connected, updatePosition]),
+        onMessageTrigger: introActive ? handleMessageTrigger : undefined
     });
 
     // Initialize zoom control
@@ -104,6 +119,18 @@ export const Paddock: React.FC<PaddockProps> = ({
                     >
                         {index + 1}
                     </Styled.PathLabel>
+                ))}
+
+                {/* Intro Messages */}
+                {introActive && introMessages.map((message, index) => (
+                    <Styled.Message
+                        key={`message-${index}`}
+                        left={message.left}
+                        top={message.top}
+                        width={message.width}
+                        opacity={visibleMessages[index] ? 1 : 0}
+                        dangerouslySetInnerHTML={{ __html: message.message }}
+                    />
                 ))}
 
                 {/* Issues Field */}

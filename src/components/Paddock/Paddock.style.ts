@@ -98,6 +98,27 @@ export const PathLabel = styled.div<{
     pointer-events: none;
 `
 
+export const Message = styled.div<{
+    left: number;
+    top: number;
+    width: number;
+    opacity: number;
+}>`
+    position: absolute;
+    transition: opacity 0.5s;
+    border: 1px solid #CCC;
+    opacity: ${props => props.opacity};
+    z-index: 10;
+    line-height: 22px;
+    border-radius: 5px;
+    text-align: center;
+    padding: 12px;
+    background-color: #FFF;
+    left: ${props => props.left}px;
+    top: ${props => props.top}px;
+    width: ${props => props.width}px;
+`
+
 export const ViewportIndicator = styled.div<{ 
     x: number; 
     y: number; 
