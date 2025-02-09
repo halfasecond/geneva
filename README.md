@@ -20,20 +20,26 @@ It enables agents to:
 
 ## Conjecture
 
-Does the integration of A.I. agents working collaboratively as an agile team foster emergence within:
-- Code quality & documentation
-- Gameplay, storytelling, NPC logic & player / community engagement
-- Ways of working, developer support & team velocity generally
+Geneva: Agile A.I. Agent Swarms for Next-Gen Web3 Innovation
 
-Specifically - are there benefits in using NFTs in this context both in terms of: 
-- developer and consumer conceptualisation
-- practicality / elegance of integration with existing web3 systems e.g. payment integration with platforms like OpenRouter, Coinbase
+Geneva is an agile framework that empowers swarms of A.I. agents to collaborate, manage tasks, and automate workflows via a configurable GitHub REST API. Built for rapid iteration and continuous delivery, Geneva explores the emerging world of agentic web3 by tackling several key questions:
 
-Do NFTs, and specifically who owns them, offer practical value in a commercial development environment?
+Agile Collaboration:
+Can A.I. agents working together as an agile team foster emergent improvements in code quality, documentation, gameplay design, storytelling, NPC behavior, and overall community engagement? How might these emergent properties enhance developer support and team velocity?
 
-Are there tangible financial advatages to companies and individuals taking this approach? Does an agentic approach deliver improved product and productivity?
+Innovative NFT Integration:
+Do NFTs add value from both a developer and consumer perspective? We’re investigating whether NFTs can elegantly integrate with existing web3 systems—such as payment platforms like OpenRouter and Coinbase—to streamline transactions and conceptualize ownership in novel ways.
 
-Does this repo provide a solid infrastructure for (and example of) the potential for elegant (and quick...) delivery of agentic applications?
+Commercial and Financial Impact:
+Beyond technical innovation, can NFT ownership models deliver tangible financial benefits in a commercial environment? We’re assessing if companies and individuals can realize measurable advantages from this agentic approach.
+
+Agentic Productivity and Infrastructure:
+Does leveraging an agentic, agile framework lead to improved product quality and faster delivery cycles? We aim to validate whether this repository serves as a robust, scalable infrastructure for rapid agentic application development.
+
+The Fun Factor:
+Ultimately, is the process fun? With A.I. training videos capturing the public’s imagination on platforms like YouTube, we’re curious whether watching agentic NFTs interact can itself be a form of engaging, consumable entertainment.
+
+Join us as we wrap up our hackathon, pushing the boundaries of A.I.-driven collaboration and redefining agile innovation in the web3 era.
 
 ## Projects
 
@@ -78,7 +84,7 @@ Together, we're not just building a game - we're creating a new way for AI agent
 
 We hope you enjoy the MVP we created in our Hackathon sprint! We've set it all up so there is no need to sign in. You can take horse21 for a ride and see whats what.
 
-The original paddock is here: https://paddock.chainedhorse.com - (we think our new one is better...)
+The original paddock is here: https://paddock.chainedhorse.com - and we think it is much improved in terms of UX (60fps 👀)  and in a way better place as a maintanable code base moving (and hooving...) forward.
 
 ![New horizons and the Paddock - #82 and #21 meet for their daily graze](https://cdn.halfasecond.com/images/geneva/horse21-and-horse88-daily-graze.png)
 ***New horizons and the Paddock - #82 and #21 meet for their daily graze***
@@ -86,7 +92,7 @@ The original paddock is here: https://paddock.chainedhorse.com - (we think our n
 ## Documentation
 
 - [GitHub Wiki](../../wiki) - Comprehensive documentation of workflows and automation tools
-- [Contributing Guide](./docs/paddock/CONTRIBUTING.md) - Guide for contributing to the project
+- [Contributing Guide](./docs/paddock/CONTRIBUTING.md) - Guide for contributing to the project👀
 
 ## Getting Started
 
