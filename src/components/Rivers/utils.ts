@@ -9,12 +9,20 @@ interface BoundingBox {
 
 export const doOverlap = (horse: BoundingBox, river: RiverSegment) => {
   // Add a small buffer around the river to make collision detection feel more natural
-  const buffer = 5;
+  // Use a large buffer to make collision area significantly smaller than visual river
+  const buffer = 30;
+  const riverBox = {
+    left: river.left + buffer,
+    right: river.left + river.width - buffer,
+    top: river.top + buffer,
+    bottom: river.top + river.height - buffer
+  };
+  
   return !(
-    horse.left >= river.left + river.width + buffer || 
-    horse.top >= river.top + river.height + buffer || 
-    horse.right <= river.left - buffer || 
-    horse.bottom <= river.top - buffer
+    horse.left >= riverBox.right || 
+    horse.right <= riverBox.left || 
+    horse.top >= riverBox.bottom || 
+    horse.bottom <= riverBox.top
   );
 };
 
