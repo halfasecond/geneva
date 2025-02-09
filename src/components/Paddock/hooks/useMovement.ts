@@ -200,21 +200,21 @@ export function useMovement({
                 const viewportBottom = viewportOffset.y + viewportHeight;
                 
                 // Check if horse is too close to right/left edges
-                const rightEdge = viewportRight - (viewportWidth * 0.1);
-                const leftEdge = viewportOffset.x + (viewportWidth * 0.1);
+                const rightEdge = viewportRight - (viewportWidth * 0.2);
+                const leftEdge = viewportOffset.x + (viewportWidth * 0.2);
                 if (position.x > rightEdge) {
-                    newX = position.x - (viewportWidth * 0.9);
+                    newX = position.x - (viewportWidth * 0.8);
                 } else if (position.x < leftEdge) {
-                    newX = position.x - (viewportWidth * 0.1);
+                    newX = position.x - (viewportWidth * 0.2);
                 }
                 
                 // Same for top/bottom
-                const bottomEdge = viewportBottom - (viewportHeight * 0.1);
-                const topEdge = viewportOffset.y + (viewportHeight * 0.1);
+                const bottomEdge = viewportBottom - (viewportHeight * 0.2);
+                const topEdge = viewportOffset.y + (viewportHeight * 0.2);
                 if (position.y > bottomEdge) {
-                    newY = position.y - (viewportHeight * 0.9);
+                    newY = position.y - (viewportHeight * 0.8);
                 } else if (position.y < topEdge) {
-                    newY = position.y - (viewportHeight * 0.1);
+                    newY = position.y - (viewportHeight * 0.2);
                 }
             }
             
