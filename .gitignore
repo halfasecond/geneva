@@ -6,6 +6,8 @@ node_modules/
 # Build
 dist/
 build/
+dump/
+demo-server/
 
 # Environment
 .env
