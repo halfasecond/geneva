@@ -14,6 +14,7 @@ import Pond from "../Pond";
 import RainbowPuke from "../RainbowPuke";
 import Duck from "../Duck";
 import Flower from "../Flower";
+import Farm from "../Farm";
 import Race from "../Race";
 
 interface PaddockProps {
@@ -274,6 +275,8 @@ export const Paddock: React.FC<PaddockProps> = ({
 
 {/* Farm Pond and RainbowPuke Falls */}
 <Pond left={1040} top={510} />
+{/* Farm below top pond */}
+<Farm left={1190} top={940} size={100} />
 {/* Ducks in first pond */}
 <Duck key="pond1-duck1" left={1040} top={650} pondWidth={380} />
 <Duck key="pond1-duck2" left={1040} top={650} pondWidth={380} />
@@ -374,6 +377,19 @@ export const Paddock: React.FC<PaddockProps> = ({
                         top: `${(2580 / 5000) * 200}px`,
                         width: `${(500 / 5000) * 200}px`,
                         height: `${(340 / 5000) * 200}px`
+                    }}
+                />
+
+                {/* Farm on minimap */}
+                <Styled.MinimapElement
+                    style={{
+                        position: 'absolute',
+                        background: '#754c29',
+                        left: `${(1190 / 5000) * 200 - ((100 / 5000) * 200)}px`,  // Offset by size increase
+                        top: `${(940 / 5000) * 200 - ((100 / 5000) * 200)}px`,    // Offset by size increase
+                        width: `${(100 / 5000) * 200 * 2}px`,   // Double width
+                        height: `${(100 / 5000) * 200 * 2}px`,  // Double height
+                        opacity: 0.6
                     }}
                 />
 

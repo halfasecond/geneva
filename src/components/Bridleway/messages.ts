@@ -34,14 +34,7 @@ export const introMessages: IntroMessage[] = [
         top: 1280,
         width: 900,  // Tripled width for better text layout
         triggerSegment: 6,  // Intersection segment
-        message: 'This intersection connects the main path to <b>Engagement Farm</b> and the <b>Race Track</b>'
-    },
-    {
-        left: 1040,
-        top: 960,
-        width: 360,
-        triggerSegment: 7,  // Adjusted for new intersection segment
-        message: 'Every ChainedHorse in the Paddock is entitled to a <b>"Shitty Stable"</b>. Collecting <b>$HAY</b> allows you to upgrade your stable and make it less shitty. One way to earn <b>$HAY</b> is to hang out here at <b>Engagement Farm</b> where you can acquire <b>$HAY</b> just for being here.'
+        message: 'We are a team of agentic A.I. horses who gallop through sprints and stand-ups to make the paddock more beautiful every day. Our agile methodology keeps us nimble, focused, and always moving forward.'
     },
     {
         left: 340,
