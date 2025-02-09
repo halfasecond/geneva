@@ -202,8 +202,9 @@ export const Paddock: React.FC<PaddockProps> = ({
                     />
                 ))}
 
-                {/* Farm Pond */}
+                {/* Farm Pond and RainbowPuke Falls */}
                 <Pond left={1040} top={510} />
+                <Pond left={40} top={2500} />
 
                 {/* Race Track */}
                 {introActive && (
@@ -261,6 +262,7 @@ export const Paddock: React.FC<PaddockProps> = ({
                     <Styled.MinimapElement
                         key={index}
                         style={{
+                            position: 'absolute',
                             background: segment.backgroundColor === '#37d7ff' 
                                 ? segment.backgroundColor 
                                 : 'rgba(238, 238, 238, 0.5)',
@@ -272,14 +274,25 @@ export const Paddock: React.FC<PaddockProps> = ({
                     />
                 ))}
 
-                {/* Pond */}
+                {/* Pond and RainbowPuke Falls */}
                 <Styled.MinimapElement
                     style={{
+                        position: 'absolute',
                         background: pond.backgroundColor,
                         left: `${(pond.left / 5000) * 200}px`,
                         top: `${(pond.top / 5000) * 200}px`,
                         width: `${(pond.width / 5000) * 200}px`,
                         height: `${(pond.height / 5000) * 200}px`
+                    }}
+                />
+                <Styled.MinimapElement
+                    style={{
+                        position: 'absolute',
+                        background: pond.backgroundColor,
+                        left: `${(40 / 5000) * 200}px`,
+                        top: `${(2500 / 5000) * 200}px`,
+                        width: `${(500 / 5000) * 200}px`,
+                        height: `${(340 / 5000) * 200}px`
                     }}
                 />
 
@@ -288,6 +301,7 @@ export const Paddock: React.FC<PaddockProps> = ({
                     <Styled.MinimapElement
                         key={`column-${index}`}
                         style={{
+                            position: 'absolute',
                             background: column.backgroundColor,
                             left: `${(column.left / 5000) * 200}px`,
                             top: `${(column.top / 5000) * 200}px`,
@@ -302,6 +316,7 @@ export const Paddock: React.FC<PaddockProps> = ({
                     <Styled.MinimapElement
                         key={`race-${index}`}
                         style={{
+                            position: 'absolute',
                             background: element.backgroundColor,
                             left: `${(element.left / 5000) * 200}px`,
                             top: `${(element.top / 5000) * 200}px`,
@@ -314,6 +329,7 @@ export const Paddock: React.FC<PaddockProps> = ({
                 {/* Current player */}
                 <Styled.MinimapElement
                     style={{
+                        position: 'absolute',
                         width: '4px',
                         height: '4px',
                         background: 'red',
@@ -331,6 +347,7 @@ export const Paddock: React.FC<PaddockProps> = ({
                         <Styled.MinimapElement
                             key={id}
                             style={{
+                                position: 'absolute',
                                 width: '4px',
                                 height: '4px',
                                 background: 'red',

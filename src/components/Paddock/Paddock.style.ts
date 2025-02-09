@@ -54,9 +54,7 @@ export const Minimap = styled.div`
 `
 
 // Base styles for minimap elements
-export const MinimapElement = styled.div`
-    position: absolute;
-`
+export const MinimapElement = styled.div``
 
 export const PathLabel = styled.div<{
     left: number;
