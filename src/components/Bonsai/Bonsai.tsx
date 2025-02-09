@@ -1,5 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
+import { getAssetPath } from '../../utils/assetPath';
 
 interface BonsaiProps {
     left: number;
@@ -22,7 +23,7 @@ const Bonsai: React.FC<BonsaiProps> = ({
 }) => {
     return (
         <BonsaiImage
-            src="/svg/horse/Bonsai.svg"
+            src={getAssetPath('svg/horse/Bonsai.svg')}
             alt="Bonsai"
             style={{ left, top }}
             size={size}

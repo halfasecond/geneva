@@ -1,5 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
+import { getAssetPath } from '../../utils/assetPath';
 
 interface FlowerProps {
     left: number;
@@ -25,7 +26,7 @@ const Flower: React.FC<FlowerProps> = ({
 }) => {
     return (
         <FlowerImage
-            src="/horse/Flower.svg"
+            src={getAssetPath('horse/Flower.svg')}
             alt="Flower"
             style={{ left, top }}
             size={size}

@@ -1,5 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
+import { getAssetPath } from '../../utils/assetPath';
 
 interface FarmProps {
     left: number;
@@ -37,7 +38,7 @@ const Farm: React.FC<FarmProps> = ({
     return (
         <Container style={{ left, top }}>
             <FarmImage
-                src="/svg/farm.svg"
+                src={getAssetPath('svg/farm.svg')}
                 alt="Farm"
                 size={size}
             />

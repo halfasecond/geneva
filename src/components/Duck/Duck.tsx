@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import * as Styled from './Duck.style';
+import { getAssetPath } from '../../utils/assetPath';
 
 interface DuckProps {
     left: number;
@@ -48,7 +49,7 @@ const Duck: React.FC<DuckProps> = ({ left, top: baseTop, width = 120, pondWidth 
 
     return (
         <Styled.DuckImage
-            src={`/horse/Duck.svg`}
+            src={getAssetPath('horse/Duck.svg')}
             alt="Duck"
             style={{
                 left: `${position}px`,

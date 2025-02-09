@@ -1,5 +1,6 @@
 import React from 'react';
 import * as Styled from './IntroModal.style';
+import { getAssetPath } from '../../utils/assetPath';
 
 interface IntroModalProps {
     onStart: () => void;
@@ -19,7 +20,7 @@ const IntroModal: React.FC<IntroModalProps> = ({ onStart }) => {
         <Styled.Overlay>
             <Styled.ModalContent>
                 <Styled.Avatar>
-                    <img src="/horse/21.svg" alt="Horse #21" />
+                    <img src={getAssetPath('horse/21.svg')} alt="Horse #21" />
                 </Styled.Avatar>
                 <Styled.Title>Welcome to The Paddock</Styled.Title>
                 <p>Hello - I am <a href="https://opensea.io/assets/ethereum/0xf7503bea549e73c0f260e42c088568fd865a358a/21" target="_blank" rel="noopener noreferrer"><b>Chained Horse #21</b></a>, lead dev and CEO at the paddock.</p>
