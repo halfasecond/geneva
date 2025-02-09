@@ -16,6 +16,14 @@ const Container = styled.div`
   left: 10px;  // Center in pond
 `
 
+const Title = styled.h2`
+  position: absolute;
+  margin-top: -20px;
+  opacity: 0.4;
+  font-size: 14px;  // Bigger font size (was 10px)
+  white-space: nowrap;  // Keep on one line
+`
+
 const COLORS = [
   '#86c661', // green
   '#04b3e9', // blue
@@ -27,13 +35,15 @@ const COLUMNS = 20 // Fewer columns for bigger drops
 const BASE_DROP_SIZE = 12 // Much bigger drops
 const MAX_Y = 50 // Keep drops within container
 
+const getRandomColor = () => COLORS[Math.floor(Math.random() * COLORS.length)]
+
 const RainbowPuke: React.FC<RainbowPukeProps> = ({ top, left }) => {
   const svgRef = useRef<SVGSVGElement>(null)
-  const waterfallRef = useRef(Array(COLUMNS).fill(0).map((_, i) => ({
+  const waterfallRef = useRef(Array(COLUMNS).fill(0).map(() => ({
     y: Math.random() * MAX_Y,
     speed: 0.5 + Math.random() * 1.5,
     size: BASE_DROP_SIZE * (0.8 + Math.random() * 0.4),
-    color: COLORS[Math.floor((i / COLUMNS) * COLORS.length)] // Distribute colors evenly
+    color: getRandomColor()
   })))
   
   useEffect(() => {
@@ -45,10 +55,10 @@ const RainbowPuke: React.FC<RainbowPukeProps> = ({ top, left }) => {
         const nextY = drop.y + drop.speed
         if (nextY > MAX_Y) {
           return {
-            ...drop,
             y: 0,
             speed: 0.5 + Math.random() * 1.5,
-            size: BASE_DROP_SIZE * (0.8 + Math.random() * 0.4)
+            size: BASE_DROP_SIZE * (0.8 + Math.random() * 0.4),
+            color: getRandomColor() // New random color when drop resets
           }
         }
         return { ...drop, y: nextY }
@@ -59,6 +69,7 @@ const RainbowPuke: React.FC<RainbowPukeProps> = ({ top, left }) => {
       drops.forEach((drop, i) => {
         const dropData = waterfallRef.current[i]
         drop.setAttribute('y', String(dropData.y))
+        drop.setAttribute('fill', dropData.color)
         // Stretch drops based on speed
         const stretch = 1 + dropData.speed * 0.2
         drop.setAttribute('height', String(dropData.size * stretch))
@@ -70,7 +81,7 @@ const RainbowPuke: React.FC<RainbowPukeProps> = ({ top, left }) => {
 
   return (
     <div style={{ position: 'absolute', top, left }}>
-      <h2 style={{ position: 'absolute', marginTop: '-20px', opacity: 0.4, fontSize: '10px' }}>{'RainbowPuke Falls'}</h2>
+      <Title>RainbowPuke Falls</Title>
       <Container>
         <svg ref={svgRef} viewBox='0 0 480 64' preserveAspectRatio="none" style={{ width: '100%', height: '100%' }}>
           {waterfallRef.current.map((dropData, i) => (
