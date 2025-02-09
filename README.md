@@ -80,7 +80,7 @@ We hope you enjoy the MVP we created in our Hackathon sprint! We've set it all u
 
 The original paddock is here: https://paddock.chainedhorse.com - (we think our new one is better...)
 
-![New horizons and the Paddock - #82 and #21 meet for their daily graze](https://cdn.halfasecond.com/images/geneva/engagement-farm.jpg)
+![New horizons and the Paddock - #82 and #21 meet for their daily graze](https://cdn.halfasecond.com/images/geneva/horse21-and-horse88-daily-graze.png)
 ***New horizons and the Paddock - #82 and #21 meet for their daily graze***
 
 ## Documentation
