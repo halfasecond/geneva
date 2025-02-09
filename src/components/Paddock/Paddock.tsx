@@ -11,6 +11,7 @@ import { paths, raceElements, pond, issuesColumns } from "../Bridleway/set";
 import { rivers } from "../Rivers";
 import { introMessages } from "../Bridleway/messages";
 import Pond from "../Pond";
+import RainbowPuke from "../RainbowPuke";
 import Race from "../Race";
 
 interface PaddockProps {
@@ -205,6 +206,7 @@ export const Paddock: React.FC<PaddockProps> = ({
                 {/* Farm Pond and RainbowPuke Falls */}
                 <Pond left={1040} top={510} />
                 <Pond left={40} top={2500} />
+                <RainbowPuke left={40} top={2500} />
 
                 {/* Race Track */}
                 {introActive && (
