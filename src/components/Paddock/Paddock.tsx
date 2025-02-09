@@ -23,6 +23,7 @@ interface PaddockProps {
     horseId: string;
     initialPosition?: Position;
     introActive?: boolean;
+    modalOpen?: boolean;
 }
 
 // Environment configuration - handle various falsy values
@@ -95,7 +96,8 @@ const AI_HORSES = [
 export const Paddock: React.FC<PaddockProps> = ({
     horseId,
     initialPosition = { x: 100, y: 150, direction: "right" as const },  // Default game start position
-    introActive = true
+    introActive = true,
+    modalOpen = false
 }) => {
     const [isMuted, setIsMuted] = useState(false);
 
@@ -192,7 +194,7 @@ export const Paddock: React.FC<PaddockProps> = ({
         viewportHeight: viewportDimensions.height,
         initialPosition,
         introActive: introActive,
-        movementDisabled: isRacing,  // Disable movement during race
+        movementDisabled: isRacing || modalOpen,  // Disable movement during race or when modal is open
         onPositionChange: useCallback((pos: Position) => {
             if (!IS_SERVERLESS && connected) {
                 updatePosition(pos);

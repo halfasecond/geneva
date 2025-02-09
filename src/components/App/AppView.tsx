@@ -19,7 +19,7 @@ const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn: w
             {showIntro && <IntroModal onStart={handleStart} />}
             <Styled.Main>
                 <h1>The Paddock</h1>
-                <Paddock horseId="21" />
+                <Paddock horseId="21" modalOpen={showIntro} />
             </Styled.Main>
         </Router>
     )
