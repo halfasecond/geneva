@@ -12,6 +12,8 @@ import { rivers } from "../Rivers";
 import { introMessages } from "../Bridleway/messages";
 import Pond from "../Pond";
 import RainbowPuke from "../RainbowPuke";
+import Duck from "../Duck";
+import Flower from "../Flower";
 import Race from "../Race";
 
 interface PaddockProps {
@@ -24,10 +26,67 @@ interface PaddockProps {
 const IS_SERVERLESS = import.meta.env.VITE_SERVERLESS?.toLowerCase() === 'true';
 console.log('Paddock VITE_SERVERLESS:', import.meta.env.VITE_SERVERLESS);
 
+// Define all restricted areas to avoid
+const RESTRICTED_AREAS = [
+    // Ponds (500x400 each)
+    { left: 1040, top: 510, width: 500, height: 400 },
+    { left: 40, top: 2580, width: 500, height: 400 },
+    // Rivers
+    ...rivers,
+    // Bridleway paths
+    ...paths.map(path => ({
+        ...path,
+        // Add 20px buffer around paths
+        left: path.left - 20,
+        top: path.top - 20,
+        width: path.width + 40,
+        height: path.height + 40
+    })),
+    // Race track elements
+    ...raceElements,
+    // Issues columns
+    ...issuesColumns
+];
+
+interface RestrictedArea {
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+}
+
+// Check if a position overlaps with any restricted area
+const isInRestrictedArea = (x: number, y: number, size: number) => {
+    return RESTRICTED_AREAS.some((area: RestrictedArea) => {
+        // Check if any part of the flower overlaps with water
+        return !(x + size < area.left || // flower is left of water
+                x > area.left + area.width || // flower is right of water
+                y + size < area.top || // flower is above water
+                y > area.top + area.height); // flower is below water
+    });
+};
+
+// Generate random flower positions (avoiding water)
+const FLOWERS = Array.from({ length: 100 }, () => {
+    let left, top, size;
+    do {
+        left = Math.random() * 4800;
+        top = Math.random() * 4800;
+        size = 100 + Math.random() * 100;
+    } while (isInRestrictedArea(left, top, size));
+    
+    return {
+        left,
+        top,
+        size,
+        rotation: 0
+    };
+});
+
 // AI horses for the race
 const AI_HORSES = [
-    { tokenId: "30", position: { x: 580, y: 1800 } },  // Stall 1 (1530 + 270)
-    { tokenId: "31", position: { x: 580, y: 1930 } }   // Stall 2 (1660 + 270)
+    { tokenId: "82", position: { x: 580, y: 1800 } },  // Stall 1 (1530 + 270)
+    { tokenId: "186", position: { x: 580, y: 1930 } }   // Stall 2 (1660 + 270)
 ];
 
 export const Paddock: React.FC<PaddockProps> = ({ 
@@ -202,10 +261,30 @@ export const Paddock: React.FC<PaddockProps> = ({
                         dangerouslySetInnerHTML={{ __html: message.message }}
                     />
                 ))}
+{/* Random flowers scattered around the paddock */}
+{FLOWERS.map((flower, index) => (
+    <Flower
+        key={`flower-${index}`}
+        left={flower.left}
+        top={flower.top}
+        size={flower.size}
+        rotation={flower.rotation}
+    />
+))}
 
-                {/* Farm Pond and RainbowPuke Falls */}
-                <Pond left={1040} top={510} />
-                <Pond left={40} top={2580} />
+{/* Farm Pond and RainbowPuke Falls */}
+<Pond left={1040} top={510} />
+{/* Ducks in first pond */}
+<Duck key="pond1-duck1" left={1040} top={650} pondWidth={380} />
+<Duck key="pond1-duck2" left={1040} top={650} pondWidth={380} />
+<Duck key="pond1-duck3" left={1040} top={650} pondWidth={380} />
+
+<Pond left={40} top={2580} />
+{/* Ducks in second pond */}
+<Duck key="pond2-duck1" left={40} top={2720} pondWidth={380} />
+<Duck key="pond2-duck2" left={40} top={2720} pondWidth={380} />
+<Duck key="pond2-duck3" left={40} top={2720} pondWidth={380} />
+<RainbowPuke left={40} top={2580} />
                 <RainbowPuke left={40} top={2580} />
 
                 {/* Race Track */}
