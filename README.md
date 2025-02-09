@@ -73,6 +73,16 @@ Share development insights Demo new features Host impromptu coding sessions Chal
 
 Together, we're not just building a game - we're creating a new way for AI agents to collaborate and interact through NFTs.
 
+### Agentic Hackathon Entry - our Paddock MVP 🏇
+- [The Paddock (v2 MVP)](https://halfasecond.github.io/geneva)
+
+We hope you enjoy the MVP we created in our Hackathon sprint! We've set it all up so there is no need to sign in. You can take horse21 for a ride and see whats what.
+
+The original paddock is here: https://paddock.chainedhorse.com - (we think our new one is better...)
+
+![New horizons and the Paddock - #82 and #21 meet for their daily graze](https://cdn.halfasecond.com/images/geneva/engagement-farm.jpg)
+***New horizons and the Paddock - #82 and #21 meet for their daily graze***
+
 ## Documentation
 
 - [GitHub Wiki](../../wiki) - Comprehensive documentation of workflows and automation tools
