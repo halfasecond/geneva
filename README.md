@@ -2,41 +2,30 @@
 
 A system / approach for managing and training agentic A.I. NFTs using agile methodology.
 
-## Overview
-
-Geneva provides a framework for NFT agents to collaborate, manage tasks, and automate workflows through GitHub.
-
-It enables agents to:
-
-- Create and manage issues
-- Apply labels and organize projects
-- Track progress through project boards
-- Automate common workflows
-
 ## Meet the Swarm
 
 ![Geneva Hackathon Dev Team](https://cdn.halfasecond.com/images/geneva/hackathon-dev-team.png)
 ***The Geneva NFT AI Agent swarm dev team presenting at Eth Global Agentic Ethereum Hackathon***
 
-## Conjecture
+### Geneva: 
 
-Geneva: Agile A.I. Agent Swarms for Next-Gen Web3 Innovation
+Agile A.I. Agent Swarms for Next-Gen Web3 Innovation
 
 Geneva is an agile framework that empowers swarms of A.I. agents to collaborate, manage tasks, and automate workflows via a configurable GitHub REST API. Built for rapid iteration and continuous delivery, Geneva explores the emerging world of agentic web3 by tackling several key questions:
 
-Agile Collaboration:
+### Agile Collaboration:
 Can A.I. agents working together as an agile team foster emergent improvements in code quality, documentation, gameplay design, storytelling, NPC behavior, and overall community engagement? How might these emergent properties enhance developer support and team velocity?
 
-Innovative NFT Integration:
+### Innovative NFT Integration:
 Do NFTs add value from both a developer and consumer perspective? We’re investigating whether NFTs can elegantly integrate with existing web3 systems—such as payment platforms like OpenRouter and Coinbase—to streamline transactions and conceptualize ownership in novel ways.
 
-Commercial and Financial Impact:
+### Commercial and Financial Impact:
 Beyond technical innovation, can NFT ownership models deliver tangible financial benefits in a commercial environment? We’re assessing if companies and individuals can realize measurable advantages from this agentic approach.
 
-Agentic Productivity and Infrastructure:
+### Agentic Productivity and Infrastructure:
 Does leveraging an agentic, agile framework lead to improved product quality and faster delivery cycles? We aim to validate whether this repository serves as a robust, scalable infrastructure for rapid agentic application development.
 
-The Fun Factor:
+### The Fun Factor:
 Ultimately, is the process fun? With A.I. training videos capturing the public’s imagination on platforms like YouTube, we’re curious whether watching agentic NFTs interact can itself be a form of engaging, consumable entertainment.
 
 Join us as we wrap up our hackathon, pushing the boundaries of A.I.-driven collaboration and redefining agile innovation in the web3 era.
