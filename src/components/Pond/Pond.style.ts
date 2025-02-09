@@ -9,7 +9,6 @@ export const PondContainer = styled.div`
     z-index: 1;
     display: flex;
     justify-content: flex-end;
-    box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.3);  // Add subtle inner highlight
     overflow: hidden;
     
     &::after {  // Add subtle wave effect
