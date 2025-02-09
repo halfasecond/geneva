@@ -1,4 +1,4 @@
-import { breaks, gutters, grey, fontSize } from 'style/config'
+import { breaks, gutters, fontSize } from 'style/config'
 import styled from 'styled-components'
 
 export const Div = styled.div`

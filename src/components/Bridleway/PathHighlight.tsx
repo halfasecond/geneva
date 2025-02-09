@@ -1,6 +1,6 @@
 import React from "react";
 import { PathContainer, PathSegment as StyledPathSegment } from "./PathHighlight.style";
-import { paths, PathSegment } from "./set";
+import { paths } from "./set";
 
 interface PathHighlightProps {
   active?: boolean;

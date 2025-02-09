@@ -30,14 +30,6 @@ export class Agent {
   }
 
   /**
-   * Get or create agent's label
-   */
-  private async getAgentLabel(): Promise<string> {
-    const labelName = `agent:${this.agentType.toLowerCase()}${this.agentNumber}`;
-    return this.client.getOrCreateLabel(labelName, 'f29513');
-  }
-
-  /**
    * Create a new issue
    */
   async createIssue(

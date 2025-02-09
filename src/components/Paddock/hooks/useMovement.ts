@@ -7,7 +7,6 @@ import { introMessages } from '../../Bridleway/messages'
 interface UseMovementProps {
     viewportWidth: number
     viewportHeight: number
-    scale: number
     initialPosition: Position
     onPositionChange: (position: Position) => void
     introActive?: boolean
@@ -34,7 +33,6 @@ const MOVEMENT_SPEED = HORSE_SIZE / 32; // Trotting speed: 3.75 pixels per frame
 export function useMovement({
     viewportWidth,
     viewportHeight,
-    scale,
     initialPosition,
     onPositionChange,
     introActive = false,
