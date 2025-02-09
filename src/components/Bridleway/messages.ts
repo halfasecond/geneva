@@ -12,7 +12,7 @@ export const introMessages: IntroMessage[] = [
         top: 280,
         width: 300,
         triggerSegment: 0,  // First path segment - show immediately
-        message: `<b>Welcome to The Meadowverse</b><br />🐎 🐎 🐎 🐎 🐎<br />Use your arrow keys:<br />&#x2B06; &#x27A1; &#x2B07; &#x2B05;<br />to move your horse`
+        message: `<b>Welcome to The Paddock</b><br />🐎 🐎 🐎 🐎 🐎<br />Use your arrow keys:<br /><span style="font-size: 32px">↑ → ↓ ←</span><br />to move your horse`
     },
     {
         left: 70,

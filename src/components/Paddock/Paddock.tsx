@@ -15,7 +15,9 @@ import RainbowPuke from "../RainbowPuke";
 import Duck from "../Duck";
 import Flower from "../Flower";
 import Farm from "../Farm";
+import MuteButton from "../MuteButton";
 import Race from "../Race";
+import { BACKGROUND_MUSIC } from '../../audio';
 
 interface PaddockProps {
     horseId: string;
@@ -90,11 +92,22 @@ const AI_HORSES = [
     { tokenId: "186", position: { x: 580, y: 1930 } }   // Stall 2 (1660 + 270)
 ];
 
-export const Paddock: React.FC<PaddockProps> = ({ 
+export const Paddock: React.FC<PaddockProps> = ({
     horseId,
     initialPosition = { x: 100, y: 150, direction: "right" as const },  // Default game start position
     introActive = true
 }) => {
+    const [isMuted, setIsMuted] = useState(false);
+
+    // Handle audio mute/unmute
+    const handleMuteToggle = useCallback(() => {
+        setIsMuted(prev => {
+            const newMuted = !prev;
+            BACKGROUND_MUSIC.muted = newMuted;
+            return newMuted;
+        });
+    }, []);
+
     const containerRef = useRef<HTMLDivElement>(null);
     const [viewportDimensions, setViewportDimensions] = React.useState({
         width: window.innerWidth,
@@ -228,7 +241,8 @@ export const Paddock: React.FC<PaddockProps> = ({
 
     return (
         <Styled.Container ref={containerRef}>
-            <Styled.GameSpace 
+            <MuteButton isMuted={isMuted} onToggle={handleMuteToggle} />
+            <Styled.GameSpace
                 style={{
                     transform: `scale(${scale}) translate(${-viewportOffset.x}px, ${-viewportOffset.y}px)`,
                     transformOrigin: `${zoomOrigin.x}% ${zoomOrigin.y}%`
