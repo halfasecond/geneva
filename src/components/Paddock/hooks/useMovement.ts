@@ -118,7 +118,25 @@ export function useMovement({
                     return prev
                 }
 
-                // After race, allow free movement
+                const horseBox = {
+                    left: x,
+                    right: x + HORSE_SIZE,
+                    top: y,
+                    bottom: y + HORSE_SIZE
+                }
+
+                // Check for river collision first
+                if (isInRiver(horseBox, rivers)) {
+                    // If only direction changed, allow that
+                    if (x === prev.x && y === prev.y && direction !== prev.direction) {
+                        const newPosition = { ...prev, direction }
+                        onPositionChange(newPosition)
+                        return newPosition
+                    }
+                    return prev // Keep previous position if in river
+                }
+
+                // After river check, handle race and path validation
                 if (hasFinishedRace) {
                     // Just keep within game bounds
                     x = Math.max(0, Math.min(x, 5000));
@@ -126,13 +144,6 @@ export function useMovement({
                     const newPosition = { x, y, direction };
                     onPositionChange(newPosition);
                     return newPosition;
-                }
-
-                const horseBox = {
-                    left: x,
-                    right: x + HORSE_SIZE,
-                    top: y,
-                    bottom: y + HORSE_SIZE
                 }
 
                 // Add safeZone to each path segment
@@ -150,17 +161,6 @@ export function useMovement({
                         return newPosition
                     }
                     return prev // Keep previous position if not on path
-                }
-
-                // Always check for river collision
-                if (isInRiver(horseBox, rivers)) {
-                    // If only direction changed, allow that
-                    if (x === prev.x && y === prev.y && direction !== prev.direction) {
-                        const newPosition = { ...prev, direction }
-                        onPositionChange(newPosition)
-                        return newPosition
-                    }
-                    return prev // Keep previous position if in river
                 }
 
                 // Check for message triggers
