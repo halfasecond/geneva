@@ -6,7 +6,9 @@ import { useGameServer } from "./hooks/useGameServer";
 import { Position } from "../../server/types";
 import IssuesField from "../IssuesField";
 import { PathHighlight } from "../Bridleway";
+import { Rivers } from "../Rivers";
 import { paths, raceElements, pond, issuesColumns } from "../Bridleway/set";
+import { rivers } from "../Rivers";
 import { introMessages } from "../Bridleway/messages";
 import Pond from "../Pond";
 import Race from "../Race";
@@ -171,8 +173,9 @@ export const Paddock: React.FC<PaddockProps> = ({
                     transformOrigin: `${zoomOrigin.x}% ${zoomOrigin.y}%`
                 }}
             >
-                {/* Bridleway Path - only show when intro is active */}
+                {/* Bridleway Path and Rivers */}
                 <PathHighlight active={introActive} />
+                <Rivers active={true} />
 
                 {/* Path Labels - show regardless of intro state */}
                 {paths.map((path, index) => (
@@ -253,16 +256,18 @@ export const Paddock: React.FC<PaddockProps> = ({
 
             {/* Minimap */}
             <Styled.Minimap>
-                {/* Bridleway paths on minimap - always visible */}
-                {paths.map((path, index) => (
+                {/* Bridleway paths and rivers on minimap - always visible */}
+                {[...paths, ...rivers].map((segment, index) => (
                     <Styled.MinimapElement
                         key={index}
                         style={{
-                            background: 'rgba(238, 238, 238, 0.5)',
-                            left: `${(path.left / 5000) * 200}px`,
-                            top: `${(path.top / 5000) * 200}px`,
-                            width: `${(path.width / 5000) * 200}px`,
-                            height: `${(path.height / 5000) * 200}px`
+                            background: segment.backgroundColor === '#37d7ff' 
+                                ? segment.backgroundColor 
+                                : 'rgba(238, 238, 238, 0.5)',
+                            left: `${(segment.left / 5000) * 200}px`,
+                            top: `${(segment.top / 5000) * 200}px`,
+                            width: `${(segment.width / 5000) * 200}px`,
+                            height: `${(segment.height / 5000) * 200}px`
                         }}
                     />
                 ))}

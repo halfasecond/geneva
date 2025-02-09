@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Position } from '../../../server/types'
 import { paths } from '../../Bridleway/set'
+import { rivers, isInRiver } from '../../Rivers'
 import { isOnPath, getSafeZone } from '../../Bridleway/utils'
 import { introMessages } from '../../Bridleway/messages'
 
@@ -127,44 +128,52 @@ export function useMovement({
                     return newPosition;
                 }
 
-                // If intro is active, validate position against paths
-                if (introActive) {
-                    const horseBox = {
-                        left: x,
-                        right: x + HORSE_SIZE, // horse width
-                        top: y,
-                        bottom: y + HORSE_SIZE // horse height
-                    }
-
-                    // Add safeZone to each path segment
-                    const pathsWithSafeZones = paths.map(path => ({
-                        ...path,
-                        safeZone: getSafeZone(path)
-                    }))
-                    
-                    // Only allow movement if new position is on path
-                    if (!isOnPath(horseBox, pathsWithSafeZones)) {
-                        // If only direction changed, allow that
-                        if (x === prev.x && y === prev.y && direction !== prev.direction) {
-                            const newPosition = { ...prev, direction }
-                            onPositionChange(newPosition)
-                            return newPosition
-                        }
-                        return prev // Keep previous position if invalid
-                    }
-
-                    // Check for message triggers
-                    if (onMessageTrigger) {
-                        pathsWithSafeZones.forEach((path, index) => {
-                            const message = introMessages.find(msg => msg.triggerSegment === index)
-                            if (message && isOnPath(horseBox, [path])) {
-                                onMessageTrigger(introMessages.indexOf(message))
-                            }
-                        })
-                    }
+                const horseBox = {
+                    left: x,
+                    right: x + HORSE_SIZE,
+                    top: y,
+                    bottom: y + HORSE_SIZE
                 }
 
-                // Position is valid or intro is inactive
+                // Add safeZone to each path segment
+                const pathsWithSafeZones = paths.map(path => ({
+                    ...path,
+                    safeZone: getSafeZone(path)
+                }))
+                
+                // If intro is active, validate position against paths
+                if (introActive && !isOnPath(horseBox, pathsWithSafeZones)) {
+                    // If only direction changed, allow that
+                    if (x === prev.x && y === prev.y && direction !== prev.direction) {
+                        const newPosition = { ...prev, direction }
+                        onPositionChange(newPosition)
+                        return newPosition
+                    }
+                    return prev // Keep previous position if not on path
+                }
+
+                // Always check for river collision
+                if (isInRiver(horseBox, rivers)) {
+                    // If only direction changed, allow that
+                    if (x === prev.x && y === prev.y && direction !== prev.direction) {
+                        const newPosition = { ...prev, direction }
+                        onPositionChange(newPosition)
+                        return newPosition
+                    }
+                    return prev // Keep previous position if in river
+                }
+
+                // Check for message triggers
+                if (onMessageTrigger) {
+                    pathsWithSafeZones.forEach((path, index) => {
+                        const message = introMessages.find(msg => msg.triggerSegment === index)
+                        if (message && isOnPath(horseBox, [path])) {
+                            onMessageTrigger(introMessages.indexOf(message))
+                        }
+                    })
+                }
+
+                // Position is valid
                 const newPosition = { x, y, direction }
                 onPositionChange(newPosition)
                 return newPosition
