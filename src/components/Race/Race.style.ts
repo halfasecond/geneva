@@ -1,4 +1,5 @@
 import styled from 'styled-components'
+import { getAssetPath } from '../../utils/assetPath';
 
 export const RaceTrack = styled.div`
     position: absolute;
@@ -108,7 +109,7 @@ export const Fence = styled.div`
     left: 700px;
     width: 1300px;
     height: 40px;
-    background-image: url('/fence.png');
+    background-image: url('${getAssetPath('fence.png')}');
     background-size: auto 200%;
     z-index: 0;
 

@@ -1,5 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
+import { getAssetPath } from '../../utils/assetPath';
 
 interface HorseProps {
     horseId: string;
@@ -23,7 +24,7 @@ const HorseContainer = styled.div`
 export const Horse: React.FC<HorseProps> = ({ horseId, style }) => {
     return (
         <HorseContainer style={style}>
-            <img src={`/horse/${horseId}.svg`} alt={`Horse #${horseId}`} />
+            <img src={getAssetPath(`horse/${horseId}.svg`)} alt={`Horse #${horseId}`} />
         </HorseContainer>
     );
 };

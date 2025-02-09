@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useCallback, useState } from "react";
 import * as Styled from "./Paddock.style";
+import { getAssetPath } from "../../utils/assetPath";
 import { useMovement } from "./hooks/useMovement";
 import { useZoom } from "./hooks/useZoom";
 import { useGameServer } from "./hooks/useGameServer";
@@ -333,7 +334,7 @@ export const Paddock: React.FC<PaddockProps> = ({
                             transform: `scaleX(${position.direction === "right" ? 1 : -1})`
                         }}
                     >
-                        <img src={`/horse/${horseId}.svg`} alt={`#${horseId}`} />
+                        <img src={getAssetPath(`horse/${horseId}.svg`)} alt={`#${horseId}`} />
                     </Styled.Horse>
                 )}
 
@@ -349,7 +350,7 @@ export const Paddock: React.FC<PaddockProps> = ({
                                 transform: `scaleX(${player.position.direction === "right" ? 1 : -1})`
                             }}
                         >
-                            <img src={`/horse/${id}.svg`} alt={`Horse ${id}`} />
+                            <img src={getAssetPath(`horse/${id}.svg`)} alt={`Horse ${id}`} />
                         </Styled.Horse>
                     );
                 })}
