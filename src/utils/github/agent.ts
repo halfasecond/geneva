@@ -104,6 +104,10 @@ export class Agent {
   async commentOnPR(prNumber: number, comment: string) {
     const signedComment = this.sign(comment);
     const pr = await this.client.getPullRequest(prNumber);
+    
+    if (!pr) {
+      throw new Error(`Pull request #${prNumber} not found`);
+    }
 
     return this.client.addComment({
       subjectId: pr.id,
