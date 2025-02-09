@@ -205,8 +205,8 @@ export const Paddock: React.FC<PaddockProps> = ({
 
                 {/* Farm Pond and RainbowPuke Falls */}
                 <Pond left={1040} top={510} />
-                <Pond left={40} top={2500} />
-                <RainbowPuke left={40} top={2500} />
+                <Pond left={40} top={2580} />
+                <RainbowPuke left={40} top={2580} />
 
                 {/* Race Track */}
                 {introActive && (
@@ -292,7 +292,7 @@ export const Paddock: React.FC<PaddockProps> = ({
                         position: 'absolute',
                         background: pond.backgroundColor,
                         left: `${(40 / 5000) * 200}px`,
-                        top: `${(2500 / 5000) * 200}px`,
+                        top: `${(2580 / 5000) * 200}px`,
                         width: `${(500 / 5000) * 200}px`,
                         height: `${(340 / 5000) * 200}px`
                     }}
