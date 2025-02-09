@@ -4,6 +4,7 @@ import { gameServer } from './src/server/vite-plugin-game-server'
 
 // https://vitejs.dev/config/
 export default defineConfig(({ command, mode }) => ({
+  base: mode === 'production' ? '/geneva/' : '/', // Only use GitHub Pages base in production
   plugins: [
     react(),
     // Only include game server in development
