@@ -9,7 +9,8 @@ const requestTimestamps = new Map<string, number>();
 
 export function rateLimit() {
     return (req: Request, _res: Response, next: NextFunction) => {
-        const clientId = req.headers['x-agent-id'] as string || req.ip;
+        // Ensure clientId is always a string
+        const clientId = (req.headers['x-agent-id'] as string | undefined) || req.ip || 'unknown';
         const now = Date.now();
         const windowStart = now - 60000; // 1 minute ago
 

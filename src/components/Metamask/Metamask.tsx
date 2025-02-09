@@ -1,5 +1,5 @@
 import React from 'react'
-import { AuthProps } from 'types/auth'
+import { AuthProps } from '../../types/auth'
 import * as Styled from './Metamask.style'
 
 const Header: React.FC<AuthProps> = ({ loggedIn, handleSignIn, handleSignOut, BASE_URL }) => {

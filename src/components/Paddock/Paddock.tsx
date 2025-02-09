@@ -114,7 +114,6 @@ export const Paddock: React.FC<PaddockProps> = ({
     const { position, viewportOffset } = useMovement({
         viewportWidth: viewportDimensions.width,
         viewportHeight: viewportDimensions.height,
-        scale: 1,
         initialPosition,
         introActive: introActive,
         movementDisabled: isRacing,  // Disable movement during race
