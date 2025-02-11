@@ -392,6 +392,24 @@ export interface CreateDiscussionResult {
     };
 }
 
+export interface AddDiscussionCommentInput {
+    discussionId: string;
+    body: string;
+}
+
+export interface AddDiscussionCommentResult {
+    addDiscussionComment: {
+        comment: {
+            id: string;
+            body: string;
+            author: {
+                login: string;
+            };
+            createdAt: string;
+        };
+    };
+}
+
 export interface GitHubError extends Error {
     response?: {
         status?: number;
@@ -428,4 +446,8 @@ export interface GitHubClient {
     getDiscussion(discussionNumber: number): Promise<Discussion | null>;
     listDiscussionCategories(): Promise<DiscussionCategory[]>;
     createDiscussion(input: CreateDiscussionInput): Promise<CreateDiscussionResult>;
+    addDiscussionComment(discussionNumber: number, body: string): Promise<AddDiscussionCommentResult>;
+
+    // Issue methods
+    listIssues(): Promise<Issue[]>;
 }

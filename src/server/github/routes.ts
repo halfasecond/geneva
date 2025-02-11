@@ -27,6 +27,14 @@ export function createGitHubRouter(client: GitHubClient): Router {
 
     // Public endpoints (no agent validation required)
     router.get(
+        '/issues',
+        asyncHandler(async (_req: Request, res: Response) => {
+            const issues = await client.listIssues();
+            sendSuccessResponse(res, issues);
+        })
+    );
+
+    router.get(
         '/issues/:issueNumber',
         validateIssueNumber,
         asyncHandler(async (req: Request, res: Response) => {
@@ -92,6 +100,19 @@ export function createGitHubRouter(client: GitHubClient): Router {
     );
 
     router.post(
+        '/discussions/:discussionNumber/comments',
+        validateDiscussionNumber,
+        validateAgent,
+        validateBody(['body']),
+        asyncHandler(async (req: Request, res: Response) => {
+            const { discussionNumber } = req.params;
+            const { body } = req.body;
+            const result = await client.addDiscussionComment(parseInt(discussionNumber), body);
+            sendSuccessResponse(res, result);
+        })
+    );
+
+    router.post(
         '/discussions',
         validateAgent,
         validateBody(['title', 'body', 'categoryId', 'projectNumber']),
@@ -149,6 +170,12 @@ export function createGitHubRouter(client: GitHubClient): Router {
                     body,
                     repositoryId: metadata.repositoryId
                 });
+
+                // Add issue to project
+                await client.addIssueToProject(
+                    result.createIssue.issue.id,
+                    metadata.projectId
+                );
 
                 sendSuccessResponse(res, result);
             } catch (error) {

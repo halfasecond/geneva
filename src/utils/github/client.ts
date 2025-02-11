@@ -31,7 +31,8 @@ import type {
     Discussion,
     DiscussionCategory,
     CreateDiscussionInput,
-    CreateDiscussionResult
+    CreateDiscussionResult,
+    AddDiscussionCommentResult
 } from './types';
 
 /**
@@ -320,6 +321,52 @@ export class GitHubClient {
         this.projectMetadataCache.set(projectNumber, metadata);
 
         return metadata;
+    }
+
+    /**
+     * List all issues in the repository
+     */
+    async listIssues(): Promise<Issue[]> {
+        const query = `
+            query($owner: String!, $repo: String!) {
+                repository(owner: $owner, name: $repo) {
+                    issues(first: 100, orderBy: {field: UPDATED_AT, direction: DESC}) {
+                        nodes {
+                            id
+                            number
+                            title
+                            body
+                            url
+                            state
+                            labels(first: 100) {
+                                nodes {
+                                    id
+                                    name
+                                    color
+                                }
+                            }
+                            comments(first: 100) {
+                                nodes {
+                                    id
+                                    body
+                                    author {
+                                        login
+                                    }
+                                    createdAt
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        `;
+
+        const response = await this.graphqlWithAuth(query, {
+            owner: this.config.owner,
+            repo: this.config.repo
+        });
+
+        return (response as any).repository.issues.nodes;
     }
 
     /**
@@ -875,5 +922,38 @@ export class GitHubClient {
         `;
 
         return this.graphqlWithAuth(mutation, { input }) as Promise<CreateDiscussionResult>;
+    }
+
+    /**
+     * Add a comment to a discussion
+     */
+    async addDiscussionComment(discussionNumber: number, body: string): Promise<AddDiscussionCommentResult> {
+        // First get the discussion ID
+        const discussion = await this.getDiscussion(discussionNumber);
+        if (!discussion) {
+            throw new Error(`Discussion #${discussionNumber} not found`);
+        }
+
+        const mutation = `
+            mutation($input: AddDiscussionCommentInput!) {
+                addDiscussionComment(input: $input) {
+                    comment {
+                        id
+                        body
+                        author {
+                            login
+                        }
+                        createdAt
+                    }
+                }
+            }
+        `;
+
+        return this.graphqlWithAuth(mutation, {
+            input: {
+                discussionId: discussion.id,
+                body
+            }
+        }) as Promise<AddDiscussionCommentResult>;
     }
 }

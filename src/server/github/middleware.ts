@@ -119,3 +119,22 @@ export function validateDiscussionNumber(req: Request, _res: Response, next: Nex
     }
     next();
 }
+
+// Validate agent ID in comment body matches header
+export function validateCommentAgentId(req: Request, _res: Response, next: NextFunction) {
+    const agentId = req.headers['x-agent-id'] as string;
+    const { body } = req.body;
+    
+    // Extract agent ID from comment body (e.g., [horse88])
+    const match = body.match(/^\[(\w+)\]/);
+    if (!match) {
+        throw new GitHubAPIError('Comment must start with agent ID in brackets (e.g., [horse88])', 400);
+    }
+    
+    const bodyAgentId = match[1];
+    if (bodyAgentId !== agentId) {
+        throw new GitHubAPIError('Agent ID in comment must match agent ID in header', 403);
+    }
+    
+    next();
+}
