@@ -97,11 +97,29 @@ const AI_HORSES = [
 
 export const Paddock: React.FC<PaddockProps> = ({
     horseId,
-    initialPosition = { x: 100, y: 150, direction: "right" as const },  // Default game start position
+    initialPosition = { x: 100, y: 4600, direction: "right" as const },  // Position near beach for testing
     introActive = true,
     modalOpen = false
 }) => {
     const [isMuted, setIsMuted] = useState(false);
+    const [debugMode, setDebugMode] = useState(false);
+
+    // Debug mode hotkey
+    useEffect(() => {
+        const handleKeyPress = (e: KeyboardEvent) => {
+            if (e.key === '9') {
+                setDebugMode(prev => {
+                    const newDebugMode = !prev;
+                    if (newDebugMode && !isMuted) { // Only mute if turning debug on and not already muted
+                        handleMuteToggle();
+                    }
+                    return newDebugMode;
+                });
+            }
+        };
+        window.addEventListener('keydown', handleKeyPress);
+        return () => window.removeEventListener('keydown', handleKeyPress);
+    }, []);
 
     // Handle audio mute/unmute
     const handleMuteToggle = useCallback(() => {
@@ -195,15 +213,15 @@ export const Paddock: React.FC<PaddockProps> = ({
         viewportWidth: viewportDimensions.width,
         viewportHeight: viewportDimensions.height,
         initialPosition,
-        introActive: introActive,
-        movementDisabled: isRacing || modalOpen,  // Disable movement during race or when modal is open
+        introActive: debugMode ? false : introActive,
+        movementDisabled: debugMode ? false : (isRacing || modalOpen),  // Debug mode bypasses all restrictions
         onPositionChange: useCallback((pos: Position) => {
             if (!IS_SERVERLESS && connected) {
                 updatePosition(pos);
             }
         }, [IS_SERVERLESS, connected, updatePosition]),
-        onMessageTrigger: introActive ? handleMessageTrigger : undefined,
-        forcePosition: forcedPosition,
+        onMessageTrigger: introActive && !debugMode ? handleMessageTrigger : undefined,
+        forcePosition: debugMode ? undefined : forcedPosition,
         racingHorsePosition: racingPosition  // Pass racing position for viewport tracking
     });
 
@@ -252,6 +270,9 @@ export const Paddock: React.FC<PaddockProps> = ({
                     transformOrigin: `${zoomOrigin.x}% ${zoomOrigin.y}%`
                 }}
             >
+                {/* Beach sand background */}
+                <Styled.BeachSand />
+
                 {/* Bridleway Path and Rivers */}
                 <PathHighlight active={introActive} />
                 <Rivers active={true} />
@@ -280,32 +301,32 @@ export const Paddock: React.FC<PaddockProps> = ({
                         dangerouslySetInnerHTML={{ __html: message.message }}
                     />
                 ))}
-{/* Random flowers scattered around the paddock */}
-{FLOWERS.map((flower, index) => (
-    <Flower
-        key={`flower-${index}`}
-        left={flower.left}
-        top={flower.top}
-        size={flower.size}
-        rotation={flower.rotation}
-    />
-))}
 
-{/* Farm Pond and RainbowPuke Falls */}
-<Pond left={1040} top={510} />
-{/* Farm below top pond */}
-<Farm left={1190} top={940} size={100} />
-{/* Ducks in first pond */}
-<Duck key="pond1-duck1" left={1040} top={650} pondWidth={380} />
-<Duck key="pond1-duck2" left={1040} top={650} pondWidth={380} />
-<Duck key="pond1-duck3" left={1040} top={650} pondWidth={380} />
+                {/* Random flowers scattered around the paddock */}
+                {FLOWERS.map((flower, index) => (
+                    <Flower
+                        key={`flower-${index}`}
+                        left={flower.left}
+                        top={flower.top}
+                        size={flower.size}
+                        rotation={flower.rotation}
+                    />
+                ))}
 
-<Pond left={40} top={2580} />
-{/* Ducks in second pond */}
-<Duck key="pond2-duck1" left={40} top={2720} pondWidth={380} />
-<Duck key="pond2-duck2" left={40} top={2720} pondWidth={380} />
-<Duck key="pond2-duck3" left={40} top={2720} pondWidth={380} />
-<RainbowPuke left={40} top={2580} />
+                {/* Farm Pond and RainbowPuke Falls */}
+                <Pond left={1040} top={510} />
+                {/* Farm below top pond */}
+                <Farm left={1190} top={940} size={100} />
+                {/* Ducks in first pond */}
+                <Duck key="pond1-duck1" left={1040} top={650} pondWidth={380} />
+                <Duck key="pond1-duck2" left={1040} top={650} pondWidth={380} />
+                <Duck key="pond1-duck3" left={1040} top={650} pondWidth={380} />
+
+                <Pond left={40} top={2580} />
+                {/* Ducks in second pond */}
+                <Duck key="pond2-duck1" left={40} top={2720} pondWidth={380} />
+                <Duck key="pond2-duck2" left={40} top={2720} pondWidth={380} />
+                <Duck key="pond2-duck3" left={40} top={2720} pondWidth={380} />
                 <RainbowPuke left={40} top={2580} />
 
                 {/* Race Track */}
@@ -355,6 +376,9 @@ export const Paddock: React.FC<PaddockProps> = ({
                         </Styled.Horse>
                     );
                 })}
+
+                {/* Beach sea overlay */}
+                <Styled.BeachSea />
             </Styled.GameSpace>
 
             {/* Minimap */}
