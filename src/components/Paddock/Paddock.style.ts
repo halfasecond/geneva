@@ -22,7 +22,7 @@ export const IssuesFieldContainer = styled.div<{ scale: number }>`
 export const GameSpace = styled.div`
     position: absolute;
     width: 5000px;
-    height: 8000px;
+    height: 5000px;
     transition: transform 0.1s ease-out;
     will-change: transform;
 `
@@ -40,21 +40,6 @@ export const Horse = styled.div`
         object-fit: contain;
     }
 `
-
-export const Minimap = styled.div`
-    position: fixed;
-    bottom: 100px;
-    right: 34px;
-    width: 250px;
-    height: 200px;
-    background: rgba(0, 0, 0, 0.1);
-    border: 1px solid rgba(0, 0, 0, 0.2);
-    border-radius: 4px;
-    overflow: hidden;
-`
-
-// Base styles for minimap elements
-export const MinimapElement = styled.div``
 
 export const PathLabel = styled.div<{
     left: number;
@@ -97,19 +82,3 @@ export const Message = styled.div<{
     width: ${props => props.width}px;
 `
 
-export const ViewportIndicator = styled.div<{ 
-    x: number; 
-    y: number; 
-    width: number; 
-    height: number;
-    scale: number;
-}>`
-    position: absolute;
-    border: 1px solid rgba(0, 0, 0, 0.3);
-    background: rgba(255, 255, 255, 0.1);
-    left: ${props => (props.x / 5000) * 200}px;
-    top: ${props => (props.y / 5000) * 200}px;
-    width: ${props => Math.min(200, (props.width / (5000 * props.scale)) * 200)}px;
-    height: ${props => Math.min(200, (props.height / (5000 * props.scale)) * 200)}px;
-    transition: all 0.1s ease-out;
-`

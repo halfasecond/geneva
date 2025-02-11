@@ -19,6 +19,7 @@ import Farm from "../Farm";
 import MuteButton from "../MuteButton";
 import Race from "../Race";
 import { BACKGROUND_MUSIC } from '../../audio';
+import { Minimap } from '../Minimap';
 
 interface PaddockProps {
     horseId: string;
@@ -357,131 +358,15 @@ export const Paddock: React.FC<PaddockProps> = ({
             </Styled.GameSpace>
 
             {/* Minimap */}
-            <Styled.Minimap>
-                {/* Bridleway paths and rivers on minimap - always visible */}
-                {[...paths, ...rivers].map((segment, index) => (
-                    <Styled.MinimapElement
-                        key={index}
-                        style={{
-                            position: 'absolute',
-                            background: segment.backgroundColor === '#37d7ff' 
-                                ? segment.backgroundColor 
-                                : 'rgba(238, 238, 238, 0.5)',
-                            left: `${(segment.left / 5000) * 200}px`,
-                            top: `${(segment.top / 5000) * 200}px`,
-                            width: `${(segment.width / 5000) * 200}px`,
-                            height: `${(segment.height / 5000) * 200}px`
-                        }}
-                    />
-                ))}
-
-                {/* Pond and RainbowPuke Falls */}
-                <Styled.MinimapElement
-                    style={{
-                        position: 'absolute',
-                        background: pond.backgroundColor,
-                        left: `${(pond.left / 5000) * 200}px`,
-                        top: `${(pond.top / 5000) * 200}px`,
-                        width: `${(pond.width / 5000) * 200}px`,
-                        height: `${(pond.height / 5000) * 200}px`
-                    }}
-                />
-                <Styled.MinimapElement
-                    style={{
-                        position: 'absolute',
-                        background: pond.backgroundColor,
-                        left: `${(40 / 5000) * 200}px`,
-                        top: `${(2580 / 5000) * 200}px`,
-                        width: `${(500 / 5000) * 200}px`,
-                        height: `${(340 / 5000) * 200}px`
-                    }}
-                />
-
-                {/* Farm on minimap */}
-                <Styled.MinimapElement
-                    style={{
-                        position: 'absolute',
-                        background: '#754c29',
-                        left: `${(1190 / 5000) * 200 - ((100 / 5000) * 200)}px`,  // Offset by size increase
-                        top: `${(940 / 5000) * 200 - ((100 / 5000) * 200)}px`,    // Offset by size increase
-                        width: `${(100 / 5000) * 200 * 2}px`,   // Double width
-                        height: `${(100 / 5000) * 200 * 2}px`,  // Double height
-                        opacity: 0.6
-                    }}
-                />
-
-                {/* Issues Field Columns */}
-                {issuesColumns.map((column, index) => (
-                    <Styled.MinimapElement
-                        key={`column-${index}`}
-                        style={{
-                            position: 'absolute',
-                            background: column.backgroundColor,
-                            left: `${(column.left / 5000) * 200}px`,
-                            top: `${(column.top / 5000) * 200}px`,
-                            width: `${(column.width / 5000) * 200}px`,
-                            height: `${(column.height / 5000) * 200}px`
-                        }}
-                    />
-                ))}
-
-                {/* Race Track Elements */}
-                {raceElements.map((element, index) => (
-                    <Styled.MinimapElement
-                        key={`race-${index}`}
-                        style={{
-                            position: 'absolute',
-                            background: element.backgroundColor,
-                            left: `${(element.left / 5000) * 200}px`,
-                            top: `${(element.top / 5000) * 200}px`,
-                            width: `${(element.width / 5000) * 200}px`,
-                            height: `${(element.height / 5000) * 200}px`
-                        }}
-                    />
-                ))}
-
-                {/* Current player */}
-                <Styled.MinimapElement
-                    style={{
-                        position: 'absolute',
-                        width: '4px',
-                        height: '4px',
-                        background: 'red',
-                        borderRadius: '50%',
-                        transform: 'translate(-50%, -50%)',
-                        left: `${(position.x / 5000) * 200}px`,
-                        top: `${(position.y / 5000) * 200}px`
-                    }}
-                />
-
-                {/* Other players - only show in non-serverless mode */}
-                {!IS_SERVERLESS && Array.from(players.entries()).map(([id, player]) => {
-                    if (id === horseId) return null;
-                    return (
-                        <Styled.MinimapElement
-                            key={id}
-                            style={{
-                                position: 'absolute',
-                                width: '4px',
-                                height: '4px',
-                                background: 'red',
-                                borderRadius: '50%',
-                                transform: 'translate(-50%, -50%)',
-                                left: `${(player.position.x / 5000) * 200}px`,
-                                top: `${(player.position.y / 5000) * 200}px`
-                            }}
-                        />
-                    );
-                })}
-
-                <Styled.ViewportIndicator
-                    x={viewportOffset.x}
-                    y={viewportOffset.y}
-                    width={viewportDimensions.width}
-                    height={viewportDimensions.height}
-                    scale={scale}
-                />
-            </Styled.Minimap>
+            <Minimap
+                viewportOffset={viewportOffset}
+                viewportDimensions={viewportDimensions}
+                scale={scale}
+                currentPosition={position}
+                otherPlayers={players}
+                isServerless={IS_SERVERLESS}
+                horseId={horseId}
+            />
         </Styled.Container>
     );
 };
