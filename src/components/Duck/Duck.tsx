@@ -28,11 +28,9 @@ const Duck: React.FC<DuckProps> = ({ left, top: baseTop, width = 120, pondWidth 
                 if (next >= left + pondWidth - width) {
                     next = left + pondWidth - width;
                     setDirection('left');
-                    console.log('Duck changing direction to left');
                 } else if (next <= left) {
                     next = left;
                     setDirection('right');
-                    console.log('Duck changing direction to right');
                 }
                 
                 return next;
@@ -41,11 +39,6 @@ const Duck: React.FC<DuckProps> = ({ left, top: baseTop, width = 120, pondWidth 
         
         return () => clearInterval(moveInterval);
     }, [direction, left, pondWidth, width]);
-
-    // Log when position or direction changes
-    useEffect(() => {
-        console.log('Duck position updated:', { position, direction });
-    }, [position, direction]);
 
     return (
         <Styled.DuckImage
