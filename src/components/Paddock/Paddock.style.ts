@@ -1,5 +1,6 @@
 import styled from 'styled-components'
 import { WORLD_WIDTH, WORLD_HEIGHT } from '../../utils/coordinates'
+import { Z_LAYERS } from '../../config/zIndex'
 
 export const Container = styled.div`
     position: relative;
@@ -23,7 +24,7 @@ export const Horse = styled.div`
     width: 100px;
     height: 100px;
     will-change: transform;
-    z-index: 1000;
+    z-index: ${Z_LAYERS.CHARACTERS};
     transform: translateZ(0);
     
     img {
@@ -57,10 +58,53 @@ export const Message = styled.div`
     position: absolute;
     transition: opacity 0.5s;
     border: 1px solid #CCC;
-    z-index: 10;
+    z-index: ${Z_LAYERS.UI};
     line-height: 22px;
     border-radius: 5px;
     text-align: center;
     padding: 12px;
     background-color: #FFF;
 `
+
+export const Sand = styled.div`
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 800px;
+    z-index: ${Z_LAYERS.SAND};
+    background: linear-gradient(
+        to bottom,
+        #f4e4bc,
+        #e6d5b1
+    );
+`;
+
+export const Sea = styled.div`
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 420px;
+    z-index: ${Z_LAYERS.WATER};
+    overflow: hidden;
+    transform: translateZ(0);
+`;
+
+export const Wave = styled.div`
+    position: absolute;
+    top: -100px;
+    left: -100%;
+    width: 400%;
+    height: 520px;
+    background: linear-gradient(
+        to bottom,
+        rgba(55, 215, 255, 0.8),
+        rgba(55, 215, 255, 0.3),
+        rgba(55, 215, 255, 0.8) 66%,
+        rgba(55, 215, 255, 0.9)
+    );
+    border-radius: 50% 50% 0 0;
+    transform-origin: center bottom;
+    backface-visibility: hidden;
+`;

@@ -5,6 +5,7 @@ import { useMovement } from "./hooks/useMovement";
 import { useZoom } from "./hooks/useZoom";
 import { useGameServer } from "./hooks/useGameServer";
 import { Position } from "../../server/types";
+import { Beach } from "./Beach";
 import IssuesField from "../IssuesField";
 import { PathHighlight } from "../Bridleway";
 import { Rivers } from "../Rivers";
@@ -21,7 +22,6 @@ import Race from "../Race";
 import { BACKGROUND_MUSIC } from '../../audio';
 import { Minimap } from '../Minimap';
 import { WORLD_WIDTH, WORLD_HEIGHT } from '../../utils/coordinates';
-import Beach from '../Beach/Beach';
 
 interface PaddockProps {
     horseId: string;
@@ -276,7 +276,7 @@ export const Paddock: React.FC<PaddockProps> = ({
                 }}
             >
                 {/* Beach with viewport-aware animation */}
-                <Beach 
+                <Beach
                     viewportOffset={viewportOffset}
                     viewportDimensions={viewportDimensions}
                 />
