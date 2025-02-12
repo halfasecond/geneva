@@ -1,6 +1,6 @@
 import styled from 'styled-components';
 
-export const FieldContainer = styled.div<{ loading?: boolean }>`
+export const FieldContainer = styled.div`
   padding: 20px;
   background: transparent;
   height: 720px; // Fixed height for consistency

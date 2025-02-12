@@ -145,7 +145,7 @@ const DynamicIssuesField: React.FC = () => {
 
     if (error) {
         return (
-            <FieldContainer loading={false}>
+            <FieldContainer data-loading="false">
                 <LoadingText>
                     🚫 {error}
                 </LoadingText>
@@ -155,7 +155,7 @@ const DynamicIssuesField: React.FC = () => {
 
     if (!board) {
         return (
-            <FieldContainer loading={true}>
+            <FieldContainer data-loading="true">
                 <LoadingSpinner />
                 <LoadingText>Loading field data...</LoadingText>
             </FieldContainer>
@@ -163,7 +163,7 @@ const DynamicIssuesField: React.FC = () => {
     }
 
     return (
-        <FieldContainer loading={loading}>
+        <FieldContainer data-loading={loading.toString()}>
             <FieldHeader>
                 <FieldTitle>🚜 Issue Tractor</FieldTitle>
             </FieldHeader>
