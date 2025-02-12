@@ -57,8 +57,8 @@ export const BeachSea = styled.div`
         content: '';
         position: absolute;
         top: -100px;
-        left: -50%;
-        width: 200%;
+        left: -100%;
+        width: 400%;
         height: 520px;
         background: linear-gradient(
             to bottom,
