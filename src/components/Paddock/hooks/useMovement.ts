@@ -23,6 +23,11 @@ interface ViewportOffset {
     y: number
 }
 
+interface UseMovementResult {
+    position: Position
+    viewportOffset: ViewportOffset
+}
+
 // Horse dimensions and movement
 const HORSE_SIZE = 120; // pixels
 const MOVEMENT_SPEED = HORSE_SIZE / 32; // Trotting speed: 3.75 pixels per frame = ~225 pixels/second at 60fps
@@ -40,20 +45,15 @@ export function useMovement({
     onMessageTrigger,
     forcePosition,
     racingHorsePosition
-}: UseMovementProps) {
-    // Use refs for values we want to track but not react to
-    const positionRef = useRef<Position>(initialPosition)
-    const viewportOffsetRef = useRef<ViewportOffset>({ x: 0, y: 0 })
-    
-    // State only for values that should trigger re-renders
+}: UseMovementProps): UseMovementResult {
     const [position, setPosition] = useState<Position>(initialPosition)
     const [viewportOffset, setViewportOffset] = useState<ViewportOffset>({ x: 0, y: 0 })
     const [keys, setKeys] = useState<Set<string>>(new Set())
     const [hasFinishedRace, setHasFinishedRace] = useState(false)
 
-    // Keep refs in sync with state
-    positionRef.current = position
-    viewportOffsetRef.current = viewportOffset
+    const animationFrameRef = useRef<number>()
+    const keysRef = useRef<Set<string>>(new Set())
+    keysRef.current = keys
 
     // Force position update when provided
     useEffect(() => {
@@ -102,8 +102,8 @@ export function useMovement({
             return false;
         }
 
-        // Check path restrictions during intro
-        if (introActive) {
+        // Check path restrictions during intro (but not after race)
+        if (introActive && !hasFinishedRace) {
             const pathsWithSafeZones = paths.map(path => ({
                 ...path,
                 safeZone: getSafeZone(path)
@@ -114,44 +114,85 @@ export function useMovement({
         }
 
         return true;
-    }, [introActive])
+    }, [introActive, hasFinishedRace])
 
-    // Handle movement animation
+    // Calculate new viewport offset based on position
+    const calculateViewportOffset = useCallback((pos: Position): ViewportOffset => {
+        if (!viewportWidth || !viewportHeight) return viewportOffset;
+
+        let newX = viewportOffset.x;
+        let newY = viewportOffset.y;
+
+        if (movementDisabled && racingHorsePosition) {
+            newX = racingHorsePosition.x - (viewportWidth * 0.2);
+            newY = racingHorsePosition.y - (viewportHeight * 0.7);
+        } else {
+            const viewportRight = viewportOffset.x + viewportWidth;
+            const viewportBottom = viewportOffset.y + viewportHeight;
+            
+            const rightEdge = viewportRight - (viewportWidth * EDGE_THRESHOLD);
+            const leftEdge = viewportOffset.x + (viewportWidth * EDGE_THRESHOLD);
+            if (pos.x > rightEdge) {
+                newX = pos.x - (viewportWidth * (1 - EDGE_THRESHOLD));
+            } else if (pos.x < leftEdge) {
+                newX = pos.x - (viewportWidth * EDGE_THRESHOLD);
+            }
+            
+            const bottomEdge = viewportBottom - (viewportHeight * EDGE_THRESHOLD);
+            const topEdge = viewportOffset.y + (viewportHeight * EDGE_THRESHOLD);
+            if (pos.y > bottomEdge) {
+                newY = pos.y - (viewportHeight * (1 - EDGE_THRESHOLD));
+            } else if (pos.y < topEdge) {
+                newY = pos.y - (viewportHeight * EDGE_THRESHOLD);
+            }
+        }
+        
+        newX = Math.max(0, Math.min(newX, WORLD_WIDTH - viewportWidth));
+        newY = Math.max(0, Math.min(newY, WORLD_HEIGHT - viewportHeight));
+
+        return { x: newX, y: newY };
+    }, [viewportWidth, viewportHeight, movementDisabled, racingHorsePosition, viewportOffset]);
+
+    // Handle movement and viewport animation
     useEffect(() => {
-        if (movementDisabled || forcePosition) return;
+        if (movementDisabled || forcePosition) {
+            if (animationFrameRef.current) {
+                cancelAnimationFrame(animationFrameRef.current);
+            }
+            return;
+        }
 
-        let animationFrameId: number;
-        const updatePosition = () => {
-            const current = positionRef.current;
-            let x = current.x;
-            let y = current.y;
-            let direction = current.direction;
+        const updateFrame = () => {
+            const activeKeys = keysRef.current;
+            let x = position.x;
+            let y = position.y;
+            let direction = position.direction;
             let moved = false;
 
             // Calculate potential new position
-            if (keys.has('ArrowLeft') || keys.has('a')) {
+            if (activeKeys.has('ArrowLeft') || activeKeys.has('a')) {
                 x -= MOVEMENT_SPEED;
                 direction = 'left';
                 moved = true;
             }
-            if (keys.has('ArrowRight') || keys.has('d')) {
+            if (activeKeys.has('ArrowRight') || activeKeys.has('d')) {
                 x += MOVEMENT_SPEED;
                 direction = 'right';
                 moved = true;
             }
-            if (keys.has('ArrowUp') || keys.has('w')) {
+            if (activeKeys.has('ArrowUp') || activeKeys.has('w')) {
                 y -= MOVEMENT_SPEED;
                 moved = true;
             }
-            if (keys.has('ArrowDown') || keys.has('s')) {
+            if (activeKeys.has('ArrowDown') || activeKeys.has('s')) {
                 y += MOVEMENT_SPEED;
                 moved = true;
             }
 
             // If no movement or only direction change
             if (!moved) {
-                if (direction !== current.direction) {
-                    const newPosition = { ...current, direction };
+                if (direction !== position.direction) {
+                    const newPosition = { ...position, direction };
                     setPosition(newPosition);
                     onPositionChange(newPosition);
                 }
@@ -167,60 +208,59 @@ export function useMovement({
                 const newPosition = { x, y, direction };
                 setPosition(newPosition);
                 onPositionChange(newPosition);
+
+                // Update viewport in the same frame
+                const newOffset = calculateViewportOffset(newPosition);
+                if (newOffset.x !== viewportOffset.x || newOffset.y !== viewportOffset.y) {
+                    setViewportOffset(newOffset);
+                }
             }
 
-            animationFrameId = requestAnimationFrame(updatePosition);
+            if (activeKeys.size > 0) {
+                animationFrameRef.current = requestAnimationFrame(updateFrame);
+            }
         };
 
         if (keys.size > 0) {
-            animationFrameId = requestAnimationFrame(updatePosition);
+            animationFrameRef.current = requestAnimationFrame(updateFrame);
         }
 
         return () => {
-            if (animationFrameId) {
-                cancelAnimationFrame(animationFrameId);
+            if (animationFrameRef.current) {
+                cancelAnimationFrame(animationFrameRef.current);
             }
         };
-    }, [keys, isValidPosition, movementDisabled, forcePosition, onPositionChange]);
+    }, [
+        keys,
+        position,
+        viewportOffset,
+        isValidPosition,
+        calculateViewportOffset,
+        movementDisabled,
+        forcePosition,
+        onPositionChange
+    ]);
 
-    // Update viewport offset
+    // Handle racing viewport updates
     useEffect(() => {
-        if (!viewportWidth || !viewportHeight) return;
+        if (!movementDisabled || !racingHorsePosition) return;
 
-        let newX = viewportOffsetRef.current.x;
-        let newY = viewportOffsetRef.current.y;
-
-        if (movementDisabled && racingHorsePosition) {
-            newX = racingHorsePosition.x - (viewportWidth * 0.2);
-            newY = racingHorsePosition.y - (viewportHeight * 0.7);
-        } else {
-            const viewportRight = viewportOffsetRef.current.x + viewportWidth;
-            const viewportBottom = viewportOffsetRef.current.y + viewportHeight;
-            
-            const rightEdge = viewportRight - (viewportWidth * EDGE_THRESHOLD);
-            const leftEdge = viewportOffsetRef.current.x + (viewportWidth * EDGE_THRESHOLD);
-            if (positionRef.current.x > rightEdge) {
-                newX = positionRef.current.x - (viewportWidth * (1 - EDGE_THRESHOLD));
-            } else if (positionRef.current.x < leftEdge) {
-                newX = positionRef.current.x - (viewportWidth * EDGE_THRESHOLD);
+        const updateRacingViewport = () => {
+            const newOffset = calculateViewportOffset(position);
+            if (newOffset.x !== viewportOffset.x || newOffset.y !== viewportOffset.y) {
+                setViewportOffset(newOffset);
             }
-            
-            const bottomEdge = viewportBottom - (viewportHeight * EDGE_THRESHOLD);
-            const topEdge = viewportOffsetRef.current.y + (viewportHeight * EDGE_THRESHOLD);
-            if (positionRef.current.y > bottomEdge) {
-                newY = positionRef.current.y - (viewportHeight * (1 - EDGE_THRESHOLD));
-            } else if (positionRef.current.y < topEdge) {
-                newY = positionRef.current.y - (viewportHeight * EDGE_THRESHOLD);
-            }
-        }
-        
-        newX = Math.max(0, Math.min(newX, WORLD_WIDTH - viewportWidth));
-        newY = Math.max(0, Math.min(newY, WORLD_HEIGHT - viewportHeight));
+            animationFrameRef.current = requestAnimationFrame(updateRacingViewport);
+        };
 
-        if (newX !== viewportOffsetRef.current.x || newY !== viewportOffsetRef.current.y) {
-            setViewportOffset({ x: newX, y: newY });
-        }
-    }, [position, viewportWidth, viewportHeight, movementDisabled, racingHorsePosition]);
+        animationFrameRef.current = requestAnimationFrame(updateRacingViewport);
+
+        return () => {
+            if (animationFrameRef.current) {
+                cancelAnimationFrame(animationFrameRef.current);
+            }
+        };
+    }, [movementDisabled, racingHorsePosition, position, calculateViewportOffset, viewportOffset]);
 
     // Handle message triggers
     useEffect(() => {
@@ -244,7 +284,7 @@ export function useMovement({
                 onMessageTrigger(introMessages.indexOf(message));
             }
         });
-    }, [position, introActive, onMessageTrigger]);
+    }, [position.x, position.y, introActive, onMessageTrigger]);
 
     return {
         position,
