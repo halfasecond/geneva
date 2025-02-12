@@ -1,12 +1,7 @@
 import styled from 'styled-components';
 
-interface DuckImageProps {
-    width?: number;
-}
-
-export const DuckImage = styled.img<DuckImageProps>`
+export const DuckImage = styled.img`
     position: absolute;
-    width: ${({ width = 120 }) => width}px;
     height: auto;
     z-index: 3;
     pointer-events: none;

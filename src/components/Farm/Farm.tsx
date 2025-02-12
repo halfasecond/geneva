@@ -17,9 +17,7 @@ const Container = styled.div`
     opacity: 0.6;
 `;
 
-const FarmImage = styled.img<{ size: number }>`
-    width: ${props => props.size}px;
-    height: ${props => props.size}px;
+const FarmImage = styled.img`
     pointer-events: none;
 `;
 
@@ -40,7 +38,10 @@ const Farm: React.FC<FarmProps> = ({
             <FarmImage
                 src={getAssetPath('svg/farm.svg')}
                 alt="Farm"
-                size={size}
+                style={{
+                    width: `${size}px`,
+                    height: `${size}px`
+                }}
             />
             <Title>Engagement Farm</Title>
         </Container>

@@ -26,9 +26,8 @@ const Title = styled.h2`
   white-space: nowrap;
 `
 
-const Drop = styled.div<{ color: string }>`
+const Drop = styled.div`
   position: absolute;
-  background-color: ${props => props.color};
   will-change: transform;
   transform: translateZ(0);
 `
@@ -125,11 +124,11 @@ const RainbowPuke: React.FC<RainbowPukeProps> = ({ top, left }) => {
         {initialDrops.map((drop, i) => (
           <Drop
             key={i}
-            color={drop.color}
             style={{
-              width: drop.size,
-              height: drop.size,
-              transform: `translate3d(${drop.x}px, ${drop.y}px, 0)`
+              width: `${drop.size}px`,
+              height: `${drop.size}px`,
+              transform: `translate3d(${drop.x}px, ${drop.y}px, 0)`,
+              backgroundColor: drop.color
             }}
           />
         ))}

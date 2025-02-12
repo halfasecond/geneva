@@ -9,11 +9,9 @@ interface FlowerProps {
     rotation?: number;
 }
 
-const FlowerImage = styled.img<{ size: number, rotation: number }>`
+const FlowerImage = styled.img`
     position: absolute;
-    width: ${props => props.size}px;
     height: auto;
-    transform: rotate(${props => props.rotation}deg);
     pointer-events: none;
     z-index: 1;
 `;
@@ -28,9 +26,12 @@ const Flower: React.FC<FlowerProps> = ({
         <FlowerImage
             src={getAssetPath('horse/Flower.svg')}
             alt="Flower"
-            style={{ left, top }}
-            size={size}
-            rotation={rotation}
+            style={{
+                left,
+                top,
+                width: `${size}px`,
+                transform: `rotate(${rotation}deg)`
+            }}
         />
     );
 };

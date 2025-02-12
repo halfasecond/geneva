@@ -3,20 +3,8 @@ import styled from 'styled-components';
 import { Rect, CoordinateTransformer } from '../../utils/coordinates';
 import { getAssetPath } from '../../utils/assetPath';
 
-const StyledElement = styled.div<{
-    minimapRect: Rect;
-    backgroundColor?: string;
-    opacity?: number;
-    borderRadius?: string;
-}>`
+const StyledElement = styled.div`
     position: absolute;
-    left: ${props => props.minimapRect.left}px;
-    top: ${props => props.minimapRect.top}px;
-    width: ${props => Math.max(props.minimapRect.width, 1)}px;
-    height: ${props => Math.max(props.minimapRect.height, 1)}px;
-    background-color: ${props => props.backgroundColor || 'rgba(238, 238, 238, 0.5)'};
-    opacity: ${props => props.opacity || 1};
-    border-radius: ${props => props.borderRadius || '0'};
     box-sizing: border-box;  /* Include border in size calculations */
 `;
 
@@ -31,26 +19,24 @@ export const MinimapElement: React.FC<{
 
     return (
         <StyledElement
-            minimapRect={minimapRect}
-            backgroundColor={backgroundColor}
-            opacity={opacity}
-            borderRadius={borderRadius}
             className={className}
+            style={{
+                left: `${minimapRect.left}px`,
+                top: `${minimapRect.top}px`,
+                width: `${Math.max(minimapRect.width, 1)}px`,
+                height: `${Math.max(minimapRect.height, 1)}px`,
+                backgroundColor: backgroundColor || 'rgba(238, 238, 238, 0.5)',
+                opacity: opacity || 1,
+                borderRadius: borderRadius || '0'
+            }}
         />
     );
 };
 
-const StyledDot = styled.div<{
-    x: number;
-    y: number;
-    direction?: 'left' | 'right';
-}>`
+const StyledDot = styled.div`
     position: absolute;
-    left: ${props => props.x}px;
-    top: ${props => props.y}px;
     width: 8px;
     height: 8px;
-    transform: translate(-50%, -50%) scaleX(${props => props.direction === 'left' ? -1 : 1});
     z-index: 2;  /* Ensure player dots are above viewport indicator */
     filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.5));  /* Add shadow for depth */
 
@@ -73,24 +59,20 @@ export const MinimapDot: React.FC<{
 
     return (
         <StyledDot
-            x={pos.x}
-            y={pos.y}
-            direction={direction}
             className={className}
+            style={{
+                left: `${pos.x}px`,
+                top: `${pos.y}px`,
+                transform: `translate(-50%, -50%) scaleX(${direction === 'left' ? -1 : 1})`
+            }}
         >
             <img src={getAssetPath(`horse/${horseId}.svg`)} alt={`Horse ${horseId}`} />
         </StyledDot>
     );
 };
 
-const StyledViewport = styled.div<{
-    minimapRect: Rect;
-}>`
+const StyledViewport = styled.div`
     position: absolute;
-    left: ${props => props.minimapRect.left}px;
-    top: ${props => props.minimapRect.top}px;
-    width: ${props => Math.max(props.minimapRect.width, 1)}px;
-    height: ${props => Math.max(props.minimapRect.height, 1)}px;
     border: 3px dotted white;
     box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);  /* Add dark outline for contrast */
     background: transparent;
@@ -113,5 +95,14 @@ export const ViewportIndicator: React.FC<{
         scale
     );
 
-    return <StyledViewport minimapRect={viewportRect} />;
+    return (
+        <StyledViewport
+            style={{
+                left: `${viewportRect.left}px`,
+                top: `${viewportRect.top}px`,
+                width: `${Math.max(viewportRect.width, 1)}px`,
+                height: `${Math.max(viewportRect.height, 1)}px`
+            }}
+        />
+    );
 };

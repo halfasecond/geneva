@@ -25,11 +25,11 @@ export const PathHighlight: React.FC<PathHighlightProps> = ({ active = true }) =
       {pathsWithSafeZones.map((path, index) => (
         <StyledPathSegment
           key={index}
-          width={path.width}
-          height={path.height}
           style={{
             left: path.left,
             top: path.top,
+            width: path.width,
+            height: path.height,
             backgroundColor: path.backgroundColor
           }}
         />

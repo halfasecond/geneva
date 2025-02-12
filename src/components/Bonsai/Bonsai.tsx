@@ -8,9 +8,8 @@ interface BonsaiProps {
     size?: number;
 }
 
-const BonsaiImage = styled.img<{ size: number }>`
+const BonsaiImage = styled.img`
     position: absolute;
-    width: ${props => props.size}px;
     height: auto;
     pointer-events: none;
     z-index: 1;
@@ -25,8 +24,11 @@ const Bonsai: React.FC<BonsaiProps> = ({
         <BonsaiImage
             src={getAssetPath('svg/horse/Bonsai.svg')}
             alt="Bonsai"
-            style={{ left, top }}
-            size={size}
+            style={{
+                left,
+                top,
+                width: `${size}px`
+            }}
         />
     );
 };

@@ -69,9 +69,9 @@ const Duck: React.FC<DuckProps> = ({ left, top: baseTop, width = 120, pondWidth 
             ref={duckRef}
             src={getAssetPath('horse/Duck.svg')}
             alt="Duck"
-            width={width}
             style={{
-                transform: `translate3d(${left}px, ${randomTop}px, 0) scaleX(1)`
+                transform: `translate3d(${left}px, ${randomTop}px, 0) scaleX(1)`,
+                width: `${width}px`
             }}
         />
     );

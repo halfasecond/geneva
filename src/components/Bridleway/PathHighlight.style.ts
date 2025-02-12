@@ -1,9 +1,7 @@
 import styled from "styled-components";
 
-export const PathSegment = styled.div<{ width: number; height: number }>`
+export const PathSegment = styled.div`
   position: absolute;
-  width: ${props => props.width}px;
-  height: ${props => props.height}px;
   z-index: 1;
 `;
 
