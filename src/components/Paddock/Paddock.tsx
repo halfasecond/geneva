@@ -20,6 +20,7 @@ import MuteButton from "../MuteButton";
 import Race from "../Race";
 import { BACKGROUND_MUSIC } from '../../audio';
 import { Minimap } from '../Minimap';
+import { WORLD_WIDTH, WORLD_HEIGHT } from '../../utils/coordinates';
 
 interface PaddockProps {
     horseId: string;
@@ -76,8 +77,8 @@ const isInRestrictedArea = (x: number, y: number, size: number) => {
 const FLOWERS = Array.from({ length: 100 }, () => {
     let left, top, size;
     do {
-        left = Math.random() * 4800;
-        top = Math.random() * 4800;
+        left = Math.random() * (WORLD_WIDTH - 200); // Leave space for flower size
+        top = Math.random() * (WORLD_HEIGHT - 1000); // Keep away from beach
         size = 100 + Math.random() * 100;
     } while (isInRestrictedArea(left, top, size));
     
@@ -97,7 +98,7 @@ const AI_HORSES = [
 
 export const Paddock: React.FC<PaddockProps> = ({
     horseId,
-    initialPosition = { x: 100, y: 4600, direction: "right" as const },  // Position near beach for testing
+    initialPosition = { x: 100, y: WORLD_HEIGHT - 1200, direction: "right" as const },  // Position near beach for testing
     introActive = true,
     modalOpen = false
 }) => {

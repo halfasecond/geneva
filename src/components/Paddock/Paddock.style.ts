@@ -1,4 +1,5 @@
 import styled, { keyframes } from 'styled-components'
+import { WORLD_WIDTH, WORLD_HEIGHT } from '../../utils/coordinates'
 
 export const Container = styled.div`
     position: relative;
@@ -11,8 +12,8 @@ export const Container = styled.div`
 
 export const GameSpace = styled.div`
     position: absolute;
-    width: 5000px;
-    height: 5000px;
+    width: ${WORLD_WIDTH}px;
+    height: ${WORLD_HEIGHT}px;
     transition: transform 0.1s ease-out;
     will-change: transform;
 `

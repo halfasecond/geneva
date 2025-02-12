@@ -5,8 +5,8 @@ export const WORLD_WIDTH = 5000;
 export const WORLD_HEIGHT = 5000;
 
 // Minimap dimensions
-export const MINIMAP_WIDTH = 250;
-export const MINIMAP_HEIGHT = 250;
+export const MINIMAP_WIDTH = 300;
+export const MINIMAP_HEIGHT = (MINIMAP_WIDTH * WORLD_HEIGHT) / WORLD_WIDTH; // Maintain aspect ratio (will be square)
 
 export interface Vector2D {
     x: number;
