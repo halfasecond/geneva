@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
-import { getAssetPath } from '../../utils/assetPath';
+import { getAssetPath } from '../../../../utils/assetPath';
+import { Z_LAYERS } from '../../../../config/zIndex';
 
 interface FarmProps {
     left: number;
@@ -13,7 +14,7 @@ const Container = styled.div`
     display: flex;
     flex-direction: column;
     align-items: center;
-    z-index: 1;
+    z-index: ${Z_LAYERS.TERRAIN_FEATURES}
     opacity: 0.6;
 `;
 

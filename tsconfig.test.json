@@ -1,0 +1,18 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "types": [
+      "react",
+      "socket.io-client",
+      "@playwright/test",
+      "node"
+    ],
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true
+  },
+  "include": [
+    "src/tests/**/*",
+    "playwright.config.ts"
+  ]
+}

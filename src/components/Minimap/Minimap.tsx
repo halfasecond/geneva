@@ -2,8 +2,8 @@ import React from 'react';
 import styled from 'styled-components';
 import { MinimapElement, MinimapDot, ViewportIndicator } from './MinimapElement';
 import { Position } from '../../server/types';
-import { paths, raceElements, pond, issuesColumns } from '../../components/Bridleway/set';
-import { rivers } from '../../components/Rivers';
+import { paths, rivers } from '../../components/Paddock/components/Environment';
+import { raceElements, pond, issuesColumns } from '../../components/Bridleway/set';
 import { WORLD_WIDTH, WORLD_HEIGHT, MINIMAP_WIDTH, MINIMAP_HEIGHT } from '../../utils/coordinates';
 
 const Container = styled.div`

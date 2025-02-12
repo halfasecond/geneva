@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
-import { getAssetPath } from '../../utils/assetPath';
+import { getAssetPath } from '../../../../utils/assetPath';
+import { Z_LAYERS } from '../../../../config/zIndex';
 
 interface BonsaiProps {
     left: number;
@@ -12,7 +13,7 @@ const BonsaiImage = styled.img`
     position: absolute;
     height: auto;
     pointer-events: none;
-    z-index: 1;
+    z-index: ${Z_LAYERS.TERRAIN_FEATURES};
 `;
 
 const Bonsai: React.FC<BonsaiProps> = ({ 

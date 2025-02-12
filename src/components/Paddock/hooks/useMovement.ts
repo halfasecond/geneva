@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Position } from '../../../server/types'
-import { paths } from '../../Bridleway/set'
-import { rivers, isInRiver } from '../../Rivers'
+import { paths, rivers, isInRiver } from '../components/Environment'
 import { isOnPath, getSafeZone } from '../../Bridleway/utils'
 import { introMessages } from '../../Bridleway/messages'
 import { WORLD_WIDTH, WORLD_HEIGHT } from '../../../utils/coordinates'
