@@ -185,14 +185,21 @@ export const Paddock: React.FC<PaddockProps> = ({
         } else if (state === 'racing') {
             setIsRacing(true);
         } else if (state === 'finished') {
+            // Clear race state
             setForcedPosition(undefined);
             setRacingPosition(undefined);
             setIsRacing(false);
+            
+            // Remove path restrictions after race
+            setPathRestricted(false);
+            
+            // Show final message
             setVisibleMessages(prev => {
                 const next = [...prev];
                 next[next.length - 1] = true;
                 return next;
             });
+
             setTimeout(() => {
                 setVisibleMessages(prev => {
                     const next = [...prev];
@@ -205,12 +212,16 @@ export const Paddock: React.FC<PaddockProps> = ({
         }
     }, [IS_SERVERLESS, updatePosition]);
 
+    // Track introActive state
+    // Track path restriction state separately from visual intro state
+    const [pathRestricted, setPathRestricted] = useState(introActive);
+
     // Initialize movement with current viewport dimensions
     const { position, viewportOffset } = useMovement({
         viewportWidth: viewportDimensions.width,
         viewportHeight: viewportDimensions.height,
         initialPosition,
-        introActive: debugMode ? false : introActive,
+        introActive: debugMode ? false : pathRestricted,
         movementDisabled: debugMode ? false : (isRacing || modalOpen),
         onPositionChange: useCallback((pos: Position) => {
             if (!IS_SERVERLESS && connected) {

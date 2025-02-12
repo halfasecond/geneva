@@ -28,6 +28,12 @@ interface UseMovementResult {
     viewportOffset: ViewportOffset
 }
 
+interface MovementState {
+    canMove: boolean;      // Can player move at all?
+    pathRestricted: boolean;  // Must stay on paths?
+    followPlayer: boolean;    // Should viewport follow player?
+}
+
 // Horse dimensions and movement
 const HORSE_SIZE = 120; // pixels
 const MOVEMENT_SPEED = HORSE_SIZE / 32; // Trotting speed: 3.75 pixels per frame = ~225 pixels/second at 60fps
@@ -49,27 +55,46 @@ export function useMovement({
     const [position, setPosition] = useState<Position>(initialPosition)
     const [viewportOffset, setViewportOffset] = useState<ViewportOffset>({ x: 0, y: 0 })
     const [keys, setKeys] = useState<Set<string>>(new Set())
-    const [hasFinishedRace, setHasFinishedRace] = useState(false)
+    
+    // Movement state
+    const [movementState, setMovementState] = useState<MovementState>({
+        canMove: !movementDisabled,
+        pathRestricted: introActive,
+        followPlayer: true
+    })
 
     const animationFrameRef = useRef<number>()
     const keysRef = useRef<Set<string>>(new Set())
     keysRef.current = keys
 
-    // Force position update when provided
+    // Update movement state based on props
+    useEffect(() => {
+        setMovementState({
+            canMove: !movementDisabled && !racingHorsePosition,  // Can move if not disabled and not racing
+            pathRestricted: introActive && !racingHorsePosition,  // Disable path restrictions during/after race
+            followPlayer: !racingHorsePosition  // Follow player unless racing
+        });
+    }, [movementDisabled, introActive, racingHorsePosition]);
+
+    // Force position update when provided or cleared
     useEffect(() => {
         if (forcePosition) {
             setPosition(forcePosition);
             onPositionChange(forcePosition);
-            if (forcePosition.x >= 1990) {
-                setHasFinishedRace(true);
-            }
+        } else if (forcePosition === undefined && racingHorsePosition === undefined) {
+            // Race finished - ensure movement state is properly reset
+            setMovementState(prevState => ({
+                ...prevState,
+                canMove: !movementDisabled,
+                pathRestricted: introActive
+            }));
         }
-    }, [forcePosition, onPositionChange]);
+    }, [forcePosition, racingHorsePosition, movementDisabled, introActive, onPositionChange]);
 
     const handleKeyDown = useCallback((e: KeyboardEvent) => {
-        if (e.repeat || movementDisabled) return;
+        if (e.repeat || !movementState.canMove) return;
         setKeys(prev => new Set(prev).add(e.key))
-    }, [movementDisabled])
+    }, [movementState.canMove])
 
     const handleKeyUp = useCallback((e: KeyboardEvent) => {
         setKeys(prev => {
@@ -102,8 +127,8 @@ export function useMovement({
             return false;
         }
 
-        // Check path restrictions during intro (but not after race)
-        if (introActive && !hasFinishedRace) {
+        // Check path restrictions
+        if (movementState.pathRestricted) {
             const pathsWithSafeZones = paths.map(path => ({
                 ...path,
                 safeZone: getSafeZone(path)
@@ -114,7 +139,7 @@ export function useMovement({
         }
 
         return true;
-    }, [introActive, hasFinishedRace])
+    }, [movementState.pathRestricted])
 
     // Calculate new viewport offset based on position
     const calculateViewportOffset = useCallback((pos: Position): ViewportOffset => {
@@ -123,10 +148,12 @@ export function useMovement({
         let newX = viewportOffset.x;
         let newY = viewportOffset.y;
 
-        if (movementDisabled && racingHorsePosition) {
+        if (!movementState.followPlayer && racingHorsePosition) {
+            // Racing mode - viewport follows race position
             newX = racingHorsePosition.x - (viewportWidth * 0.2);
             newY = racingHorsePosition.y - (viewportHeight * 0.7);
         } else {
+            // Normal mode - viewport follows player
             const viewportRight = viewportOffset.x + viewportWidth;
             const viewportBottom = viewportOffset.y + viewportHeight;
             
@@ -151,11 +178,11 @@ export function useMovement({
         newY = Math.max(0, Math.min(newY, WORLD_HEIGHT - viewportHeight));
 
         return { x: newX, y: newY };
-    }, [viewportWidth, viewportHeight, movementDisabled, racingHorsePosition, viewportOffset]);
+    }, [viewportWidth, viewportHeight, movementState.followPlayer, racingHorsePosition, viewportOffset]);
 
     // Handle movement and viewport animation
     useEffect(() => {
-        if (movementDisabled || forcePosition) {
+        if (!movementState.canMove) {
             if (animationFrameRef.current) {
                 cancelAnimationFrame(animationFrameRef.current);
             }
@@ -236,14 +263,13 @@ export function useMovement({
         viewportOffset,
         isValidPosition,
         calculateViewportOffset,
-        movementDisabled,
-        forcePosition,
+        movementState.canMove,
         onPositionChange
     ]);
 
     // Handle racing viewport updates
     useEffect(() => {
-        if (!movementDisabled || !racingHorsePosition) return;
+        if (movementState.followPlayer || !racingHorsePosition) return;
 
         const updateRacingViewport = () => {
             const newOffset = calculateViewportOffset(position);
@@ -260,7 +286,7 @@ export function useMovement({
                 cancelAnimationFrame(animationFrameRef.current);
             }
         };
-    }, [movementDisabled, racingHorsePosition, position, calculateViewportOffset, viewportOffset]);
+    }, [movementState.followPlayer, racingHorsePosition, position, calculateViewportOffset, viewportOffset]);
 
     // Handle message triggers
     useEffect(() => {
