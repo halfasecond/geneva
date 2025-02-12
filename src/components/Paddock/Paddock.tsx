@@ -132,12 +132,12 @@ export const Paddock: React.FC<PaddockProps> = ({
     }, []);
 
     const containerRef = useRef<HTMLDivElement>(null);
-    const [viewportDimensions, setViewportDimensions] = React.useState({
+    const [viewportDimensions, setViewportDimensions] = useState({
         width: window.innerWidth,
         height: window.innerHeight
     });
-    const [dimensionsReady, setDimensionsReady] = React.useState(false);
-    const [visibleMessages, setVisibleMessages] = React.useState<boolean[]>(
+    const [dimensionsReady, setDimensionsReady] = useState(false);
+    const [visibleMessages, setVisibleMessages] = useState<boolean[]>(
         new Array(introMessages.length).fill(false)
     );
 
@@ -232,7 +232,10 @@ export const Paddock: React.FC<PaddockProps> = ({
         maxScale: 1.5,
         position,
         viewportOffset,
-        viewportDimensions
+        viewportDimensions: {
+            width: viewportDimensions.width,
+            height: viewportDimensions.height
+        }
     });
 
     // Update viewport dimensions on resize and initial mount

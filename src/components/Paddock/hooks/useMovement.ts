@@ -26,12 +26,9 @@ interface ViewportOffset {
 // Horse dimensions and movement
 const HORSE_SIZE = 120; // pixels
 const MOVEMENT_SPEED = HORSE_SIZE / 32; // Trotting speed: 3.75 pixels per frame = ~225 pixels/second at 60fps
-const VISUAL_OVERLAP = 40; // Allow horse element to overlap bottom by this many pixels
 
 // Viewport thresholds
 const EDGE_THRESHOLD = 0.2; // 20% from edges
-const TOP_THRESHOLD = 0.2; // 20% from top
-const BOTTOM_THRESHOLD = 0; // Allow horse to reach bottom edge
 
 export function useMovement({
     viewportWidth,
@@ -122,7 +119,7 @@ export function useMovement({
 
                 // Keep horse within game bounds
                 x = Math.max(0, Math.min(x, WORLD_WIDTH - HORSE_SIZE));
-                y = Math.max(0, Math.min(y, WORLD_HEIGHT - HORSE_SIZE + VISUAL_OVERLAP));
+                y = Math.max(0, Math.min(y, WORLD_HEIGHT - HORSE_SIZE));
 
                 const horseBox = {
                     left: x,
@@ -213,14 +210,13 @@ export function useMovement({
                     newX = position.x - (viewportWidth * EDGE_THRESHOLD);
                 }
                 
-                // Different thresholds for top and bottom
-                const bottomEdge = viewportBottom;
-                const topEdge = viewportOffset.y + (viewportHeight * TOP_THRESHOLD);
-                if (position.y > bottomEdge - (HORSE_SIZE - VISUAL_OVERLAP)) {
-                    // When near bottom, position viewport to show horse at bottom with overlap
-                    newY = position.y - viewportHeight + (HORSE_SIZE - VISUAL_OVERLAP);
+                // Same threshold for top/bottom
+                const bottomEdge = viewportBottom - (viewportHeight * EDGE_THRESHOLD);
+                const topEdge = viewportOffset.y + (viewportHeight * EDGE_THRESHOLD);
+                if (position.y > bottomEdge) {
+                    newY = position.y - (viewportHeight * (1 - EDGE_THRESHOLD));
                 } else if (position.y < topEdge) {
-                    newY = position.y - (viewportHeight * TOP_THRESHOLD);
+                    newY = position.y - (viewportHeight * EDGE_THRESHOLD);
                 }
             }
             
