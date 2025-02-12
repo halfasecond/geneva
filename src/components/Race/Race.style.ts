@@ -1,24 +1,25 @@
 import styled from 'styled-components'
 import { getAssetPath } from '../../utils/assetPath';
+import { Z_LAYERS } from 'src/config/zIndex';
 
 export const RaceTrack = styled.div`
     position: absolute;
     left: 700px;
-    top: 1770px;  // 1500 + 270
+    top: 1770px;
     width: 1250px;
     height: 400px;
     background-color: transparent;
-    z-index: 1;
+    z-index: ${Z_LAYERS.TERRAIN_FEATURES};
 `
 
 export const StartLine = styled.div`
     position: absolute;
     left: 700px;
-    top: 1770px;  // 1500 + 270
+    top: 1770px;
     width: 10px;
     height: 420px;
     background-color: #888;
-    z-index: 1;
+    z-index: ${Z_LAYERS.TERRAIN_FEATURES + 1};
 `
 
 export const FinishLine = styled.div`
@@ -28,39 +29,38 @@ export const FinishLine = styled.div`
     width: 10px;
     height: 420px;
     background-color: #888;
-    z-index: 1;
 `
 
 export const StartingStall = styled.div`
     position: absolute;
     width: 120px;
-    height: 100px;  // Reduced height by 20px
-    background-color: #cccccc;  // Solid color without opacity
-    border: 1px solid #CCC;  // Added border for better visibility
-    z-index: 1;
+    height: 100px;
+    background-color: #cccccc;
+    border: 1px solid #CCC;
+    z-index: ${Z_LAYERS.TERRAIN_FEATURES};
 `
 
 export const CountdownDisplay = styled.div`
-    position: absolute;  // Changed to absolute to position relative to race track
-    left: 800px;        // Position near start line
-    top: 1930px;        // Vertically centered in race area
+    position: absolute;
+    left: 800px;
+    top: 1930px;
     width: 80px;
     height: 80px;
     background-color: #FFF;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 48px;    // Increased size for better visibility
+    font-size: 48px;
     font-weight: bold;
     z-index: 2;
-    border-radius: 8px;  // Rounded corners
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);  // Add shadow for depth
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 `
 
 export const Podium = styled.div`
     position: absolute;
     left: 1880px;
-    top: 1650px;  // 1380 + 270
+    top: 1650px;
     width: 260px;
     height: 80px;
     background-color: #FFF;
@@ -68,7 +68,6 @@ export const Podium = styled.div`
     border-radius: 5px;
     opacity: 0;
     transition: opacity 0.5s;
-    z-index: 10;
     text-align: center;
 `
 
@@ -96,12 +95,11 @@ export const PodiumPlatform = styled.div`
 `
 
 export const LeaderBoard = styled.div`
-    position: fixed;  // Fixed position relative to viewport
+    position: fixed;
     right: 20px;
     top: 20px;
     width: 380px;
     height: 120px;
-    z-index: 1;
 `
 
 export const Fence = styled.div`
@@ -111,13 +109,12 @@ export const Fence = styled.div`
     height: 40px;
     background-image: url('${getAssetPath('fence.png')}');
     background-size: auto 200%;
-    z-index: 0;
 
     &.top {
-        top: 1739px;  // 1469 + 270
+        top: 1739px;
     }
 
     &.bottom {
-        top: 2150px;  // 1880 + 270
+        top: 2150px;
     }
 `

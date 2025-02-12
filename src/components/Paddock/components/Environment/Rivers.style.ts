@@ -3,7 +3,7 @@ import { Z_LAYERS } from '../../../../config/zIndex';
 
 export const RiverContainer = styled.div`
   position: absolute;
-  z-index: ${Z_LAYERS.WATER};
+  z-index: ${Z_LAYERS.TERRAIN_FEATURES};
   width: 100%;
   height: 100%;
   pointer-events: none;

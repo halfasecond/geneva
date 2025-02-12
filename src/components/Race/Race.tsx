@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import * as Styled from './Race.style';
 import Horse from '../Horse';
+import { Z_LAYERS } from 'src/config/zIndex';
 
 interface RaceProps {
     playerHorse: {
@@ -198,7 +199,8 @@ const Race = ({
                             position: 'absolute',
                             left: `${position.x}px`,
                             top: `${1790 + (index * 130)}px`,  // -10px from base position for vertical centering
-                            transform: 'scaleX(1)'
+                            transform: 'scaleX(1)',
+                            zIndex: Z_LAYERS.TERRAIN_FEATURES + 1
                         }}
                         horseId={horse.tokenId}
                     />
@@ -212,7 +214,8 @@ const Race = ({
                         position: 'absolute',
                         left: `${racingHorsePosition.x}px`,
                         top: `${racingHorsePosition.y}px`,
-                        transform: 'scaleX(1)'
+                        transform: 'scaleX(1)',
+                        zIndex: Z_LAYERS.TERRAIN_FEATURES + 1
                     }}
                     horseId={playerHorse.tokenId}
                 />

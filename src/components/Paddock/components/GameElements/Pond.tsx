@@ -12,7 +12,7 @@ const PondContainer = styled.div`
     width: 500px;
     height: 400px;
     background-color: #37d7ff;
-    z-index: ${Z_LAYERS.WATER};
+    z-index: ${Z_LAYERS.TERRAIN_FEATURES};
     display: flex;
     justify-content: flex-end;
     overflow: hidden;
