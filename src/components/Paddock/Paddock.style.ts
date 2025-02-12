@@ -34,13 +34,13 @@ export const BeachSand = styled.div`
 
 const waveAnimation = keyframes`
     0% {
-        transform: translateX(0) scaleY(1);
+        transform: translate3d(0, 0, 0) scaleY(1);
     }
     50% {
-        transform: translateX(-25%) scaleY(0.8);
+        transform: translate3d(-25%, 0, 0) scaleY(0.8);
     }
     100% {
-        transform: translateX(-50%) scaleY(1);
+        transform: translate3d(-50%, 0, 0) scaleY(1);
     }
 `;
 
@@ -52,6 +52,8 @@ export const BeachSea = styled.div`
     height: 420px;
     z-index: 2000;
     overflow: hidden;
+    transform: translateZ(0);
+    will-change: transform;
 
     &::before {
         content: '';
@@ -70,6 +72,8 @@ export const BeachSea = styled.div`
         border-radius: 50% 50% 0 0;
         animation: ${waveAnimation} 8s infinite linear;
         transform-origin: center bottom;
+        will-change: transform;
+        backface-visibility: hidden;
     }
 `
 
@@ -79,6 +83,7 @@ export const Horse = styled.div`
     height: 100px;
     will-change: transform;
     z-index: 1000;
+    transform: translateZ(0);
     
     img {
         width: 100%;

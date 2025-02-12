@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import * as Styled from './Duck.style';
 import { getAssetPath } from '../../utils/assetPath';
 
@@ -10,46 +10,69 @@ interface DuckProps {
 }
 
 const Duck: React.FC<DuckProps> = ({ left, top: baseTop, width = 120, pondWidth }) => {
-    const [position, setPosition] = useState(left);
-    const [direction, setDirection] = useState<'right' | 'left'>('right');
+    const animationRef = useRef<number>();
+    const lastTimeRef = useRef<number>(0);
+    const positionRef = useRef(left);
+    const directionRef = useRef<'right' | 'left'>('right');
     
-    // Generate random speed and height offset only once on mount
-    const [speed] = useState(() => 1 + Math.random());
-    const [randomTop] = useState(() => baseTop + Math.floor(Math.random() * 100));
+    // Generate random speed and height offset only once
+    const speed = useMemo(() => 1 + Math.random(), []);
+    const randomTop = useMemo(() => baseTop + Math.floor(Math.random() * 100), [baseTop]);
     
+    // Use ref for the element to avoid unnecessary re-renders
+    const duckRef = useRef<HTMLImageElement>(null);
+
     useEffect(() => {
-        // Each duck gets its own random speed between 1-2px per frame
-        const DUCK_SPEED = speed;
-        const moveInterval = setInterval(() => {
-            setPosition(prev => {
-                let next = direction === 'right' ? prev + DUCK_SPEED : prev - DUCK_SPEED;
-                
-                // Change direction at pond edges
-                if (next >= left + pondWidth - width) {
-                    next = left + pondWidth - width;
-                    setDirection('left');
-                } else if (next <= left) {
-                    next = left;
-                    setDirection('right');
-                }
-                
-                return next;
-            });
-        }, 50); // Same interval as horse movement
+        const animate = (timestamp: number) => {
+            // Calculate time delta for smooth animation
+            const delta = timestamp - lastTimeRef.current;
+            lastTimeRef.current = timestamp;
+
+            // Update position based on delta time
+            const DUCK_SPEED = speed * (delta * 0.06); // Scale speed by delta
+            let nextPosition = directionRef.current === 'right' 
+                ? positionRef.current + DUCK_SPEED 
+                : positionRef.current - DUCK_SPEED;
+            
+            // Change direction at pond edges
+            if (nextPosition >= left + pondWidth - width) {
+                nextPosition = left + pondWidth - width;
+                directionRef.current = 'left';
+            } else if (nextPosition <= left) {
+                nextPosition = left;
+                directionRef.current = 'right';
+            }
+            
+            positionRef.current = nextPosition;
+
+            // Update transform directly for better performance
+            if (duckRef.current) {
+                const scaleX = directionRef.current === 'right' ? -1 : 1;
+                duckRef.current.style.transform = 
+                    `translate3d(${nextPosition}px, ${randomTop}px, 0) scaleX(${scaleX})`;
+            }
+
+            animationRef.current = requestAnimationFrame(animate);
+        };
+
+        animationRef.current = requestAnimationFrame(animate);
         
-        return () => clearInterval(moveInterval);
-    }, [direction, left, pondWidth, width]);
+        return () => {
+            if (animationRef.current) {
+                cancelAnimationFrame(animationRef.current);
+            }
+        };
+    }, [left, pondWidth, width, speed, randomTop]);
 
     return (
         <Styled.DuckImage
+            ref={duckRef}
             src={getAssetPath('horse/Duck.svg')}
             alt="Duck"
-            style={{
-                left: `${position}px`,
-                top: `${randomTop}px`,
-                transform: `scaleX(${direction === 'right' ? -1 : 1})`  // Reversed to match duck image direction
-            }}
             width={width}
+            style={{
+                transform: `translate3d(${left}px, ${randomTop}px, 0) scaleX(1)`
+            }}
         />
     );
 };
