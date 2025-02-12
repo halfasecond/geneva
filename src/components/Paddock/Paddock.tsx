@@ -98,7 +98,7 @@ const AI_HORSES = [
 
 export const Paddock: React.FC<PaddockProps> = ({
     horseId,
-    initialPosition = { x: 100, y: WORLD_HEIGHT - 1200, direction: "right" as const },
+    initialPosition = { x: 100, y: 150, direction: "right" as const },
     introActive = true,
     modalOpen = false
 }) => {

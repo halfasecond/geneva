@@ -1,5 +1,4 @@
 import React from 'react';
-import Board from '@asseinfo/react-kanban';
 import {
     FieldContainer,
     IssueCard,
@@ -9,6 +8,7 @@ import {
     FieldHeader,
     FieldTitle,
 } from './IssuesField.style';
+import KanbanBoard from './KanbanBoard';
 
 // Demo board data for serverless deployment
 const DEMO_BOARD = {
@@ -99,12 +99,6 @@ interface KanbanCard {
     };
 }
 
-interface KanbanColumn {
-    id: string;
-    title: string;
-    cards: KanbanCard[];
-}
-
 const StaticIssuesField: React.FC = () => {
     // Custom card component with agent labels
     const renderCard = (card: KanbanCard) => (
@@ -127,31 +121,17 @@ const StaticIssuesField: React.FC = () => {
         </IssueCard>
     );
 
-    // Custom column component
-    const renderColumn = (column: KanbanColumn) => (
-        <div data-title={`${column.title} (${column.cards.length})`}>
-            {column.cards.map(card => (
-                <div key={`${card.projectId}-${card.contentId}`}>
-                    {renderCard(card)}
-                </div>
-            ))}
-        </div>
-    );
-
     return (
-        <FieldContainer loading={false}>
+        <FieldContainer data-loading="false">
             <FieldHeader>
                 <FieldTitle>🚜 Issue Tractor (Serverless Demo)</FieldTitle>
             </FieldHeader>
-            <Board
-                disableColumnDrag
+            <KanbanBoard
+                columns={DEMO_BOARD.columns}
                 renderCard={renderCard}
-                renderColumn={renderColumn}
-            >
-                {DEMO_BOARD}
-            </Board>
+            />
         </FieldContainer>
     );
 };
 
-export default React.memo(StaticIssuesField);
+export default StaticIssuesField;

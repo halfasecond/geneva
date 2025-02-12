@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import Board from '@asseinfo/react-kanban';
 import {
     FieldContainer,
     IssueCard,
@@ -12,6 +11,7 @@ import {
     LoadingText
 } from './IssuesField.style';
 import StaticIssuesField from './StaticIssuesField';
+import KanbanBoard from './KanbanBoard';
 
 // Project configuration
 const PROJECT_NUMBER = parseInt(import.meta.env.VITE_APP_GITHUB_PROJECT_NUMBER || '1', 10);
@@ -77,17 +77,6 @@ const DynamicIssuesField: React.FC = () => {
             </IssueLabels>
         </IssueCard>
     ), []);
-
-    // Custom column component
-    const renderColumn = useCallback((column: KanbanColumn) => (
-        <div data-title={`${column.title} (${column.cards.length})`}>
-            {column.cards.map(card => (
-                <div key={`${card.projectId}-${card.contentId}`}>
-                    {renderCard(card)}
-                </div>
-            ))}
-        </div>
-    ), [renderCard]);
 
     // Fetch project items
     const fetchProjectItems = useCallback(async () => {
@@ -167,21 +156,17 @@ const DynamicIssuesField: React.FC = () => {
             <FieldHeader>
                 <FieldTitle>🚜 Issue Tractor</FieldTitle>
             </FieldHeader>
-            <Board
-                disableColumnDrag
+            <KanbanBoard
+                columns={board.columns}
                 renderCard={renderCard}
-                renderColumn={renderColumn}
-            >
-                {board}
-            </Board>
+            />
         </FieldContainer>
     );
 };
 
 // Main component that conditionally renders serverless or dynamic version
 const IssuesField: React.FC = () => {
-    console.log('VITE_SERVERLESS:', import.meta.env.VITE_SERVERLESS);
     return IS_SERVERLESS ? <StaticIssuesField /> : <DynamicIssuesField />;
 };
 
-export default React.memo(IssuesField);
+export default IssuesField;
