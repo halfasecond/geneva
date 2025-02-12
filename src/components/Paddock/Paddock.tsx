@@ -21,6 +21,7 @@ import Race from "../Race";
 import { BACKGROUND_MUSIC } from '../../audio';
 import { Minimap } from '../Minimap';
 import { WORLD_WIDTH, WORLD_HEIGHT } from '../../utils/coordinates';
+import Beach from '../Beach/Beach';
 
 interface PaddockProps {
     horseId: string;
@@ -31,7 +32,6 @@ interface PaddockProps {
 
 // Environment configuration - handle various falsy values
 const IS_SERVERLESS = import.meta.env.VITE_SERVERLESS?.toLowerCase() === 'true';
-console.log('Paddock VITE_SERVERLESS:', import.meta.env.VITE_SERVERLESS);
 
 // Define all restricted areas to avoid
 const RESTRICTED_AREAS = [
@@ -98,7 +98,7 @@ const AI_HORSES = [
 
 export const Paddock: React.FC<PaddockProps> = ({
     horseId,
-    initialPosition = { x: 100, y: WORLD_HEIGHT - 1200, direction: "right" as const },  // Position near beach for testing
+    initialPosition = { x: 100, y: WORLD_HEIGHT - 1200, direction: "right" as const },
     introActive = true,
     modalOpen = false
 }) => {
@@ -111,7 +111,7 @@ export const Paddock: React.FC<PaddockProps> = ({
             if (e.key === '9') {
                 setDebugMode(prev => {
                     const newDebugMode = !prev;
-                    if (newDebugMode && !isMuted) { // Only mute if turning debug on and not already muted
+                    if (newDebugMode && !isMuted) {
                         handleMuteToggle();
                     }
                     return newDebugMode;
@@ -149,9 +149,10 @@ export const Paddock: React.FC<PaddockProps> = ({
                 next[0] = true;
                 return next;
             });
-        }, 500);  // Small delay before fade in
+        }, 500);
         return () => clearTimeout(timer);
     }, []);
+
     const [isRacing, setIsRacing] = useState(false);
     const [forcedPosition, setForcedPosition] = useState<Position | undefined>();
     const [racingPosition, setRacingPosition] = useState<{ x: number; y: number } | undefined>();
@@ -165,7 +166,7 @@ export const Paddock: React.FC<PaddockProps> = ({
     // Handle message triggers
     const handleMessageTrigger = useCallback((messageIndex: number) => {
         setVisibleMessages(prev => {
-            if (prev[messageIndex]) return prev; // Already visible
+            if (prev[messageIndex]) return prev;
             const next = [...prev];
             next[messageIndex] = true;
             return next;
@@ -175,31 +176,26 @@ export const Paddock: React.FC<PaddockProps> = ({
     // Handle race state changes
     const handleRaceStateChange = useCallback((state: 'countdown' | 'racing' | 'finished') => {
         if (state === 'countdown') {
-            setIsRacing(true);  // Disable movement during countdown
-            // Set position to finish line immediately since horse is hidden anyway
-            const finishPosition = { x: 1990, y: 2060, direction: 'right' as const };  // -10px
+            setIsRacing(true);
+            const finishPosition = { x: 1990, y: 2060, direction: 'right' as const };
             setForcedPosition(finishPosition);
             if (!IS_SERVERLESS) {
                 updatePosition(finishPosition);
             }
         } else if (state === 'racing') {
-            setIsRacing(true);  // Keep movement disabled during race
+            setIsRacing(true);
         } else if (state === 'finished') {
-            // Clear forced position, racing position, re-enable movement, and show completion
             setForcedPosition(undefined);
             setRacingPosition(undefined);
             setIsRacing(false);
-            // Show completion message when movement and path restrictions are lifted
             setVisibleMessages(prev => {
                 const next = [...prev];
-                next[next.length - 1] = true;  // Show last message (completion)
+                next[next.length - 1] = true;
                 return next;
             });
-            // Fade out all messages except first one after 10 seconds
             setTimeout(() => {
                 setVisibleMessages(prev => {
                     const next = [...prev];
-                    // Keep first message (index 0) visible
                     for (let i = 1; i < next.length; i++) {
                         next[i] = false;
                     }
@@ -207,7 +203,7 @@ export const Paddock: React.FC<PaddockProps> = ({
                 });
             }, 10000);
         }
-    }, [IS_SERVERLESS, updatePosition, setVisibleMessages]);
+    }, [IS_SERVERLESS, updatePosition]);
 
     // Initialize movement with current viewport dimensions
     const { position, viewportOffset } = useMovement({
@@ -215,7 +211,7 @@ export const Paddock: React.FC<PaddockProps> = ({
         viewportHeight: viewportDimensions.height,
         initialPosition,
         introActive: debugMode ? false : introActive,
-        movementDisabled: debugMode ? false : (isRacing || modalOpen),  // Debug mode bypasses all restrictions
+        movementDisabled: debugMode ? false : (isRacing || modalOpen),
         onPositionChange: useCallback((pos: Position) => {
             if (!IS_SERVERLESS && connected) {
                 updatePosition(pos);
@@ -223,7 +219,7 @@ export const Paddock: React.FC<PaddockProps> = ({
         }, [IS_SERVERLESS, connected, updatePosition]),
         onMessageTrigger: introActive && !debugMode ? handleMessageTrigger : undefined,
         forcePosition: debugMode ? undefined : forcedPosition,
-        racingHorsePosition: racingPosition  // Pass racing position for viewport tracking
+        racingHorsePosition: racingPosition
     });
 
     // Initialize zoom control
@@ -232,10 +228,7 @@ export const Paddock: React.FC<PaddockProps> = ({
         maxScale: 1.5,
         position,
         viewportOffset,
-        viewportDimensions: {
-            width: viewportDimensions.width,
-            height: viewportDimensions.height
-        }
+        viewportDimensions
     });
 
     // Update viewport dimensions on resize and initial mount
@@ -253,10 +246,7 @@ export const Paddock: React.FC<PaddockProps> = ({
             }
         };
 
-        // Initial update
         updateDimensions();
-        
-        // Update on resize
         window.addEventListener("resize", updateDimensions);
         return () => window.removeEventListener("resize", updateDimensions);
     }, []);
@@ -274,8 +264,11 @@ export const Paddock: React.FC<PaddockProps> = ({
                     transformOrigin: `${zoomOrigin.x}% ${zoomOrigin.y}%`
                 }}
             >
-                {/* Beach sand background */}
-                <Styled.BeachSand />
+                {/* Beach with viewport-aware animation */}
+                <Beach 
+                    viewportOffset={viewportOffset}
+                    viewportDimensions={viewportDimensions}
+                />
 
                 {/* Bridleway Path and Rivers */}
                 <PathHighlight active={introActive} />
@@ -285,10 +278,12 @@ export const Paddock: React.FC<PaddockProps> = ({
                 {paths.map((path, index) => (
                     <Styled.PathLabel
                         key={`label-${index}`}
-                        left={path.left}
-                        top={path.top}
-                        width={path.width}
-                        height={path.height}
+                        style={{
+                            left: `${path.left}px`,
+                            top: `${path.top}px`,
+                            width: `${path.width}px`,
+                            height: `${path.height}px`
+                        }}
                     >
                         {index + 1}
                     </Styled.PathLabel>
@@ -298,10 +293,12 @@ export const Paddock: React.FC<PaddockProps> = ({
                 {introActive && introMessages.map((message, index) => (
                     <Styled.Message
                         key={`message-${index}`}
-                        left={message.left}
-                        top={message.top}
-                        width={message.width}
-                        opacity={visibleMessages[index] ? 1 : 0}
+                        style={{
+                            left: `${message.left}px`,
+                            top: `${message.top}px`,
+                            width: `${message.width}px`,
+                            opacity: visibleMessages[index] ? 1 : 0
+                        }}
                         dangerouslySetInnerHTML={{ __html: message.message }}
                     />
                 ))}
@@ -347,7 +344,11 @@ export const Paddock: React.FC<PaddockProps> = ({
                 )}
 
                 {/* Issues Field */}
-                <Styled.IssuesFieldContainer scale={scale}>
+                <Styled.IssuesFieldContainer
+                    style={{
+                        transform: `scale(${1 / scale})`
+                    }}
+                >
                     <IssuesField />
                 </Styled.IssuesFieldContainer>
 
@@ -366,7 +367,7 @@ export const Paddock: React.FC<PaddockProps> = ({
 
                 {/* Other players - only show in non-serverless mode */}
                 {!IS_SERVERLESS && Array.from(players.entries()).map(([id, player]) => {
-                    if (id === horseId) return null; // Skip current player
+                    if (id === horseId) return null;
                     return (
                         <Styled.Horse
                             key={id}
@@ -380,9 +381,6 @@ export const Paddock: React.FC<PaddockProps> = ({
                         </Styled.Horse>
                     );
                 })}
-
-                {/* Beach sea overlay */}
-                <Styled.BeachSea />
             </Styled.GameSpace>
 
             {/* Minimap */}
