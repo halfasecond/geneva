@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Position } from '../../../server/types'
 import { paths } from '../../Bridleway/set'
 import { rivers, isInRiver } from '../../Rivers'
@@ -41,17 +41,25 @@ export function useMovement({
     forcePosition,
     racingHorsePosition
 }: UseMovementProps) {
+    // Use refs for values we want to track but not react to
+    const positionRef = useRef<Position>(initialPosition)
+    const viewportOffsetRef = useRef<ViewportOffset>({ x: 0, y: 0 })
+    
+    // State only for values that should trigger re-renders
     const [position, setPosition] = useState<Position>(initialPosition)
     const [viewportOffset, setViewportOffset] = useState<ViewportOffset>({ x: 0, y: 0 })
     const [keys, setKeys] = useState<Set<string>>(new Set())
     const [hasFinishedRace, setHasFinishedRace] = useState(false)
+
+    // Keep refs in sync with state
+    positionRef.current = position
+    viewportOffsetRef.current = viewportOffset
 
     // Force position update when provided
     useEffect(() => {
         if (forcePosition) {
             setPosition(forcePosition);
             onPositionChange(forcePosition);
-            // If position is at finish line, mark race as finished
             if (forcePosition.x >= 1990) {
                 setHasFinishedRace(true);
             }
@@ -80,155 +88,163 @@ export function useMovement({
         }
     }, [handleKeyDown, handleKeyUp])
 
-    useEffect(() => {
-        let animationFrameId: number
-
-        const updatePosition = () => {
-            if (movementDisabled || forcePosition) return;
-
-            setPosition(prev => {
-                let x = prev.x
-                let y = prev.y
-                let direction = prev.direction
-                let moved = false
-
-                // Calculate potential new position
-                if (keys.has('ArrowLeft') || keys.has('a')) {
-                    x -= MOVEMENT_SPEED
-                    direction = 'left'
-                    moved = true
-                }
-                if (keys.has('ArrowRight') || keys.has('d')) {
-                    x += MOVEMENT_SPEED
-                    direction = 'right'
-                    moved = true
-                }
-                if (keys.has('ArrowUp') || keys.has('w')) {
-                    y -= MOVEMENT_SPEED
-                    moved = true
-                }
-                if (keys.has('ArrowDown') || keys.has('s')) {
-                    y += MOVEMENT_SPEED
-                    moved = true
-                }
-
-                // If no movement, return previous state
-                if (!moved && direction === prev.direction) {
-                    return prev
-                }
-
-                // Keep horse within game bounds
-                x = Math.max(0, Math.min(x, WORLD_WIDTH - HORSE_SIZE));
-                y = Math.max(0, Math.min(y, WORLD_HEIGHT - HORSE_SIZE));
-
-                const horseBox = {
-                    left: x,
-                    right: x + HORSE_SIZE,
-                    top: y,
-                    bottom: y + HORSE_SIZE
-                }
-
-                // Check for river collision first
-                if (isInRiver(horseBox, rivers)) {
-                    // If only direction changed, allow that
-                    if (x === prev.x && y === prev.y && direction !== prev.direction) {
-                        const newPosition = { ...prev, direction }
-                        onPositionChange(newPosition)
-                        return newPosition
-                    }
-                    return prev // Keep previous position if in river
-                }
-
-                // Add safeZone to each path segment
-                const pathsWithSafeZones = paths.map(path => ({
-                    ...path,
-                    safeZone: getSafeZone(path)
-                }))
-                
-                // If intro is active, validate position against paths
-                if (introActive && !isOnPath(horseBox, pathsWithSafeZones)) {
-                    // If only direction changed, allow that
-                    if (x === prev.x && y === prev.y && direction !== prev.direction) {
-                        const newPosition = { ...prev, direction }
-                        onPositionChange(newPosition)
-                        return newPosition
-                    }
-                    return prev // Keep previous position if not on path
-                }
-
-                // Check for message triggers
-                if (onMessageTrigger) {
-                    pathsWithSafeZones.forEach((path, index) => {
-                        const message = introMessages.find(msg => msg.triggerSegment === index)
-                        if (message && isOnPath(horseBox, [path])) {
-                            onMessageTrigger(introMessages.indexOf(message))
-                        }
-                    })
-                }
-
-                // Position is valid
-                const newPosition = { x, y, direction }
-                onPositionChange(newPosition)
-                return newPosition
-            })
-
-            animationFrameId = requestAnimationFrame(updatePosition)
+    // Check if a position is valid
+    const isValidPosition = useCallback((x: number, y: number, direction: 'left' | 'right'): boolean => {
+        const horseBox = {
+            left: x,
+            right: x + HORSE_SIZE,
+            top: y,
+            bottom: y + HORSE_SIZE
         }
 
+        // Check river collision
+        if (isInRiver(horseBox, rivers)) {
+            return false;
+        }
+
+        // Check path restrictions during intro
+        if (introActive) {
+            const pathsWithSafeZones = paths.map(path => ({
+                ...path,
+                safeZone: getSafeZone(path)
+            }))
+            if (!isOnPath(horseBox, pathsWithSafeZones)) {
+                return false;
+            }
+        }
+
+        return true;
+    }, [introActive])
+
+    // Handle movement animation
+    useEffect(() => {
+        if (movementDisabled || forcePosition) return;
+
+        let animationFrameId: number;
+        const updatePosition = () => {
+            const current = positionRef.current;
+            let x = current.x;
+            let y = current.y;
+            let direction = current.direction;
+            let moved = false;
+
+            // Calculate potential new position
+            if (keys.has('ArrowLeft') || keys.has('a')) {
+                x -= MOVEMENT_SPEED;
+                direction = 'left';
+                moved = true;
+            }
+            if (keys.has('ArrowRight') || keys.has('d')) {
+                x += MOVEMENT_SPEED;
+                direction = 'right';
+                moved = true;
+            }
+            if (keys.has('ArrowUp') || keys.has('w')) {
+                y -= MOVEMENT_SPEED;
+                moved = true;
+            }
+            if (keys.has('ArrowDown') || keys.has('s')) {
+                y += MOVEMENT_SPEED;
+                moved = true;
+            }
+
+            // If no movement or only direction change
+            if (!moved) {
+                if (direction !== current.direction) {
+                    const newPosition = { ...current, direction };
+                    setPosition(newPosition);
+                    onPositionChange(newPosition);
+                }
+                return;
+            }
+
+            // Keep within bounds
+            x = Math.max(0, Math.min(x, WORLD_WIDTH - HORSE_SIZE));
+            y = Math.max(0, Math.min(y, WORLD_HEIGHT - HORSE_SIZE));
+
+            // Check if new position is valid
+            if (isValidPosition(x, y, direction)) {
+                const newPosition = { x, y, direction };
+                setPosition(newPosition);
+                onPositionChange(newPosition);
+            }
+
+            animationFrameId = requestAnimationFrame(updatePosition);
+        };
+
         if (keys.size > 0) {
-            animationFrameId = requestAnimationFrame(updatePosition)
+            animationFrameId = requestAnimationFrame(updatePosition);
         }
 
         return () => {
             if (animationFrameId) {
-                cancelAnimationFrame(animationFrameId)
+                cancelAnimationFrame(animationFrameId);
             }
-        }
-    }, [keys, onPositionChange, introActive, onMessageTrigger, movementDisabled, forcePosition, hasFinishedRace])
+        };
+    }, [keys, isValidPosition, movementDisabled, forcePosition, onPositionChange]);
 
-    // Update viewport when horse approaches edges
+    // Update viewport offset
     useEffect(() => {
-        if (viewportWidth > 0 && viewportHeight > 0) {
-            let newX = viewportOffset.x;
-            let newY = viewportOffset.y;
+        if (!viewportWidth || !viewportHeight) return;
 
-            if (movementDisabled && racingHorsePosition) {
-                // During race: directly track racing horse position
-                newX = racingHorsePosition.x - (viewportWidth * 0.2);  // 20% from left
-                newY = racingHorsePosition.y - (viewportHeight * 0.7);  // 70% from top
-            } else {
-                // Normal gameplay: use edge detection for smooth scrolling
-                const viewportRight = viewportOffset.x + viewportWidth;
-                const viewportBottom = viewportOffset.y + viewportHeight;
-                
-                // Check if horse is too close to right/left edges
-                const rightEdge = viewportRight - (viewportWidth * EDGE_THRESHOLD);
-                const leftEdge = viewportOffset.x + (viewportWidth * EDGE_THRESHOLD);
-                if (position.x > rightEdge) {
-                    newX = position.x - (viewportWidth * (1 - EDGE_THRESHOLD));
-                } else if (position.x < leftEdge) {
-                    newX = position.x - (viewportWidth * EDGE_THRESHOLD);
-                }
-                
-                // Same threshold for top/bottom
-                const bottomEdge = viewportBottom - (viewportHeight * EDGE_THRESHOLD);
-                const topEdge = viewportOffset.y + (viewportHeight * EDGE_THRESHOLD);
-                if (position.y > bottomEdge) {
-                    newY = position.y - (viewportHeight * (1 - EDGE_THRESHOLD));
-                } else if (position.y < topEdge) {
-                    newY = position.y - (viewportHeight * EDGE_THRESHOLD);
-                }
+        let newX = viewportOffsetRef.current.x;
+        let newY = viewportOffsetRef.current.y;
+
+        if (movementDisabled && racingHorsePosition) {
+            newX = racingHorsePosition.x - (viewportWidth * 0.2);
+            newY = racingHorsePosition.y - (viewportHeight * 0.7);
+        } else {
+            const viewportRight = viewportOffsetRef.current.x + viewportWidth;
+            const viewportBottom = viewportOffsetRef.current.y + viewportHeight;
+            
+            const rightEdge = viewportRight - (viewportWidth * EDGE_THRESHOLD);
+            const leftEdge = viewportOffsetRef.current.x + (viewportWidth * EDGE_THRESHOLD);
+            if (positionRef.current.x > rightEdge) {
+                newX = positionRef.current.x - (viewportWidth * (1 - EDGE_THRESHOLD));
+            } else if (positionRef.current.x < leftEdge) {
+                newX = positionRef.current.x - (viewportWidth * EDGE_THRESHOLD);
             }
             
-            // Keep viewport within GameSpace bounds
-            newX = Math.max(0, Math.min(newX, WORLD_WIDTH - viewportWidth));
-            newY = Math.max(0, Math.min(newY, WORLD_HEIGHT - viewportHeight));
-            
-            if (newX !== viewportOffset.x || newY !== viewportOffset.y) {
-                setViewportOffset({ x: newX, y: newY });
+            const bottomEdge = viewportBottom - (viewportHeight * EDGE_THRESHOLD);
+            const topEdge = viewportOffsetRef.current.y + (viewportHeight * EDGE_THRESHOLD);
+            if (positionRef.current.y > bottomEdge) {
+                newY = positionRef.current.y - (viewportHeight * (1 - EDGE_THRESHOLD));
+            } else if (positionRef.current.y < topEdge) {
+                newY = positionRef.current.y - (viewportHeight * EDGE_THRESHOLD);
             }
         }
-    }, [position.x, position.y, viewportWidth, viewportHeight, viewportOffset, movementDisabled, racingHorsePosition])
+        
+        newX = Math.max(0, Math.min(newX, WORLD_WIDTH - viewportWidth));
+        newY = Math.max(0, Math.min(newY, WORLD_HEIGHT - viewportHeight));
+
+        if (newX !== viewportOffsetRef.current.x || newY !== viewportOffsetRef.current.y) {
+            setViewportOffset({ x: newX, y: newY });
+        }
+    }, [position, viewportWidth, viewportHeight, movementDisabled, racingHorsePosition]);
+
+    // Handle message triggers
+    useEffect(() => {
+        if (!onMessageTrigger || !introActive) return;
+
+        const pathsWithSafeZones = paths.map(path => ({
+            ...path,
+            safeZone: getSafeZone(path)
+        }));
+
+        const horseBox = {
+            left: position.x,
+            right: position.x + HORSE_SIZE,
+            top: position.y,
+            bottom: position.y + HORSE_SIZE
+        };
+
+        pathsWithSafeZones.forEach((path, index) => {
+            const message = introMessages.find(msg => msg.triggerSegment === index);
+            if (message && isOnPath(horseBox, [path])) {
+                onMessageTrigger(introMessages.indexOf(message));
+            }
+        });
+    }, [position, introActive, onMessageTrigger]);
 
     return {
         position,

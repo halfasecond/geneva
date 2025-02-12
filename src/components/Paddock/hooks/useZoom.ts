@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Position } from '../../../server/types'
 
 interface UseZoomProps {
@@ -9,6 +9,11 @@ interface UseZoomProps {
     viewportDimensions: { width: number; height: number }
 }
 
+interface ZoomOrigin {
+    x: number;
+    y: number;
+}
+
 export const useZoom = ({
     minScale = 0.2,  // Max zoom out (see whole space)
     maxScale = 1.5,  // Max zoom in
@@ -16,32 +21,69 @@ export const useZoom = ({
     viewportOffset,
     viewportDimensions
 }: UseZoomProps) => {
+    // Use refs for values we want to track but not react to
+    const scaleRef = useRef(1)
+    const zoomOriginRef = useRef<ZoomOrigin>({ x: 50, y: 50 })
+    
+    // State only for values that should trigger re-renders
     const [scale, setScale] = useState(1)
-    const [zoomOrigin, setZoomOrigin] = useState({ x: 50, y: 50 }) // Center by default
+    const [zoomOrigin, setZoomOrigin] = useState<ZoomOrigin>({ x: 50, y: 50 })
 
-    // Update zoom origin when viewport dimensions change
-    useEffect(() => {
+    // Keep refs in sync with state
+    scaleRef.current = scale
+    zoomOriginRef.current = zoomOrigin
+
+    // Calculate zoom origin without triggering re-renders
+    const updateZoomOrigin = () => {
         if (viewportDimensions.width > 0 && viewportDimensions.height > 0) {
-            const horseViewportX = (position.x - viewportOffset.x) * scale
-            const horseViewportY = (position.y - viewportOffset.y) * scale
-            setZoomOrigin({
+            const horseViewportX = (position.x - viewportOffset.x) * scaleRef.current
+            const horseViewportY = (position.y - viewportOffset.y) * scaleRef.current
+            const newOrigin = {
                 x: (horseViewportX / viewportDimensions.width) * 100,
                 y: (horseViewportY / viewportDimensions.height) * 100
-            })
-        }
-    }, [viewportDimensions.width, viewportDimensions.height, position, viewportOffset, scale])
+            }
 
-    // Listen for Ctrl+/- keyboard shortcuts
+            // Only update if values actually changed
+            if (newOrigin.x !== zoomOriginRef.current.x || 
+                newOrigin.y !== zoomOriginRef.current.y) {
+                setZoomOrigin(newOrigin)
+            }
+        }
+    }
+
+    // Update zoom origin when relevant values change
+    useEffect(() => {
+        updateZoomOrigin()
+    }, [
+        viewportDimensions.width,
+        viewportDimensions.height,
+        position.x,
+        position.y,
+        viewportOffset.x,
+        viewportOffset.y
+    ]) // Removed scale from dependencies
+
+    // Handle zoom keyboard shortcuts
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (!e.ctrlKey) return
 
             if (e.key === '=' || e.key === '+') {
                 e.preventDefault()
-                setScale(current => Math.min(maxScale, current + 0.1))
+                const newScale = Math.min(maxScale, scaleRef.current + 0.1)
+                if (newScale !== scaleRef.current) {
+                    setScale(newScale)
+                    // Update zoom origin after scale change
+                    requestAnimationFrame(updateZoomOrigin)
+                }
             } else if (e.key === '-') {
                 e.preventDefault()
-                setScale(current => Math.max(minScale, current - 0.1))
+                const newScale = Math.max(minScale, scaleRef.current - 0.1)
+                if (newScale !== scaleRef.current) {
+                    setScale(newScale)
+                    // Update zoom origin after scale change
+                    requestAnimationFrame(updateZoomOrigin)
+                }
             }
         }
 
