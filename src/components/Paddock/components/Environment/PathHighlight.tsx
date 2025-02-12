@@ -37,3 +37,5 @@ export const PathHighlight: React.FC<PathHighlightProps> = ({ active = true }) =
     </PathContainer>
   );
 };
+
+export default PathHighlight;

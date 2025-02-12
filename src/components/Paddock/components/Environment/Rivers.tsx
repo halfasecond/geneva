@@ -26,3 +26,5 @@ export const Rivers: React.FC<RiversProps> = ({ active = true }) => {
     </RiverContainer>
   );
 };
+
+export default Rivers;

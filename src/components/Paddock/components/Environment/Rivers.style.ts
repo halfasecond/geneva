@@ -1,8 +1,9 @@
 import styled from 'styled-components';
+import { Z_LAYERS } from '../../../../config/zIndex';
 
 export const RiverContainer = styled.div`
   position: absolute;
-  z-index: 1;
+  z-index: ${Z_LAYERS.WATER};
   width: 100%;
   height: 100%;
   pointer-events: none;

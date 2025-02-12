@@ -1,8 +1,9 @@
 import styled from "styled-components";
+import { Z_LAYERS } from "../../../../config/zIndex";
 
 export const PathSegment = styled.div`
   position: absolute;
-  z-index: 1;
+  z-index: ${Z_LAYERS.TERRAIN_BASE};
 `;
 
 export const PathContainer = styled.div`

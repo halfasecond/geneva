@@ -1,7 +1,7 @@
 import React from 'react';
-import * as Styled from './Paddock.style';
-import { useGameSpaceVisibility } from './hooks/useGameSpaceVisibility';
-import { useWaveAnimation } from './hooks/useWaveAnimation';
+import * as Styled from '../../Paddock.style';
+import { useGameSpaceVisibility } from '../../hooks/useGameSpaceVisibility';
+import { useWaveAnimation } from '../../hooks/useWaveAnimation';
 
 interface BeachProps {
     viewportOffset: { x: number; y: number };
