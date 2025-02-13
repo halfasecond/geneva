@@ -48,6 +48,6 @@ const schema = new Schema<CMS>({
 });
 
 export default (prefix: string, db: Connection): Model<CMS> => {
-    const modelName = `${prefix}_cms`;
+    const modelName = prefix === '' ? 'cms' : `${prefix}_cms`;
     return db.model<CMS>(modelName, schema);
 };

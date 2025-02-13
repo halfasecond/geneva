@@ -1,5 +1,4 @@
 import { Server, Socket, Namespace } from 'socket.io';
-import Web3 from 'web3';
 import { Model } from 'mongoose';
 
 interface Models {
@@ -16,7 +15,7 @@ interface MessageData {
     account: string;
 }
 
-const socket = async (io: Server, web3: Web3, name: string, Models: Models) => {
+const socket = async (io: Server, web3: any, name: string, Models: Models) => {
     const namespace: Namespace = io.of(`/${name}`);
     const { Account, Message } = Models;
     let socketCount = 0;

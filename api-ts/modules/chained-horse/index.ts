@@ -1,6 +1,5 @@
 import { Express } from 'express';
 import { Server } from 'socket.io';
-import Web3 from 'web3';
 import { decode } from 'js-base64';
 import { Model, Connection } from 'mongoose';
 import _Models from './models';
@@ -12,7 +11,7 @@ import { getContractHistory, handleStandardERC721Event } from '../utils';
 interface ModuleConfig {
     app: Express;
     io: Server;
-    web3: Web3;
+    web3: any;
     db: Connection;
     name?: string;
     prefix: string;
@@ -47,7 +46,7 @@ interface Event {
     [key: string]: any;
 }
 
-const processEvent = async (event: Event, web3: Web3): Promise<void> => {
+const processEvent = async (event: Event, web3: any): Promise<void> => {
     const contract = new web3.eth.Contract(Contracts.Core.abi, Contracts.Core.addr);
     
     try {
@@ -83,7 +82,7 @@ const processEvent = async (event: Event, web3: Web3): Promise<void> => {
     }
 };
 
-const logEvent = async (event: any, Models: Models, web3: Web3) => 
+const logEvent = async (event: any, Models: Models, web3: any) => 
     handleStandardERC721Event(event, processEvent, Models, web3);
 
 const runModule = (config: ModuleConfig) => {

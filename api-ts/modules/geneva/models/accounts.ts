@@ -19,6 +19,6 @@ const schema = new Schema<Account>({
 });
 
 export default (prefix: string, db: Connection): Model<Account> => {
-    const modelName = `${prefix}_account`;
+    const modelName = prefix === '' ? 'account' : `${prefix}_account`;
     return db.model<Account>(modelName, schema);
 };

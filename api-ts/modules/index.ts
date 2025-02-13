@@ -1,11 +1,10 @@
-import { Express } from '../types/express';
+import { Express } from '../types/express.js';
 import { Server } from 'socket.io';
-import Web3 from 'web3';
 import { Connection } from 'mongoose';
-import defaultModule from './geneva';
-import chainedHorseModule from './chained-horse';
+import defaultModule from './geneva/index.js';
+import chainedHorseModule from './chained-horse/index.js';
 
-const modules = (app: Express, io: Server, web3: Web3, db: Connection) => {
+const modules = (app: Express, io: Server, web3: any, db: Connection) => {
     // Initialize default (geneva) module
     defaultModule({
         app,
