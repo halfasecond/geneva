@@ -11,3 +11,22 @@ services:
       - ${PORT}:${PORT}
     stdin_open: true
     tty: true
+    networks:
+      - geneva-network
+
+  mongo:
+    image: mongo:latest
+    container_name: geneva-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - geneva-network
+
+networks:
+  geneva-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
