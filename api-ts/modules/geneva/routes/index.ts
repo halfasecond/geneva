@@ -1,5 +1,6 @@
 import { Express } from 'express';
 import { Model } from 'mongoose';
+import createGitHubRouter from './github/index.js';
 
 interface Models {
     Account: Model<any>;
@@ -15,7 +16,8 @@ const routes = (app: Express, urlPrepend: string | undefined, Models: Models) =>
         res.json({ status: 'ok' });
     });
 
-    // Add more routes here as needed
+    // Mount GitHub routes
+    app.use(`${url}github`, createGitHubRouter());
 };
 
 export default routes;
