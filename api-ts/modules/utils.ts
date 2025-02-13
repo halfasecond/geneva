@@ -1,4 +1,3 @@
-import { Contract } from 'web3';
 import { Model } from 'mongoose';
 
 interface Models {
@@ -43,7 +42,6 @@ export const getContractHistory = async (name: string, Module: Module, eventIncl
                 eventIncludes,
                 web3
             );
-            console.log(events); // should return a message that the ${name} events are up to date:
             subscribeToContractEvents(name, Contracts.Core.abi, Contracts.Core.addr, logEvent, eventIncludes, web3);
         }
     }));
@@ -82,27 +80,17 @@ export const subscribeToContractEvents = async (
 };
 
 const getPastEvents = async (abi: any[], address: string, fromBlock: number, toBlock: number, eventIncludes: string[], web3: any) => {
-    console.log('Creating contract instance for:', address);
     const contract = new web3.eth.Contract(abi, address);
     const pastEvents: any[] = [];
     
     for (const eventName of eventIncludes) {
-        console.log(`Querying ${eventName} events from block ${fromBlock} to ${toBlock}`);
         try {
             const _events = await contract.getPastEvents(eventName, { 
                 fromBlock: fromBlock, 
                 toBlock: toBlock,
                 filter: {} // Add empty filter to ensure we get all events
             });
-            console.log(`Found ${_events.length} ${eventName} events`);
             _events.forEach(event => {
-                console.log('Event:', {
-                    event: eventName,
-                    blockNumber: event.blockNumber,
-                    tokenId: event.returnValues.tokenId,
-                    from: event.returnValues.from,
-                    to: event.returnValues.to
-                });
                 pastEvents.push({ ...event, event: eventName });
             });
         } catch (error) {
@@ -130,13 +118,6 @@ export const getPastContractEvents = async (
     let fromBlockNumber = latestEvent ? latestEvent.blockNumber + 1 : fromBlock;
     let currentBlockHeight = await web3.eth.getBlockNumber();
     let toBlockNumber = Math.min(fromBlockNumber + (increment - 1), Number(currentBlockHeight));
-    console.log('Scanning blocks:', {
-        fromBlock: fromBlockNumber,
-        toBlock: toBlockNumber,
-        currentHeight: currentBlockHeight,
-        increment
-    });
-
     while (fromBlockNumber <= currentBlockHeight) {
         let pastEvents = await getPastEvents(abi, addr, fromBlockNumber, toBlockNumber, eventIncludes, web3);
         pastEvents.sort((a, b) => {
@@ -155,11 +136,6 @@ export const getPastContractEvents = async (
 
         for (let event of pastEvents) {
             try {
-                console.log('Processing event:', {
-                    event: event.event,
-                    blockNumber: event.blockNumber,
-                    tokenId: event.returnValues.tokenId
-                });
                 await logEvent(event);
             } catch (error) {
                 console.error(`Error processing event:`, error);
@@ -181,14 +157,6 @@ export const handleStandardERC721Event = async (
     Models: Models,
     web3: any
 ) => {
-    console.log('Handling event:', {
-        event: event.event,
-        blockNumber: event.blockNumber,
-        tokenId: event.returnValues.tokenId,
-        from: event.returnValues.from,
-        to: event.returnValues.to
-    });
-
     const _event: any = {
         logIndex: Number(event.logIndex),
         transactionIndex: Number(event.transactionIndex),
@@ -224,7 +192,6 @@ export const handleStandardERC721Event = async (
         });
 
         if (_event.from === '0x0000000000000000000000000000000000000000') {
-            console.log('Mint event detected');
             _event.owner = _event.to;
             _event.owners = [_event.to];
             if (processEvent) {
@@ -238,7 +205,6 @@ export const handleStandardERC721Event = async (
             ).exec();
         } else {
             if (_event.from !== '0x0000000000000000000000000000000000000000') {
-                console.log('Transfer event detected');
                 try {
                     await Models.NFT.findOneAndUpdate(
                         { tokenId: _event.tokenId },
