@@ -2,7 +2,10 @@ import { Server, Socket, Namespace } from 'socket.io';
 import Web3 from 'web3';
 import { Model } from 'mongoose';
 
-interface BaseModels {
+interface Models {
+    Event: Model<any>;
+    NFT: Model<any>;
+    Owner: Model<any>;
     Account: Model<any>;
     Message: Model<any>;
     [key: string]: Model<any>;
@@ -13,7 +16,7 @@ interface MessageData {
     account: string;
 }
 
-const socket = async (io: Server, web3: Web3, name: string, Models: BaseModels) => {
+const socket = async (io: Server, web3: Web3, name: string, Models: Models) => {
     const namespace: Namespace = io.of(`/${name}`);
     const { Account, Message } = Models;
     let socketCount = 0;

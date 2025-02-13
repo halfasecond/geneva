@@ -7,10 +7,12 @@ const { JWT_SECRET } = process.env;
 const web3 = new Web3(Web3.givenProvider);
 
 interface Models {
-    Account: Model<any>;
+    Event: Model<any>;
     NFT: Model<any>;
     Owner: Model<any>;
-    Event: Model<any>;
+    Account: Model<any>;
+    Message: Model<any>;
+    [key: string]: Model<any>;
 }
 
 const routes = (Models: Models): Router => {

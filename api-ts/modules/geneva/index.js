@@ -1,5 +1,5 @@
 import _Models from './models'
-import Routes from './routes'
+// import Routes from './routes'
 // import Contracts from './contracts'
 // import Socket from './socket'
 //  import { getContractHistory, handleStandardERC721Event } from '../../utils'
@@ -14,7 +14,7 @@ const runModule = (app, io, web3, config) => {
     Object.keys(_Models).map((m, i) => {
         Models[m] = _Models[m](prefix)
         if (i === Object.keys(_Models).length - 1) {
-            Routes(app, name, Models)
+            // Routes(app, name, Models)
             // Socket(io, web3, name ? name : '', Models)
         }
     })

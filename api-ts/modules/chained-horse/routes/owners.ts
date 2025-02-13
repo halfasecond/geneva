@@ -2,10 +2,12 @@ import express, { Router } from 'express';
 import { Model } from 'mongoose';
 
 interface Models {
-    Account: Model<any>;
+    Event: Model<any>;
     NFT: Model<any>;
     Owner: Model<any>;
-    Event: Model<any>;
+    Account: Model<any>;
+    Message: Model<any>;
+    [key: string]: Model<any>;
 }
 
 const routes = (Models: Models): Router => {

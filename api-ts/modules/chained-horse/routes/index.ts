@@ -5,10 +5,12 @@ import nfts from './nfts';
 import owners from './owners';
 
 interface Models {
-    Account: Model<any>;
+    Event: Model<any>;
     NFT: Model<any>;
     Owner: Model<any>;
-    Event: Model<any>;
+    Account: Model<any>;
+    Message: Model<any>;
+    [key: string]: Model<any>;
 }
 
 const routes = (app: Express, urlPrepend: string | undefined, Models: Models) => {
