@@ -1,32 +1,36 @@
-import { Plugin } from 'vite'
-import { Server } from 'socket.io'
-import { EventEmitter } from 'events'
-import { setupGitHubServer } from './github'
-import cors from 'cors'
-import express, { Express } from 'express'
-import dotenv from 'dotenv'
-import path from 'path'
+import { Plugin } from 'vite';
+import { Server as SocketServer } from 'socket.io';
+import { EventEmitter } from 'events';
+import cors from 'cors';
+import express from 'express';
+import dotenv from 'dotenv';
+import path from 'path';
+import mongoose from 'mongoose';
+import modules from '../../api-ts/modules/index.js';
+import createWeb3Connection from '../../api-ts/config/web3.js';
 
 export function gameServer(): Plugin {
     return {
         name: 'vite-plugin-game-server',
         config(config, { command }) {
             // Load environment variables based on mode
-            const envFile = command === 'serve' ? '.env' : '.env.production'
+            const envFile = command === 'serve' ? '.env' : '.env.production';
             dotenv.config({
                 path: path.resolve(process.cwd(), envFile)
-            })
+            });
         },
         async configureServer(server) {
-            // Add CORS and JSON parsing middleware
-            server.middlewares.use(cors())
-            server.middlewares.use(express.json())
+            const { MONGODB_URI, WEB3_SOCKET_URL, CORS_ORIGINS } = process.env;
+
+            if (!MONGODB_URI || !WEB3_SOCKET_URL) {
+                throw new Error('Missing required environment variables');
+            }
 
             try {
                 // Set up Socket.io server
-                const io = new Server(server.httpServer!, {
+                const io = new SocketServer(server.httpServer!, {
                     cors: {
-                        origin: process.env.CORS_ORIGINS?.split(',') || '*',
+                        origin: CORS_ORIGINS?.split(',') || '*',
                         methods: ['GET', 'POST']
                     }
                 });
@@ -35,20 +39,32 @@ export function gameServer(): Plugin {
                 const emitter = new EventEmitter();
 
                 // Create Express app
-                const app: Express = express();
-                
-                // Mount Express app on Vite middleware
-                server.middlewares.use(app);
+                const app = express();
+                app.use(express.json());
+                app.use(cors());
 
-                // Set up GitHub API server
-                setupGitHubServer(server.middlewares);
+                // Connect to MongoDB
+                console.log('Connecting to MongoDB...');
+                const db = await mongoose.createConnection(MONGODB_URI);
+                console.log('Successfully connected to MongoDB');
+
+                // Initialize Web3
+                console.log('Initializing Web3 connection...');
+                const web3 = createWeb3Connection(WEB3_SOCKET_URL);
+
+                // Initialize modules with prefixed routes
+                modules(app, io, web3, db);
+                
+                // Mount Express app on Vite middleware under /api
+                server.middlewares.use('/api', app);
 
                 // Log when server is ready
                 server.httpServer?.once('listening', () => {
                     const address = server.httpServer?.address();
                     if (address && typeof address !== 'string') {
                         console.log(`🐎 Game server running on port ${address.port}`);
-                        console.log('🐎 GitHub API endpoints available at /api/github');
+                        console.log('🐎 API endpoints available at /api');
+                        console.log('🐎 Socket.io namespaces ready');
                     }
                 });
             } catch (error) {
@@ -56,5 +72,5 @@ export function gameServer(): Plugin {
                 throw error;
             }
         }
-    }
+    };
 }
