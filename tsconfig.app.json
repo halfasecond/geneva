@@ -5,7 +5,7 @@
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "skipLibCheck": true,
-    "moduleResolution": "NodeNext",
+    "moduleResolution": "node",
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
@@ -17,8 +17,8 @@
     "noFallthroughCasesInSwitch": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-    "types": ["react", "socket.io-client"],
-    "baseUrl": ".",
+  "types": ["node", "react"],
+  "baseUrl": ".",
     "paths": {
       "src/*": ["./src/*"],
       "contracts/*": ["./src/contracts/*"],
@@ -26,7 +26,6 @@
       "pages/*": ["./src/pages/*"],
       "style/*": ["./src/style/*"],
       "utils/*": ["./src/utils/*"],
-      "api-ts/*": ["./api-ts/*"]
     }
   },
   "include": ["src/**/*"],
