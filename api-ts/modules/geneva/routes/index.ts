@@ -9,13 +9,7 @@ interface Models {
 }
 
 const routes = (app: Express, urlPrepend: string | undefined, Models: Models) => {
-    const url = urlPrepend ? `/${urlPrepend}-` : `/`;
-    
-    // Basic health check route
-    app.get(`${url}health`, (req, res) => {
-        res.json({ status: 'ok' });
-    });
-
+    const url = urlPrepend ? `/${urlPrepend}/` : `/`;
     // Mount GitHub routes
     app.use(`${url}github`, createGitHubRouter());
 };

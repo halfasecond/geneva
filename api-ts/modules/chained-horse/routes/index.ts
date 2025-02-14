@@ -14,7 +14,7 @@ interface Models {
 }
 
 const routes = (app: Express, urlPrepend: string | undefined, Models: Models) => {
-    const url = urlPrepend ? `/${urlPrepend}-` : `/`;
+    const url = urlPrepend ? `/${urlPrepend}/` : `/`;
     app.use(`${url}auth`, auth(Models));
     app.use(`${url}nfts`, nfts(Models));
     app.use(`${url}owners`, owners(Models));
