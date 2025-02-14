@@ -6,8 +6,8 @@ import express from 'express';
 import dotenv from 'dotenv';
 import path from 'path';
 import mongoose from 'mongoose';
-import modules from '../../api-ts/modules/index.js';
-import createWeb3Connection from '../../api-ts/config/web3.js';
+import modules from './modules';
+import createWeb3Connection from './config/web3';
 
 // Track active connections for cleanup
 let io: SocketServer | null = null;
