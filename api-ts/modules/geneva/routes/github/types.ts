@@ -27,6 +27,40 @@ export interface ProjectMetadata {
     repositoryId: string;
 }
 
+export interface ProjectBoardItem {
+    id: string;
+    fieldValues: {
+        nodes: Array<{
+            text?: string;
+            name?: string;
+            date?: string;
+            field?: { name: string };
+        }>;
+    };
+    content: {
+        number: number;
+        title: string;
+        url: string;
+        labels: {
+            nodes: Array<{
+                id: string;
+                name: string;
+                color: string;
+            }>;
+        };
+    };
+}
+
+export interface ProjectBoard {
+    items: {
+        nodes: ProjectBoardItem[];
+    };
+}
+
+export interface OrganizationProject {
+    projectV2: ProjectBoard;
+}
+
 export interface CreateDiscussionInput {
     title: string;
     body: string;

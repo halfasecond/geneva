@@ -9,63 +9,6 @@ export const FieldContainer = styled.div`
   display: flex;
   flex-direction: column;
   position: relative;
-
-  /* Style the react-kanban-board container */
-  .react-kanban-board {
-    z-index: 0; // Lower z-index than container
-    display: flex;
-    gap: 0; // Remove default gap
-    overflow-x: auto;
-    flex: 1; // Take up remaining height
-
-    /* Style the columns container */
-    > div {
-      display: flex;
-      gap: 24px; // Consistent gap between columns
-      min-width: fit-content;
-      width: 100%;
-      height: 100%; // Full height
-
-      .react-kanban-column-header {
-        font-weight: bold;
-        margin-bottom: 12px;
-      }
-
-      /* Style react-kanban-column */
-      .react-kanban-column {
-        flex: 1;
-        min-width: 236px;
-        max-width: 236px;
-        height: 100%; // Full height
-        display: flex; // Enable flex layout
-        flex-direction: column; // Stack children vertically
-        background: rgb(139, 69, 19); //#654321; // Dark soil color
-        border-radius: 8px;
-        padding: 16px;
-        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
-        box-sizing: border-box;
-
-        /* Column content should align to top */
-        > div {
-          display: flex;
-          flex-direction: column;
-          align-items: stretch;
-          justify-content: flex-start;
-        }
-
-        /* Column header using pseudo-element */
-        &::before {
-          content: attr(data-title);
-          display: block;
-          color: #F5DEB3; // Wheat color
-          font-size: 20px;
-          font-weight: bold;
-          margin: 0 0 16px 0;
-          text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
-        }
-      }
-    }
-  }
 `;
 
 export const IssueCard = styled.div`
@@ -100,7 +43,7 @@ export const IssueLabels = styled.div`
 `;
 
 export const Label = styled.span<{ color: string }>`
-  background: ${props => props.color};
+  background: #${props => props.color};
   color: #fff;
   padding: 2px 8px;
   border-radius: 12px;

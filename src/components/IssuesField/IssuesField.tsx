@@ -101,20 +101,57 @@ const DynamicIssuesField: React.FC = () => {
                 throw new Error(errorData.error?.message || 'Failed to fetch board data');
             }
 
+            const data = await response.json();
             if (!mountedRef.current) return;
 
-            const data = response.json();
-
-            console.log(data) // {...items: { nodes: [...] }}
-
-            setBoard({
+            // Initialize board with themed columns
+            const board: KanbanBoard = {
                 columns: [
-                  { id: 'Todo', title: 'Backlog Field 🌱', cards: [] },
-                  { id: 'In Progress', title: 'Growing Field 🌾', cards: [] },
-                  { id: 'In Review', title: 'Review Field 🌿', cards: [] },
-                  { id: 'Done', title: 'Harvested Field 🌾', cards: [] }
+                    { id: 'Todo', title: 'Backlog Field 🌱', cards: [] as KanbanCard[] },
+                    { id: 'In Progress', title: 'Growing Field 🌾', cards: [] as KanbanCard[] },
+                    { id: 'In Review', title: 'Review Field 🌿', cards: [] as KanbanCard[] },
+                    { id: 'Done', title: 'Harvested Field 🌾', cards: [] as KanbanCard[] }
                 ]
-              });
+            };
+
+            // Get items from GraphQL response
+            const items = data?.items?.nodes || [];
+            
+            // Sort items into columns
+            items.forEach((item: any) => {
+                // Find status field value
+                const statusField = item.fieldValues?.nodes?.find(
+                    (value: any) => value.field?.name === 'Status'
+                );
+                
+                // Get status from field value
+                const status = statusField?.name || 'Todo';
+                
+                // Find matching column
+                const column = board.columns.find(col => col.id === status);
+                if (column && item.content) {
+                    // Transform item into KanbanCard format
+                    const card: KanbanCard = {
+                        projectId: item.id,
+                        contentId: item.id,
+                        title: item.content.title,
+                        number: item.content.number,
+                        labels: {
+                            nodes: (item.content.labels?.nodes || []).map((label: any) => ({
+                                id: label.id || label.name,
+                                name: label.name,
+                                color: label.color || 'f29513'
+                            }))
+                        },
+                        content: {
+                            url: item.content.url
+                        }
+                    };
+                    column.cards.push(card);
+                }
+            });
+
+            setBoard(board);
             setError(null);
         } catch (err) {
             if (mountedRef.current) {
@@ -131,7 +168,7 @@ const DynamicIssuesField: React.FC = () => {
     useEffect(() => {
         mountedRef.current = true;
         fetchProjectItems();
-        const interval = setInterval(fetchProjectItems, 90000); // Refresh every 90 seconds
+        const interval = setInterval(fetchProjectItems, 90000);
         return () => {
             mountedRef.current = false;
             clearInterval(interval);
