@@ -1,9 +1,10 @@
 import bodyParser from 'body-parser';
 import cors from 'cors';
+import { Express, Request, Response, NextFunction } from 'express';
 
 const { CORS_ORIGINS, NODE_ENV } = process.env;
 
-const configureExpress = (app) => {
+const configureExpress = (app: Express): void => {
   const corsOptions = NODE_ENV === 'production' ? {
     origin: CORS_ORIGINS ? CORS_ORIGINS.split(',') : [], // Ensure CORS_ORIGINS is defined
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -18,7 +19,7 @@ const configureExpress = (app) => {
   app.use(cors(corsOptions));
 
   if (NODE_ENV !== 'production') {
-    app.use((req, res, next) => {
+    app.use((req: Request, res: Response, next: NextFunction) => {
       res.header('Access-Control-Allow-Origin', '*');
       res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, x-api-key, Authorization');
       res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');

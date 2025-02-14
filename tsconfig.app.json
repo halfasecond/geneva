@@ -5,7 +5,7 @@
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "skipLibCheck": true,
-    "moduleResolution": "node",
+    "moduleResolution": "NodeNext",
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
@@ -25,7 +25,8 @@
       "components/*": ["./src/components/*"],
       "pages/*": ["./src/pages/*"],
       "style/*": ["./src/style/*"],
-      "utils/*": ["./src/utils/*"]
+      "utils/*": ["./src/utils/*"],
+      "api-ts/*": ["./api-ts/*"]
     }
   },
   "include": ["src/**/*"],

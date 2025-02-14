@@ -3,9 +3,13 @@
     "composite": true,
     "skipLibCheck": true,
     "module": "ESNext",
-    "moduleResolution": "bundler",
+    "moduleResolution": "NodeNext",
     "allowSyntheticDefaultImports": true,
-    "strict": true
+    "strict": true,
+    "resolveJsonModule": true,
+    "paths": {
+      "api-ts/*": ["./api-ts/*"]
+    }
   },
   "include": [
     "vite.config.ts",

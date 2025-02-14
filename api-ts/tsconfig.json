@@ -10,7 +10,7 @@
     "outDir": "dist",
     "rootDir": ".",
     "resolveJsonModule": true,
-    "allowJs": true,
+    "allowJs": false,
     "checkJs": false,
     "baseUrl": ".",
     "paths": {
@@ -23,7 +23,6 @@
   },
   "include": [
     "**/*.ts",
-    "**/*.js",
     "**/*.json"
   ],
   "exclude": [

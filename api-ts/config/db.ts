@@ -3,8 +3,12 @@ import mongoose from 'mongoose';
 mongoose.set('strictQuery', true);
 const mongoUri = process.env.MONGO_URL;
 
-const conn = async () => {
-  await mongoose.connect(mongoUri, {});
+if (!mongoUri) {
+  throw new Error('MONGO_URL environment variable is required');
+}
+
+const conn = async (): Promise<void> => {
+  await mongoose.connect(mongoUri);
 };
 
 // Call it to connect

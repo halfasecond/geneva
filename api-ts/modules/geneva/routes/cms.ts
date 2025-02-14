@@ -1,11 +1,30 @@
-import express from 'express'
-import authenticateToken from '../middleware/auth'
-const router = express.Router();
+import express, { Request, Response, Router } from 'express';
+import { Model } from 'mongoose';
+import authenticateToken from '../middleware/auth.js';
 
-const routes = ({ CMS }) => {
-    const router = express.Router()
+interface CMSDocument {
+    slug: string;
+    title: string;
+    author: string;
+    publishedDate: Date;
+    contentType: string;
+    thumbnail: {
+        src: string;
+        alt: string;
+    };
+    content: any[];
+    tags: string[];
+    published: boolean;
+}
 
-    router.post('/', authenticateToken, async (req, res) => {
+interface Models {
+    CMS: Model<CMSDocument>;
+}
+
+const routes = ({ CMS }: Models): Router => {
+    const router = express.Router();
+
+    router.post('/', authenticateToken, async (req: Request, res: Response) => {
         const { slug, title, author, publishedDate, contentType, thumbnail, content, tags, published } = req.body;
 
         if (!slug || !title || !author || !contentType) {
@@ -31,68 +50,65 @@ const routes = ({ CMS }) => {
                 content: content || [],
                 tags: tags || [],
                 published: published || false
-            })
+            });
 
             const savedCopy = await copy.save();
             res.status(201).json(savedCopy);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error saving copy:', error);
             res.status(400).json({ error: error.message });
         }
     });
 
-    // Get all copys
-    router.get('/', async (req, res) => {
+    // Get all copies
+    router.get('/', async (req: Request, res: Response) => {
         try {
             const { type } = req.query;
             let filter = {};
             if (type) {
-                filter.contentType = type;
+                filter = { contentType: type };
             }
-            const copys = await CMS.find(filter).sort({ publishedDate: -1 });
-            res.status(200).json(copys);
-        } catch (error) {
+            const copies = await CMS.find(filter).sort({ publishedDate: -1 });
+            res.status(200).json(copies);
+        } catch (error: any) {
             res.status(500).json({ error: error.message });
         }
     });
 
-    // Get an copy by ID
-    // ]
-
-    // Get an copy by slug
-    router.get('/:slug', async (req, res) => {
+    // Get a copy by slug
+    router.get('/:slug', async (req: Request, res: Response) => {
         try {
             const copy = await CMS.findOne({ slug: req.params.slug });
             if (!copy) return res.status(404).json({ error: 'Copy not found' });
             res.status(200).json(copy);
-        } catch (error) {
+        } catch (error: any) {
             res.status(500).json({ error: error.message });
         }
     });
 
-    // Update an copy by ID
-    router.put('/:id', authenticateToken, async (req, res) => {
+    // Update a copy by ID
+    router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
         try {
             const copy = await CMS.findByIdAndUpdate(req.params.id, req.body, { new: true });
             if (!copy) return res.status(404).json({ error: 'Copy not found' });
             res.status(200).json(copy);
-        } catch (error) {
+        } catch (error: any) {
             res.status(400).json({ error: error.message });
         }
     });
 
-    // Delete an copy by ID
-    router.delete('/:id', authenticateToken, async (req, res) => {
+    // Delete a copy by ID
+    router.delete('/:id', authenticateToken, async (req: Request, res: Response) => {
         try {
             const copy = await CMS.findByIdAndDelete(req.params.id);
             if (!copy) return res.status(404).json({ error: 'Copy not found' });
             res.status(200).json({ message: 'Copy deleted successfully' });
-        } catch (error) {
+        } catch (error: any) {
             res.status(500).json({ error: error.message });
         }
-    })
+    });
 
-    return router
-}
+    return router;
+};
 
-export default routes
+export default routes;

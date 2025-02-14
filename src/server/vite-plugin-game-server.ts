@@ -6,8 +6,8 @@ import express from 'express';
 import dotenv from 'dotenv';
 import path from 'path';
 import mongoose from 'mongoose';
-import modules from '../../api-ts/modules/index.js';
-import createWeb3Connection from '../../api-ts/config/web3.js';
+import modules from '../../api-ts/modules';
+import createWeb3Connection from '../../api-ts/config/web3';
 
 export function gameServer(): Plugin {
     return {

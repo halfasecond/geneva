@@ -1,27 +1,8 @@
-import { Express } from 'express';
-import { Server } from 'socket.io';
-import { Model, Connection } from 'mongoose';
-import _Models from './models';
-import Routes from './routes';
+import { Model } from 'mongoose';
+import { ModuleConfig, Models } from '../../types/shared.js';
+import _Models from './models/index.js';
+import Routes from './routes/index.js';
 // import Socket from './socket';
-
-interface ModuleConfig {
-    app: Express;
-    io: Server;
-    web3: any;
-    db: Connection;
-    name?: string;
-    prefix?: string;
-    deployed?: number;
-    increment?: number;
-    eventsToWatch?: string[];
-}
-
-interface Models {
-    Account: Model<any>;
-    CMS: Model<any>;
-    [key: string]: Model<any>;
-}
 
 const runModule = (config: ModuleConfig) => {
     const { app, db, name, prefix } = config;
