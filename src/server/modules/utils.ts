@@ -47,10 +47,12 @@ export const getContractHistory = async (name: string, Module: Module, eventIncl
                     eventIncludes,
                     web3
                 );
-                
+                console.log(`${name} events indexed - switching to contract subscription`)
+                subscribeToContractEvents(name, Contracts.Core.abi, Contracts.Core.addr, logEvent, eventIncludes, web3);
             }
         }));
     } else {
+        console.log(`${name} events not indexed - switching to contract subscription`)
         subscribeToContractEvents(name, Contracts.Core.abi, Contracts.Core.addr, logEvent, eventIncludes, web3);
     }
     
