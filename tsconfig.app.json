@@ -17,15 +17,15 @@
     "noFallthroughCasesInSwitch": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-    "types": ["react", "socket.io-client"],
-    "baseUrl": ".",
+  "types": ["node", "react"],
+  "baseUrl": ".",
     "paths": {
       "src/*": ["./src/*"],
       "contracts/*": ["./src/contracts/*"],
       "components/*": ["./src/components/*"],
       "pages/*": ["./src/pages/*"],
       "style/*": ["./src/style/*"],
-      "utils/*": ["./src/utils/*"]
+      "utils/*": ["./src/utils/*"],
     }
   },
   "include": ["src/**/*"],

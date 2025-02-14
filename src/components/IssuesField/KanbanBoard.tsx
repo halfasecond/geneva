@@ -50,15 +50,34 @@ const Column = styled.div`
     }
 `;
 
+interface CardLabel {
+    id: string;
+    name: string;
+    color: string;
+}
+
+interface KanbanCard {
+    projectId: string;
+    contentId: string;
+    title: string;
+    number: number;
+    labels: {
+        nodes: CardLabel[];
+    };
+    content: {
+        url: string;
+    };
+}
+
 interface KanbanColumn {
     id: string;
     title: string;
-    cards: any[];
+    cards: KanbanCard[];
 }
 
 interface KanbanBoardProps {
     columns: KanbanColumn[];
-    renderCard: (card: any) => React.ReactNode;
+    renderCard: (card: KanbanCard) => React.ReactNode;
 }
 
 const KanbanBoard: React.FC<KanbanBoardProps> = ({ 
