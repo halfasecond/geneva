@@ -101,14 +101,20 @@ const DynamicIssuesField: React.FC = () => {
                 throw new Error(errorData.error?.message || 'Failed to fetch board data');
             }
 
-            const data = await response.json();
-            if (!data.success) {
-                throw new Error(data.error?.message || 'Unknown error');
-            }
-
             if (!mountedRef.current) return;
 
-            setBoard(data.data);
+            const data = response.json();
+
+            console.log(data) // {...items: { nodes: [...] }}
+
+            setBoard({
+                columns: [
+                  { id: 'Todo', title: 'Backlog Field 🌱', cards: [] },
+                  { id: 'In Progress', title: 'Growing Field 🌾', cards: [] },
+                  { id: 'In Review', title: 'Review Field 🌿', cards: [] },
+                  { id: 'Done', title: 'Harvested Field 🌾', cards: [] }
+                ]
+              });
             setError(null);
         } catch (err) {
             if (mountedRef.current) {
