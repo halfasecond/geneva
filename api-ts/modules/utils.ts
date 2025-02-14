@@ -1,4 +1,8 @@
 import { Model } from 'mongoose';
+import dotenv from 'dotenv';
+dotenv.config();
+
+const { VITE_ENABLE_INDEXER } = process.env
 
 interface Models {
     Event: Model<any>;
@@ -21,30 +25,35 @@ interface Module {
 
 export const getContractHistory = async (name: string, Module: Module, eventIncludes: string[], web3: any) => {
     const { Contracts, Models, deployed, increment, logEvent } = Module;
-    console.log('Starting contract history scan:', {
-        name,
-        contract: Contracts.Core.addr,
-        deployed,
-        increment,
-        events: eventIncludes
-    });
+    if (VITE_ENABLE_INDEXER === 'true') {
+        console.log('Starting contract history scan:', {
+            name,
+            contract: Contracts.Core.addr,
+            deployed,
+            increment,
+            events: eventIncludes
+        });
+        
+        await Promise.all(Object.keys(Contracts).map(async (contractName) => {
+            if (contractName === 'Core') { // Only listen to "Core" events
+                const events = await getPastContractEvents(
+                    `${name}`,
+                    Contracts[contractName].abi,
+                    Contracts[contractName].addr,
+                    deployed,
+                    increment,
+                    Models,
+                    logEvent,
+                    eventIncludes,
+                    web3
+                );
+                
+            }
+        }));
+    } else {
+        subscribeToContractEvents(name, Contracts.Core.abi, Contracts.Core.addr, logEvent, eventIncludes, web3);
+    }
     
-    await Promise.all(Object.keys(Contracts).map(async (contractName) => {
-        if (contractName === 'Core') { // Only listen to "Core" events
-            const events = await getPastContractEvents(
-                `${name}`,
-                Contracts[contractName].abi,
-                Contracts[contractName].addr,
-                deployed,
-                increment,
-                Models,
-                logEvent,
-                eventIncludes,
-                web3
-            );
-            subscribeToContractEvents(name, Contracts.Core.abi, Contracts.Core.addr, logEvent, eventIncludes, web3);
-        }
-    }));
 };
 
 const getContractEvents = async (abi: any[], addr: string, web3: any) => {

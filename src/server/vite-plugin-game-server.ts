@@ -6,8 +6,35 @@ import express from 'express';
 import dotenv from 'dotenv';
 import path from 'path';
 import mongoose from 'mongoose';
-import modules from '../../api-ts/modules';
-import createWeb3Connection from '../../api-ts/config/web3';
+import modules from '../../api-ts/modules/index.js';
+import createWeb3Connection from '../../api-ts/config/web3.js';
+
+// Track active connections for cleanup
+let io: SocketServer | null = null;
+let db: mongoose.Connection | null = null;
+let web3: any = null;
+
+const cleanup = () => {
+    console.log('\n🐎 Shutting down game server...');
+    
+    if (web3?.currentProvider) {
+        console.log('Closing Web3 connections...');
+        web3.currentProvider.disconnect();
+    }
+
+    if (db) {
+        console.log('Closing MongoDB connection...');
+        db.close();
+    }
+
+    if (io) {
+        console.log('Closing Socket.IO connections...');
+        io.close();
+    }
+
+    // Exit after cleanup
+    process.exit(0);
+};
 
 export function gameServer(): Plugin {
     return {
@@ -20,7 +47,7 @@ export function gameServer(): Plugin {
             });
         },
         async configureServer(server) {
-            const { MONGODB_URI, WEB3_SOCKET_URL, CORS_ORIGINS } = process.env;
+            const { MONGODB_URI, WEB3_SOCKET_URL, CORS_ORIGINS, VITE_ENABLE_INDEXER } = process.env;
 
             if (!MONGODB_URI || !WEB3_SOCKET_URL) {
                 throw new Error('Missing required environment variables');
@@ -28,7 +55,7 @@ export function gameServer(): Plugin {
 
             try {
                 // Set up Socket.io server
-                const io = new SocketServer(server.httpServer!, {
+                io = new SocketServer(server.httpServer!, {
                     cors: {
                         origin: CORS_ORIGINS?.split(',') || '*',
                         methods: ['GET', 'POST']
@@ -45,18 +72,21 @@ export function gameServer(): Plugin {
 
                 // Connect to MongoDB
                 console.log('Connecting to MongoDB...');
-                const db = await mongoose.createConnection(MONGODB_URI);
+                db = await mongoose.createConnection(MONGODB_URI);
                 console.log('Successfully connected to MongoDB');
 
                 // Initialize Web3
-                console.log('Initializing Web3 connection...');
-                const web3 = createWeb3Connection(WEB3_SOCKET_URL);
+                web3 = createWeb3Connection(WEB3_SOCKET_URL);
 
                 // Initialize modules with prefixed routes
                 modules(app, io, web3, db);
                 
                 // Mount Express app on Vite middleware under /api
                 server.middlewares.use('/api', app);
+
+                // Set up signal handlers for clean shutdown
+                process.on('SIGINT', cleanup);
+                process.on('SIGTERM', cleanup);
 
                 // Log when server is ready
                 server.httpServer?.once('listening', () => {
@@ -65,6 +95,11 @@ export function gameServer(): Plugin {
                         console.log(`🐎 Game server running on port ${address.port}`);
                         console.log('🐎 API endpoints available at /api');
                         console.log('🐎 Socket.io namespaces ready');
+                        if (VITE_ENABLE_INDEXER === 'true') {
+                            console.log('🐎 Event indexer enabled');
+                        } else {
+                            console.log('🐎 Event indexer disabled');
+                        }
                     }
                 });
             } catch (error) {
