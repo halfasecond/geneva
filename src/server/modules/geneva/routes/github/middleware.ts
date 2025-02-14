@@ -24,7 +24,7 @@ export const rateLimit = () => (req: Request, _res: Response, next: NextFunction
 };
 
 export const validateAgent = (req: GitHubRequest, _res: Response, next: NextFunction) => {
-    const agent = req.headers['x-github-agent'];
+    const agent = req.headers['x-agent-id'];
     if (!agent) {
         throw new GitHubAPIError('Agent validation failed', 401);
     }
