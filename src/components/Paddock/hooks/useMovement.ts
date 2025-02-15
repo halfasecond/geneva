@@ -23,7 +23,7 @@ interface ViewportOffset {
 }
 
 interface UseMovementResult {
-    position: Position
+    position: Position | undefined
     viewportOffset: ViewportOffset
 }
 
@@ -34,7 +34,7 @@ interface MovementState {
 }
 
 interface PositionState {
-    current: Position;
+    current: Position | undefined;
     lastBroadcast: Position | null;
     frameCount: number;
 }
@@ -47,8 +47,10 @@ const MOVEMENT_SPEED = HORSE_SIZE / 32; // Trotting speed: 3.75 pixels per frame
 const EDGE_THRESHOLD = 0.2; // 20% from edges
 
 // Position change detection
-const hasPositionChanged = (a: Position, b: Position) => 
-    a.x !== b.x || a.y !== b.y || a.direction !== b.direction;
+const hasPositionChanged = (a: Position | undefined, b: Position | undefined) => {
+    if (!a || !b) return false;
+    return a.x !== b.x || a.y !== b.y || a.direction !== b.direction;
+};
 
 export function useMovement({
     viewportWidth,
@@ -61,7 +63,7 @@ export function useMovement({
     racingHorsePosition,
     serverPosition
 }: UseMovementProps): UseMovementResult {
-    const [position, setPosition] = useState<Position>({ x: 100, y: 150, direction: 'right' })
+    const [position, setPosition] = useState<Position | undefined>(undefined)
 
     // Update position when server position changes
     useEffect(() => {
@@ -74,7 +76,7 @@ export function useMovement({
     
     // Movement state
     const [movementState, setMovementState] = useState<MovementState>({
-        canMove: !movementDisabled,
+        canMove: !movementDisabled && Boolean(serverPosition),  // Only allow movement with server position
         pathRestricted: introActive,
         followPlayer: true
     })
@@ -85,7 +87,7 @@ export function useMovement({
 
     // Track position state for throttling
     const positionStateRef = useRef<PositionState>({
-        current: { x: 100, y: 150, direction: 'right' },
+        current: undefined,
         lastBroadcast: null,
         frameCount: 0
     });
@@ -101,11 +103,11 @@ export function useMovement({
     // Update movement state based on props
     useEffect(() => {
         setMovementState({
-            canMove: !movementDisabled && !racingHorsePosition,  // Can move if not disabled and not racing
+            canMove: !movementDisabled && !racingHorsePosition && Boolean(serverPosition),  // Need server position
             pathRestricted: introActive && !racingHorsePosition,  // Disable path restrictions during/after race
             followPlayer: !racingHorsePosition  // Follow player unless racing
         });
-    }, [movementDisabled, introActive, racingHorsePosition]);
+    }, [movementDisabled, introActive, racingHorsePosition, serverPosition]);
 
     // Force position update when provided or cleared
     useEffect(() => {
@@ -178,8 +180,8 @@ export function useMovement({
     }, [movementState.pathRestricted])
 
     // Calculate new viewport offset based on position
-    const calculateViewportOffset = useCallback((pos: Position): ViewportOffset => {
-        if (!viewportWidth || !viewportHeight) return viewportOffset;
+    const calculateViewportOffset = useCallback((pos: Position | undefined): ViewportOffset => {
+        if (!viewportWidth || !viewportHeight || !pos) return viewportOffset;
 
         let newX = viewportOffset.x;
         let newY = viewportOffset.y;
@@ -226,6 +228,8 @@ export function useMovement({
         }
 
         const updateFrame = () => {
+            if (!position) return;  // Don't update if no position yet
+            
             const activeKeys = keysRef.current;
             let x = position.x;
             let y = position.y;
@@ -322,7 +326,7 @@ export function useMovement({
 
     // Handle racing viewport updates
     useEffect(() => {
-        if (movementState.followPlayer || !racingHorsePosition) return;
+        if (movementState.followPlayer || !racingHorsePosition || !position) return;
 
         const updateRacingViewport = () => {
             const newOffset = calculateViewportOffset(position);
@@ -343,7 +347,7 @@ export function useMovement({
 
     // Handle message triggers
     useEffect(() => {
-        if (!onMessageTrigger || !introActive) return;
+        if (!onMessageTrigger || !introActive || !position) return;
 
         const pathsWithSafeZones = paths.map(path => ({
             ...path,
@@ -363,7 +367,7 @@ export function useMovement({
                 onMessageTrigger(introMessages.indexOf(message));
             }
         });
-    }, [position.x, position.y, introActive, onMessageTrigger]);
+    }, [position, introActive, onMessageTrigger]);
 
     return {
         position,

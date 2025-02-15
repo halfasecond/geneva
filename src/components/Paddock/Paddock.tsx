@@ -355,7 +355,7 @@ export const Paddock: React.FC<PaddockProps> = ({
                 <RainbowPuke left={40} top={2580} />
 
                 {/* Race Track */}
-                {introActive && (
+                {introActive && position && (
                     <Race
                         playerHorse={{
                             tokenId: horseId,
@@ -387,15 +387,17 @@ export const Paddock: React.FC<PaddockProps> = ({
             </Styled.GameSpace>
 
             {/* Minimap */}
-            <Minimap
-                viewportOffset={viewportOffset}
-                viewportDimensions={viewportDimensions}
-                scale={scale}
-                currentPosition={position}
-                otherPlayers={actors}
-                isServerless={IS_SERVERLESS}
-                horseId={horseId}
-            />
+            {position && (
+                <Minimap
+                    viewportOffset={viewportOffset}
+                    viewportDimensions={viewportDimensions}
+                    scale={scale}
+                    currentPosition={position}
+                    otherPlayers={actors}
+                    isServerless={IS_SERVERLESS}
+                    horseId={horseId}
+                />
+            )}
         </Styled.Container>
     );
 };

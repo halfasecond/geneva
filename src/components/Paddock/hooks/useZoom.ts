@@ -4,7 +4,7 @@ import { Position } from '../../../server/types'
 interface UseZoomProps {
     minScale?: number
     maxScale?: number
-    position: Position
+    position: Position | undefined
     viewportOffset: { x: number; y: number }
     viewportDimensions: { width: number; height: number }
 }
@@ -35,19 +35,19 @@ export const useZoom = ({
 
     // Calculate zoom origin without triggering re-renders
     const updateZoomOrigin = () => {
-        if (viewportDimensions.width > 0 && viewportDimensions.height > 0) {
-            const horseViewportX = (position.x - viewportOffset.x) * scaleRef.current
-            const horseViewportY = (position.y - viewportOffset.y) * scaleRef.current
-            const newOrigin = {
-                x: (horseViewportX / viewportDimensions.width) * 100,
-                y: (horseViewportY / viewportDimensions.height) * 100
-            }
+        if (!position || !viewportDimensions.width || !viewportDimensions.height) return;
 
-            // Only update if values actually changed
-            if (newOrigin.x !== zoomOriginRef.current.x || 
-                newOrigin.y !== zoomOriginRef.current.y) {
-                setZoomOrigin(newOrigin)
-            }
+        const horseViewportX = (position.x - viewportOffset.x) * scaleRef.current
+        const horseViewportY = (position.y - viewportOffset.y) * scaleRef.current
+        const newOrigin = {
+            x: (horseViewportX / viewportDimensions.width) * 100,
+            y: (horseViewportY / viewportDimensions.height) * 100
+        }
+
+        // Only update if values actually changed
+        if (newOrigin.x !== zoomOriginRef.current.x ||
+            newOrigin.y !== zoomOriginRef.current.y) {
+            setZoomOrigin(newOrigin)
         }
     }
 
@@ -57,8 +57,7 @@ export const useZoom = ({
     }, [
         viewportDimensions.width,
         viewportDimensions.height,
-        position.x,
-        position.y,
+        position,  // Watch whole position object
         viewportOffset.x,
         viewportOffset.y
     ]) // Removed scale from dependencies
