@@ -34,7 +34,7 @@ const socket = async (io: Server, web3: any, name: string, Models: Models) => {
     // Initialize namespace state
     namespace.players = [];
 
-    // Log player state every 10 seconds
+    // Log player state every 5 seconds
     const stateLogInterval = setInterval(() => {
         const connectedPlayers = namespace.players.filter(p => p.connected);
         console.log('\n=== Current Player State ===');
@@ -48,7 +48,7 @@ const socket = async (io: Server, web3: any, name: string, Models: Models) => {
             console.log('No connected players');
         }
         console.log('===========================\n');
-    }, 10000);
+    }, 5000);
 
     namespace.on('connection', (socket: Socket) => {
         socketCount++;

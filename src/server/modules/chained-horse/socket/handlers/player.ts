@@ -31,15 +31,19 @@ export const setupPlayerHandlers = (socket: Socket, namespace: Namespace) => {
         socket.on('player:move', ({ x, y, direction }: Position) => {
             const currentPlayer = getPlayerBySocket(namespace, socket.id);
             if (currentPlayer && currentPlayer.connected) {
+                // Update player position
                 updatePlayerPosition(namespace, currentPlayer.address, x, y, direction);
                 
-                // Broadcast to other clients
-                socket.broadcast.emit('player:moved', {
+                // Broadcast to all clients including sender
+                namespace.emit('player:moved', {
                     address: currentPlayer.address,
                     x,
                     y,
                     direction
                 });
+
+                // Log movement for debugging
+                console.log(`Player ${currentPlayer.address} moved:`, { x, y, direction });
             }
         });
 

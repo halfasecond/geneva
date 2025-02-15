@@ -100,13 +100,34 @@ export function useGameServer(_props: UseGameServerProps) {
             direction: 'left' | 'right';
         }) => {
             setRemotePlayers(prev => {
+                const updated = new Map(prev);
                 const player = prev.get(address);
+                
                 if (player) {
-                    const updated = new Map(prev);
-                    updated.set(address, { ...player, x, y, direction });
-                    return updated;
+                    // Update existing player
+                    updated.set(address, {
+                        ...player,
+                        x,
+                        y,
+                        direction,
+                        lastSeen: new Date()
+                    });
+                } else {
+                    // Create new player entry with defaults
+                    updated.set(address, {
+                        address,
+                        socketId: null, // Will be set on next full state update
+                        connected: true,
+                        lastSeen: new Date(),
+                        avatarHorseId: 21, // Default horse
+                        x,
+                        y,
+                        direction,
+                        levelIndex: 0
+                    });
                 }
-                return prev;
+                
+                return updated;
             });
         });
 

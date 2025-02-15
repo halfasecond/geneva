@@ -17,9 +17,6 @@ export interface LivePlayer {
     levelIndex: number;
 }
 
-// In-memory players array - never remove players, only update their state
-const livePlayers: LivePlayer[] = [];
-
 // Helper functions for player state management
 export const addPlayer = (namespace: Namespace, player: LivePlayer): LivePlayer => {
     // Only add if player doesn't exist
@@ -43,10 +40,21 @@ export const updatePlayerPosition = (
 ): void => {
     const player = namespace.players.find(p => p.address === address);
     if (player) {
+        // Update position
         player.x = x;
         player.y = y;
         player.direction = direction;
         player.lastSeen = new Date();
+
+        // Log position update
+        console.log(`Updated position for ${address}:`, { x, y, direction });
+        console.log('All players:', namespace.players.map(p => ({
+            address: p.address,
+            position: { x: p.x, y: p.y, direction: p.direction },
+            connected: p.connected
+        })));
+    } else {
+        console.warn(`Attempted to update position for unknown player: ${address}`);
     }
 };
 
