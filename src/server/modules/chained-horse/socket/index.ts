@@ -11,7 +11,8 @@ import {
     getPlayerBySocket,
     addDuck,
     getWorldState,
-    formatActorState
+    formatActorState,
+    completePlayerTutorial
 } from './state/world';
 
 interface Models {
@@ -84,6 +85,13 @@ const socket = async (io: Server, web3: any, name: string, Models: Models) => {
             const player = getPlayerBySocket(namespace, socket.id);
             if (player) {
                 updateActorPosition(namespace, player.id, x, y, direction);
+            }
+        });
+
+        socket.on('player:complete_tutorial', () => {
+            const player = getPlayerBySocket(namespace, socket.id);
+            if (player) {
+                completePlayerTutorial(namespace, player.id);
             }
         });
 

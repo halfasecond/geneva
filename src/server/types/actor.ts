@@ -11,8 +11,9 @@ export interface Actor {
     type: ActorType;
     position: Position;
     sprite: string;     // path to sprite image
-    connected?: boolean; // for players only
-    lastSeen?: Date;    // for players only
+    connected?: boolean;   // for players only
+    lastSeen?: Date;      // for players only
+    introActive?: true;   // only present during tutorial
 }
 
 export interface WorldState {
@@ -34,5 +35,6 @@ export const createActor = (
     position: { x, y, direction },
     sprite,
     connected: type === 'player' ? true : undefined,
-    lastSeen: type === 'player' ? new Date() : undefined
+    lastSeen: type === 'player' ? new Date() : undefined,
+    introActive: type === 'player' ? true : undefined
 });

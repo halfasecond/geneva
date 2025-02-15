@@ -83,6 +83,15 @@ export const setPlayerDisconnected = (namespace: Namespace, address: string): vo
     }
 };
 
+export const completePlayerTutorial = (namespace: Namespace, address: string): void => {
+    const player = namespace.worldState.actors.find(
+        actor => actor.type === 'player' && actor.id === address
+    );
+    if (player) {
+        delete player.introActive;  // Remove the flag entirely
+    }
+};
+
 export const getConnectedPlayers = (namespace: Namespace): Actor[] => {
     return namespace.worldState.actors.filter(
         actor => actor.type === 'player' && actor.connected

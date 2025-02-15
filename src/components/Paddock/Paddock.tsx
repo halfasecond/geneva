@@ -178,7 +178,7 @@ export const Paddock: React.FC<PaddockProps> = ({
     const [racingPosition, setRacingPosition] = useState<{ x: number; y: number } | undefined>();
 
     // Initialize game server connection
-    const { connected, actors, updatePosition } = useGameServer({
+    const { connected, actors, updatePosition, completeTutorial } = useGameServer({
         horseId
     });
 
@@ -209,7 +209,8 @@ export const Paddock: React.FC<PaddockProps> = ({
             setRacingPosition(undefined);
             setIsRacing(false);
             
-            // Remove path restrictions after race
+            // Complete tutorial and remove path restrictions
+            completeTutorial();
             setPathRestricted(false);
             
             // Show final message
@@ -252,7 +253,9 @@ export const Paddock: React.FC<PaddockProps> = ({
         onMessageTrigger: introActive && !debugMode ? handleMessageTrigger : undefined,
         forcePosition: debugMode ? undefined : forcedPosition,
         racingHorsePosition: racingPosition,
-        serverPosition: currentPlayer?.position
+        serverPosition: currentPlayer?.position,
+        actors,
+        horseId
     });
 
     // Initialize zoom control

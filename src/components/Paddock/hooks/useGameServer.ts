@@ -130,11 +130,18 @@ export function useGameServer({ horseId }: UseGameServerProps) {
         }
     }, [connected]);
 
+    const completeTutorial = useCallback(() => {
+        if (socketRef.current?.connected && connected) {
+            socketRef.current.emit('player:complete_tutorial');
+        }
+    }, [connected]);
+
     // If in serverless mode, return empty state
     if (IS_SERVERLESS) {
         return {
             connected: false,
             updatePosition: () => {},
+            completeTutorial: () => {},
             actors: []
         };
     }
@@ -142,6 +149,7 @@ export function useGameServer({ horseId }: UseGameServerProps) {
     return {
         connected,
         updatePosition,
+        completeTutorial,
         actors
     };
 }

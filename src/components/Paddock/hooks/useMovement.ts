@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Position } from '../../../server/types'
+import { Actor } from '../../../server/types/actor'
 import { paths, rivers, isInRiver } from '../components/Environment'
 import { isOnPath, getSafeZone } from '../../Bridleway/utils'
 import { introMessages } from '../../Bridleway/messages'
@@ -15,6 +16,8 @@ interface UseMovementProps {
     forcePosition?: Position
     racingHorsePosition?: { x: number; y: number }
     serverPosition?: Position  // Position from server actor
+    actors: Actor[]  // All actors from server
+    horseId: string  // Current player's horse ID
 }
 
 interface ViewportOffset {
@@ -61,7 +64,9 @@ export function useMovement({
     onMessageTrigger,
     forcePosition,
     racingHorsePosition,
-    serverPosition
+    serverPosition,
+    actors = [],  // Default to empty array
+    horseId
 }: UseMovementProps): UseMovementResult {
     const [position, setPosition] = useState<Position | undefined>(undefined)
 
@@ -100,14 +105,15 @@ export function useMovement({
         }
     }, [serverPosition]);
 
-    // Update movement state based on props
+    // Update movement state based on props and server state
     useEffect(() => {
+        const currentPlayer = actors.find(actor => actor.sprite === `horse/${horseId}.svg`);
         setMovementState({
             canMove: !movementDisabled && !racingHorsePosition && Boolean(serverPosition),  // Need server position
-            pathRestricted: introActive && !racingHorsePosition,  // Disable path restrictions during/after race
+            pathRestricted: Boolean(currentPlayer?.introActive) && !racingHorsePosition,  // Restrict if introActive exists
             followPlayer: !racingHorsePosition  // Follow player unless racing
         });
-    }, [movementDisabled, introActive, racingHorsePosition, serverPosition]);
+    }, [movementDisabled, racingHorsePosition, serverPosition, actors]);
 
     // Force position update when provided or cleared
     useEffect(() => {
