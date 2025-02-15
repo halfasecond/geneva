@@ -5,7 +5,8 @@ import {
     updatePlayerPosition,
     setPlayerDisconnected,
     getPlayerBySocket,
-    getConnectedPlayers
+    getConnectedPlayers,
+    setPlayerConnected
 } from '../state/players';
 
 interface Position {
@@ -15,39 +16,68 @@ interface Position {
 }
 
 export const setupPlayerHandlers = (socket: Socket, namespace: Namespace) => {
-    // Initialize test player on connection
-    initializeTestPlayer(socket);
+    console.log(`Socket connected: ${socket.id}`);
     
-    // Broadcast initial state to all clients
-    namespace.emit('players:state', getConnectedPlayers());
+    // Initialize test player on connection
+    const player = initializeTestPlayer(namespace, socket);
+    if (player) {
+        // Set player as connected and broadcast initial state
+        setPlayerConnected(namespace, player.address, socket.id);
+        
+        // Broadcast to all clients including sender
+        namespace.emit('players:state', getConnectedPlayers(namespace));
 
-    // Handle player movement
-    socket.on('player:move', ({ x, y, direction }: Position) => {
-        const player = getPlayerBySocket(socket.id);
-        if (player) {
-            updatePlayerPosition(player.address, x, y, direction);
-            // Broadcast position update to other players
-            socket.broadcast.emit('player:moved', {
-                address: player.address,
-                x,
-                y,
-                direction
-            });
-        }
-    });
+        // Handle player movement
+        socket.on('player:move', ({ x, y, direction }: Position) => {
+            const currentPlayer = getPlayerBySocket(namespace, socket.id);
+            if (currentPlayer && currentPlayer.connected) {
+                updatePlayerPosition(namespace, currentPlayer.address, x, y, direction);
+                
+                // Broadcast to other clients
+                socket.broadcast.emit('player:moved', {
+                    address: currentPlayer.address,
+                    x,
+                    y,
+                    direction
+                });
+            }
+        });
 
-    // Handle disconnection
-    socket.on('disconnect', () => {
-        const player = getPlayerBySocket(socket.id);
-        if (player) {
-            setPlayerDisconnected(player.address);
-            // Broadcast player disconnection
-            namespace.emit('players:state', getConnectedPlayers());
-        }
-    });
+        // Handle disconnection
+        socket.on('disconnect', () => {
+            console.log(`Socket disconnected: ${socket.id}`);
+            const currentPlayer = getPlayerBySocket(namespace, socket.id);
+            if (currentPlayer) {
+                setPlayerDisconnected(namespace, currentPlayer.address);
+                // Broadcast player disconnection to all clients
+                namespace.emit('players:state', getConnectedPlayers(namespace));
+            }
+        });
 
-    // Handle client requesting current state
-    socket.on('players:get_state', () => {
-        socket.emit('players:state', getConnectedPlayers());
-    });
+        // Handle client requesting current state
+        socket.on('players:get_state', () => {
+            const players = getConnectedPlayers(namespace);
+            socket.emit('players:state', players);
+        });
+
+        // Handle socket errors
+        socket.on('error', (error) => {
+            console.error(`Socket error for ${socket.id}:`, error);
+            const currentPlayer = getPlayerBySocket(namespace, socket.id);
+            if (currentPlayer) {
+                setPlayerDisconnected(namespace, currentPlayer.address);
+                namespace.emit('players:state', getConnectedPlayers(namespace));
+            }
+        });
+
+        // Handle socket reconnection
+        socket.on('reconnect', () => {
+            console.log(`Socket reconnected: ${socket.id}`);
+            const currentPlayer = getPlayerBySocket(namespace, socket.id);
+            if (currentPlayer) {
+                setPlayerConnected(namespace, currentPlayer.address, socket.id);
+                namespace.emit('players:state', getConnectedPlayers(namespace));
+            }
+        });
+    }
 };

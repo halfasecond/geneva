@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { io } from 'socket.io-client';
+import { io, Socket } from 'socket.io-client';
 import { Position } from '../../../server/types';
 
 interface LivePlayer {
@@ -28,9 +28,12 @@ const IS_SERVERLESS = import.meta.env.VITE_SERVERLESS?.toLowerCase() === 'true';
 const TEST_ADDRESS = "0x51Ad709f827C6eC2Ed07269573abF592F83ED50c";
 
 export function useGameServer(_props: UseGameServerProps) {
-    const socketRef = useRef<any>(null);
-    const [players, setPlayers] = useState<Map<string, LivePlayer>>(new Map());
+    const socketRef = useRef<Socket | null>(null);
     const [connected, setConnected] = useState(false);
+    // Only track remote players in socket state
+    const [remotePlayers, setRemotePlayers] = useState<Map<string, LivePlayer>>(new Map());
+    const reconnectAttempts = useRef(0);
+    const maxReconnectAttempts = 5;
 
     // Log player state every 10 seconds
     useEffect(() => {
@@ -39,7 +42,7 @@ export function useGameServer(_props: UseGameServerProps) {
         const interval = setInterval(() => {
             console.log('\n=== Frontend Player State ===');
             console.log('Connected:', connected);
-            console.log('Players:', Array.from(players.values()).map(player => ({
+            console.log('Remote Players:', Array.from(remotePlayers.values()).map(player => ({
                 address: player.address,
                 avatarHorse: player.avatarHorseId,
                 position: { x: player.x, y: player.y, direction: player.direction },
@@ -49,47 +52,70 @@ export function useGameServer(_props: UseGameServerProps) {
         }, 10000);
 
         return () => clearInterval(interval);
-    }, [connected, players]);
+    }, [connected, remotePlayers]);
 
-    useEffect(() => {
-        if (IS_SERVERLESS) return;
+    // Initialize socket connection
+    const initSocket = useCallback(() => {
+        if (IS_SERVERLESS || socketRef.current?.connected) return;
 
         // Use environment variable with fallback for development
         const serverUrl = import.meta.env.VITE_GAME_SERVER_URL || 'http://localhost:3131';
-        const socket = io(serverUrl);
+        const socket = io(`${serverUrl}/api/chained-horse`, {
+            reconnection: true,
+            reconnectionAttempts: maxReconnectAttempts,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000,
+            timeout: 10000
+        });
         socketRef.current = socket;
+        console.log('do i happen a lot?')
 
         socket.on('connect', () => {
-            console.log('Connected to game server');
             setConnected(true);
-            // Initial position will be set by server's test player
+            reconnectAttempts.current = 0;
+            // Request initial state for other players
             socket.emit('players:get_state');
         });
 
-        socket.on('disconnect', () => {
-            console.log('Disconnected from game server');
+        socket.on('disconnect', (reason) => {
+            console.log('Disconnected from game server:', reason);
             setConnected(false);
-            setPlayers(new Map());
+            // Only clear remote players on disconnect
+            setRemotePlayers(new Map());
         });
 
-        // Handle full state updates
+        socket.on('connect_error', (error) => {
+            console.error('Connection error:', error);
+            reconnectAttempts.current++;
+            if (reconnectAttempts.current >= maxReconnectAttempts) {
+                console.error('Max reconnection attempts reached');
+                socket.disconnect();
+            }
+        });
+
+        // Handle full state updates - filter out local player
         socket.on('players:state', (livePlayers: LivePlayer[]) => {
             console.log('Received players:state update:', livePlayers);
             const playerMap = new Map();
             livePlayers.forEach(player => {
-                playerMap.set(player.address, player);
+                // Only add remote players to state
+                if (player.address !== TEST_ADDRESS) {
+                    playerMap.set(player.address, player);
+                }
             });
-            setPlayers(playerMap);
+            setRemotePlayers(playerMap);
         });
 
-        // Handle individual player moves
+        // Handle individual player moves - only for remote players
         socket.on('player:moved', ({ address, x, y, direction }: { 
             address: string;
             x: number;
             y: number;
             direction: 'left' | 'right';
         }) => {
-            setPlayers(prev => {
+            if (address === TEST_ADDRESS) return; // Ignore our own updates
+
+            setRemotePlayers(prev => {
                 const player = prev.get(address);
                 if (player) {
                     const updated = new Map(prev);
@@ -108,15 +134,27 @@ export function useGameServer(_props: UseGameServerProps) {
         };
     }, []);
 
+    // Initialize socket on mount
+    useEffect(() => {
+        initSocket();
+        return () => {
+            if (socketRef.current) {
+                socketRef.current.disconnect();
+                socketRef.current = null;
+            }
+        };
+    }, [initSocket]);
+
+    // Broadcast position updates but don't wait for response
     const updatePosition = useCallback((position: Position) => {
-        if (socketRef.current && connected) {
+        if (socketRef.current?.connected) {
             socketRef.current.emit('player:move', {
                 x: position.x,
                 y: position.y,
                 direction: position.direction
             });
         }
-    }, [connected]);
+    }, []);
 
     // If in serverless mode, return empty state
     if (IS_SERVERLESS) {
@@ -130,6 +168,7 @@ export function useGameServer(_props: UseGameServerProps) {
     return {
         connected,
         updatePosition,
-        players
+        // Only return remote players
+        players: remotePlayers
     };
 }

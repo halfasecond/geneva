@@ -1,4 +1,4 @@
-import { Socket } from 'socket.io';
+import { Socket, Namespace } from 'socket.io';
 
 export interface LivePlayer {
     // Identity
@@ -21,21 +21,27 @@ export interface LivePlayer {
 const livePlayers: LivePlayer[] = [];
 
 // Helper functions for player state management
-export const addPlayer = (player: LivePlayer): void => {
+export const addPlayer = (namespace: Namespace, player: LivePlayer): LivePlayer => {
     // Only add if player doesn't exist
-    const existingPlayer = livePlayers.find(p => p.address === player.address);
+    const existingPlayer = namespace.players.find(p => p.address === player.address);
     if (!existingPlayer) {
-        livePlayers.push(player);
+        const newPlayer = { ...player };
+        namespace.players.push(newPlayer);
+        console.log(`Player added: ${player.address}`);
+        console.log('Current players:', namespace.players);
+        return newPlayer;
     }
+    return existingPlayer;
 };
 
 export const updatePlayerPosition = (
+    namespace: Namespace,
     address: string,
     x: number,
     y: number,
     direction: 'left' | 'right'
 ): void => {
-    const player = livePlayers.find(p => p.address === address);
+    const player = namespace.players.find(p => p.address === address);
     if (player) {
         player.x = x;
         player.y = y;
@@ -44,38 +50,44 @@ export const updatePlayerPosition = (
     }
 };
 
-export const setPlayerConnected = (address: string, socketId: string): void => {
-    const player = livePlayers.find(p => p.address === address);
+export const setPlayerConnected = (namespace: Namespace, address: string, socketId: string): void => {
+    const player = namespace.players.find(p => p.address === address);
     if (player) {
         player.connected = true;
         player.socketId = socketId;
         player.lastSeen = new Date();
+        console.log(`Player connected: ${address}`);
+        console.log('Current players:', namespace.players);
     }
 };
 
-export const setPlayerDisconnected = (address: string): void => {
-    const player = livePlayers.find(p => p.address === address);
+export const setPlayerDisconnected = (namespace: Namespace, address: string): void => {
+    const player = namespace.players.find(p => p.address === address);
     if (player) {
         player.connected = false;
         player.socketId = null;
         player.lastSeen = new Date();
+        console.log(`Player disconnected: ${address}`);
+        console.log('Current players:', namespace.players);
     }
 };
 
-export const getConnectedPlayers = (): LivePlayer[] => {
-    return livePlayers.filter(p => p.connected);
+export const getConnectedPlayers = (namespace: Namespace): LivePlayer[] => {
+    const players = namespace.players.filter(p => p.connected);
+    console.log(`Getting connected players. Count: ${players.length}`);
+    return players;
 };
 
-export const getPlayerBySocket = (socketId: string): LivePlayer | undefined => {
-    return livePlayers.find(p => p.socketId === socketId);
+export const getPlayerBySocket = (namespace: Namespace, socketId: string): LivePlayer | undefined => {
+    return namespace.players.find(p => p.socketId === socketId);
 };
 
-export const getPlayerByAddress = (address: string): LivePlayer | undefined => {
-    return livePlayers.find(p => p.address === address);
+export const getPlayerByAddress = (namespace: Namespace, address: string): LivePlayer | undefined => {
+    return namespace.players.find(p => p.address === address);
 };
 
 // For testing/development
-export const initializeTestPlayer = (socket: Socket): void => {
+export const initializeTestPlayer = (namespace: Namespace, socket: Socket): LivePlayer => {
     const testPlayer: LivePlayer = {
         address: "0x51Ad709f827C6eC2Ed07269573abF592F83ED50c",
         socketId: socket.id,
@@ -87,5 +99,5 @@ export const initializeTestPlayer = (socket: Socket): void => {
         direction: 'right',
         levelIndex: 0
     };
-    addPlayer(testPlayer);
+    return addPlayer(namespace, testPlayer);
 };

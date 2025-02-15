@@ -154,11 +154,19 @@ export const Paddock: React.FC<PaddockProps> = ({
     const [forcedPosition, setForcedPosition] = useState<Position | undefined>();
     const [racingPosition, setRacingPosition] = useState<{ x: number; y: number } | undefined>();
 
-    // Initialize game server connection
-    const { connected, players, updatePosition } = useGameServer({
-        horseId,
-        initialPosition
+    // Initialize game server connection for remote players
+    const { connected, players: remotePlayers, updatePosition } = useGameServer({
+        _horseId: horseId,
+        _initialPosition: initialPosition
     });
+
+    // Convert remote players to minimap format
+    const minimapPlayers = new Map(
+        Array.from(remotePlayers.entries()).map(([address, player]) => [
+            address,
+            { position: { x: player.x, y: player.y, direction: player.direction } }
+        ])
+    );
 
     // Handle message triggers
     const handleMessageTrigger = useCallback((messageIndex: number) => {
@@ -374,21 +382,18 @@ export const Paddock: React.FC<PaddockProps> = ({
                 )}
 
                 {/* Other players - only show in non-serverless mode */}
-                {!IS_SERVERLESS && Array.from(players.entries()).map(([id, player]) => {
-                    if (id === horseId) return null;
-                    return (
-                        <Styled.Horse
-                            key={id}
-                            style={{
-                                left: `${player.position.x}px`,
-                                top: `${player.position.y}px`,
-                                transform: `scaleX(${player.position.direction === "right" ? 1 : -1})`
-                            }}
-                        >
-                            <img src={getAssetPath(`horse/${id}.svg`)} alt={`Horse ${id}`} />
-                        </Styled.Horse>
-                    );
-                })}
+                {!IS_SERVERLESS && Array.from(remotePlayers.entries()).map(([address, player]) => (
+                    <Styled.Horse
+                        key={address}
+                        style={{
+                            left: `${player.x}px`,
+                            top: `${player.y}px`,
+                            transform: `scaleX(${player.direction === "right" ? 1 : -1})`
+                        }}
+                    >
+                        <img src={getAssetPath(`horse/${player.avatarHorseId}.svg`)} alt={`Horse ${player.avatarHorseId}`} />
+                    </Styled.Horse>
+                ))}
             </Styled.GameSpace>
 
             {/* Minimap */}
@@ -397,7 +402,7 @@ export const Paddock: React.FC<PaddockProps> = ({
                 viewportDimensions={viewportDimensions}
                 scale={scale}
                 currentPosition={position}
-                otherPlayers={players}
+                otherPlayers={minimapPlayers}
                 isServerless={IS_SERVERLESS}
                 horseId={horseId}
             />
