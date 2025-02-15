@@ -19,14 +19,13 @@ export const initializeWorldState = (namespace: Namespace) => {
 // Player management
 export const addPlayer = (namespace: Namespace, address: string, socketId: string, position: Position, horseId: number): Actor => {
     const existingPlayer = namespace.worldState.actors.find(
-        actor => actor.type === 'player' && actor.id === address
+        actor => actor.type === 'player' && actor.id === String(horseId)
     );
 
     if (existingPlayer) {
         // Only update connection state and sprite, preserve position
         existingPlayer.connected = true;
         existingPlayer.lastSeen = new Date();
-        existingPlayer.sprite = `horse/${horseId}.svg`;
         existingPlayer.socketId = socketId;  // Update socket mapping
         return existingPlayer;
     }
@@ -34,10 +33,9 @@ export const addPlayer = (namespace: Namespace, address: string, socketId: strin
     const player = {
         ...createActor(
             'player',
-            address,
+            String(horseId),
             position.x,
             position.y,
-            `horse/${horseId}.svg`,  // getAssetPath will prepend /svg/ on client
             position.direction
         ),
         socketId
@@ -111,7 +109,7 @@ export const getPlayerBySocket = (namespace: Namespace, socketId: string): Actor
 // Duck management
 export const addDuck = (namespace: Namespace, x: number, y: number): Actor => {
     const id = `duck-${namespace.worldState.actors.filter(a => a.type === 'duck').length + 1}`;
-    const duck = createActor('duck', id, x, y, 'horse/Duck.svg');  // getAssetPath will prepend /svg/
+    const duck = createActor('duck', id, x, y, 'right');
     namespace.worldState.actors.push(duck);
     return duck;
 };

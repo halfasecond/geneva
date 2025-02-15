@@ -20,26 +20,6 @@ export function useGameServer({ horseId }: UseGameServerProps) {
     const reconnectAttempts = useRef(0);
     const maxReconnectAttempts = 5;
 
-    // Log world state every 10 seconds
-    useEffect(() => {
-        if (IS_SERVERLESS) return;
-
-        const interval = setInterval(() => {
-            console.log('\n=== Frontend World State ===');
-            console.log('Connected:', connected);
-            console.log('Actors:', actors.map(actor => ({
-                id: actor.id,
-                type: actor.type,
-                position: actor.position,
-                sprite: actor.sprite,
-                connected: actor.connected
-            })));
-            console.log('==========================\n');
-        }, 10000);
-
-        return () => clearInterval(interval);
-    }, [connected, actors]);
-
     // Initialize socket connection
     useEffect(() => {
         if (IS_SERVERLESS) return;

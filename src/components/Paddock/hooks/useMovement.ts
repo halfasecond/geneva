@@ -70,18 +70,12 @@ export function useMovement({
 }: UseMovementProps): UseMovementResult {
     const [position, setPosition] = useState<Position | undefined>(undefined)
 
-    // Update position and viewport when server position changes
+    // Update position when server position changes
     useEffect(() => {
         if (serverPosition) {
             setPosition(serverPosition);
-            // Center viewport on initial position
-            const newOffset = {
-                x: Math.max(0, serverPosition.x - (viewportWidth / 2)),
-                y: Math.max(0, serverPosition.y - (viewportHeight / 2))
-            };
-            setViewportOffset(newOffset);
         }
-    }, [serverPosition, viewportWidth, viewportHeight]);
+    }, [serverPosition]);
     const [viewportOffset, setViewportOffset] = useState<ViewportOffset>({ x: 0, y: 0 })
     const [keys, setKeys] = useState<Set<string>>(new Set())
     
@@ -113,7 +107,7 @@ export function useMovement({
 
     // Update movement state based on props and server state
     useEffect(() => {
-        const currentPlayer = actors.find(actor => actor.sprite === `horse/${horseId}.svg`);
+        const currentPlayer = actors.find(actor => actor.type === 'player' && actor.id === horseId);
         setMovementState({
             canMove: !movementDisabled && !racingHorsePosition && Boolean(serverPosition),  // Need server position
             pathRestricted: Boolean(currentPlayer?.introActive) && !racingHorsePosition,  // Restrict if introActive exists

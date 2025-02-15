@@ -21,6 +21,7 @@ import { Minimap } from '../Minimap';
 import { WORLD_WIDTH, WORLD_HEIGHT } from '../../utils/coordinates';
 import { Z_LAYERS } from 'src/config/zIndex';
 import { getAssetPath } from '../../utils/assetPath'
+import { getImage } from '../../utils/getImage'
 
 // Render game actors with smooth transitions
 const GameActor = memo(({ actor, visible }: {
@@ -28,7 +29,7 @@ const GameActor = memo(({ actor, visible }: {
     visible: boolean;
 }) => (
     <img
-        src={getAssetPath(actor.sprite)}
+        src={getAssetPath(getImage(actor.type, actor.id))}
         alt={`${actor.type} ${actor.id}`}
         style={{
             width: '100px',
@@ -238,7 +239,7 @@ export const Paddock: React.FC<PaddockProps> = ({
 
     // Initialize movement with current viewport dimensions
     // Find current player in actors
-    const currentPlayer = actors.find(actor => actor.sprite === `horse/${horseId}.svg`);
+    const currentPlayer = actors.find(actor => actor.type === 'player' && actor.id === horseId);
 
     const { position, viewportOffset } = useMovement({
         viewportWidth: viewportDimensions.width,

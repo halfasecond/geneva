@@ -10,7 +10,6 @@ export interface Actor {
     id: string;
     type: ActorType;
     position: Position;
-    sprite: string;     // path to sprite image
     connected?: boolean;   // for players only
     lastSeen?: Date;      // for players only
     introActive?: true;   // only present during tutorial

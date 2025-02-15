@@ -149,7 +149,8 @@ export const Minimap: React.FC<MinimapProps> = ({
                             key={actor.id}
                             x={actor.position.x}
                             y={actor.position.y}
-                            sprite={actor.sprite}
+                            type={actor.type}
+                            id={actor.id}
                             direction={actor.position.direction}
                         />
                     );
