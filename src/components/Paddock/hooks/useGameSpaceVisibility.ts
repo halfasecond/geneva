@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 
 interface ViewportDimensions {
     width: number;
@@ -18,8 +18,10 @@ interface UseGameSpaceVisibilityProps {
 export const useGameSpaceVisibility = ({ viewportOffset, viewportDimensions }: UseGameSpaceVisibilityProps) => {
     const [isVisible, setIsVisible] = useState(false);
     const elementRef = useRef<HTMLDivElement>(null);
+    const lastUpdateRef = useRef<number>(0);
+    const UPDATE_INTERVAL = 100; // ms
 
-    useEffect(() => {
+    const checkVisibility = useCallback(() => {
         if (elementRef.current) {
             const rect = elementRef.current.getBoundingClientRect();
             const isInView = (
@@ -30,7 +32,15 @@ export const useGameSpaceVisibility = ({ viewportOffset, viewportDimensions }: U
             );
             setIsVisible(isInView);
         }
-    }, [viewportOffset.x, viewportOffset.y, viewportDimensions]);
+    }, [viewportDimensions]);
+
+    useEffect(() => {
+        const now = Date.now();
+        if (now - lastUpdateRef.current >= UPDATE_INTERVAL) {
+            lastUpdateRef.current = now;
+            checkVisibility();
+        }
+    }, [viewportOffset.x, viewportOffset.y, checkVisibility]);
 
     return {
         elementRef,

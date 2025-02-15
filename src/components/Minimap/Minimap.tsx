@@ -5,6 +5,7 @@ import { Position } from '../../server/types';
 import { paths, rivers } from '../../components/Paddock/components/Environment';
 import { raceElements, pond, issuesColumns } from '../../components/Bridleway/set';
 import { WORLD_WIDTH, WORLD_HEIGHT, MINIMAP_WIDTH, MINIMAP_HEIGHT } from '../../utils/coordinates';
+import { LivePlayer } from '../../server/modules/chained-horse/socket/state/players';
 
 const Container = styled.div`
     position: fixed;
@@ -34,7 +35,7 @@ interface MinimapProps {
     viewportDimensions: { width: number; height: number };
     scale: number;
     currentPosition: Position;
-    otherPlayers?: Map<string, { position: Position }>;
+    otherPlayers?: Map<string, LivePlayer>;
     isServerless?: boolean;
     horseId: string;
 }
@@ -153,10 +154,10 @@ export const Minimap: React.FC<MinimapProps> = ({
                     return (
                         <MinimapDot
                             key={id}
-                            x={player.position.x}
-                            y={player.position.y}
-                            horseId={id}
-                            direction={player.position.direction}
+                            x={player.x}
+                            y={player.y}
+                            horseId={player.avatarHorseId.toString()}
+                            direction={player.direction}
                         />
                     );
                 })}

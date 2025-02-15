@@ -1,18 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { Position } from '../../../server/types';
-
-interface LivePlayer {
-    address: string;
-    socketId: string | null;
-    connected: boolean;
-    lastSeen: Date;
-    avatarHorseId: number;
-    x: number;
-    y: number;
-    direction: 'left' | 'right';
-    levelIndex: number;
-}
+import { LivePlayer } from '../../../server/modules/chained-horse/socket/state/players';
 
 interface UseGameServerProps {
     // These props are kept for backwards compatibility
@@ -30,7 +19,6 @@ const TEST_ADDRESS = "0x51Ad709f827C6eC2Ed07269573abF592F83ED50c";
 export function useGameServer(_props: UseGameServerProps) {
     const socketRef = useRef<Socket | null>(null);
     const [connected, setConnected] = useState(false);
-    // Only track remote players in socket state
     const [remotePlayers, setRemotePlayers] = useState<Map<string, LivePlayer>>(new Map());
     const reconnectAttempts = useRef(0);
     const maxReconnectAttempts = 5;
@@ -68,9 +56,9 @@ export function useGameServer(_props: UseGameServerProps) {
             timeout: 10000
         });
         socketRef.current = socket;
-        console.log('do i happen a lot?')
 
         socket.on('connect', () => {
+            console.log('Connected to game server');
             setConnected(true);
             reconnectAttempts.current = 0;
             // Request initial state for other players
@@ -93,28 +81,24 @@ export function useGameServer(_props: UseGameServerProps) {
             }
         });
 
-        // Handle full state updates - filter out local player
+        // Handle full state updates
         socket.on('players:state', (livePlayers: LivePlayer[]) => {
             console.log('Received players:state update:', livePlayers);
             const playerMap = new Map();
             livePlayers.forEach(player => {
-                // Only add remote players to state
-                if (player.address !== TEST_ADDRESS) {
-                    playerMap.set(player.address, player);
-                }
+                // Keep all players in the map
+                playerMap.set(player.address, player);
             });
             setRemotePlayers(playerMap);
         });
 
-        // Handle individual player moves - only for remote players
+        // Handle individual player moves
         socket.on('player:moved', ({ address, x, y, direction }: { 
             address: string;
             x: number;
             y: number;
             direction: 'left' | 'right';
         }) => {
-            if (address === TEST_ADDRESS) return; // Ignore our own updates
-
             setRemotePlayers(prev => {
                 const player = prev.get(address);
                 if (player) {
@@ -168,7 +152,6 @@ export function useGameServer(_props: UseGameServerProps) {
     return {
         connected,
         updatePosition,
-        // Only return remote players
         players: remotePlayers
     };
 }

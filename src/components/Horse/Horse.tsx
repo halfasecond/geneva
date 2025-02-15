@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import { getAssetPath } from '../../utils/assetPath';
+import { Z_LAYERS } from 'src/config/zIndex';
 
 interface HorseProps {
     horseId: string;
@@ -11,7 +12,7 @@ const HorseContainer = styled.div`
     width: 100px;
     height: 100px;
     will-change: transform;
-    z-index: 2;
+    z-index: ${Z_LAYERS.CHARACTERS};
 
     img {
         width: 100%;
