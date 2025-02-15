@@ -155,7 +155,7 @@ export const Paddock: React.FC<PaddockProps> = ({
     const [racingPosition, setRacingPosition] = useState<{ x: number; y: number } | undefined>();
 
     // Initialize game server connection for remote players
-    const { connected, players: remotePlayers, updatePosition } = useGameServer({
+    const { connected, players, updatePosition } = useGameServer({
         _horseId: horseId,
         _initialPosition: initialPosition
     });
@@ -361,14 +361,7 @@ export const Paddock: React.FC<PaddockProps> = ({
                 </Styled.IssuesFieldContainer>
 
                 {/* Players */}
-                <Players
-                    localPlayer={{
-                        horseId,
-                        position,
-                        isRacing
-                    }}
-                    remotePlayers={remotePlayers}
-                />
+                <Players { ...{ players }} />
             </Styled.GameSpace>
 
             {/* Minimap */}
@@ -377,7 +370,7 @@ export const Paddock: React.FC<PaddockProps> = ({
                 viewportDimensions={viewportDimensions}
                 scale={scale}
                 currentPosition={position}
-                otherPlayers={remotePlayers}
+                otherPlayers={players}
                 isServerless={IS_SERVERLESS}
                 horseId={horseId}
             />

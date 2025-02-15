@@ -15,6 +15,7 @@ export interface LivePlayer {
     y: number;
     direction: 'left' | 'right';
     levelIndex: number;
+    isRacing: boolean;
 }
 
 // Helper functions for player state management

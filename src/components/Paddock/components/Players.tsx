@@ -15,25 +15,18 @@ const StyledHorse = styled.div`
 `;
 
 interface PlayersProps {
-    localPlayer: {
-        horseId: string;
-        position: Position;
-        isRacing?: boolean;
-    };
-    remotePlayers: Map<string, LivePlayer>;
-    offset?: { x: number; y: number };
+    players: Map<string, LivePlayer>;
 }
 
 // Memoize individual horse to prevent unnecessary re-renders
-const RemoteHorse = memo(({ player, offset }: { 
-    player: LivePlayer; 
-    offset: { x: number; y: number; 
-}}) => (
+const RemoteHorse = memo(({ player }: { 
+    player: LivePlayer; }) => (
     <StyledHorse
         style={{
-            left: `${player.x + offset.x}px`,
-            top: `${player.y + offset.y}px`,
-            transform: `scaleX(${player.direction === "right" ? 1 : -1})`
+            left: `${player.x}px`,
+            top: `${player.y}px`,
+            transform: `scaleX(${player.direction === "right" ? 1 : -1})`,
+            display: player.isRacing ? 'none' : 'block'
         }}
     >
         <Horse
@@ -43,19 +36,12 @@ const RemoteHorse = memo(({ player, offset }: {
 ));
 
 export const Players: React.FC<PlayersProps> = ({ 
-    localPlayer, 
-    remotePlayers,
-    offset = { x: 100, y: 100 }  // Default offset for testing
+    players,
 }) => {
-    console.log('Rendering Players:', {
-        localPlayer,
-        remotePlayers: Array.from(remotePlayers.entries())
-    });
-
     return (
         <>
             {/* Local player - hide during racing */}
-            {!localPlayer.isRacing && (
+            {/* {!localPlayer.isRacing && (
                 <StyledHorse
                     style={{
                         left: `${localPlayer.position.x}px`,
@@ -65,14 +51,13 @@ export const Players: React.FC<PlayersProps> = ({
                 >
                     <Horse horseId={localPlayer.horseId} />
                 </StyledHorse>
-            )}
+            )} */}
             
             {/* Remote players */}
-            {Array.from(remotePlayers.entries()).map(([address, player]) => (
+            {Array.from(players.entries()).map(([address, player]) => (
                 <RemoteHorse
                     key={address}
                     player={player}
-                    offset={offset}
                 />
             ))}
         </>
