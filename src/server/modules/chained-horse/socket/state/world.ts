@@ -107,9 +107,8 @@ export const getPlayerBySocket = (namespace: Namespace, socketId: string): Actor
 };
 
 // Duck management
-export const addDuck = (namespace: Namespace, x: number, y: number): Actor => {
-    const id = `duck-${namespace.worldState.actors.filter(a => a.type === 'duck').length + 1}`;
-    const duck = createActor('duck', id, x, y, 'right');
+export const addDuck = (namespace: Namespace, x: number, y: number, horseId: string): Actor => {
+    const duck = createActor('duck of doom', horseId, x, y, 'right');
     namespace.worldState.actors.push(duck);
     return duck;
 };

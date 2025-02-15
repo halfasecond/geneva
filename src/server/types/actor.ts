@@ -1,4 +1,4 @@
-export type ActorType = 'player' | 'duck' | 'flower';
+export type ActorType = 'player' | 'duck of doom' | 'flower';
 
 export interface Position {
     x: number;

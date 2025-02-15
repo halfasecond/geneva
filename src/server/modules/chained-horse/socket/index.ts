@@ -34,13 +34,32 @@ const socket = async (io: Server, web3: any, name: string, Models: Models) => {
     // Initialize world state
     initializeWorldState(namespace);
 
-    // Add initial ducks
-    addDuck(namespace, 1040, 650); // First pond
-    addDuck(namespace, 1140, 650);
-    addDuck(namespace, 1240, 650);
-    addDuck(namespace, 40, 2720);  // Second pond
-    addDuck(namespace, 140, 2720);
-    addDuck(namespace, 240, 2720);
+    // Log all unique utility traits
+    const horses = await Models.NFT.find();
+    console.log('\n=== Horse Utility Traits ===');
+    const utilities = new Set(horses.map(horse => horse.utility).filter(Boolean));
+    console.log('Unique utilities:', Array.from(utilities));
+    
+    // Log distribution
+    const utilityCount = {};
+    horses.forEach(horse => {
+        if (horse.utility) {
+            utilityCount[horse.utility] = (utilityCount[horse.utility] || 0) + 1;
+        }
+    });
+    console.log('\nUtility Distribution:');
+    Object.entries(utilityCount).forEach(([utility, count]) => {
+        console.log(`${utility}: ${count} horses`);
+    });
+    // Create ducks of doom
+    const duckHorses = horses.filter(horse => horse.utility === 'duck of doom');
+    console.log('\nCreating Ducks of Doom:');
+    duckHorses.forEach((horse, index) => {
+        console.log(`Creating Duck of Doom for Horse #${horse.tokenId}`);
+        // Space them out in the first pond
+        const x = 1040 + (index * 100);
+        addDuck(namespace, x, 650, String(horse.tokenId));
+    });
 
     // Start game loop
     const startGameLoop = () => {
