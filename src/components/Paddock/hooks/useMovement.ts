@@ -70,12 +70,18 @@ export function useMovement({
 }: UseMovementProps): UseMovementResult {
     const [position, setPosition] = useState<Position | undefined>(undefined)
 
-    // Update position when server position changes
+    // Update position and viewport when server position changes
     useEffect(() => {
         if (serverPosition) {
             setPosition(serverPosition);
+            // Center viewport on initial position
+            const newOffset = {
+                x: Math.max(0, serverPosition.x - (viewportWidth / 2)),
+                y: Math.max(0, serverPosition.y - (viewportHeight / 2))
+            };
+            setViewportOffset(newOffset);
         }
-    }, [serverPosition]);
+    }, [serverPosition, viewportWidth, viewportHeight]);
     const [viewportOffset, setViewportOffset] = useState<ViewportOffset>({ x: 0, y: 0 })
     const [keys, setKeys] = useState<Set<string>>(new Set())
     
