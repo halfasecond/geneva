@@ -1,9 +1,10 @@
-import React, { useEffect, useRef, useCallback, useState } from "react";
+import React, { useEffect, useRef, useCallback, useState, memo } from "react";
 import * as Styled from "./Paddock.style";
 import { useMovement } from "./hooks/useMovement";
 import { useZoom } from "./hooks/useZoom";
 import { useGameServer } from "./hooks/useGameServer";
 import { Position } from "../../server/types";
+import { LivePlayer } from "../../server/modules/chained-horse/socket/state/players";
 import Beach from "./components/Beach";
 import IssuesField from "../IssuesField";
 import { PathHighlight } from "./components/Environment";
@@ -18,7 +19,31 @@ import Race from "../Race";
 import { BACKGROUND_MUSIC } from '../../audio';
 import { Minimap } from '../Minimap';
 import { WORLD_WIDTH, WORLD_HEIGHT } from '../../utils/coordinates';
-import { Players } from './components/Players';
+import { Z_LAYERS } from 'src/config/zIndex';
+import { getAssetPath } from '../../utils/assetPath'
+
+// Memoize individual horse to prevent unnecessary re-renders
+const RemoteHorse = memo(({ player, visible }: {
+    player: LivePlayer;
+    visible: boolean;
+}) => (
+    <img 
+        src={getAssetPath(`horse/${player.avatarHorseId}.svg`)}
+        alt={`Horse #${player.avatarHorseId}`}
+        style={{
+            width: '100px',
+            height: '100px',
+            left: `${player.x}px`,
+            top: `${player.y}px`,
+            transform: `scaleX(${player.direction === "right" ? 1 : -1})`,
+            display: visible ? 'block' : 'none',
+            position: 'absolute',
+            willChange: 'transform',
+            transition: 'all 0.1s linear',
+            zIndex: Z_LAYERS.CHARACTERS,
+        }}
+    />
+));
 
 interface PaddockProps {
     horseId: string;
@@ -360,8 +385,14 @@ export const Paddock: React.FC<PaddockProps> = ({
                     <IssuesField />
                 </Styled.IssuesFieldContainer>
 
-                {/* Players */}
-                <Players { ...{ players }} />
+                {/* Remote Players */}
+                {players.map((player) => (
+                    <RemoteHorse
+                        key={player.address}
+                        player={player}
+                        visible={!isRacing}
+                    />
+                ))}
             </Styled.GameSpace>
 
             {/* Minimap */}

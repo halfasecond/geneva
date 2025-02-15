@@ -19,7 +19,7 @@ const TEST_ADDRESS = "0x51Ad709f827C6eC2Ed07269573abF592F83ED50c";
 export function useGameServer(_props: UseGameServerProps) {
     const socketRef = useRef<Socket | null>(null);
     const [connected, setConnected] = useState(false);
-    const [remotePlayers, setRemotePlayers] = useState<Map<string, LivePlayer>>(new Map());
+    const [remotePlayers, setRemotePlayers] = useState<LivePlayer[]>([]);
     const reconnectAttempts = useRef(0);
     const maxReconnectAttempts = 5;
 
@@ -69,7 +69,7 @@ export function useGameServer(_props: UseGameServerProps) {
             console.log('Disconnected from game server:', reason);
             setConnected(false);
             // Only clear remote players on disconnect
-            setRemotePlayers(new Map());
+            setRemotePlayers([]);
         });
 
         socket.on('connect_error', (error) => {
@@ -83,11 +83,7 @@ export function useGameServer(_props: UseGameServerProps) {
 
         // Handle world state updates
         socket.on('players:state', (livePlayers: LivePlayer[]) => {
-            const playerMap = new Map();
-            livePlayers.forEach(player => {
-                playerMap.set(player.address, player);
-            });
-            setRemotePlayers(playerMap);
+            setRemotePlayers(livePlayers);
         });
 
         return () => {
@@ -125,7 +121,7 @@ export function useGameServer(_props: UseGameServerProps) {
         return {
             connected: false,
             updatePosition: () => {},
-            players: new Map()
+            players: []
         };
     }
 

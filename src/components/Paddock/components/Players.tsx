@@ -14,11 +14,11 @@ const StyledHorse = styled.div`
 `;
 
 interface PlayersProps {
-    players: Map<string, LivePlayer>;
+    players: LivePlayer[];
 }
 
 // Memoize individual horse to prevent unnecessary re-renders
-const RemoteHorse = memo(({ player }: { 
+const RemoteHorse = memo(({ player }: {
     player: LivePlayer; }) => (
     <StyledHorse
         style={{
@@ -34,28 +34,15 @@ const RemoteHorse = memo(({ player }: {
     </StyledHorse>
 ));
 
-export const Players: React.FC<PlayersProps> = ({ 
+export const Players: React.FC<PlayersProps> = ({
     players,
 }) => {
     return (
         <>
-            {/* Local player - hide during racing */}
-            {/* {!localPlayer.isRacing && (
-                <StyledHorse
-                    style={{
-                        left: `${localPlayer.position.x}px`,
-                        top: `${localPlayer.position.y}px`,
-                        transform: `scaleX(${localPlayer.position.direction === "right" ? 1 : -1})`
-                    }}
-                >
-                    <Horse horseId={localPlayer.horseId} />
-                </StyledHorse>
-            )} */}
-            
             {/* Remote players */}
-            {Array.from(players.entries()).map(([address, player]) => (
+            {players.map((player) => (
                 <RemoteHorse
-                    key={address}
+                    key={player.address}
                     player={player}
                 />
             ))}

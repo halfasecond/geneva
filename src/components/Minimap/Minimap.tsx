@@ -35,7 +35,7 @@ interface MinimapProps {
     viewportDimensions: { width: number; height: number };
     scale: number;
     currentPosition: Position;
-    otherPlayers?: Map<string, LivePlayer>;
+    otherPlayers?: LivePlayer[];
     isServerless?: boolean;
     horseId: string;
 }
@@ -149,11 +149,11 @@ export const Minimap: React.FC<MinimapProps> = ({
                 />
 
                 {/* Other players - only show in non-serverless mode */}
-                {!isServerless && otherPlayers && Array.from(otherPlayers.entries()).map(([id, player]) => {
-                    if (id === currentPosition.toString()) return null;
+                {!isServerless && otherPlayers && otherPlayers.map(player => {
+                    if (player.address === currentPosition.toString()) return null;
                     return (
                         <MinimapDot
-                            key={id}
+                            key={player.address}
                             x={player.x}
                             y={player.y}
                             horseId={player.avatarHorseId.toString()}
