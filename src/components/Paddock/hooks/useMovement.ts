@@ -70,6 +70,9 @@ export function useMovement({
 }: UseMovementProps): UseMovementResult {
     const [position, setPosition] = useState<Position | undefined>(undefined)
 
+    // Track if we've done initial viewport update
+    const initialViewportRef = useRef(false);
+
     // Update position when server position changes
     useEffect(() => {
         if (serverPosition) {
@@ -329,6 +332,17 @@ export function useMovement({
         onPositionChange,
         serverPosition
     ]);
+
+    // Initial viewport update
+    useEffect(() => {
+        if (serverPosition && !initialViewportRef.current) {
+            const newOffset = calculateViewportOffset(serverPosition);
+            if (newOffset.x !== viewportOffset.x || newOffset.y !== viewportOffset.y) {
+                setViewportOffset(newOffset);
+            }
+            initialViewportRef.current = true;
+        }
+    }, [serverPosition, calculateViewportOffset, viewportOffset]);
 
     // Handle racing viewport updates
     useEffect(() => {
