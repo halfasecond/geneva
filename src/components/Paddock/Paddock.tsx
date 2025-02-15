@@ -7,13 +7,10 @@ import { Position } from "../../server/types";
 import { Actor } from "../../server/types/actor";
 import Beach from "./components/Beach";
 import IssuesField from "../IssuesField";
-import { PathHighlight } from "./components/Environment";
-import { Rivers, paths, rivers } from "./components/Environment";
+import { PathHighlight, Rivers, paths, rivers } from "./components/Environment";
 import { raceElements, issuesColumns } from "../Bridleway/set";
 import { introMessages } from "../Bridleway/messages";
-import { Pond } from "./components/GameElements";
-import { RainbowPuke } from "./components/GameElements";
-import { Duck, Flower, Farm } from "./components/GameElements";
+import { Pond, RainbowPuke, Flower, Farm } from "./components/GameElements";
 import MuteButton from "../MuteButton";
 import Race from "../Race";
 import { BACKGROUND_MUSIC } from '../../audio';
@@ -124,24 +121,6 @@ export const Paddock: React.FC<PaddockProps> = ({
     modalOpen = false
 }) => {
     const [isMuted, setIsMuted] = useState(false);
-    const [debugMode, setDebugMode] = useState(false);
-
-    // Debug mode hotkey
-    useEffect(() => {
-        const handleKeyPress = (e: KeyboardEvent) => {
-            if (e.key === '9') {
-                setDebugMode(prev => {
-                    const newDebugMode = !prev;
-                    if (newDebugMode && !isMuted) {
-                        handleMuteToggle();
-                    }
-                    return newDebugMode;
-                });
-            }
-        };
-        window.addEventListener('keydown', handleKeyPress);
-        return () => window.removeEventListener('keydown', handleKeyPress);
-    }, []);
 
     // Handle audio mute/unmute
     const handleMuteToggle = useCallback(() => {
@@ -244,15 +223,15 @@ export const Paddock: React.FC<PaddockProps> = ({
     const { position, viewportOffset } = useMovement({
         viewportWidth: viewportDimensions.width,
         viewportHeight: viewportDimensions.height,
-        introActive: debugMode ? false : pathRestricted,
-        movementDisabled: debugMode ? false : (isRacing || modalOpen),
+        introActive: pathRestricted,
+        movementDisabled: (isRacing || modalOpen),
         onPositionChange: useCallback((pos: Position) => {
             if (!IS_SERVERLESS && connected) {
                 updatePosition(pos);
             }
         }, [IS_SERVERLESS, connected, updatePosition]),
-        onMessageTrigger: introActive && !debugMode ? handleMessageTrigger : undefined,
-        forcePosition: debugMode ? undefined : forcedPosition,
+        onMessageTrigger: introActive ? handleMessageTrigger : undefined,
+        forcePosition: forcedPosition,
         racingHorsePosition: racingPosition,
         serverPosition: currentPlayer?.position,
         actors,
@@ -351,10 +330,8 @@ export const Paddock: React.FC<PaddockProps> = ({
                     />
                 ))}
 
-                {/* Farm Pond and RainbowPuke Falls */}
-                <Pond left={1040} top={510} />
-                {/* Farm below top pond */}
                 <Farm left={1190} top={940} size={100} />
+                <Pond left={1040} top={510} />
                 <Pond left={40} top={2580} />
                 <RainbowPuke left={40} top={2580} />
 
@@ -381,9 +358,9 @@ export const Paddock: React.FC<PaddockProps> = ({
                 </Styled.IssuesFieldContainer>
 
                 {/* Game Actors */}
-                {actors.map((actor) => (
+                {actors.map((actor, i) => (
                     <GameActor
-                        key={actor.id}
+                        key={i}
                         actor={actor}
                         visible={!isRacing || actor.type !== 'player'}
                     />
@@ -393,13 +370,10 @@ export const Paddock: React.FC<PaddockProps> = ({
             {/* Minimap */}
             {position && (
                 <Minimap
-                    viewportOffset={viewportOffset}
-                    viewportDimensions={viewportDimensions}
-                    scale={scale}
+                    {...{ viewportDimensions, viewportOffset, scale, position, actors, horseId }}
                     currentPosition={position}
                     otherPlayers={actors}
                     isServerless={IS_SERVERLESS}
-                    horseId={horseId}
                 />
             )}
         </Styled.Container>

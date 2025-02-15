@@ -56,15 +56,76 @@ const socket = async (io: Server, web3: any, name: string, Models: Models) => {
     console.log('\nCreating Ducks of Doom:');
     duckHorses.forEach((horse, index) => {
         console.log(`Creating Duck of Doom for Horse #${horse.tokenId}`);
-        // Space them out in the first pond
-        const x = 1040 + (index * 100);
-        addDuck(namespace, x, 650, String(horse.tokenId));
+        
+        // First 3 ducks in first pond, next 3 in second pond
+        let x, y;
+        if (index < 3) {
+            // First pond (1140, 750) - moved right 100px, down 100px
+            x = 1140 + (index * 100);
+            y = 750 + (Math.random() * 40 - 20); // ±20px random height
+        } else {
+            // Second pond (140, 2820) - moved right 100px, down 100px
+            x = 140 + ((index - 3) * 100);
+            y = 2820 + (Math.random() * 40 - 20); // ±20px random height
+        }
+        
+        addDuck(namespace, x, y, String(horse.tokenId));
     });
+
+    // Track duck movement state
+    const duckState = new Map<string, {
+        spawnX: number;
+        direction: 'left' | 'right';
+        speed: number;
+    }>();
 
     // Start game loop
     const startGameLoop = () => {
+        let lastTime = Date.now();
+
         gameLoopInterval = setInterval(() => {
-            // Only broadcast if there are actors
+            const now = Date.now();
+            const delta = now - lastTime;
+            lastTime = now;
+
+            // Update duck positions
+            namespace.worldState.actors.forEach(actor => {
+                if (actor.type === 'duck of doom') {
+                    // Initialize state if needed
+                    if (!duckState.has(actor.id)) {
+                        duckState.set(actor.id, {
+                            spawnX: actor.position.x,
+                            direction: 'right',
+                            speed: 0.2 + (Math.random() * 0.2) // Slower speed range (0.2-0.4)
+                        });
+                    }
+
+                    const state = duckState.get(actor.id)!;
+                    const MOVEMENT_RANGE = 100; // 100px each direction
+                    const DUCK_SPEED = state.speed * (delta * 0.06);
+
+                    // Update position
+                    let newX = state.direction === 'right'
+                        ? actor.position.x + DUCK_SPEED
+                        : actor.position.x - DUCK_SPEED;
+
+                    // Change direction at boundaries
+                    if (newX >= state.spawnX + MOVEMENT_RANGE) {
+                        newX = state.spawnX + MOVEMENT_RANGE;
+                        state.direction = 'left';
+                    } else if (newX <= state.spawnX - MOVEMENT_RANGE) {
+                        newX = state.spawnX - MOVEMENT_RANGE;
+                        state.direction = 'right';
+                    }
+
+                    // Update actor position
+                    actor.position.x = newX;
+                    // Direction should be opposite of movement (face left when moving right)
+                    actor.position.direction = state.direction === 'right' ? 'left' : 'right';
+                }
+            });
+
+            // Broadcast if there are actors
             if (namespace.worldState.actors.length > 0) {
                 namespace.emit('world:state', getWorldState(namespace));
             }
@@ -131,6 +192,9 @@ const socket = async (io: Server, web3: any, name: string, Models: Models) => {
         // Stop the game loop
         stopGameLoop();
         
+        // Clear duck movement state
+        duckState.clear();
+
         // Log final state
         const connectedPlayers = getConnectedPlayers(namespace);
         console.log('\n=== Final World State ===');

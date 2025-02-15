@@ -1,4 +1,3 @@
-export { default as Duck } from './Duck';
 export { default as Flower } from './Flower';
 export { default as Farm } from './Farm';
 export { default as RainbowPuke } from './RainbowPuke';
