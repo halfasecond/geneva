@@ -1,6 +1,5 @@
 import React, { memo } from 'react';
 import Horse from '../../Horse/Horse';
-import { Position } from '../../../server/types';
 import { LivePlayer } from '../../../server/modules/chained-horse/socket/state/players';
 import { Z_LAYERS } from 'src/config/zIndex';
 import styled from 'styled-components';

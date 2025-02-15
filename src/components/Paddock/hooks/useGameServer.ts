@@ -81,54 +81,13 @@ export function useGameServer(_props: UseGameServerProps) {
             }
         });
 
-        // Handle full state updates
+        // Handle world state updates
         socket.on('players:state', (livePlayers: LivePlayer[]) => {
-            console.log('Received players:state update:', livePlayers);
             const playerMap = new Map();
             livePlayers.forEach(player => {
-                // Keep all players in the map
                 playerMap.set(player.address, player);
             });
             setRemotePlayers(playerMap);
-        });
-
-        // Handle individual player moves
-        socket.on('player:moved', ({ address, x, y, direction }: { 
-            address: string;
-            x: number;
-            y: number;
-            direction: 'left' | 'right';
-        }) => {
-            setRemotePlayers(prev => {
-                const updated = new Map(prev);
-                const player = prev.get(address);
-                
-                if (player) {
-                    // Update existing player
-                    updated.set(address, {
-                        ...player,
-                        x,
-                        y,
-                        direction,
-                        lastSeen: new Date()
-                    });
-                } else {
-                    // Create new player entry with defaults
-                    updated.set(address, {
-                        address,
-                        socketId: null, // Will be set on next full state update
-                        connected: true,
-                        lastSeen: new Date(),
-                        avatarHorseId: 21, // Default horse
-                        x,
-                        y,
-                        direction,
-                        levelIndex: 0
-                    });
-                }
-                
-                return updated;
-            });
         });
 
         return () => {

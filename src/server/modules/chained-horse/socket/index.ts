@@ -27,12 +27,35 @@ const formatPlayerState = (player: LivePlayer) => ({
     lastSeen: player.lastSeen
 });
 
+const TICK_RATE = 50; // 20 updates per second
+
 const socket = async (io: Server, web3: any, name: string, Models: Models) => {
     const namespace: Namespace = io.of(`/api/${name}`);
     let socketCount = 0;
+    let gameLoopInterval: NodeJS.Timeout;
 
     // Initialize namespace state
     namespace.players = [];
+
+    // Start game loop
+    const startGameLoop = () => {
+        gameLoopInterval = setInterval(() => {
+            // Only broadcast if there are connected players
+            if (namespace.players.length > 0) {
+                namespace.emit('players:state', namespace.players);
+            }
+        }, TICK_RATE);
+    };
+
+    // Stop game loop
+    const stopGameLoop = () => {
+        if (gameLoopInterval) {
+            clearInterval(gameLoopInterval);
+        }
+    };
+
+    // Start game loop when server starts
+    startGameLoop();
 
     namespace.on('connection', (socket: Socket) => {
         socketCount++;
@@ -50,6 +73,10 @@ const socket = async (io: Server, web3: any, name: string, Models: Models) => {
     // Clean up on server shutdown
     const cleanup = () => {
         console.log('\n🎮 Cleaning up game server...');
+        
+        // Stop the game loop
+        stopGameLoop();
+        
         // Log final state
         const connectedPlayers = namespace.players.filter(p => p.connected);
         console.log('\n=== Final Player State ===');
