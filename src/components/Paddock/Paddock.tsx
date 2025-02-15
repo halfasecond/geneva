@@ -351,16 +351,7 @@ export const Paddock: React.FC<PaddockProps> = ({
                 <Pond left={1040} top={510} />
                 {/* Farm below top pond */}
                 <Farm left={1190} top={940} size={100} />
-                {/* Ducks in first pond */}
-                <Duck key="pond1-duck1" left={1040} top={650} pondWidth={380} />
-                <Duck key="pond1-duck2" left={1040} top={650} pondWidth={380} />
-                <Duck key="pond1-duck3" left={1040} top={650} pondWidth={380} />
-
                 <Pond left={40} top={2580} />
-                {/* Ducks in second pond */}
-                <Duck key="pond2-duck1" left={40} top={2720} pondWidth={380} />
-                <Duck key="pond2-duck2" left={40} top={2720} pondWidth={380} />
-                <Duck key="pond2-duck3" left={40} top={2720} pondWidth={380} />
                 <RainbowPuke left={40} top={2580} />
 
                 {/* Race Track */}

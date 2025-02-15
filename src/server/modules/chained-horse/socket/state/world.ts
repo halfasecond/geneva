@@ -23,9 +23,11 @@ export const addPlayer = (namespace: Namespace, address: string, socketId: strin
     );
 
     if (existingPlayer) {
-        existingPlayer.position = position;
+        // Only update connection state and sprite, preserve position
         existingPlayer.connected = true;
         existingPlayer.lastSeen = new Date();
+        existingPlayer.sprite = `horse/${horseId}.svg`;
+        existingPlayer.socketId = socketId;  // Update socket mapping
         return existingPlayer;
     }
 

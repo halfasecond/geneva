@@ -75,11 +75,9 @@ const socket = async (io: Server, web3: any, name: string, Models: Models) => {
             const player = addPlayer(namespace, address, socket.id, spawnPosition, horseId);
             setPlayerConnected(namespace, player.id, socket.id);
             
-            // Send join confirmation first
+            // Send join confirmation and initial state
             socket.emit('player:joined');
-            
-            // Then send initial world state
-            socket.emit('world:state', getWorldState(namespace));
+            namespace.emit('world:state', getWorldState(namespace));  // Broadcast to all clients
         });
 
         socket.on('player:move', ({ x, y, direction }: Position) => {
