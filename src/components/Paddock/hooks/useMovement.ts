@@ -33,12 +33,22 @@ interface MovementState {
     followPlayer: boolean;    // Should viewport follow player?
 }
 
+interface PositionState {
+    current: Position;
+    lastBroadcast: Position | null;
+    frameCount: number;
+}
+
 // Horse dimensions and movement
 const HORSE_SIZE = 120; // pixels
 const MOVEMENT_SPEED = HORSE_SIZE / 32; // Trotting speed: 3.75 pixels per frame = ~225 pixels/second at 60fps
 
 // Viewport thresholds
 const EDGE_THRESHOLD = 0.2; // 20% from edges
+
+// Position change detection
+const hasPositionChanged = (a: Position, b: Position) => 
+    a.x !== b.x || a.y !== b.y || a.direction !== b.direction;
 
 export function useMovement({
     viewportWidth,
@@ -66,6 +76,13 @@ export function useMovement({
     const keysRef = useRef<Set<string>>(new Set())
     keysRef.current = keys
 
+    // Track position state for throttling
+    const positionStateRef = useRef<PositionState>({
+        current: initialPosition,
+        lastBroadcast: null,
+        frameCount: 0
+    });
+
     // Update movement state based on props
     useEffect(() => {
         setMovementState({
@@ -80,6 +97,11 @@ export function useMovement({
         if (forcePosition) {
             setPosition(forcePosition);
             onPositionChange(forcePosition);
+            positionStateRef.current = {
+                current: forcePosition,
+                lastBroadcast: forcePosition,
+                frameCount: 0
+            };
         } else if (forcePosition === undefined && racingHorsePosition === undefined) {
             // Race finished - ensure movement state is properly reset
             setMovementState(prevState => ({
@@ -216,12 +238,14 @@ export function useMovement({
             }
 
             // If no movement or only direction change
-            if (!moved) {
-                if (direction !== position.direction) {
-                    const newPosition = { ...position, direction };
-                    setPosition(newPosition);
-                    onPositionChange(newPosition);
-                }
+            if (!moved && direction !== position.direction) {
+                const newPosition = { ...position, direction };
+                setPosition(newPosition);
+                positionStateRef.current.current = newPosition;
+
+                // Always broadcast direction changes
+                onPositionChange(newPosition);
+                positionStateRef.current.lastBroadcast = newPosition;
                 return;
             }
 
@@ -233,12 +257,26 @@ export function useMovement({
             if (isValidPosition(x, y, direction)) {
                 const newPosition = { x, y, direction };
                 setPosition(newPosition);
-                onPositionChange(newPosition);
+                positionStateRef.current.current = newPosition;
 
                 // Update viewport in the same frame
                 const newOffset = calculateViewportOffset(newPosition);
                 if (newOffset.x !== viewportOffset.x || newOffset.y !== viewportOffset.y) {
                     setViewportOffset(newOffset);
+                }
+
+                // Handle position broadcasting
+                positionStateRef.current.frameCount++;
+                if (positionStateRef.current.frameCount >= 3) { // Every 3rd frame (~20 updates/sec)
+                    const { current, lastBroadcast } = positionStateRef.current;
+                    
+                    // Broadcast if position changed
+                    if (!lastBroadcast || hasPositionChanged(current, lastBroadcast)) {
+                        onPositionChange(current);
+                        positionStateRef.current.lastBroadcast = { ...current };
+                    }
+                    
+                    positionStateRef.current.frameCount = 0;
                 }
             }
 
