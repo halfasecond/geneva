@@ -47,7 +47,6 @@ const GameActor = memo(({ actor, visible }: {
 
 interface PaddockProps {
     horseId: string;
-    initialPosition?: Position;
     introActive?: boolean;
     modalOpen?: boolean;
 }
@@ -120,7 +119,6 @@ const AI_HORSES = [
 
 export const Paddock: React.FC<PaddockProps> = ({
     horseId,
-    initialPosition = { x: 100, y: 150, direction: "right" as const },
     introActive = true,
     modalOpen = false
 }) => {
@@ -181,8 +179,7 @@ export const Paddock: React.FC<PaddockProps> = ({
 
     // Initialize game server connection
     const { connected, actors, updatePosition } = useGameServer({
-        horseId,
-        initialPosition: initialPosition || { x: 100, y: 150, direction: "right" }
+        horseId
     });
 
     // Handle message triggers
@@ -239,10 +236,12 @@ export const Paddock: React.FC<PaddockProps> = ({
     const [pathRestricted, setPathRestricted] = useState(introActive);
 
     // Initialize movement with current viewport dimensions
+    // Find current player in actors
+    const currentPlayer = actors.find(actor => actor.sprite === `horse/${horseId}.svg`);
+
     const { position, viewportOffset } = useMovement({
         viewportWidth: viewportDimensions.width,
         viewportHeight: viewportDimensions.height,
-        initialPosition,
         introActive: debugMode ? false : pathRestricted,
         movementDisabled: debugMode ? false : (isRacing || modalOpen),
         onPositionChange: useCallback((pos: Position) => {
@@ -252,7 +251,8 @@ export const Paddock: React.FC<PaddockProps> = ({
         }, [IS_SERVERLESS, connected, updatePosition]),
         onMessageTrigger: introActive && !debugMode ? handleMessageTrigger : undefined,
         forcePosition: debugMode ? undefined : forcedPosition,
-        racingHorsePosition: racingPosition
+        racingHorsePosition: racingPosition,
+        serverPosition: currentPlayer?.position
     });
 
     // Initialize zoom control

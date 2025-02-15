@@ -8,13 +8,13 @@ import { WORLD_WIDTH, WORLD_HEIGHT } from '../../../utils/coordinates'
 interface UseMovementProps {
     viewportWidth: number
     viewportHeight: number
-    initialPosition: Position
     onPositionChange: (position: Position) => void
     introActive?: boolean
     movementDisabled?: boolean
     onMessageTrigger?: (messageIndex: number) => void
     forcePosition?: Position
     racingHorsePosition?: { x: number; y: number }
+    serverPosition?: Position  // Position from server actor
 }
 
 interface ViewportOffset {
@@ -53,15 +53,22 @@ const hasPositionChanged = (a: Position, b: Position) =>
 export function useMovement({
     viewportWidth,
     viewportHeight,
-    initialPosition,
     onPositionChange,
     introActive = false,
     movementDisabled = false,
     onMessageTrigger,
     forcePosition,
-    racingHorsePosition
+    racingHorsePosition,
+    serverPosition
 }: UseMovementProps): UseMovementResult {
-    const [position, setPosition] = useState<Position>(initialPosition)
+    const [position, setPosition] = useState<Position>({ x: 100, y: 150, direction: 'right' })
+
+    // Update position when server position changes
+    useEffect(() => {
+        if (serverPosition) {
+            setPosition(serverPosition);
+        }
+    }, [serverPosition]);
     const [viewportOffset, setViewportOffset] = useState<ViewportOffset>({ x: 0, y: 0 })
     const [keys, setKeys] = useState<Set<string>>(new Set())
     
@@ -78,10 +85,18 @@ export function useMovement({
 
     // Track position state for throttling
     const positionStateRef = useRef<PositionState>({
-        current: initialPosition,
+        current: { x: 100, y: 150, direction: 'right' },
         lastBroadcast: null,
         frameCount: 0
     });
+
+    // Update ref when server position changes
+    useEffect(() => {
+        if (serverPosition) {
+            positionStateRef.current.current = serverPosition;
+            positionStateRef.current.lastBroadcast = serverPosition;
+        }
+    }, [serverPosition]);
 
     // Update movement state based on props
     useEffect(() => {
@@ -301,7 +316,8 @@ export function useMovement({
         isValidPosition,
         calculateViewportOffset,
         movementState.canMove,
-        onPositionChange
+        onPositionChange,
+        serverPosition
     ]);
 
     // Handle racing viewport updates

@@ -5,7 +5,6 @@ import { Actor, WorldState } from '../../../server/types/actor';
 
 interface UseGameServerProps {
     horseId: string;
-    initialPosition: Position;
 }
 
 // Environment configuration - handle various falsy values
