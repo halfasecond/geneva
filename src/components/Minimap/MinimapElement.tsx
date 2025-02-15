@@ -51,10 +51,10 @@ export const MinimapDot: React.FC<{
     x: number;
     y: number;
     size?: number;
-    horseId: string;
+    sprite: string;
     direction?: 'left' | 'right';
     className?: string;
-}> = ({ x, y, horseId, direction = 'right', className }) => {
+}> = ({ x, y, sprite, direction = 'right', className }) => {
     const pos = CoordinateTransformer.worldToMinimap({ x, y });
 
     return (
@@ -66,7 +66,7 @@ export const MinimapDot: React.FC<{
                 transform: `translate(-50%, -50%) scaleX(${direction === 'left' ? -1 : 1})`
             }}
         >
-            <img src={getAssetPath(`horse/${horseId}.svg`)} alt={`Horse ${horseId}`} />
+            <img src={getAssetPath(sprite)} alt={`Horse`} />
         </StyledDot>
     );
 };

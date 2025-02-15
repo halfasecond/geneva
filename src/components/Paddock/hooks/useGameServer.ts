@@ -1,13 +1,11 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { Position } from '../../../server/types';
-import { LivePlayer } from '../../../server/modules/chained-horse/socket/state/players';
+import { Actor, WorldState } from '../../../server/types/actor';
 
 interface UseGameServerProps {
-    // These props are kept for backwards compatibility
-    // but we'll use hardcoded values for now
-    _horseId?: string;
-    _initialPosition?: Position;
+    horseId: string;
+    initialPosition: Position;
 }
 
 // Environment configuration - handle various falsy values
@@ -16,35 +14,42 @@ const IS_SERVERLESS = import.meta.env.VITE_SERVERLESS?.toLowerCase() === 'true';
 // Hardcoded test values
 const TEST_ADDRESS = "0x51Ad709f827C6eC2Ed07269573abF592F83ED50c";
 
-export function useGameServer(_props: UseGameServerProps) {
+export function useGameServer({ horseId }: UseGameServerProps) {
     const socketRef = useRef<Socket | null>(null);
     const [connected, setConnected] = useState(false);
-    const [remotePlayers, setRemotePlayers] = useState<LivePlayer[]>([]);
+    const [actors, setActors] = useState<Actor[]>([]);
     const reconnectAttempts = useRef(0);
     const maxReconnectAttempts = 5;
 
-    // Log player state every 10 seconds
+    // Log world state every 10 seconds
     useEffect(() => {
         if (IS_SERVERLESS) return;
 
         const interval = setInterval(() => {
-            console.log('\n=== Frontend Player State ===');
+            console.log('\n=== Frontend World State ===');
             console.log('Connected:', connected);
-            console.log('Remote Players:', Array.from(remotePlayers.values()).map(player => ({
-                address: player.address,
-                avatarHorse: player.avatarHorseId,
-                position: { x: player.x, y: player.y, direction: player.direction },
-                connected: player.connected
+            console.log('Actors:', actors.map(actor => ({
+                id: actor.id,
+                type: actor.type,
+                position: actor.position,
+                sprite: actor.sprite,
+                connected: actor.connected
             })));
             console.log('==========================\n');
         }, 10000);
 
         return () => clearInterval(interval);
-    }, [connected, remotePlayers]);
+    }, [connected, actors]);
 
     // Initialize socket connection
-    const initSocket = useCallback(() => {
-        if (IS_SERVERLESS || socketRef.current?.connected) return;
+    useEffect(() => {
+        if (IS_SERVERLESS) return;
+
+        // Clean up existing socket if any
+        if (socketRef.current) {
+            socketRef.current.disconnect();
+            socketRef.current = null;
+        }
 
         // Use environment variable with fallback for development
         const serverUrl = import.meta.env.VITE_GAME_SERVER_URL || 'http://localhost:3131';
@@ -53,81 +58,91 @@ export function useGameServer(_props: UseGameServerProps) {
             reconnectionAttempts: maxReconnectAttempts,
             reconnectionDelay: 1000,
             reconnectionDelayMax: 5000,
-            timeout: 10000
+            timeout: 10000,
+            transports: ['websocket']
         });
         socketRef.current = socket;
 
-        socket.on('connect', () => {
+        const handleConnect = () => {
             console.log('Connected to game server');
-            setConnected(true);
             reconnectAttempts.current = 0;
-            // Request initial state for other players
-            socket.emit('players:get_state');
-        });
+            
+            // Join game
+            socket.emit('player:join', {
+                address: TEST_ADDRESS,
+                horseId: parseInt(horseId)
+            });
+        };
 
-        socket.on('disconnect', (reason) => {
+        const handleJoined = () => {
+            console.log('Joined game successfully');
+            setConnected(true);
+        };
+
+        const handleDisconnect = (reason: string) => {
             console.log('Disconnected from game server:', reason);
             setConnected(false);
-            // Only clear remote players on disconnect
-            setRemotePlayers([]);
-        });
+            // Only clear actors on permanent disconnects
+            if (reason === 'io server disconnect' || reason === 'io client disconnect') {
+                setActors([]);
+            }
+        };
 
-        socket.on('connect_error', (error) => {
+        const handleConnectError = (error: Error) => {
             console.error('Connection error:', error);
             reconnectAttempts.current++;
             if (reconnectAttempts.current >= maxReconnectAttempts) {
                 console.error('Max reconnection attempts reached');
                 socket.disconnect();
             }
-        });
+        };
 
-        // Handle world state updates
-        socket.on('players:state', (livePlayers: LivePlayer[]) => {
-            setRemotePlayers(livePlayers);
-        });
+        const handleWorldState = (state: WorldState) => {
+            setActors(state.actors);
+        };
+
+        // Set up event handlers
+        socket.on('connect', handleConnect);
+        socket.on('player:joined', handleJoined);
+        socket.on('disconnect', handleDisconnect);
+        socket.on('connect_error', handleConnectError);
+        socket.on('world:state', handleWorldState);
 
         return () => {
-            if (socket) {
-                socket.disconnect();
-                socketRef.current = null;
-            }
+            socket.off('connect', handleConnect);
+            socket.off('player:joined', handleJoined);
+            socket.off('disconnect', handleDisconnect);
+            socket.off('connect_error', handleConnectError);
+            socket.off('world:state', handleWorldState);
+            socket.removeAllListeners();
+            socket.disconnect();
+            socketRef.current = null;
         };
-    }, []);
-
-    // Initialize socket on mount
-    useEffect(() => {
-        initSocket();
-        return () => {
-            if (socketRef.current) {
-                socketRef.current.disconnect();
-                socketRef.current = null;
-            }
-        };
-    }, [initSocket]);
+    }, [horseId]);
 
     // Broadcast position updates but don't wait for response
     const updatePosition = useCallback((position: Position) => {
-        if (socketRef.current?.connected) {
+        if (socketRef.current?.connected && connected) {
             socketRef.current.emit('player:move', {
                 x: position.x,
                 y: position.y,
                 direction: position.direction
             });
         }
-    }, []);
+    }, [connected]);
 
     // If in serverless mode, return empty state
     if (IS_SERVERLESS) {
         return {
             connected: false,
             updatePosition: () => {},
-            players: []
+            actors: []
         };
     }
 
     return {
         connected,
         updatePosition,
-        players: remotePlayers
+        actors
     };
 }

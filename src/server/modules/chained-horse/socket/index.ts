@@ -1,7 +1,18 @@
 import { Server, Socket, Namespace } from 'socket.io';
 import { Model } from 'mongoose';
-import { setupPlayerHandlers } from './handlers/player';
-import { LivePlayer } from './state/players';
+import { Position } from '../../../types/actor';
+import {
+    initializeWorldState,
+    addPlayer,
+    updateActorPosition,
+    setPlayerConnected,
+    setPlayerDisconnected,
+    getConnectedPlayers,
+    getPlayerBySocket,
+    addDuck,
+    getWorldState,
+    formatActorState
+} from './state/world';
 
 interface Models {
     Event: Model<any>;
@@ -12,21 +23,6 @@ interface Models {
     [key: string]: Model<any>;
 }
 
-// Augment the Namespace type to include our state
-declare module 'socket.io' {
-    interface Namespace {
-        players: LivePlayer[];
-    }
-}
-
-const formatPlayerState = (player: LivePlayer) => ({
-    address: player.address,
-    avatarHorse: player.avatarHorseId,
-    position: { x: player.x, y: player.y, direction: player.direction },
-    connected: player.connected,
-    lastSeen: player.lastSeen
-});
-
 const TICK_RATE = 50; // 20 updates per second
 
 const socket = async (io: Server, web3: any, name: string, Models: Models) => {
@@ -34,15 +30,23 @@ const socket = async (io: Server, web3: any, name: string, Models: Models) => {
     let socketCount = 0;
     let gameLoopInterval: NodeJS.Timeout;
 
-    // Initialize namespace state
-    namespace.players = [];
+    // Initialize world state
+    initializeWorldState(namespace);
+
+    // Add initial ducks
+    addDuck(namespace, 1040, 650); // First pond
+    addDuck(namespace, 1140, 650);
+    addDuck(namespace, 1240, 650);
+    addDuck(namespace, 40, 2720);  // Second pond
+    addDuck(namespace, 140, 2720);
+    addDuck(namespace, 240, 2720);
 
     // Start game loop
     const startGameLoop = () => {
         gameLoopInterval = setInterval(() => {
-            // Only broadcast if there are connected players
-            if (namespace.players.length > 0) {
-                namespace.emit('players:state', namespace.players);
+            // Only broadcast if there are actors
+            if (namespace.worldState.actors.length > 0) {
+                namespace.emit('world:state', getWorldState(namespace));
             }
         }, TICK_RATE);
     };
@@ -61,12 +65,37 @@ const socket = async (io: Server, web3: any, name: string, Models: Models) => {
         socketCount++;
         console.log(`Socket connected: ${socket.id} (Total sockets: ${socketCount})`);
 
-        // Set up player event handlers
-        setupPlayerHandlers(socket, namespace);
+        // Set up event handlers
+        socket.on('player:join', ({ address, horseId }: {
+            address: string;
+            horseId: number;
+        }) => {
+            // Default spawn position for new players
+            const spawnPosition = { x: 100, y: 150, direction: 'right' as const };
+            const player = addPlayer(namespace, address, socket.id, spawnPosition, horseId);
+            setPlayerConnected(namespace, player.id, socket.id);
+            
+            // Send join confirmation first
+            socket.emit('player:joined');
+            
+            // Then send initial world state
+            socket.emit('world:state', getWorldState(namespace));
+        });
+
+        socket.on('player:move', ({ x, y, direction }: Position) => {
+            const player = getPlayerBySocket(namespace, socket.id);
+            if (player) {
+                updateActorPosition(namespace, player.id, x, y, direction);
+            }
+        });
 
         socket.on('disconnect', () => {
             socketCount--;
             console.log(`Socket disconnected: ${socket.id} (Total sockets: ${socketCount})`);
+            const player = getPlayerBySocket(namespace, socket.id);
+            if (player) {
+                setPlayerDisconnected(namespace, player.id);
+            }
         });
     });
 
@@ -78,12 +107,13 @@ const socket = async (io: Server, web3: any, name: string, Models: Models) => {
         stopGameLoop();
         
         // Log final state
-        const connectedPlayers = namespace.players.filter(p => p.connected);
-        console.log('\n=== Final Player State ===');
+        const connectedPlayers = getConnectedPlayers(namespace);
+        console.log('\n=== Final World State ===');
         console.log(`Socket Count: ${socketCount}`);
         console.log('Connected Players:', connectedPlayers.length);
+        console.log('All Actors:', namespace.worldState.actors.length);
         connectedPlayers.forEach(player => {
-            console.log(`Player ${player.address}:`, formatPlayerState(player));
+            console.log(`Player ${player.id}:`, formatActorState(player));
         });
         console.log('===========================\n');
 

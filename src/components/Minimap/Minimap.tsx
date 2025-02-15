@@ -5,7 +5,7 @@ import { Position } from '../../server/types';
 import { paths, rivers } from '../../components/Paddock/components/Environment';
 import { raceElements, pond, issuesColumns } from '../../components/Bridleway/set';
 import { WORLD_WIDTH, WORLD_HEIGHT, MINIMAP_WIDTH, MINIMAP_HEIGHT } from '../../utils/coordinates';
-import { LivePlayer } from '../../server/modules/chained-horse/socket/state/players';
+import { Actor } from '../../server/types/actor';
 
 const Container = styled.div`
     position: fixed;
@@ -35,7 +35,7 @@ interface MinimapProps {
     viewportDimensions: { width: number; height: number };
     scale: number;
     currentPosition: Position;
-    otherPlayers?: LivePlayer[];
+    otherPlayers?: Actor[];
     isServerless?: boolean;
     horseId: string;
 }
@@ -140,24 +140,17 @@ export const Minimap: React.FC<MinimapProps> = ({
                     />
                 ))}
 
-                {/* Current player */}
-                <MinimapDot
-                    x={currentPosition.x}
-                    y={currentPosition.y}
-                    horseId={horseId}
-                    direction={currentPosition.direction}
-                />
-
                 {/* Other players - only show in non-serverless mode */}
-                {!isServerless && otherPlayers && otherPlayers.map(player => {
-                    if (player.address === currentPosition.toString()) return null;
+                {!isServerless && otherPlayers && otherPlayers.map(actor => {
+                    if (actor.id === currentPosition.toString()) return null;
+                    if (actor.type !== 'player') return null;
                     return (
                         <MinimapDot
-                            key={player.address}
-                            x={player.x}
-                            y={player.y}
-                            horseId={player.avatarHorseId.toString()}
-                            direction={player.direction}
+                            key={actor.id}
+                            x={actor.position.x}
+                            y={actor.position.y}
+                            sprite={actor.sprite}
+                            direction={actor.position.direction}
                         />
                     );
                 })}

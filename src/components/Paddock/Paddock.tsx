@@ -4,7 +4,7 @@ import { useMovement } from "./hooks/useMovement";
 import { useZoom } from "./hooks/useZoom";
 import { useGameServer } from "./hooks/useGameServer";
 import { Position } from "../../server/types";
-import { LivePlayer } from "../../server/modules/chained-horse/socket/state/players";
+import { Actor } from "../../server/types/actor";
 import Beach from "./components/Beach";
 import IssuesField from "../IssuesField";
 import { PathHighlight } from "./components/Environment";
@@ -22,20 +22,20 @@ import { WORLD_WIDTH, WORLD_HEIGHT } from '../../utils/coordinates';
 import { Z_LAYERS } from 'src/config/zIndex';
 import { getAssetPath } from '../../utils/assetPath'
 
-// Memoize individual horse to prevent unnecessary re-renders
-const RemoteHorse = memo(({ player, visible }: {
-    player: LivePlayer;
+// Render game actors with smooth transitions
+const GameActor = memo(({ actor, visible }: {
+    actor: Actor;
     visible: boolean;
 }) => (
-    <img 
-        src={getAssetPath(`horse/${player.avatarHorseId}.svg`)}
-        alt={`Horse #${player.avatarHorseId}`}
+    <img
+        src={getAssetPath(actor.sprite)}
+        alt={`${actor.type} ${actor.id}`}
         style={{
             width: '100px',
             height: '100px',
-            left: `${player.x}px`,
-            top: `${player.y}px`,
-            transform: `scaleX(${player.direction === "right" ? 1 : -1})`,
+            left: `${actor.position.x}px`,
+            top: `${actor.position.y}px`,
+            transform: `scaleX(${actor.position.direction === "right" ? 1 : -1})`,
             display: visible ? 'block' : 'none',
             position: 'absolute',
             willChange: 'transform',
@@ -179,10 +179,10 @@ export const Paddock: React.FC<PaddockProps> = ({
     const [forcedPosition, setForcedPosition] = useState<Position | undefined>();
     const [racingPosition, setRacingPosition] = useState<{ x: number; y: number } | undefined>();
 
-    // Initialize game server connection for remote players
-    const { connected, players, updatePosition } = useGameServer({
-        _horseId: horseId,
-        _initialPosition: initialPosition
+    // Initialize game server connection
+    const { connected, actors, updatePosition } = useGameServer({
+        horseId,
+        initialPosition: initialPosition || { x: 100, y: 150, direction: "right" }
     });
 
     // Handle message triggers
@@ -385,12 +385,12 @@ export const Paddock: React.FC<PaddockProps> = ({
                     <IssuesField />
                 </Styled.IssuesFieldContainer>
 
-                {/* Remote Players */}
-                {players.map((player) => (
-                    <RemoteHorse
-                        key={player.address}
-                        player={player}
-                        visible={!isRacing}
+                {/* Game Actors */}
+                {actors.map((actor) => (
+                    <GameActor
+                        key={actor.id}
+                        actor={actor}
+                        visible={!isRacing || actor.type !== 'player'}
                     />
                 ))}
             </Styled.GameSpace>
@@ -401,7 +401,7 @@ export const Paddock: React.FC<PaddockProps> = ({
                 viewportDimensions={viewportDimensions}
                 scale={scale}
                 currentPosition={position}
-                otherPlayers={players}
+                otherPlayers={actors}
                 isServerless={IS_SERVERLESS}
                 horseId={horseId}
             />
