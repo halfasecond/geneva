@@ -14,10 +14,23 @@ const IS_SERVERLESS = import.meta.env.VITE_SERVERLESS?.toLowerCase() === 'true';
 // Hardcoded test values
 const TEST_ADDRESS = "0x51Ad709f827C6eC2Ed07269573abF592F83ED50c";
 
+interface GameSettings {
+    tickRate: number;
+    movementSpeed: number;
+    broadcastFrames: number;
+    smoothing: number;
+}
+
 export function useGameServer({ tokenId, onStaticActors }: UseGameServerProps) {
     const socketRef = useRef<Socket | null>(null);
     const [connected, setConnected] = useState(false);
     const [actors, setActors] = useState<Actor[]>([]);
+    const [gameSettings, setGameSettings] = useState<GameSettings>({
+        tickRate: 100,        // Default values, will be overridden by server
+        movementSpeed: 3.75,
+        broadcastFrames: 5,
+        smoothing: 0.1
+    });
     const reconnectAttempts = useRef(0);
     const maxReconnectAttempts = 5;
 
@@ -85,6 +98,11 @@ export function useGameServer({ tokenId, onStaticActors }: UseGameServerProps) {
             onStaticActors?.(actors);
         };
 
+        const handleGameSettings = (settings: GameSettings) => {
+            console.log('Received game settings:', settings);
+            setGameSettings(settings);
+        };
+
         // Set up event handlers
         socket.on('connect', handleConnect);
         socket.on('player:joined', handleJoined);
@@ -92,6 +110,7 @@ export function useGameServer({ tokenId, onStaticActors }: UseGameServerProps) {
         socket.on('connect_error', handleConnectError);
         socket.on('world:state', handleWorldState);
         socket.on('static:actors', handleStaticActors);
+        socket.on('game:settings', handleGameSettings);
 
         return () => {
             socket.off('connect', handleConnect);
@@ -100,6 +119,7 @@ export function useGameServer({ tokenId, onStaticActors }: UseGameServerProps) {
             socket.off('connect_error', handleConnectError);
             socket.off('world:state', handleWorldState);
             socket.off('static:actors', handleStaticActors);
+            socket.off('game:settings', handleGameSettings);
             socket.removeAllListeners();
             socket.disconnect();
             socketRef.current = null;
@@ -123,13 +143,14 @@ export function useGameServer({ tokenId, onStaticActors }: UseGameServerProps) {
         }
     }, [connected]);
 
-    // If in serverless mode, return empty state
+    // If in serverless mode, return default state
     if (IS_SERVERLESS) {
         return {
             connected: false,
             updatePosition: () => {},
             completeTutorial: () => {},
-            actors: []
+            actors: [],
+            gameSettings  // Return default settings
         };
     }
 
@@ -137,6 +158,7 @@ export function useGameServer({ tokenId, onStaticActors }: UseGameServerProps) {
         connected,
         updatePosition,
         completeTutorial,
-        actors
+        actors,
+        gameSettings  // Return server-provided settings
     };
 }

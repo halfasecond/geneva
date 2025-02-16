@@ -18,6 +18,11 @@ interface UseMovementProps {
     serverPosition?: Position  // Position from server actor
     actors: Actor[]  // All actors from server
     tokenId: number  // NFT token ID that identifies the player
+    gameSettings: {  // Game settings from server
+        movementSpeed: number;
+        broadcastFrames: number;
+        smoothing: number;
+    }
 }
 
 interface ViewportOffset {
@@ -44,7 +49,7 @@ interface PositionState {
 
 // Horse dimensions and movement
 const HORSE_SIZE = 120; // pixels
-const MOVEMENT_SPEED = HORSE_SIZE / 32; // Trotting speed: 3.75 pixels per frame = ~225 pixels/second at 60fps
+// Movement speed will be provided by game settings
 
 // Viewport thresholds
 const EDGE_THRESHOLD = 0.2; // 20% from edges
@@ -66,8 +71,11 @@ export function useMovement({
     racingHorsePosition,
     serverPosition,
     actors = [],  // Default to empty array
-    tokenId
+    tokenId,
+    gameSettings
 }: UseMovementProps): UseMovementResult {
+    // Get movement speed from game settings
+    const { movementSpeed, broadcastFrames } = gameSettings;
     const [position, setPosition] = useState<Position | undefined>(undefined)
 
     // Track if we've done initial viewport update
@@ -247,21 +255,21 @@ export function useMovement({
 
             // Calculate potential new position
             if (activeKeys.has('ArrowLeft') || activeKeys.has('a')) {
-                x -= MOVEMENT_SPEED;
+                x -= movementSpeed;
                 direction = 'left';
                 moved = true;
             }
             if (activeKeys.has('ArrowRight') || activeKeys.has('d')) {
-                x += MOVEMENT_SPEED;
+                x += movementSpeed;
                 direction = 'right';
                 moved = true;
             }
             if (activeKeys.has('ArrowUp') || activeKeys.has('w')) {
-                y -= MOVEMENT_SPEED;
+                y -= movementSpeed;
                 moved = true;
             }
             if (activeKeys.has('ArrowDown') || activeKeys.has('s')) {
-                y += MOVEMENT_SPEED;
+                y += movementSpeed;
                 moved = true;
             }
 
@@ -295,7 +303,7 @@ export function useMovement({
 
                 // Handle position broadcasting
                 positionStateRef.current.frameCount++;
-                if (positionStateRef.current.frameCount >= 3) { // Every 3rd frame (~20 updates/sec)
+                if (positionStateRef.current.frameCount >= broadcastFrames) { // Use server-configured broadcast rate
                     const { current, lastBroadcast } = positionStateRef.current;
                     
                     // Broadcast if position changed

@@ -73,8 +73,13 @@ interface PaddockProps {
 // Environment configuration - handle various falsy values
 const IS_SERVERLESS = import.meta.env.VITE_SERVERLESS?.toLowerCase() === 'true';
 
+interface RaceHorse {
+    tokenId: number;
+    position: { x: number; y: number };
+}
+
 // AI horses for the race
-const AI_HORSES = [
+const AI_HORSES: RaceHorse[] = [
     { tokenId: 82, position: { x: 580, y: 1800 } },  // Stall 1 (1530 + 270)
     { tokenId: 186, position: { x: 580, y: 1930 } }   // Stall 2 (1660 + 270)
 ];
@@ -124,7 +129,7 @@ export const Paddock: React.FC<PaddockProps> = ({
 
     // Initialize game server connection
     const [staticActors, setStaticActors] = useState<Actor[]>([]);
-    const { connected, actors, updatePosition, completeTutorial } = useGameServer({
+    const { connected, actors, updatePosition, completeTutorial, gameSettings } = useGameServer({
         tokenId,  // Pass tokenId to game server
         onStaticActors: useCallback((actors: Actor[]) => {
             setStaticActors(actors);
@@ -208,7 +213,8 @@ export const Paddock: React.FC<PaddockProps> = ({
         racingHorsePosition: racingPosition,
         serverPosition: currentPlayer?.position,
         actors,
-        tokenId
+        tokenId,
+        gameSettings
     });
 
     // Initialize zoom control
@@ -336,7 +342,7 @@ export const Paddock: React.FC<PaddockProps> = ({
                         key={`dynamic-${i}`}
                         actor={actor}
                         visible={!isRacing || actor.type !== 'player'}
-                        asset={actor.type === 'player' ? nfts.find(nft => nft.tokenId === actor.id) : undefined}
+                        asset={actor.type === 'player' ? nfts.find((nft: { tokenId: number; svg: string }) => nft.tokenId === actor.id) : undefined}
                     />
                 ))}
             </Styled.GameSpace>

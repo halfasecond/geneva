@@ -43,7 +43,16 @@ interface Models {
     [key: string]: Model<any>;
 }
 
-const TICK_RATE = 50; // 20 updates per second
+// Game settings that can be adjusted
+const gameSettings = {
+    tickRate: 100,  // 100 = 10 updates per second
+    movementSpeed: 3.75,  // pixels per frame
+    broadcastFrames: 5,  // Client broadcasts every 5th frame
+    smoothing: 0.1  // Animation smoothing factor
+};
+
+// Slower tick rate for better performance
+const TICK_RATE = gameSettings.tickRate;
 
 const socket = async (io: Server, web3: any, name: string, Models: Models) => {
     const namespace: Namespace = io.of(`/api/${name}`);
@@ -221,8 +230,9 @@ const socket = async (io: Server, web3: any, name: string, Models: Models) => {
             const player = addPlayer(namespace, socket.id, spawnPosition, tokenId);
             setPlayerConnected(namespace, player.id);
             
-            // Send join confirmation, static actors, and initial state
+            // Send join confirmation, game settings, static actors, and initial state
             socket.emit('player:joined');
+            socket.emit('game:settings', gameSettings);  // Send game settings
             socket.emit('static:actors', getStaticActors(namespace));  // Send static actors once
             namespace.emit('world:state', getWorldState(namespace));  // Broadcast dynamic actors
         });
