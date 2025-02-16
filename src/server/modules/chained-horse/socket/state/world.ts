@@ -31,7 +31,7 @@ export const addStaticActor = (namespace: Namespace, actor: Actor): void => {
 // Player management
 export const addPlayer = (namespace: Namespace, address: string, socketId: string, position: Position, horseId: number): Actor => {
     const existingPlayer = namespace.worldState.actors.find(
-        actor => actor.type === 'player' && actor.id === String(horseId)
+        actor => actor.type === 'player' && actor.id === horseId  // Compare numbers
     );
 
     if (existingPlayer) {
@@ -45,7 +45,7 @@ export const addPlayer = (namespace: Namespace, address: string, socketId: strin
     const player = {
         ...createActor(
             'player',
-            String(horseId),
+            horseId,  // Use number directly
             position.x,
             position.y,
             position.direction
@@ -119,14 +119,14 @@ export const getPlayerBySocket = (namespace: Namespace, socketId: string): Actor
 };
 
 // Duck management
-export const addDuck = (namespace: Namespace, x: number, y: number, horseId: string): Actor => {
+export const addDuck = (namespace: Namespace, x: number, y: number, horseId: number): Actor => {
     const duck = createActor('duck of doom', horseId, x, y, 'right');
     namespace.worldState.actors.push(duck);
     return duck;
 };
 
 // Flower management (static actors)
-export const addFlower = (namespace: Namespace, x: number, y: number, horseId: string): Actor => {
+export const addFlower = (namespace: Namespace, x: number, y: number, horseId: number): Actor => {
     const size = 100 + Math.random() * 100; // Random size 100-200
     const flower = {
         ...createActor('flower of goodwill', horseId, x, y, 'right'),

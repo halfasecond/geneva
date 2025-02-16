@@ -7,101 +7,96 @@ import { Position } from "../../server/types";
 import { Actor } from "../../server/types/actor";
 import Beach from "./components/Beach";
 import IssuesField from "../IssuesField";
-import { PathHighlight, Rivers, paths, rivers } from "./components/Environment";
-import { raceElements, issuesColumns } from "../Bridleway/set";
+import { PathHighlight, Rivers, paths } from "./components/Environment";
 import { introMessages } from "../Bridleway/messages";
-import { Pond, RainbowPuke, Flower, Farm } from "./components/GameElements";
+import { Pond, RainbowPuke, Farm } from "./components/GameElements";
 import MuteButton from "../MuteButton";
 import Race from "../Race";
 import { BACKGROUND_MUSIC } from '../../audio';
 import { Minimap } from '../Minimap';
-import { WORLD_WIDTH, WORLD_HEIGHT } from '../../utils/coordinates';
 import { Z_LAYERS } from 'src/config/zIndex';
 import { getAssetPath } from '../../utils/assetPath'
 import { getImage } from '../../utils/getImage'
+import { decode, encode } from 'js-base64'
+
+const getSVG = (imgsrc: string) => {
+    const svg = decode(imgsrc.split(',')[1])
+    const param = imgsrc.split(',')[0]
+    const _svg = []
+    svg.split('><').map((bit, i) => bit.indexOf(`rect width='32' height='32' fill='#`) !== -1 ?
+        _svg.push(`<rect width='32' height='32' fill='transparent' />`)
+        : i === 0 ? _svg.push(`${bit}>`)
+        : i === svg.split('><').length - 1 ? _svg.push(`<${bit}`)
+            : _svg.push(`<${bit}>`) // Manky.. strips out the background
+    )
+    return param + ',' + encode(_svg.join(''))
+}
+
+
 
 // Render game actors with smooth transitions
-const GameActor = memo(({ actor, visible }: {
+const GameActor = memo(({ actor, visible, asset }: {
     actor: Actor;
     visible: boolean;
-}) => (
-    <img
-        src={getAssetPath(getImage(actor.type, actor.id))}
-        alt={`${actor.type} ${actor.id}`}
-        style={{
-            width: actor.type === 'flower of goodwill' && actor.size ? `${actor.size}px` : '100px',
-            height: actor.type === 'flower of goodwill' && actor.size ? `${actor.size}px` : '100px',
-            left: `${actor.position.x}px`,
-            top: `${actor.position.y}px`,
-            transform: `scaleX(${actor.position.direction === "right" ? 1 : -1})`,
-            display: visible ? 'block' : 'none',
-            position: 'absolute',
-            willChange: 'transform',
-            transition: 'all 0.1s linear',
-            zIndex: Z_LAYERS.CHARACTERS,
-        }}
-    />
-));
+    asset: any,
+}) => actor.type === 'player' ? (
+        <img
+            src={getSVG(asset.svg)}
+            alt={`${actor.type} ${actor.id}`}
+            style={{
+                width: '100px',
+                height: '100px',
+                left: `${actor.position.x}px`,
+                top: `${actor.position.y}px`,
+                transform: `scaleX(${actor.position.direction === "right" ? 1 : -1})`,
+                display: visible ? 'block' : 'none',
+                position: 'absolute',
+                willChange: 'transform',
+                transition: 'all 0.1s linear',
+                zIndex: Z_LAYERS.CHARACTERS,
+            }}
+        />
+    ) : (
+        <img
+            src={getAssetPath(getImage(actor.type, actor.id))}
+            alt={`${actor.type} ${actor.id}`}
+            style={{
+                width: actor.type === 'flower of goodwill' && actor.size ? `${actor.size}px` : '100px',
+                height: actor.type === 'flower of goodwill' && actor.size ? `${actor.size}px` : '100px',
+                left: `${actor.position.x}px`,
+                top: `${actor.position.y}px`,
+                transform: `scaleX(${actor.position.direction === "right" ? 1 : -1})`,
+                display: visible ? 'block' : 'none',
+                position: 'absolute',
+                willChange: 'transform',
+                transition: 'all 0.1s linear',
+                zIndex: Z_LAYERS.CHARACTERS,
+            }}
+        />
+    )
+);
 
 interface PaddockProps {
-    horseId: string;
+    horseId: number;  // Changed from string to number to match NFT tokenIds
     introActive?: boolean;
     modalOpen?: boolean;
+    nfts: any;
 }
 
 // Environment configuration - handle various falsy values
 const IS_SERVERLESS = import.meta.env.VITE_SERVERLESS?.toLowerCase() === 'true';
 
-// Define all restricted areas to avoid
-const RESTRICTED_AREAS = [
-    // Ponds (500x400 each)
-    { left: 1040, top: 510, width: 500, height: 400 },
-    { left: 40, top: 2580, width: 500, height: 400 },
-    // Rivers
-    ...rivers,
-    // Bridleway paths
-    ...paths.map(path => ({
-        ...path,
-        // Add 20px buffer around paths
-        left: path.left - 20,
-        top: path.top - 20,
-        width: path.width + 40,
-        height: path.height + 40
-    })),
-    // Race track elements
-    ...raceElements,
-    // Issues columns
-    ...issuesColumns
-];
-
-interface RestrictedArea {
-    left: number;
-    top: number;
-    width: number;
-    height: number;
-}
-
-// Check if a position overlaps with any restricted area
-const isInRestrictedArea = (x: number, y: number, size: number) => {
-    return RESTRICTED_AREAS.some((area: RestrictedArea) => {
-        // Check if any part of the flower overlaps with water
-        return !(x + size < area.left || // flower is left of water
-                x > area.left + area.width || // flower is right of water
-                y + size < area.top || // flower is above water
-                y > area.top + area.height); // flower is below water
-    });
-};
-
 // AI horses for the race
 const AI_HORSES = [
-    { tokenId: "82", position: { x: 580, y: 1800 } },  // Stall 1 (1530 + 270)
-    { tokenId: "186", position: { x: 580, y: 1930 } }   // Stall 2 (1660 + 270)
+    { tokenId: 82, position: { x: 580, y: 1800 } },  // Stall 1 (1530 + 270)
+    { tokenId: 186, position: { x: 580, y: 1930 } }   // Stall 2 (1660 + 270)
 ];
 
 export const Paddock: React.FC<PaddockProps> = ({
     horseId,
     introActive = true,
-    modalOpen = false
+    modalOpen = false,
+    nfts
 }) => {
     const [isMuted, setIsMuted] = useState(false);
 
@@ -205,7 +200,7 @@ export const Paddock: React.FC<PaddockProps> = ({
 
     // Initialize movement with current viewport dimensions
     // Find current player in actors
-    const currentPlayer = actors.find(actor => actor.type === 'player' && actor.id === horseId);
+    const currentPlayer = actors.find(actor => actor.type === 'player' && actor.id === horseId); // Both are numbers now
 
     const { position, viewportOffset } = useMovement({
         viewportWidth: viewportDimensions.width,
@@ -316,7 +311,7 @@ export const Paddock: React.FC<PaddockProps> = ({
                 {introActive && position && (
                     <Race
                         playerHorse={{
-                            tokenId: horseId,
+                            tokenId: String(horseId), // Race component still expects string
                             position: { x: position.x, y: position.y }
                         }}
                         aiHorses={AI_HORSES}
@@ -340,6 +335,7 @@ export const Paddock: React.FC<PaddockProps> = ({
                         key={`static-${i}`}
                         actor={actor}
                         visible={true}
+                        asset={undefined}
                     />
                 ))}
 
@@ -349,6 +345,7 @@ export const Paddock: React.FC<PaddockProps> = ({
                         key={`dynamic-${i}`}
                         actor={actor}
                         visible={!isRacing || actor.type !== 'player'}
+                        asset={actor.type === 'player' ? nfts.find(nft => nft.tokenId === Number(actor.id)) : undefined}
                     />
                 ))}
             </Styled.GameSpace>

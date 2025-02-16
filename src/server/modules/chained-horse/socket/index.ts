@@ -109,14 +109,14 @@ const socket = async (io: Server, web3: any, name: string, Models: Models) => {
             y = 2820 + (Math.random() * 40 - 20); // ±20px random height
         }
         
-        addDuck(namespace, x, y, String(horse.tokenId));
+        addDuck(namespace, x, y, horse.tokenId);  // Already a number
     });
 
     console.log('\nCreating Flowers of Goodwill:');
     flowerHorses.forEach(horse => {
         console.log(`Creating Flower of Goodwill for Horse #${horse.tokenId}`);
         const { x, y } = getRandomPosition(RESTRICTED_AREAS, WORLD_WIDTH, WORLD_HEIGHT);
-        addFlower(namespace, x, y, String(horse.tokenId));
+        addFlower(namespace, x, y, horse.tokenId);  // Already a number
     });
 
     // Track duck movement state

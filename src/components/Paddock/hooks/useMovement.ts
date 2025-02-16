@@ -17,7 +17,7 @@ interface UseMovementProps {
     racingHorsePosition?: { x: number; y: number }
     serverPosition?: Position  // Position from server actor
     actors: Actor[]  // All actors from server
-    horseId: string  // Current player's horse ID
+    horseId: number  // Current player's horse ID
 }
 
 interface ViewportOffset {
@@ -110,7 +110,7 @@ export function useMovement({
 
     // Update movement state based on props and server state
     useEffect(() => {
-        const currentPlayer = actors.find(actor => actor.type === 'player' && actor.id === horseId);
+        const currentPlayer = actors.find(actor => actor.type === 'player' && actor.id === horseId);  // Both are numbers now
         setMovementState({
             canMove: !movementDisabled && !racingHorsePosition && Boolean(serverPosition),  // Need server position
             pathRestricted: Boolean(currentPlayer?.introActive) && !racingHorsePosition,  // Restrict if introActive exists

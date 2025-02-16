@@ -4,7 +4,7 @@ import { Position } from '../../../server/types';
 import { Actor, WorldState } from '../../../server/types/actor';
 
 interface UseGameServerProps {
-    horseId: string;
+    horseId: number;  // Changed from string to number to match NFT tokenIds
     onStaticActors?: (actors: Actor[]) => void;
 }
 
@@ -50,7 +50,7 @@ export function useGameServer({ horseId, onStaticActors }: UseGameServerProps) {
             // Join game
             socket.emit('player:join', {
                 address: TEST_ADDRESS,
-                horseId: parseInt(horseId)
+                horseId  // Already a number, no need to parse
             });
         };
 

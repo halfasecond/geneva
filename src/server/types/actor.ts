@@ -7,7 +7,7 @@ export interface Position {
 }
 
 export interface Actor {
-    id: string;
+    id: number;  // Changed from string to number to match NFT tokenIds
     type: ActorType;
     position: Position;
     connected?: boolean;   // for players only
@@ -22,9 +22,13 @@ export interface WorldState {
 }
 
 // Helper to create consistent actor objects
+export interface PlayerActor extends Actor {
+    socketId?: string;
+}
+
 export const createActor = (
     type: ActorType,
-    id: string,
+    id: number,  // Changed from string to number
     x: number,
     y: number,
     direction: 'left' | 'right' = 'right'
