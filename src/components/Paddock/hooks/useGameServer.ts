@@ -99,7 +99,6 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
         };
 
         const handleGameSettings = (settings: GameSettings) => {
-            console.log('Received game settings:', settings);
             setGameSettings(settings);
         };
 
@@ -107,10 +106,21 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
         socket.on('connect', handleConnect);
         socket.on('player:joined', handleJoined);
         socket.on('disconnect', handleDisconnect);
+        const handleError = (error: { message: string }) => {
+            console.error('Game server error:', error.message);
+            // Disconnect on auth/ownership errors
+            if (error.message.includes('auth') || error.message.includes('own')) {
+                socket.disconnect();
+                setConnected(false);
+                setActors([]);
+            }
+        };
+
         socket.on('connect_error', handleConnectError);
         socket.on('world:state', handleWorldState);
         socket.on('static:actors', handleStaticActors);
         socket.on('game:settings', handleGameSettings);
+        socket.on('error', handleError);
 
         return () => {
             socket.off('connect', handleConnect);
@@ -120,6 +130,7 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
             socket.off('world:state', handleWorldState);
             socket.off('static:actors', handleStaticActors);
             socket.off('game:settings', handleGameSettings);
+            socket.off('error', handleError);
             socket.removeAllListeners();
             socket.disconnect();
             socketRef.current = null;

@@ -54,13 +54,13 @@ const gameSettings = {
 // Slower tick rate for better performance
 const TICK_RATE = gameSettings.tickRate;
 
-import { socketAuth } from '../../../middleware/socketAuth';
+import { authMiddleware, getWalletAddress } from '../middleware/auth';
 
 const socket = async (io: Server, web3: any, name: string, Models: Models) => {
     const namespace: Namespace = io.of(`/api/${name}`);
     
     // Apply auth middleware to namespace
-    namespace.use(socketAuth);
+    namespace.use(authMiddleware);
     let socketCount = 0;
     let gameLoopInterval: NodeJS.Timeout;
 
@@ -226,13 +226,33 @@ const socket = async (io: Server, web3: any, name: string, Models: Models) => {
         console.log(`Socket connected: ${socket.id} (Total sockets: ${socketCount})`);
 
         // Set up event handlers
-        socket.on('player:join', ({ tokenId }: {
+        socket.on('player:join', async ({ tokenId }: {
             tokenId: number;  // NFT token ID
         }) => {
-            // Default spawn position for new players
-            const spawnPosition = { x: 100, y: 150, direction: 'right' as const };
-            const player = addPlayer(namespace, socket.id, spawnPosition, tokenId);
-            setPlayerConnected(namespace, player.id);
+            try {
+                const walletAddress = getWalletAddress(socket);
+                if (!walletAddress) {
+                    socket.emit('error', { message: 'Not authenticated' });
+                    return;
+                }
+
+                // Verify NFT ownership
+                const nft = await Models.NFT.findOne({ tokenId, owner: walletAddress.toLowerCase() });
+                console.log(`🐎 Horse #${nft.tokenId} joined the paddock 🐎`);
+
+                if (!nft) {
+                    socket.emit('error', { message: 'You do not own this horse' });
+                    return;
+                }
+
+                // Default spawn position for new players
+                const spawnPosition = { x: 100, y: 150, direction: 'right' as const };
+                const player = addPlayer(namespace, socket.id, spawnPosition, tokenId);
+                setPlayerConnected(namespace, player.id);
+            } catch (error) {
+                console.error('Join error:', error);
+                socket.emit('error', { message: 'Failed to join game' });
+            }
             
             // Send join confirmation, game settings, static actors, and initial state
             socket.emit('player:joined');
