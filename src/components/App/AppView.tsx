@@ -8,7 +8,6 @@ import IntroModal from 'components/IntroModal'
 const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn: walletAddress, token, BASE_URL }) => {
     const [showIntro, setShowIntro] = useState(true);
     const [nfts, setNFTs] = useState<any[]>([]);
-    console.log(token)
 
     // Load and analyze NFT data
     useEffect(() => {
@@ -17,26 +16,6 @@ const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn: w
                 const response = await fetch('/api/chained-horse/nfts');
                 const nfts = await response.json();
                 setNFTs(nfts);
-
-                // Log all NFTs
-                console.log('\n=== All NFTs ===');
-                console.log('Total NFTs:', nfts.length);
-
-                // Analyze utilities
-                const utilities = new Set(nfts.map((nft: any) => nft.utility).filter(Boolean));
-                console.log('\nUnique utilities:', Array.from(utilities));
-
-                // Count utilities
-                const utilityCount: { [key: string]: number } = {};
-                nfts.forEach((nft: any) => {
-                    if (nft.utility) {
-                        utilityCount[nft.utility] = (utilityCount[nft.utility] || 0) + 1;
-                    }
-                });
-                console.log('\nUtility Distribution:');
-                Object.entries(utilityCount).forEach(([utility, count]) => {
-                    console.log(`${utility}: ${count} NFTs`);
-                });
             } catch (error) {
                 console.error('Error loading NFTs:', error);
             }
