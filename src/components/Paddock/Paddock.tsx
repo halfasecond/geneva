@@ -16,21 +16,8 @@ import { BACKGROUND_MUSIC } from '../../audio';
 import { Minimap } from '../Minimap';
 import { Z_LAYERS } from 'src/config/zIndex';
 import { getAssetPath } from '../../utils/assetPath'
-import { getImage } from '../../utils/getImage'
-import { decode, encode } from 'js-base64'
+import { getImage, getSVG } from '../../utils/getImage'
 
-const getSVG = (imgsrc: string) => {
-    const svg = decode(imgsrc.split(',')[1])
-    const param = imgsrc.split(',')[0]
-    const _svg = []
-    svg.split('><').map((bit, i) => bit.indexOf(`rect width='32' height='32' fill='#`) !== -1 ?
-        _svg.push(`<rect width='32' height='32' fill='transparent' />`)
-        : i === 0 ? _svg.push(`${bit}>`)
-        : i === svg.split('><').length - 1 ? _svg.push(`<${bit}`)
-            : _svg.push(`<${bit}>`) // Manky.. strips out the background
-    )
-    return param + ',' + encode(_svg.join(''))
-}
 
 
 
@@ -353,7 +340,7 @@ export const Paddock: React.FC<PaddockProps> = ({
             {/* Minimap */}
             {position && (
                 <Minimap
-                    {...{ viewportDimensions, viewportOffset, scale, position, actors, horseId }}
+                    {...{ viewportDimensions, viewportOffset, scale, position, actors, horseId, nfts }}
                     currentPosition={position}
                     otherPlayers={actors}
                     isServerless={IS_SERVERLESS}

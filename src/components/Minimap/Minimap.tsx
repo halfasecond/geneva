@@ -37,17 +37,19 @@ interface MinimapProps {
     currentPosition: Position;
     otherPlayers?: Actor[];
     isServerless?: boolean;
-    horseId: string;
+    horseId: number;
+    nfts: any[];
 }
 
 export const Minimap: React.FC<MinimapProps> = ({
     viewportOffset,
     viewportDimensions,
     scale,
-    currentPosition,
+    actors,
     otherPlayers,
     isServerless = false,
-    horseId
+    horseId,
+    nfts,
 }) => {
     return (
         <Container>
@@ -142,15 +144,13 @@ export const Minimap: React.FC<MinimapProps> = ({
 
                 {/* Other players - only show in non-serverless mode */}
                 {!isServerless && otherPlayers && otherPlayers.map(actor => {
-                    if (actor.id === currentPosition.toString()) return null;
-                    if (actor.type !== 'player') return null;
+                    if (actor.type !== 'player' || actor.id !== horseId) return null;
                     return (
                         <MinimapDot
                             key={actor.id}
                             x={actor.position.x}
                             y={actor.position.y}
-                            type={actor.type}
-                            id={actor.id}
+                            svg={nfts.find(nft => nft.tokenId === actor.id)?.svg}
                             direction={actor.position.direction}
                         />
                     );

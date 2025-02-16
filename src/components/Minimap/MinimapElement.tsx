@@ -2,7 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { Rect, CoordinateTransformer } from '../../utils/coordinates';
 import { getAssetPath } from '../../utils/assetPath';
-import { getImage } from '../../utils/getImage';
+import { getImage, getSVG } from '../../utils/getImage';
 
 const StyledElement = styled.div`
     position: absolute;
@@ -52,11 +52,10 @@ export const MinimapDot: React.FC<{
     x: number;
     y: number;
     size?: number;
-    type: 'player' | 'duck';
-    id: string;
+    svg: string;
     direction?: 'left' | 'right';
     className?: string;
-}> = ({ x, y, type, id, direction = 'right', className }) => {
+}> = ({ x, y, svg, direction = 'right', className }) => {
     const pos = CoordinateTransformer.worldToMinimap({ x, y });
 
     return (
@@ -68,7 +67,7 @@ export const MinimapDot: React.FC<{
                 transform: `translate(-50%, -50%) scaleX(${direction === 'left' ? -1 : 1})`
             }}
         >
-            <img src={getAssetPath(getImage(type, id))} alt={type} />
+            <img src={getSVG(svg)} alt={''} />
         </StyledDot>
     );
 };

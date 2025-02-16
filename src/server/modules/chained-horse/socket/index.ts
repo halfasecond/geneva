@@ -49,8 +49,26 @@ const socket = async (io: Server, web3: any, name: string, Models: Models) => {
     let socketCount = 0;
     let gameLoopInterval: NodeJS.Timeout;
 
+    // Legacy players from previous state
+    const LEGACY_PLAYERS = [
+        { id: 267, position: { x: 1376, y: 1112, direction: 'right' }, address: '0x137d9174d3bd00f2153dcc0fe7af712d3876a71e' },
+        { id: 19, position: { x: 1036, y: 940, direction: 'right' }, address: '0x92265f4c85619ec8b70bb179ff1f86c56e54d348' },
+        { id: 18, position: { x: 3072, y: 640, direction: 'right' }, address: '0xf3aab663fb3f428c8f82f1e0791c23284325f8db' },
+        // { id: 97, position: { x: 120, y: 140, direction: 'right' }, address: '0xc79fd9befd02ec67cab3ee2bae66976c182e4d31' },
+        // { id: 316, position: { x: 120, y: 140, direction: 'right' }, address: '0x314e5699db4756138107ae7d7eeddf5708583ff5' },
+        { id: 47, position: { x: 1476, y: 1112, direction: 'left' }, address: '0x07c0ca4600dec713a40a7cc5f98bec70770f14c8' },
+        { id: 389, position: { x: 2308, y: 2010, direction: 'right' }, address: '0x4438e17a37057a696aae09e1c93df97ea23f0af8' },
+        // { id: 326, position: { x: 120, y: 140, direction: 'right' }, address: '0x41ba9db50d8e7bdaac43e7b7a535784532ddd802' }
+    ];
+
     // Initialize world state
     initializeWorldState(namespace);
+
+    // Add legacy players as disconnected players
+    LEGACY_PLAYERS.forEach(player => {
+        const actor = addPlayer(namespace, player.address, '', player.position, player.id);
+        setPlayerDisconnected(namespace, actor.id);
+    });
 
     // Log all unique utility traits
     const horses = await Models.NFT.find();
