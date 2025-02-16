@@ -56,7 +56,7 @@ const TICK_RATE = gameSettings.tickRate;
 
 import { authMiddleware, getWalletAddress } from '../middleware/auth';
 
-const socket = async (io: Server, web3: any, name: string, Models: Models) => {
+const socket = async (io: Server, web3: any, name: string, Models: Models, Contracts: any) => {
     const namespace: Namespace = io.of(`/api/${name}`);
     
     // Apply auth middleware to namespace
@@ -86,9 +86,9 @@ const socket = async (io: Server, web3: any, name: string, Models: Models) => {
 
     // Log all unique utility traits
     const horses = await Models.NFT.find();
-    console.log('\n=== Horse Utility Traits ===');
-    const utilities = new Set(horses.map(horse => horse.utility).filter(Boolean));
-    console.log('Unique utilities:', Array.from(utilities));
+    // console.log('\n=== Horse Utility Traits ===');
+    // const utilities = new Set(horses.map(horse => horse.utility).filter(Boolean));
+    // console.log('Unique utilities:', Array.from(utilities));
     
     // Log distribution
     const utilityCount: UtilityCount = {};
@@ -97,10 +97,10 @@ const socket = async (io: Server, web3: any, name: string, Models: Models) => {
             utilityCount[horse.utility] = (utilityCount[horse.utility] || 0) + 1;
         }
     });
-    console.log('\nUtility Distribution:');
-    Object.entries(utilityCount).forEach(([utility, count]) => {
-        console.log(`${utility}: ${count} horses`);
-    });
+    // console.log('\nUtility Distribution:');
+    // Object.entries(utilityCount).forEach(([utility, count]) => {
+    //     console.log(`${utility}: ${count} horses`);
+    // });
     // Create ducks of doom and flowers of goodwill
     const duckHorses = horses.filter(horse => horse.utility === 'duck of doom');
     const flowerHorses = horses.filter(horse => horse.utility === 'flower of goodwill');
@@ -125,9 +125,8 @@ const socket = async (io: Server, web3: any, name: string, Models: Models) => {
         ...issuesColumns
     ];
 
-    console.log('\nCreating Ducks of Doom:');
+    console.log(`🦆 Creating ${duckHorses.length} Ducks of Doom`);
     duckHorses.forEach((horse, index) => {
-        console.log(`Creating Duck of Doom for Horse #${horse.tokenId}`);
         
         // First 3 ducks in first pond, next 3 in second pond
         let x, y;
@@ -144,9 +143,8 @@ const socket = async (io: Server, web3: any, name: string, Models: Models) => {
         addDuck(namespace, x, y, horse.tokenId);  // Already a number
     });
 
-    console.log('\nCreating Flowers of Goodwill:');
+    console.log(`🌼 Creating ${flowerHorses.length} Flowers of Goodwill`);
     flowerHorses.forEach(horse => {
-        console.log(`Creating Flower of Goodwill for Horse #${horse.tokenId}`);
         const { x, y } = getRandomPosition(RESTRICTED_AREAS, WORLD_WIDTH, WORLD_HEIGHT);
         addFlower(namespace, x, y, horse.tokenId);  // Already a number
     });
@@ -235,15 +233,20 @@ const socket = async (io: Server, web3: any, name: string, Models: Models) => {
                     socket.emit('error', { message: 'Not authenticated' });
                     return;
                 }
-
-                // Verify NFT ownership
-                const nft = await Models.NFT.findOne({ tokenId, owner: walletAddress.toLowerCase() });
-                console.log(`🐎 Horse #${nft.tokenId} joined the paddock 🐎`);
-
-                if (!nft) {
-                    socket.emit('error', { message: 'You do not own this horse' });
+                try { // Verify 🐎 ownership...
+                    const contract = new web3.eth.Contract(Contracts.Core.abi, Contracts.Core.addr);
+                    const owner = await contract.methods.ownerOf(tokenId).call();
+                    const isOwner = owner.toLowerCase() === walletAddress.toLowerCase();
+                    if (!isOwner) {
+                        socket.emit('error', { message: 'You do not own this horse' });
+                        return;
+                    }
+                } catch (error) {
+                    socket.emit('error', { message: 'Failed to verify horse ownership' });
                     return;
                 }
+
+                console.log(`🐎 Horse #${tokenId} joined the paddock 🐎`);
 
                 // Default spawn position for new players
                 const spawnPosition = { x: 100, y: 150, direction: 'right' as const };
