@@ -44,6 +44,7 @@
     "@tsconfig/node18": "^18.2.4",
     "@types/bn.js": "^5.1.6",
     "@types/express": "^5.0.0",
+    "@types/js-cookie": "^3.0.6",
     "@types/jsonwebtoken": "^9.0.8",
     "@types/node": "^20.11.19",
     "@types/react": "^18.3.3",
