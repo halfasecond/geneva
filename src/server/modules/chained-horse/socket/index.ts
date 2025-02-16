@@ -12,6 +12,7 @@ interface RestrictedArea {
     height: number;
     backgroundColor?: string;
 }
+
 import {
     initializeWorldState,
     addPlayer,
@@ -65,7 +66,7 @@ const socket = async (io: Server, web3: any, name: string, Models: Models) => {
 
     // Add legacy players as disconnected players
     LEGACY_PLAYERS.forEach(player => {
-        const actor = addPlayer(namespace, '', '', player.position, player.tokenId);  // Empty string for socketId, tokenId for player ID
+        const actor = addPlayer(namespace, '', player.position as Position, player.tokenId);  // Empty string for socketId, tokenId for player ID
         setPlayerDisconnected(namespace, actor.id);
     });
 
@@ -217,8 +218,8 @@ const socket = async (io: Server, web3: any, name: string, Models: Models) => {
         }) => {
             // Default spawn position for new players
             const spawnPosition = { x: 100, y: 150, direction: 'right' as const };
-            const player = addPlayer(namespace, '', socket.id, spawnPosition, tokenId);
-            setPlayerConnected(namespace, player.id, socket.id);
+            const player = addPlayer(namespace, socket.id, spawnPosition, tokenId);
+            setPlayerConnected(namespace, player.id);
             
             // Send join confirmation, static actors, and initial state
             socket.emit('player:joined');

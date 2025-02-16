@@ -29,7 +29,7 @@ export const addStaticActor = (namespace: Namespace, actor: Actor): void => {
 };
 
 // Player management
-export const addPlayer = (namespace: Namespace, _unused: string, socketId: string, position: Position, tokenId: number): Actor => {
+export const addPlayer = (namespace: Namespace, socketId: string, position: Position, tokenId: number): Actor => {
     const existingPlayer = namespace.worldState.actors.find(
         actor => actor.type === 'player' && actor.id === tokenId  // Compare tokenIds
     );
@@ -59,7 +59,7 @@ export const addPlayer = (namespace: Namespace, _unused: string, socketId: strin
 
 export const updateActorPosition = (
     namespace: Namespace,
-    id: string,
+    id: number,
     x: number,
     y: number,
     direction: 'left' | 'right'
@@ -73,9 +73,9 @@ export const updateActorPosition = (
     }
 };
 
-export const setPlayerConnected = (namespace: Namespace, address: string, socketId: string): void => {
+export const setPlayerConnected = (namespace: Namespace, id: number): void => {
     const player = namespace.worldState.actors.find(
-        actor => actor.type === 'player' && actor.id === address
+        actor => actor.type === 'player' && actor.id === id
     );
     if (player) {
         player.connected = true;
@@ -83,9 +83,9 @@ export const setPlayerConnected = (namespace: Namespace, address: string, socket
     }
 };
 
-export const setPlayerDisconnected = (namespace: Namespace, address: string): void => {
+export const setPlayerDisconnected = (namespace: Namespace, id: number): void => {
     const player = namespace.worldState.actors.find(
-        actor => actor.type === 'player' && actor.id === address
+        actor => actor.type === 'player' && actor.id === id
     );
     if (player) {
         player.connected = false;
@@ -93,9 +93,9 @@ export const setPlayerDisconnected = (namespace: Namespace, address: string): vo
     }
 };
 
-export const completePlayerTutorial = (namespace: Namespace, address: string): void => {
+export const completePlayerTutorial = (namespace: Namespace, id: number): void => {
     const player = namespace.worldState.actors.find(
-        actor => actor.type === 'player' && actor.id === address
+        actor => actor.type === 'player' && actor.id === id
     );
     if (player) {
         delete player.introActive;  // Remove the flag entirely

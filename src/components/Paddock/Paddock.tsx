@@ -348,12 +348,9 @@ export const Paddock: React.FC<PaddockProps> = ({
                     viewportOffset={viewportOffset}
                     scale={scale}
                     currentPosition={position}
-                    otherPlayers={actors}
-                    isServerless={IS_SERVERLESS}
                     tokenId={tokenId}
                     actors={actors}
                     nfts={nfts}
-                    currentPosition={position}
                     otherPlayers={actors}
                     isServerless={IS_SERVERLESS}
                 />
