@@ -5,6 +5,7 @@ import { Actor, WorldState } from '../../../server/types/actor';
 
 interface UseGameServerProps {
     horseId: string;
+    onStaticActors?: (actors: Actor[]) => void;
 }
 
 // Environment configuration - handle various falsy values
@@ -13,7 +14,7 @@ const IS_SERVERLESS = import.meta.env.VITE_SERVERLESS?.toLowerCase() === 'true';
 // Hardcoded test values
 const TEST_ADDRESS = "0x51Ad709f827C6eC2Ed07269573abF592F83ED50c";
 
-export function useGameServer({ horseId }: UseGameServerProps) {
+export function useGameServer({ horseId, onStaticActors }: UseGameServerProps) {
     const socketRef = useRef<Socket | null>(null);
     const [connected, setConnected] = useState(false);
     const [actors, setActors] = useState<Actor[]>([]);
@@ -80,12 +81,17 @@ export function useGameServer({ horseId }: UseGameServerProps) {
             setActors(state.actors);
         };
 
+        const handleStaticActors = (actors: Actor[]) => {
+            onStaticActors?.(actors);
+        };
+
         // Set up event handlers
         socket.on('connect', handleConnect);
         socket.on('player:joined', handleJoined);
         socket.on('disconnect', handleDisconnect);
         socket.on('connect_error', handleConnectError);
         socket.on('world:state', handleWorldState);
+        socket.on('static:actors', handleStaticActors);
 
         return () => {
             socket.off('connect', handleConnect);
@@ -93,6 +99,7 @@ export function useGameServer({ horseId }: UseGameServerProps) {
             socket.off('disconnect', handleDisconnect);
             socket.off('connect_error', handleConnectError);
             socket.off('world:state', handleWorldState);
+            socket.off('static:actors', handleStaticActors);
             socket.removeAllListeners();
             socket.disconnect();
             socketRef.current = null;

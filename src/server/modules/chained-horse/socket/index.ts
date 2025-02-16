@@ -1,6 +1,17 @@
 import { Server, Socket, Namespace } from 'socket.io';
 import { Model } from 'mongoose';
 import { Position } from '../../../types/actor';
+import { WORLD_WIDTH, WORLD_HEIGHT } from '../../../../utils/coordinates';
+import { paths, rivers } from '../../../../components/Paddock/components/Environment/set';
+import { raceElements, issuesColumns } from '../../../../components/Bridleway/set';
+
+interface RestrictedArea {
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+    backgroundColor?: string;
+}
 import {
     initializeWorldState,
     addPlayer,
@@ -10,10 +21,17 @@ import {
     getConnectedPlayers,
     getPlayerBySocket,
     addDuck,
+    addFlower,
+    getRandomPosition,
     getWorldState,
     formatActorState,
-    completePlayerTutorial
+    completePlayerTutorial,
+    getStaticActors
 } from './state/world';
+
+interface UtilityCount {
+    [key: string]: number;
+}
 
 interface Models {
     Event: Model<any>;
@@ -41,7 +59,7 @@ const socket = async (io: Server, web3: any, name: string, Models: Models) => {
     console.log('Unique utilities:', Array.from(utilities));
     
     // Log distribution
-    const utilityCount = {};
+    const utilityCount: UtilityCount = {};
     horses.forEach(horse => {
         if (horse.utility) {
             utilityCount[horse.utility] = (utilityCount[horse.utility] || 0) + 1;
@@ -51,8 +69,30 @@ const socket = async (io: Server, web3: any, name: string, Models: Models) => {
     Object.entries(utilityCount).forEach(([utility, count]) => {
         console.log(`${utility}: ${count} horses`);
     });
-    // Create ducks of doom
+    // Create ducks of doom and flowers of goodwill
     const duckHorses = horses.filter(horse => horse.utility === 'duck of doom');
+    const flowerHorses = horses.filter(horse => horse.utility === 'flower of goodwill');
+
+    // Define all restricted areas for flower placement
+    const RESTRICTED_AREAS = [
+        // Ponds (500x400 each)
+        { left: 1040, top: 510, width: 500, height: 400 },
+        { left: 40, top: 2580, width: 500, height: 400 },
+        // Rivers
+        ...rivers,
+        // Bridleway paths (with 20px buffer)
+        ...paths.map(path => ({
+            left: path.left - 20,
+            top: path.top - 20,
+            width: path.width + 40,
+            height: path.height + 40
+        })),
+        // Race track elements
+        ...raceElements,
+        // Issues columns
+        ...issuesColumns
+    ];
+
     console.log('\nCreating Ducks of Doom:');
     duckHorses.forEach((horse, index) => {
         console.log(`Creating Duck of Doom for Horse #${horse.tokenId}`);
@@ -70,6 +110,13 @@ const socket = async (io: Server, web3: any, name: string, Models: Models) => {
         }
         
         addDuck(namespace, x, y, String(horse.tokenId));
+    });
+
+    console.log('\nCreating Flowers of Goodwill:');
+    flowerHorses.forEach(horse => {
+        console.log(`Creating Flower of Goodwill for Horse #${horse.tokenId}`);
+        const { x, y } = getRandomPosition(RESTRICTED_AREAS, WORLD_WIDTH, WORLD_HEIGHT);
+        addFlower(namespace, x, y, String(horse.tokenId));
     });
 
     // Track duck movement state
@@ -156,9 +203,10 @@ const socket = async (io: Server, web3: any, name: string, Models: Models) => {
             const player = addPlayer(namespace, address, socket.id, spawnPosition, horseId);
             setPlayerConnected(namespace, player.id, socket.id);
             
-            // Send join confirmation and initial state
+            // Send join confirmation, static actors, and initial state
             socket.emit('player:joined');
-            namespace.emit('world:state', getWorldState(namespace));  // Broadcast to all clients
+            socket.emit('static:actors', getStaticActors(namespace));  // Send static actors once
+            namespace.emit('world:state', getWorldState(namespace));  // Broadcast dynamic actors
         });
 
         socket.on('player:move', ({ x, y, direction }: Position) => {

@@ -5,6 +5,7 @@ import { Namespace } from 'socket.io';
 declare module 'socket.io' {
     interface Namespace {
         worldState: WorldState;
+        staticActors: Actor[];  // Non-moving actors like flowers
     }
 }
 
@@ -14,6 +15,17 @@ export const initializeWorldState = (namespace: Namespace) => {
         actors: [],
         timestamp: Date.now()
     };
+    namespace.staticActors = [];
+};
+
+// Get static actors
+export const getStaticActors = (namespace: Namespace): Actor[] => {
+    return namespace.staticActors;
+};
+
+// Add static actor
+export const addStaticActor = (namespace: Namespace, actor: Actor): void => {
+    namespace.staticActors.push(actor);
 };
 
 // Player management
@@ -113,6 +125,44 @@ export const addDuck = (namespace: Namespace, x: number, y: number, horseId: str
     return duck;
 };
 
+// Flower management (static actors)
+export const addFlower = (namespace: Namespace, x: number, y: number, horseId: string): Actor => {
+    const size = 100 + Math.random() * 100; // Random size 100-200
+    const flower = {
+        ...createActor('flower of goodwill', horseId, x, y, 'right'),
+        size
+    };
+    addStaticActor(namespace, flower);
+    return flower;
+};
+
+interface RestrictedArea {
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+}
+
+// Check if position is in restricted area
+export const isInRestrictedArea = (x: number, y: number, size: number, areas: RestrictedArea[]) => {
+    return areas.some(area => {
+        return !(x + size < area.left ||
+                x > area.left + area.width ||
+                y + size < area.top ||
+                y > area.top + area.height);
+    });
+};
+
+// Get random position avoiding areas
+export const getRandomPosition = (areas: RestrictedArea[], worldWidth: number, worldHeight: number): { x: number, y: number } => {
+    let x, y;
+    do {
+        x = Math.random() * (worldWidth - 200);  // Leave space for size
+        y = Math.random() * (worldHeight - 1000); // Keep away from beach
+    } while (isInRestrictedArea(x, y, 100, areas));
+    return { x, y };
+};
+
 // World state helpers
 export const getWorldState = (namespace: Namespace): WorldState => {
     return {
@@ -124,8 +174,8 @@ export const getWorldState = (namespace: Namespace): WorldState => {
 export const formatActorState = (actor: Actor) => ({
     id: actor.id,
     type: actor.type,
-    sprite: actor.sprite,
     position: actor.position,
     connected: actor.connected,
-    lastSeen: actor.lastSeen
+    lastSeen: actor.lastSeen,
+    size: actor.size
 });

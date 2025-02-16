@@ -1,4 +1,4 @@
-export type ActorType = 'player' | 'duck of doom' | 'flower';
+export type ActorType = 'player' | 'duck of doom' | 'flower of goodwill';
 
 export interface Position {
     x: number;
@@ -13,6 +13,7 @@ export interface Actor {
     connected?: boolean;   // for players only
     lastSeen?: Date;      // for players only
     introActive?: true;   // only present during tutorial
+    size?: number;        // for flowers only - random size 100-200
 }
 
 export interface WorldState {
@@ -26,13 +27,11 @@ export const createActor = (
     id: string,
     x: number,
     y: number,
-    sprite: string,
     direction: 'left' | 'right' = 'right'
 ): Actor => ({
     id,
     type,
     position: { x, y, direction },
-    sprite,
     connected: type === 'player' ? true : undefined,
     lastSeen: type === 'player' ? new Date() : undefined,
     introActive: type === 'player' ? true : undefined

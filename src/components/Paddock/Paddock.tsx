@@ -29,8 +29,8 @@ const GameActor = memo(({ actor, visible }: {
         src={getAssetPath(getImage(actor.type, actor.id))}
         alt={`${actor.type} ${actor.id}`}
         style={{
-            width: '100px',
-            height: '100px',
+            width: actor.type === 'flower of goodwill' && actor.size ? `${actor.size}px` : '100px',
+            height: actor.type === 'flower of goodwill' && actor.size ? `${actor.size}px` : '100px',
             left: `${actor.position.x}px`,
             top: `${actor.position.y}px`,
             transform: `scaleX(${actor.position.direction === "right" ? 1 : -1})`,
@@ -92,23 +92,6 @@ const isInRestrictedArea = (x: number, y: number, size: number) => {
     });
 };
 
-// Generate random flower positions (avoiding water)
-const FLOWERS = Array.from({ length: 100 }, () => {
-    let left, top, size;
-    do {
-        left = Math.random() * (WORLD_WIDTH - 200); // Leave space for flower size
-        top = Math.random() * (WORLD_HEIGHT - 1000); // Keep away from beach
-        size = 100 + Math.random() * 100;
-    } while (isInRestrictedArea(left, top, size));
-    
-    return {
-        left,
-        top,
-        size,
-        rotation: 0
-    };
-});
-
 // AI horses for the race
 const AI_HORSES = [
     { tokenId: "82", position: { x: 580, y: 1800 } },  // Stall 1 (1530 + 270)
@@ -158,8 +141,12 @@ export const Paddock: React.FC<PaddockProps> = ({
     const [racingPosition, setRacingPosition] = useState<{ x: number; y: number } | undefined>();
 
     // Initialize game server connection
+    const [staticActors, setStaticActors] = useState<Actor[]>([]);
     const { connected, actors, updatePosition, completeTutorial } = useGameServer({
-        horseId
+        horseId,
+        onStaticActors: useCallback((actors: Actor[]) => {
+            setStaticActors(actors);
+        }, [])
     });
 
     // Handle message triggers
@@ -280,11 +267,12 @@ export const Paddock: React.FC<PaddockProps> = ({
                     transformOrigin: `${zoomOrigin.x}% ${zoomOrigin.y}%`
                 }}
             >
-                {/* Beach with viewport-aware animation */}
+                {/* Beach with continuous animation */}
                 <Beach
                     viewportOffset={viewportOffset}
                     viewportDimensions={viewportDimensions}
                 />
+
 
                 {/* Bridleway Path and Rivers */}
                 <PathHighlight active={introActive} />
@@ -319,17 +307,6 @@ export const Paddock: React.FC<PaddockProps> = ({
                     />
                 ))}
 
-                {/* Random flowers scattered around the paddock */}
-                {FLOWERS.map((flower, index) => (
-                    <Flower
-                        key={`flower-${index}`}
-                        left={flower.left}
-                        top={flower.top}
-                        size={flower.size}
-                        rotation={flower.rotation}
-                    />
-                ))}
-
                 <Farm left={1190} top={940} size={100} />
                 <Pond left={1040} top={510} />
                 <Pond left={40} top={2580} />
@@ -357,10 +334,19 @@ export const Paddock: React.FC<PaddockProps> = ({
                     <IssuesField />
                 </Styled.IssuesFieldContainer>
 
-                {/* Game Actors */}
+                {/* Static Actors (flowers) */}
+                {staticActors.map((actor, i) => (
+                    <GameActor
+                        key={`static-${i}`}
+                        actor={actor}
+                        visible={true}
+                    />
+                ))}
+
+                {/* Dynamic Actors (players, ducks) */}
                 {actors.map((actor, i) => (
                     <GameActor
-                        key={i}
+                        key={`dynamic-${i}`}
                         actor={actor}
                         visible={!isRacing || actor.type !== 'player'}
                     />
