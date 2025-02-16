@@ -29,9 +29,9 @@ export const addStaticActor = (namespace: Namespace, actor: Actor): void => {
 };
 
 // Player management
-export const addPlayer = (namespace: Namespace, address: string, socketId: string, position: Position, horseId: number): Actor => {
+export const addPlayer = (namespace: Namespace, _unused: string, socketId: string, position: Position, tokenId: number): Actor => {
     const existingPlayer = namespace.worldState.actors.find(
-        actor => actor.type === 'player' && actor.id === horseId  // Compare numbers
+        actor => actor.type === 'player' && actor.id === tokenId  // Compare tokenIds
     );
 
     if (existingPlayer) {
@@ -45,7 +45,7 @@ export const addPlayer = (namespace: Namespace, address: string, socketId: strin
     const player = {
         ...createActor(
             'player',
-            horseId,  // Use number directly
+            tokenId,  // NFT token ID is the player's ID
             position.x,
             position.y,
             position.direction

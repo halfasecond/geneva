@@ -28,7 +28,7 @@ const GameActor = memo(({ actor, visible, asset }: {
     asset: any,
 }) => actor.type === 'player' ? (
         <img
-            src={getSVG(asset.svg)}
+            src={asset?.svg ? getSVG(asset.svg) : ''}
             alt={`${actor.type} ${actor.id}`}
             style={{
                 width: '100px',
@@ -64,7 +64,7 @@ const GameActor = memo(({ actor, visible, asset }: {
 );
 
 interface PaddockProps {
-    horseId: number;  // Changed from string to number to match NFT tokenIds
+    tokenId: number;  // NFT token ID that identifies the player
     introActive?: boolean;
     modalOpen?: boolean;
     nfts: any;
@@ -80,7 +80,7 @@ const AI_HORSES = [
 ];
 
 export const Paddock: React.FC<PaddockProps> = ({
-    horseId,
+    tokenId,
     introActive = true,
     modalOpen = false,
     nfts
@@ -125,7 +125,7 @@ export const Paddock: React.FC<PaddockProps> = ({
     // Initialize game server connection
     const [staticActors, setStaticActors] = useState<Actor[]>([]);
     const { connected, actors, updatePosition, completeTutorial } = useGameServer({
-        horseId,
+        tokenId,  // Pass tokenId to game server
         onStaticActors: useCallback((actors: Actor[]) => {
             setStaticActors(actors);
         }, [])
@@ -187,7 +187,11 @@ export const Paddock: React.FC<PaddockProps> = ({
 
     // Initialize movement with current viewport dimensions
     // Find current player in actors
-    const currentPlayer = actors.find(actor => actor.type === 'player' && actor.id === horseId); // Both are numbers now
+    // Find current player by matching NFT token ID
+    const currentPlayer = actors.find(actor =>
+        actor.type === 'player' &&
+        actor.id === tokenId  // actor.id is number, tokenId is number
+    );
 
     const { position, viewportOffset } = useMovement({
         viewportWidth: viewportDimensions.width,
@@ -204,7 +208,7 @@ export const Paddock: React.FC<PaddockProps> = ({
         racingHorsePosition: racingPosition,
         serverPosition: currentPlayer?.position,
         actors,
-        horseId
+        tokenId
     });
 
     // Initialize zoom control
@@ -298,7 +302,7 @@ export const Paddock: React.FC<PaddockProps> = ({
                 {introActive && position && (
                     <Race
                         playerHorse={{
-                            tokenId: String(horseId), // Race component still expects string
+                            tokenId: tokenId.toString(), // Convert to string for Race component
                             position: { x: position.x, y: position.y }
                         }}
                         aiHorses={AI_HORSES}
@@ -332,7 +336,7 @@ export const Paddock: React.FC<PaddockProps> = ({
                         key={`dynamic-${i}`}
                         actor={actor}
                         visible={!isRacing || actor.type !== 'player'}
-                        asset={actor.type === 'player' ? nfts.find(nft => nft.tokenId === Number(actor.id)) : undefined}
+                        asset={actor.type === 'player' ? nfts.find(nft => nft.tokenId === actor.id) : undefined}
                     />
                 ))}
             </Styled.GameSpace>
@@ -340,7 +344,15 @@ export const Paddock: React.FC<PaddockProps> = ({
             {/* Minimap */}
             {position && (
                 <Minimap
-                    {...{ viewportDimensions, viewportOffset, scale, position, actors, horseId, nfts }}
+                    viewportDimensions={viewportDimensions}
+                    viewportOffset={viewportOffset}
+                    scale={scale}
+                    currentPosition={position}
+                    otherPlayers={actors}
+                    isServerless={IS_SERVERLESS}
+                    tokenId={tokenId}
+                    actors={actors}
+                    nfts={nfts}
                     currentPosition={position}
                     otherPlayers={actors}
                     isServerless={IS_SERVERLESS}

@@ -4,7 +4,7 @@ import { Position } from '../../../server/types';
 import { Actor, WorldState } from '../../../server/types/actor';
 
 interface UseGameServerProps {
-    horseId: number;  // Changed from string to number to match NFT tokenIds
+    tokenId: number;  // NFT token ID that identifies the player
     onStaticActors?: (actors: Actor[]) => void;
 }
 
@@ -14,7 +14,7 @@ const IS_SERVERLESS = import.meta.env.VITE_SERVERLESS?.toLowerCase() === 'true';
 // Hardcoded test values
 const TEST_ADDRESS = "0x51Ad709f827C6eC2Ed07269573abF592F83ED50c";
 
-export function useGameServer({ horseId, onStaticActors }: UseGameServerProps) {
+export function useGameServer({ tokenId, onStaticActors }: UseGameServerProps) {
     const socketRef = useRef<Socket | null>(null);
     const [connected, setConnected] = useState(false);
     const [actors, setActors] = useState<Actor[]>([]);
@@ -50,7 +50,7 @@ export function useGameServer({ horseId, onStaticActors }: UseGameServerProps) {
             // Join game
             socket.emit('player:join', {
                 address: TEST_ADDRESS,
-                horseId  // Already a number, no need to parse
+                tokenId  // NFT token ID
             });
         };
 
@@ -104,7 +104,7 @@ export function useGameServer({ horseId, onStaticActors }: UseGameServerProps) {
             socket.disconnect();
             socketRef.current = null;
         };
-    }, [horseId]);
+    }, [tokenId]);  // Re-initialize socket when tokenId changes
 
     // Broadcast position updates but don't wait for response
     const updatePosition = useCallback((position: Position) => {

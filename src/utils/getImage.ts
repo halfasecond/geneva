@@ -1,7 +1,7 @@
 import { ActorType } from '../server/types/actor';
 import { decode, encode } from 'js-base64'
 
-export const getImage = (type: ActorType, id?: string): string => {
+export const getImage = (type: ActorType, id?: number): string => {
     switch (type) {
         case 'player':
             if (!id) throw new Error('Player type requires an ID');

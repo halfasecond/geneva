@@ -54,7 +54,7 @@ const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn: w
             {showIntro && <IntroModal onStart={handleStart} />}
             <Styled.Main>
                 <h1>The Paddock</h1>
-                {nfts.length > 0 && <Paddock horseId={21} modalOpen={showIntro} {...{ nfts }} />}
+                {nfts.length > 0 && <Paddock tokenId={21} modalOpen={showIntro} {...{ nfts }} />}
             </Styled.Main>
         </>
     )

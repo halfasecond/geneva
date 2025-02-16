@@ -17,7 +17,7 @@ interface UseMovementProps {
     racingHorsePosition?: { x: number; y: number }
     serverPosition?: Position  // Position from server actor
     actors: Actor[]  // All actors from server
-    horseId: number  // Current player's horse ID
+    tokenId: number  // NFT token ID that identifies the player
 }
 
 interface ViewportOffset {
@@ -66,7 +66,7 @@ export function useMovement({
     racingHorsePosition,
     serverPosition,
     actors = [],  // Default to empty array
-    horseId
+    tokenId
 }: UseMovementProps): UseMovementResult {
     const [position, setPosition] = useState<Position | undefined>(undefined)
 
@@ -110,7 +110,7 @@ export function useMovement({
 
     // Update movement state based on props and server state
     useEffect(() => {
-        const currentPlayer = actors.find(actor => actor.type === 'player' && actor.id === horseId);  // Both are numbers now
+        const currentPlayer = actors.find(actor => actor.type === 'player' && actor.id === tokenId);  // Both are numbers
         setMovementState({
             canMove: !movementDisabled && !racingHorsePosition && Boolean(serverPosition),  // Need server position
             pathRestricted: Boolean(currentPlayer?.introActive) && !racingHorsePosition,  // Restrict if introActive exists
