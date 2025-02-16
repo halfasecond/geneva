@@ -5,14 +5,12 @@ import { Actor, WorldState } from '../../../server/types/actor';
 
 interface UseGameServerProps {
     tokenId: number;  // NFT token ID that identifies the player
+    token: string;   // JWT token for authentication
     onStaticActors?: (actors: Actor[]) => void;
 }
 
 // Environment configuration - handle various falsy values
 const IS_SERVERLESS = import.meta.env.VITE_SERVERLESS?.toLowerCase() === 'true';
-
-// Hardcoded test values
-const TEST_ADDRESS = "0x51Ad709f827C6eC2Ed07269573abF592F83ED50c";
 
 interface GameSettings {
     tickRate: number;
@@ -21,7 +19,7 @@ interface GameSettings {
     smoothing: number;
 }
 
-export function useGameServer({ tokenId, onStaticActors }: UseGameServerProps) {
+export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerProps) {
     const socketRef = useRef<Socket | null>(null);
     const [connected, setConnected] = useState(false);
     const [actors, setActors] = useState<Actor[]>([]);
@@ -36,7 +34,7 @@ export function useGameServer({ tokenId, onStaticActors }: UseGameServerProps) {
 
     // Initialize socket connection
     useEffect(() => {
-        if (IS_SERVERLESS) return;
+        if (IS_SERVERLESS || !token) return;
 
         // Clean up existing socket if any
         if (socketRef.current) {
@@ -52,7 +50,10 @@ export function useGameServer({ tokenId, onStaticActors }: UseGameServerProps) {
             reconnectionDelay: 1000,
             reconnectionDelayMax: 5000,
             timeout: 10000,
-            transports: ['websocket']
+            transports: ['websocket'],
+            auth: {
+                token  // Pass JWT token for authentication
+            }
         });
         socketRef.current = socket;
 
@@ -60,10 +61,9 @@ export function useGameServer({ tokenId, onStaticActors }: UseGameServerProps) {
             console.log('Connected to game server');
             reconnectAttempts.current = 0;
             
-            // Join game
+            // Join game with authenticated token
             socket.emit('player:join', {
-                address: TEST_ADDRESS,
-                tokenId  // NFT token ID
+                tokenId  // NFT token ID is all we need, server will get address from token
             });
         };
 
@@ -124,7 +124,7 @@ export function useGameServer({ tokenId, onStaticActors }: UseGameServerProps) {
             socket.disconnect();
             socketRef.current = null;
         };
-    }, [tokenId]);  // Re-initialize socket when tokenId changes
+    }, [tokenId, token]);  // Re-initialize socket when tokenId or token changes
 
     // Broadcast position updates but don't wait for response
     const updatePosition = useCallback((position: Position) => {
@@ -143,8 +143,8 @@ export function useGameServer({ tokenId, onStaticActors }: UseGameServerProps) {
         }
     }, [connected]);
 
-    // If in serverless mode, return default state
-    if (IS_SERVERLESS) {
+    // If in serverless mode or no token, return default state
+    if (IS_SERVERLESS || !token) {
         return {
             connected: false,
             updatePosition: () => {},

@@ -54,8 +54,13 @@ const gameSettings = {
 // Slower tick rate for better performance
 const TICK_RATE = gameSettings.tickRate;
 
+import { socketAuth } from '../../../middleware/socketAuth';
+
 const socket = async (io: Server, web3: any, name: string, Models: Models) => {
     const namespace: Namespace = io.of(`/api/${name}`);
+    
+    // Apply auth middleware to namespace
+    namespace.use(socketAuth);
     let socketCount = 0;
     let gameLoopInterval: NodeJS.Timeout;
 
@@ -221,8 +226,7 @@ const socket = async (io: Server, web3: any, name: string, Models: Models) => {
         console.log(`Socket connected: ${socket.id} (Total sockets: ${socketCount})`);
 
         // Set up event handlers
-        socket.on('player:join', ({ address, tokenId }: {
-            address: string;  // Wallet address
+        socket.on('player:join', ({ tokenId }: {
             tokenId: number;  // NFT token ID
         }) => {
             // Default spawn position for new players

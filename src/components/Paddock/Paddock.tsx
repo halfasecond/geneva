@@ -68,6 +68,7 @@ interface PaddockProps {
     introActive?: boolean;
     modalOpen?: boolean;
     nfts: any;
+    token: string;  // JWT token for socket authentication
 }
 
 // Environment configuration - handle various falsy values
@@ -88,7 +89,8 @@ export const Paddock: React.FC<PaddockProps> = ({
     tokenId,
     introActive = true,
     modalOpen = false,
-    nfts
+    nfts,
+    token
 }) => {
     const [isMuted, setIsMuted] = useState(false);
 
@@ -130,7 +132,8 @@ export const Paddock: React.FC<PaddockProps> = ({
     // Initialize game server connection
     const [staticActors, setStaticActors] = useState<Actor[]>([]);
     const { connected, actors, updatePosition, completeTutorial, gameSettings } = useGameServer({
-        tokenId,  // Pass tokenId to game server
+        tokenId,  // NFT token ID
+        token,    // JWT token for authentication
         onStaticActors: useCallback((actors: Actor[]) => {
             setStaticActors(actors);
         }, [])
