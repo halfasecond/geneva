@@ -4,10 +4,24 @@ import { Position } from '../../../server/types';
 import { Actor, WorldState } from '../../../server/types/actor';
 
 interface UseGameServerProps {
-    tokenId: number;  // NFT token ID that identifies the player
+    tokenId?: number;  // Optional NFT token ID (undefined for view mode)
     token: string;   // JWT token for authentication
     onStaticActors?: (actors: Actor[]) => void;
 }
+
+// Default state for view mode
+const defaultState = {
+    connected: false,
+    updatePosition: () => {},
+    completeTutorial: () => {},
+    actors: [],
+    gameSettings: {
+        tickRate: 100,
+        movementSpeed: 3.75,
+        broadcastFrames: 5,
+        smoothing: 0.1
+    }
+};
 
 // Environment configuration - handle various falsy values
 const IS_SERVERLESS = import.meta.env.VITE_SERVERLESS?.toLowerCase() === 'true';
@@ -154,15 +168,23 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
         }
     }, [connected]);
 
-    // If in serverless mode or no token, return default state
-    if (IS_SERVERLESS || !token) {
+    // Handle different modes
+    if (IS_SERVERLESS) {
+        return defaultState;  // Completely offline mode
+    }
+
+    // View mode - still connect for world state, but no actions
+    if (!tokenId) {
         return {
-            connected: false,
-            updatePosition: () => {},
-            completeTutorial: () => {},
-            actors: [],
-            gameSettings  // Return default settings
+            ...defaultState,
+            actors: actors,  // Show world state
+            connected: connected  // Show connection state
         };
+    }
+
+    // No token - can't connect
+    if (!token) {
+        return defaultState;
     }
 
     return {

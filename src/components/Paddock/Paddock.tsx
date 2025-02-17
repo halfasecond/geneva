@@ -64,25 +64,23 @@ const GameActor = memo(({ actor, visible, asset }: {
 );
 
 interface PaddockProps {
-    tokenId: number;  // NFT token ID that identifies the player
+    tokenId?: number;  // Optional NFT token ID for view-only mode
     introActive?: boolean;
     modalOpen?: boolean;
     nfts: any;
     token: string;  // JWT token for socket authentication
 }
 
+// View mode when no tokenId is selected
+const isViewMode = (tokenId: number | undefined): boolean => !tokenId;
+
 // Environment configuration - handle various falsy values
 const IS_SERVERLESS = import.meta.env.VITE_SERVERLESS?.toLowerCase() === 'true';
 
-interface RaceHorse {
-    tokenId: number;
-    position: { x: number; y: number };
-}
-
-// AI horses for the race
-const AI_HORSES: RaceHorse[] = [
-    { tokenId: 82, position: { x: 580, y: 1800 } },  // Stall 1 (1530 + 270)
-    { tokenId: 186, position: { x: 580, y: 1930 } }   // Stall 2 (1660 + 270)
+// AI horses for the race - using string tokenIds for Race component
+const AI_HORSES = [
+    { tokenId: '82', position: { x: 580, y: 1800 } },  // Stall 1 (1530 + 270)
+    { tokenId: '186', position: { x: 580, y: 1930 } }   // Stall 2 (1660 + 270)
 ];
 
 export const Paddock: React.FC<PaddockProps> = ({
@@ -130,14 +128,26 @@ export const Paddock: React.FC<PaddockProps> = ({
     const [racingPosition, setRacingPosition] = useState<{ x: number; y: number } | undefined>();
 
     // Initialize game server connection
-    const [staticActors, setStaticActors] = useState<Actor[]>([]);
-    const { connected, actors, updatePosition, completeTutorial, gameSettings } = useGameServer({
-        tokenId,  // NFT token ID
-        token,    // JWT token for authentication
-        onStaticActors: useCallback((actors: Actor[]) => {
-            setStaticActors(actors);
-        }, [])
-    });
+    const [staticActors, setStaticActors] = useState<Actor[]>([]);  // Initialize with empty array
+    // Create static actors callback once
+    const handleStaticActors = useCallback((actors: Actor[]) => {
+        setStaticActors(actors);
+    }, []);
+
+    // In view mode, don't connect to game server
+    const { connected, actors, updatePosition, completeTutorial, gameSettings } = useGameServer(
+        isViewMode(tokenId)
+            ? { // View mode - no server connection
+                tokenId: undefined,
+                token: '',
+                onStaticActors: handleStaticActors  // Use same callback
+            }
+            : { // Play mode - connect with tokenId
+                tokenId: tokenId!,  // Safe to assert as we checked isViewMode
+                token,
+                onStaticActors: handleStaticActors  // Use same callback
+            }
+    );
 
     // Handle message triggers
     const handleMessageTrigger = useCallback((messageIndex: number) => {
@@ -201,22 +211,26 @@ export const Paddock: React.FC<PaddockProps> = ({
         actor.id === tokenId  // actor.id is number, tokenId is number
     );
 
+    // Default view position
+    const viewPosition = { x: 100, y: 150, direction: 'right' as const };
+
+    // Use movement hook with disabled state when no tokenId
     const { position, viewportOffset } = useMovement({
         viewportWidth: viewportDimensions.width,
         viewportHeight: viewportDimensions.height,
         introActive: pathRestricted,
-        movementDisabled: (isRacing || modalOpen),
+        movementDisabled: !tokenId || isRacing || modalOpen,  // Disable without tokenId
         onPositionChange: useCallback((pos: Position) => {
-            if (!IS_SERVERLESS && connected) {
+            if (!IS_SERVERLESS && connected && tokenId) {
                 updatePosition(pos);
             }
-        }, [IS_SERVERLESS, connected, updatePosition]),
+        }, [IS_SERVERLESS, connected, updatePosition, tokenId]),
         onMessageTrigger: introActive ? handleMessageTrigger : undefined,
-        forcePosition: forcedPosition,
+        forcePosition: !tokenId ? viewPosition : forcedPosition,  // Use view position without tokenId
         racingHorsePosition: racingPosition,
         serverPosition: currentPlayer?.position,
         actors,
-        tokenId,
+        tokenId: tokenId || 0,  // Provide default to avoid undefined
         gameSettings
     });
 
@@ -307,11 +321,11 @@ export const Paddock: React.FC<PaddockProps> = ({
                 <Pond left={40} top={2580} />
                 <RainbowPuke left={40} top={2580} />
 
-                {/* Race Track */}
-                {introActive && position && (
+                {/* Race Track - only show in play mode */}
+                {introActive && position && tokenId && (
                     <Race
                         playerHorse={{
-                            tokenId: tokenId.toString(), // Convert to string for Race component
+                            tokenId: tokenId.toString(),
                             position: { x: position.x, y: position.y }
                         }}
                         aiHorses={AI_HORSES}

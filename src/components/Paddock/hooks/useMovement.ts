@@ -128,23 +128,25 @@ export function useMovement({
 
     // Force position update when provided or cleared
     useEffect(() => {
-        if (forcePosition) {
-            setPosition(forcePosition);
-            onPositionChange(forcePosition);
-            positionStateRef.current = {
-                current: forcePosition,
-                lastBroadcast: forcePosition,
-                frameCount: 0
-            };
-        } else if (forcePosition === undefined && racingHorsePosition === undefined) {
-            // Race finished - ensure movement state is properly reset
-            setMovementState(prevState => ({
-                ...prevState,
-                canMove: !movementDisabled,
-                pathRestricted: introActive
-            }));
+        if (tokenId) {
+            if (forcePosition) {
+                setPosition(forcePosition);
+                onPositionChange(forcePosition);
+                positionStateRef.current = {
+                    current: forcePosition,
+                    lastBroadcast: forcePosition,
+                    frameCount: 0
+                };
+            } else if (forcePosition === undefined && racingHorsePosition === undefined) {
+                // Race finished - ensure movement state is properly reset
+                setMovementState(prevState => ({
+                    ...prevState,
+                    canMove: !movementDisabled,
+                    pathRestricted: introActive
+                }));
+            }
         }
-    }, [forcePosition, racingHorsePosition, movementDisabled, introActive, onPositionChange]);
+    }, [tokenId, forcePosition, racingHorsePosition, movementDisabled, introActive, onPositionChange]);
 
     const handleKeyDown = useCallback((e: KeyboardEvent) => {
         if (e.repeat || !movementState.canMove) return;

@@ -37,7 +37,7 @@ interface MinimapProps {
     currentPosition: Position;
     otherPlayers?: Actor[];
     isServerless?: boolean;
-    tokenId: number;  // NFT token ID that identifies the player
+    tokenId?: number;  // Optional NFT token ID (undefined for view mode)
     actors: Actor[];  // All actors from server
     nfts: any[];
 }
@@ -143,19 +143,21 @@ export const Minimap: React.FC<MinimapProps> = ({
                     />
                 ))}
 
-                {/* Other players - only show in non-serverless mode */}
-                {!isServerless && otherPlayers && otherPlayers.map(actor => {
-                    // Only show current player's horse
-                    if (actor.type !== 'player' || actor.id !== tokenId) return null;
-                    return (
-                        <MinimapDot
-                            key={actor.id}
-                            x={actor.position.x}
-                            y={actor.position.y}
-                            svg={nfts.find(nft => nft.tokenId === actor.id)?.svg}
-                            direction={actor.position.direction}
-                        />
-                    );
+                {/* Only show player in play mode */}
+                {!isServerless && tokenId && otherPlayers && otherPlayers.map(actor => {
+                    // Only show current player's horse when in play mode
+                    if (actor.type === 'player' && actor.id === tokenId) {
+                        return (
+                            <MinimapDot
+                                key={actor.id}
+                                x={actor.position.x}
+                                y={actor.position.y}
+                                svg={nfts.find(nft => nft.tokenId === actor.id)?.svg}
+                                direction={actor.position.direction}
+                            />
+                        );
+                    }
+                    return null;
                 })}
 
                 {/* Viewport indicator */}
