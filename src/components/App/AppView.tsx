@@ -26,27 +26,25 @@ const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn: w
 
     const [selectedHorse, setSelectedHorse] = useState<number | undefined>();
 
-    const handleStart = (horse?: number) => {
-        setSelectedHorse(horse);
-        setShowIntro(false);
-    };
-
     return (
         <>
-            {showIntro && (
+            {(!selectedHorse || !walletAddress) &&  (
                 <IntroModal
-                    onStart={handleStart}
+                    onSelectHorse={id => setSelectedHorse(id)}
                     {...{ handleSignIn, handleSignOut, BASE_URL, loggedIn: walletAddress, nfts }}
                 />
             )}
             <MetaMask {...{ handleSignIn, handleSignOut, BASE_URL }} loggedIn={walletAddress} />
             <Styled.Main>
                 <h1>The Paddock</h1>
-                <Paddock
-                    tokenId={selectedHorse}
-                    modalOpen={showIntro}
-                    {...{ nfts, token }}
-                />
+                {selectedHorse ? (
+                    <Paddock
+                        tokenId={selectedHorse}
+                        {...{ nfts, token }}
+                    />
+                ) : (
+                    <p>{selectedHorse}</p>
+                )}
             </Styled.Main>
         </>
     )

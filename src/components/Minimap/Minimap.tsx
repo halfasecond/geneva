@@ -145,8 +145,7 @@ export const Minimap: React.FC<MinimapProps> = ({
 
                 {/* Only show player in play mode */}
                 {!isServerless && tokenId && otherPlayers && otherPlayers.map(actor => {
-                    // Only show current player's horse when in play mode
-                    if (actor.type === 'player' && actor.id === tokenId) {
+                    if (actor.type === 'player') {
                         return (
                             <MinimapDot
                                 key={actor.id}

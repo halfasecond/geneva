@@ -18,9 +18,6 @@ import { Z_LAYERS } from 'src/config/zIndex';
 import { getAssetPath } from '../../utils/assetPath'
 import { getImage, getSVG } from '../../utils/getImage'
 
-
-
-
 // Render game actors with smooth transitions
 const GameActor = memo(({ actor, visible, asset }: {
     actor: Actor;
@@ -199,12 +196,9 @@ export const Paddock: React.FC<PaddockProps> = ({
         }
     }, [IS_SERVERLESS, updatePosition]);
 
-    // Track introActive state
     // Track path restriction state separately from visual intro state
     const [pathRestricted, setPathRestricted] = useState(introActive);
 
-    // Initialize movement with current viewport dimensions
-    // Find current player in actors
     // Find current player by matching NFT token ID
     const currentPlayer = actors.find(actor =>
         actor.type === 'player' &&
@@ -219,7 +213,7 @@ export const Paddock: React.FC<PaddockProps> = ({
         viewportWidth: viewportDimensions.width,
         viewportHeight: viewportDimensions.height,
         introActive: pathRestricted,
-        movementDisabled: !tokenId || isRacing || modalOpen,  // Disable without tokenId
+        movementDisabled: !tokenId || isRacing,
         onPositionChange: useCallback((pos: Position) => {
             if (!IS_SERVERLESS && connected && tokenId) {
                 updatePosition(pos);

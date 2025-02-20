@@ -2,14 +2,16 @@ import { useState } from 'react'
 import * as Styled from './IntroModal.style'
 import Metamask from '../Metamask'
 import { getAssetPath } from '../../utils/assetPath';
+import { useGameServer } from '../Paddock/hooks/useGameServer';
 
 interface IntroModalProps {
-    onStart: (selectedHorse?: number) => void;
+    onSelectHorse: (horse: number) => void;  // Callback to select horse
     nfts: Array<{ tokenId: number; svg: string }>;
     loggedIn: string | undefined;
     handleSignIn: () => void;
     handleSignOut: () => void;
     BASE_URL: string;
+    currentHorse?: number;  // Current horse from socket
 }
 
 interface HorseSelectProps {
@@ -36,20 +38,24 @@ const HorseSelect: React.FC<HorseSelectProps> = ({ nfts, onSelect }) => {
 import { BACKGROUND_MUSIC } from '../../audio';
 
 const IntroModal: React.FC<IntroModalProps> = ({
-    onStart,
+    onSelectHorse,
     handleSignIn,
     handleSignOut,
     BASE_URL,
     loggedIn,
-    nfts
+    nfts,
+    currentHorse
 }) => {
-    const [selectedHorse, setSelectedHorse] = useState<number | undefined>();
+    // Use socket passed from AppView
     const handleStart = () => {
         // Start playing music when entering paddock
-        BACKGROUND_MUSIC.play()
-            .catch(error => console.error('Error playing audio:', error));
-        onStart(selectedHorse);
+        //BACKGROUND_MUSIC.play()
+          //  .catch(error => console.error('Error playing audio:', error));
+        // onStart();
     };
+
+    // If we have a current horse, show it
+    const selectedNft = currentHorse ? nfts.find(nft => nft.tokenId === currentHorse) : undefined;
 
     return (
         <Styled.Overlay>
@@ -64,21 +70,27 @@ const IntroModal: React.FC<IntroModalProps> = ({
                 {!loggedIn ? (
                     <>
                         <p>Connect your wallet to join the paddock!</p>
-                        <Metamask {...{ handleSignIn, handleSignOut, BASE_URL, loggedIn }} />
                     </>
                 ) : nfts.filter(nft => nft.owner === loggedIn.toLowerCase()).length > 0 ? (
                     <>
-                        <p>Select your horse to enter the paddock:</p>
-                        <HorseSelect nfts={nfts.filter(nft => nft.owner === loggedIn.toLowerCase())} onSelect={setSelectedHorse} />
-                        <Styled.Button
-                            onClick={handleStart}
-                            disabled={!selectedHorse}
-                        >
-                            {selectedHorse
-                                ? `Enter with Horse #${selectedHorse}`
-                                : 'Select a Horse'
-                            }
-                        </Styled.Button>
+                        {selectedNft ? (
+                            <>
+                                <p>Welcome back!</p>
+                                <img src={selectedNft.svg} alt={`Horse #${selectedNft.tokenId}`} style={{ width: 200 }} />
+                                <p>Continue with Horse #{selectedNft.tokenId}?</p>
+                                <Styled.Button onClick={handleStart}>
+                                    Enter The Paddock
+                                </Styled.Button>
+                            </>
+                        ) : (
+                            <>
+                                <p>Select your horse to enter the paddock:</p>
+                                <HorseSelect
+                                    nfts={nfts.filter(nft => nft.owner === loggedIn.toLowerCase())}
+                                    onSelect={(horse) => onSelectHorse(horse)}
+                                />
+                            </>
+                        )}
                     </>
                 ) : (
                     <Styled.MintCTA>
@@ -89,6 +101,7 @@ const IntroModal: React.FC<IntroModalProps> = ({
                         </a>
                     </Styled.MintCTA>
                 )}
+                <Metamask {...{ handleSignIn, handleSignOut, BASE_URL }} loggedIn={loggedIn} />
             </Styled.ModalContent>
         </Styled.Overlay>
     );
