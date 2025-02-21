@@ -29,13 +29,23 @@ const routes = (Models: Models): Router => {
             );
             // Check if the recovered address matches the expected signer's address
             if (recoveredSigner.toLowerCase() === address.toLowerCase()) {
+                // Check if player exists in game state
+                const gameState = await Models.GameState.findOne({
+                    walletAddress: address.toLowerCase()
+                });
+
                 const token = jwt.sign({ userId: recoveredSigner }, JWT_SECRET || 'default-secret');
                 const account = await Models.Account.findOneAndUpdate(
                     { address: address.toLowerCase() },
                     { $set: { token } },
                     { upsert: true, new: true }
                 );
-                res.status(200).json({ token });
+
+                // Return token and horse ID if player exists
+                res.status(200).json({
+                    token,
+                    horseId: gameState && gameState.tokenId ? gameState.tokenId : -1
+                });
             } else {
                 // Authentication failed
                 res.status(401).json({ authenticated: false });
@@ -51,9 +61,17 @@ const routes = (Models: Models): Router => {
         try {
             const decoded = jwt.verify(token, JWT_SECRET || 'default-secret');
             const { userId } = decoded as { userId: string };
-            Models.Account.findOne({ address: userId.toLowerCase(), token }).then((account) => {
+            Models.Account.findOne({ address: userId.toLowerCase(), token }).then(async (account) => {
                 if (account) {
-                    res.status(200).json({ valid: true, address: userId.toLowerCase() });
+                    // Check if player exists in game state
+                    const gameState = await Models.GameState.findOne({
+                        walletAddress: userId.toLowerCase()
+                    });
+                    res.status(200).json({ 
+                        valid: true,
+                        address: userId.toLowerCase(),
+                        horseId: gameState && gameState.tokenId ? gameState.tokenId : -1
+                    });
                 } else {
                     res.status(200).json({ valid: false });
                 }

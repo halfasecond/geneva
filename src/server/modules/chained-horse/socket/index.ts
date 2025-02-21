@@ -45,7 +45,7 @@ interface Models {
 
 // Game settings that can be adjusted
 const gameSettings = {
-    tickRate: 100,  // 100 = 10 updates per second
+    tickRate: 50,  // 100 = 10 updates per second
     movementSpeed: 3.75,  // pixels per frame
     broadcastFrames: 5,  // Client broadcasts every 5th frame
     smoothing: 0.1  // Animation smoothing factor
@@ -252,6 +252,21 @@ const socket = async (io: Server, web3: any, name: string, Models: Models, Contr
                 const spawnPosition = { x: 100, y: 150, direction: 'right' as const };
                 const player = addPlayer(namespace, socket.id, spawnPosition, tokenId, walletAddress);
                 setPlayerConnected(namespace, player.id);
+
+                // Save to GameState collection
+                await Models.GameState.findOneAndUpdate(
+                    { walletAddress: walletAddress.toLowerCase() },
+                    {
+                        $set: {
+                            tokenId,
+                            position: spawnPosition,
+                            connected: true,
+                            lastSeen: new Date(),
+                            introActive: true
+                        }
+                    },
+                    { upsert: true, new: true }
+                );
             } catch (error) {
                 console.error('Join error:', error);
                 socket.emit('error', { message: 'Failed to join game' });
@@ -264,11 +279,10 @@ const socket = async (io: Server, web3: any, name: string, Models: Models, Contr
             namespace.emit('world:state', getWorldState(namespace));  // Broadcast dynamic actors
         });
 
-        socket.on('player:move', ({ x, y, direction }: Position) => {
+        socket.on('player:move', async ({ x, y, direction }: Position) => {
             const player = getPlayerBySocket(namespace, socket.id);
             if (player) {
                 updateActorPosition(namespace, player.id, x, y, direction);
-                console.log(getWorldState(namespace))
             }
         });
 
@@ -279,12 +293,26 @@ const socket = async (io: Server, web3: any, name: string, Models: Models, Contr
             }
         });
 
-        socket.on('disconnect', () => {
+        socket.on('disconnect', async () => {
             socketCount--;
             console.log(`Socket disconnected: ${socket.id} (Total sockets: ${socketCount})`);
             const player = getPlayerBySocket(namespace, socket.id);
             if (player) {
                 setPlayerDisconnected(namespace, player.id);
+                
+                // Update GameState collection
+                const walletAddress = getWalletAddress(socket);
+                if (walletAddress) {
+                    await Models.GameState.updateOne(
+                        { walletAddress: walletAddress.toLowerCase() },
+                        {
+                            $set: {
+                                connected: false,
+                                lastSeen: new Date()
+                            }
+                        }
+                    );
+                }
             }
         });
     });
