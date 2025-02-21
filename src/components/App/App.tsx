@@ -66,7 +66,6 @@ function App() {
           const accounts = await web3.eth.getAccounts();
           const signature = await web3.eth.personal.sign(message, accounts[0], '');
           const { data } = await axios.post<AuthResponse>(`${VITE_APP_ENDPOINT}chained-horse/auth`, { address: accounts[0], signature, message });
-          console.log(data)
           Cookies.set(VITE_APP_TOKEN_NAME, data.token);
           setLoggedIn(accounts[0]);
           setToken(data.token);  // Ensure token is set after login
@@ -96,7 +95,6 @@ function App() {
       const chainId = await (window.ethereum as any).request({ method: 'eth_chainId' });
       if (chainId === VITE_APP_CHAIN_ID) {
         const { data } = await axios.post<CheckTokenResponse>(`${VITE_APP_ENDPOINT}chained-horse/auth/check-token`, { token });
-        console.log(data)
         if (data.valid) {
           setLoggedIn(data.address.toLowerCase());
         } else {

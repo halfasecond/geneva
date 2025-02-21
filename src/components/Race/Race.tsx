@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import * as Styled from './Race.style';
 import Horse from '../Horse';
 import { Z_LAYERS } from 'src/config/zIndex';
+import { RaceState } from '../Game/utils';
 
 interface RaceProps {
     playerHorse: {
@@ -14,6 +15,7 @@ interface RaceProps {
     }>;
     onStateChange?: (state: 'countdown' | 'racing' | 'finished') => void;
     onRacingPositionChange?: (position: { x: number; y: number }) => void;
+    raceState: RaceState;
 }
 
 type RaceState = 'not_started' | 'countdown' | 'racing' | 'finishing' | 'finished';
@@ -21,11 +23,11 @@ const Race = ({
     playerHorse,
     aiHorses,
     onStateChange,
-    onRacingPositionChange
+    onRacingPositionChange,
+    raceState
 }: RaceProps): React.ReactElement => {
     // Destructure props to make them available in scope
-    const { tokenId: playerTokenId, position: playerPosition } = playerHorse;
-    const [raceState, setRaceState] = useState<RaceState>('not_started');
+    const { tokenId: playerTokenId } = playerHorse;
     const [countdown, setCountdown] = useState<number | null>(null);
     const [startTime, setStartTime] = useState<number | null>(null);
     const [finishTimes, setFinishTimes] = useState<Map<string, number>>(new Map());
@@ -34,36 +36,13 @@ const Race = ({
         new Map(aiHorses.map(horse => [horse.tokenId, horse.position]))
     );
     const [racingHorsePosition, setRacingHorsePosition] = useState({ x: 580, y: 2060 });  // Match stall position
-    const [hasStarted, setHasStarted] = useState(false);  // Track if race has started
-
-    // Check if player is in starting position - only check once
-    const checkStartPosition = useCallback(() => {
-        if (hasStarted || raceState !== 'not_started') return false;
-
-        // Check if player position is within the valid start range
-        const isInStartRange = 
-            playerPosition.x >= 580 && 
-            playerPosition.x <= 700 &&
-            playerPosition.y >= 2060 &&
-            playerPosition.y <= 2160;
-
-        if (isInStartRange) {
-            setHasStarted(true);  // Lock the start check
-        }
-        return isInStartRange;
-    }, [hasStarted, raceState, playerPosition]);
 
     // Start countdown when player enters start box
     useEffect(() => {
-        if (raceState === 'not_started') {
-            const isInStartPosition = checkStartPosition();
-            if (isInStartPosition) {
-                setRaceState('countdown');
-                if (onStateChange) onStateChange('countdown');
-                setCountdown(3);
-            }
+        if (raceState === 'countdown' && countdown === null) {
+            setCountdown(3)
         }
-    }, [raceState, checkStartPosition, onStateChange]);
+    }, [raceState]);
 
     // Handle countdown
     useEffect(() => {
@@ -73,7 +52,7 @@ const Race = ({
                 timer = setTimeout(() => setCountdown(countdown - 1), 1000);
             } else {
                 timer = setTimeout(() => {
-                    setRaceState('racing');
+                    onStateChange('racing');
                     if (onStateChange) onStateChange('racing');
                     setStartTime(Date.now());
                 }, 1000);  // Show GO! for 1 second

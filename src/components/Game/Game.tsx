@@ -231,6 +231,7 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
                             { tokenId: '186', position: { x: 580, y: 1930 } }
                         ]}
                         onStateChange={handleRaceStateChange}
+                        raceState={raceState}
                     />
                 )}
                 {connected && (
