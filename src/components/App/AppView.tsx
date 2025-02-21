@@ -5,9 +5,9 @@ import { AuthProps } from '../../types/auth'
 import { Paddock } from 'components/Paddock'
 import IntroModal from 'components/IntroModal'
 
-const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn: walletAddress, token, BASE_URL }) => {
-    const [showIntro, setShowIntro] = useState(true);
+const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn: walletAddress, token, tokenId, BASE_URL }) => {
     const [nfts, setNFTs] = useState<any[]>([]);
+    const [selectedHorse, setSelectedHorse] = useState<number | undefined>(tokenId);
 
     // Load and analyze NFT data
     useEffect(() => {
@@ -23,8 +23,6 @@ const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn: w
         };
         loadNFTs();
     }, []);
-
-    const [selectedHorse, setSelectedHorse] = useState<number | undefined>();
 
     return (
         <>
