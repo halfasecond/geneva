@@ -13,12 +13,10 @@ interface RaceProps {
         tokenId: string;
         position: { x: number; y: number };
     }>;
-    onStateChange?: (state: 'countdown' | 'racing' | 'finished') => void;
+    onStateChange: (state: RaceState) => void;
     onRacingPositionChange?: (position: { x: number; y: number }) => void;
     raceState: RaceState;
 }
-
-type RaceState = 'not_started' | 'countdown' | 'racing' | 'finishing' | 'finished';
 const Race = ({
     playerHorse,
     aiHorses,
@@ -37,25 +35,29 @@ const Race = ({
     );
     const [racingHorsePosition, setRacingHorsePosition] = useState({ x: 580, y: 2060 });  // Match stall position
 
-    // Start countdown when player enters start box
-    useEffect(() => {
-        if (raceState === 'countdown' && countdown === null) {
-            setCountdown(3)
-        }
-    }, [raceState]);
-
-    // Handle countdown
+    // Handle countdown and race state transitions
     useEffect(() => {
         let timer: NodeJS.Timeout;
-        if (raceState === 'countdown' && countdown !== null) {
-            if (countdown > 0) {
+        console.log(raceState)
+        if (raceState === 'countdown') {
+            // Initialize countdown
+            if (countdown === null) {
+                onStateChange('racing');
+                //setCountdown(3);
+            }
+            // Handle countdown ticks
+            else if (countdown > 0) {
+                console.log(raceState, countdown)
                 timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-            } else {
+            }
+            // Transition to racing after showing "GO!"
+            else {
                 timer = setTimeout(() => {
-                    onStateChange('racing');
-                    if (onStateChange) onStateChange('racing');
-                    setStartTime(Date.now());
-                }, 1000);  // Show GO! for 1 second
+                    if (onStateChange) {
+                        onStateChange('racing');
+                        setStartTime(Date.now());
+                    }
+                }, 1000);
             }
         }
         return () => {
@@ -65,7 +67,7 @@ const Race = ({
 
     // Move horses during race
     useEffect(() => {
-        if (raceState === 'racing' || raceState === 'finishing') {
+        if (raceState === 'racing') {
             const moveInterval = setInterval(() => {
                 // Move racing horse
                 setRacingHorsePosition(prev => {
@@ -125,7 +127,7 @@ const Race = ({
 
     // Notify parent of racing position changes
     useEffect(() => {
-        if (onRacingPositionChange && (raceState === 'countdown' || raceState === 'racing' || raceState === 'finishing')) {
+        if (onRacingPositionChange && (raceState === 'countdown' || raceState === 'racing')) {
             onRacingPositionChange(racingHorsePosition);
         }
     }, [onRacingPositionChange, racingHorsePosition, raceState]);
@@ -138,8 +140,7 @@ const Race = ({
             
             if (allFinished && racingHorsePosition.x >= 1990) {
                 // Signal race completion
-                setRaceState('finished');
-                if (onStateChange) onStateChange('finished');
+                onStateChange('finished');
             }
         }
     }, [raceState, startTime, finishTimes, playerTokenId, aiHorses, onStateChange, racingHorsePosition.x]);
@@ -186,8 +187,8 @@ const Race = ({
                 );
             })}
 
-            {/* Racing Horse (during countdown, racing, and finishing) */}
-            {(raceState === 'racing' || raceState === 'countdown' || raceState === 'finishing') && (
+            {/* Racing Horse (during countdown and racing) */}
+            {(raceState === 'racing' || raceState === 'countdown') && (
                 <Horse
                     style={{
                         position: 'absolute',
@@ -224,7 +225,14 @@ const Race = ({
 
             {/* Countdown Display */}
             {raceState === 'countdown' && countdown !== null && (
-                <Styled.CountdownDisplay>
+                <Styled.CountdownDisplay
+                    style={{
+                        animation: countdown === 0 ? 'scale 0.5s infinite' : 'none',
+                        fontSize: countdown === 0 ? '72px' : '48px',
+                        color: countdown === 0 ? '#00ff00' : '#ffffff',
+                        transition: 'all 0.3s ease'
+                    }}
+                >
                     {countdown === 0 ? 'GO!' : countdown}
                 </Styled.CountdownDisplay>
             )}
