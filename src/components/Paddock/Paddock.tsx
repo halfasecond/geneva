@@ -3,6 +3,7 @@ import * as Styled from "./Paddock.style";
 import { useMovement } from "./hooks/useMovement";
 import { useZoom } from "./hooks/useZoom";
 import { useGameServer } from "./hooks/useGameServer";
+import { PerformancePanel } from "./components/PerformancePanel";
 import { Position } from "../../server/types";
 import { Actor } from "../../server/types/actor";
 import Beach from "./components/Beach";
@@ -88,6 +89,18 @@ export const Paddock: React.FC<PaddockProps> = ({
     token
 }) => {
     const [isMuted, setIsMuted] = useState(false);
+    const [showMetrics, setShowMetrics] = useState(false);
+
+    // Toggle metrics panel with 'P' key
+    useEffect(() => {
+        const handleKeyPress = (e: KeyboardEvent) => {
+            if (e.key.toLowerCase() === 'p') {
+                setShowMetrics(prev => !prev);
+            }
+        };
+        window.addEventListener('keypress', handleKeyPress);
+        return () => window.removeEventListener('keypress', handleKeyPress);
+    }, []);
 
     // Handle audio mute/unmute
     const handleMuteToggle = useCallback(() => {
@@ -132,7 +145,7 @@ export const Paddock: React.FC<PaddockProps> = ({
     }, []);
 
     // In view mode, don't connect to game server
-    const { connected, actors, updatePosition, completeTutorial, gameSettings } = useGameServer(
+    const { connected, actors, updatePosition, completeTutorial, gameSettings, metrics } = useGameServer(
         isViewMode(tokenId)
             ? { // View mode - no server connection
                 tokenId: undefined,
@@ -264,6 +277,7 @@ export const Paddock: React.FC<PaddockProps> = ({
     return (
         <Styled.Container ref={containerRef}>
             <MuteButton isMuted={isMuted} onToggle={handleMuteToggle} />
+            <PerformancePanel metrics={metrics} visible={showMetrics} />
             <Styled.GameSpace
                 style={{
                     transform: `scale(${scale}) translate(${-viewportOffset.x}px, ${-viewportOffset.y}px)`,

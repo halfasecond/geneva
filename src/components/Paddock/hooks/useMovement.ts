@@ -81,21 +81,30 @@ export function useMovement({
     // Track if we've done initial viewport update
     const initialViewportRef = useRef(false);
 
-    // Update position when server position changes
-    useEffect(() => {
-        if (serverPosition) {
-            setPosition(serverPosition);
-        }
-    }, [serverPosition]);
     const [viewportOffset, setViewportOffset] = useState<ViewportOffset>({ x: 0, y: 0 })
     const [keys, setKeys] = useState<Set<string>>(new Set())
     
-    // Movement state
-    const [movementState, setMovementState] = useState<MovementState>({
-        canMove: !movementDisabled && Boolean(serverPosition),  // Only allow movement with server position
+    // Use ref for movement state to avoid unnecessary re-renders
+    const movementStateRef = useRef<MovementState>({
+        canMove: !movementDisabled && Boolean(serverPosition),
         pathRestricted: introActive,
         followPlayer: true
-    })
+    });
+
+    // Update movement state without triggering re-renders
+    const updateMovementState = useCallback((updates: Partial<MovementState>) => {
+        movementStateRef.current = {
+            ...movementStateRef.current,
+            ...updates
+        };
+    }, []);
+
+    // Initialize position from server position
+    useEffect(() => {
+        if (serverPosition && !position) {
+            setPosition(serverPosition);
+        }
+    }, [serverPosition, position]);
 
     const animationFrameRef = useRef<number>()
     const keysRef = useRef<Set<string>>(new Set())
@@ -119,12 +128,12 @@ export function useMovement({
     // Update movement state based on props and server state
     useEffect(() => {
         const currentPlayer = actors.find(actor => actor.type === 'player' && actor.id === tokenId);  // Both are numbers
-        setMovementState({
+        updateMovementState({
             canMove: !movementDisabled && !racingHorsePosition && Boolean(serverPosition),  // Need server position
             pathRestricted: Boolean(currentPlayer?.introActive) && !racingHorsePosition,  // Restrict if introActive exists
             followPlayer: !racingHorsePosition  // Follow player unless racing
         });
-    }, [movementDisabled, racingHorsePosition, serverPosition, actors]);
+    }, [movementDisabled, racingHorsePosition, serverPosition, actors, updateMovementState]);
 
     // Force position update when provided or cleared
     useEffect(() => {
@@ -139,19 +148,18 @@ export function useMovement({
                 };
             } else if (forcePosition === undefined && racingHorsePosition === undefined) {
                 // Race finished - ensure movement state is properly reset
-                setMovementState(prevState => ({
-                    ...prevState,
+                updateMovementState({
                     canMove: !movementDisabled,
                     pathRestricted: introActive
-                }));
+                });
             }
         }
     }, [tokenId, forcePosition, racingHorsePosition, movementDisabled, introActive, onPositionChange]);
 
     const handleKeyDown = useCallback((e: KeyboardEvent) => {
-        if (e.repeat || !movementState.canMove) return;
+        if (e.repeat || !movementStateRef.current.canMove) return;
         setKeys(prev => new Set(prev).add(e.key))
-    }, [movementState.canMove])
+    }, [])
 
     const handleKeyUp = useCallback((e: KeyboardEvent) => {
         setKeys(prev => {
@@ -185,7 +193,7 @@ export function useMovement({
         }
 
         // Check path restrictions
-        if (movementState.pathRestricted) {
+        if (movementStateRef.current.pathRestricted) {
             const pathsWithSafeZones = paths.map(path => ({
                 ...path,
                 safeZone: getSafeZone(path)
@@ -196,7 +204,7 @@ export function useMovement({
         }
 
         return true;
-    }, [movementState.pathRestricted])
+    }, [])
 
     // Calculate new viewport offset based on position
     const calculateViewportOffset = useCallback((pos: Position | undefined): ViewportOffset => {
@@ -205,7 +213,7 @@ export function useMovement({
         let newX = viewportOffset.x;
         let newY = viewportOffset.y;
 
-        if (!movementState.followPlayer && racingHorsePosition) {
+        if (!movementStateRef.current.followPlayer && racingHorsePosition) {
             // Racing mode - viewport follows race position
             newX = racingHorsePosition.x - (viewportWidth * 0.2);
             newY = racingHorsePosition.y - (viewportHeight * 0.7);
@@ -235,11 +243,11 @@ export function useMovement({
         newY = Math.max(0, Math.min(newY, WORLD_HEIGHT - viewportHeight));
 
         return { x: newX, y: newY };
-    }, [viewportWidth, viewportHeight, movementState.followPlayer, racingHorsePosition, viewportOffset]);
+    }, [viewportWidth, viewportHeight, racingHorsePosition, viewportOffset]);
 
     // Handle movement and viewport animation
     useEffect(() => {
-        if (!movementState.canMove) {
+        if (!movementStateRef.current.canMove) {
             if (animationFrameRef.current) {
                 cancelAnimationFrame(animationFrameRef.current);
             }
@@ -247,7 +255,7 @@ export function useMovement({
         }
 
         const updateFrame = () => {
-            if (!position) return;  // Don't update if no position yet
+            if (!position || !movementStateRef.current.canMove) return;  // Don't update if no position or can't move
             
             const activeKeys = keysRef.current;
             let x = position.x;
@@ -338,9 +346,10 @@ export function useMovement({
         viewportOffset,
         isValidPosition,
         calculateViewportOffset,
-        movementState.canMove,
         onPositionChange,
-        serverPosition
+        serverPosition,
+        movementSpeed,
+        broadcastFrames
     ]);
 
     // Initial viewport update
@@ -356,7 +365,7 @@ export function useMovement({
 
     // Handle racing viewport updates
     useEffect(() => {
-        if (movementState.followPlayer || !racingHorsePosition || !position) return;
+        if (movementStateRef.current.followPlayer || !racingHorsePosition || !position) return;
 
         const updateRacingViewport = () => {
             const newOffset = calculateViewportOffset(position);
@@ -373,7 +382,7 @@ export function useMovement({
                 cancelAnimationFrame(animationFrameRef.current);
             }
         };
-    }, [movementState.followPlayer, racingHorsePosition, position, calculateViewportOffset, viewportOffset]);
+    }, [racingHorsePosition, position, calculateViewportOffset, viewportOffset]);
 
     // Handle message triggers
     useEffect(() => {

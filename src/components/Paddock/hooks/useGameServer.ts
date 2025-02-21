@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { Position } from '../../../server/types';
 import { Actor, WorldState } from '../../../server/types/actor';
+import { usePerformanceMetrics } from './usePerformanceMetrics';
 
 interface UseGameServerProps {
     tokenId?: number;  // Optional NFT token ID (undefined for view mode)
@@ -43,6 +44,10 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
         broadcastFrames: 5,
         smoothing: 0.1
     });
+    
+    const { metrics, trackMovementUpdate, trackServerResponse, trackLatency } = usePerformanceMetrics();
+    const lastPingTime = useRef<number>(0);
+    const lastStateUpdate = useRef<number>(performance.now());
     const reconnectAttempts = useRef(0);
     const maxReconnectAttempts = 5;
 
@@ -57,8 +62,8 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
         }
 
         // Use environment variable with fallback for development
-        const serverUrl = import.meta.env.VITE_GAME_SERVER_URL || 'http://localhost:3131';
-        const socket = io(`${serverUrl}/api/chained-horse`, {
+        const serverUrl = import.meta.env.VITE_APP_GAME_SERVER_URL;
+        const socket = io(`${serverUrl}chained-horse`, {
             reconnection: true,
             reconnectionAttempts: maxReconnectAttempts,
             reconnectionDelay: 1000,
@@ -70,6 +75,18 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
             }
         });
         socketRef.current = socket;
+
+        // Track socket.io latency
+        let lastPingSent = 0;
+        const pingInterval = setInterval(() => {
+            lastPingSent = performance.now();
+            socket.emit('ping');
+        }, 1000);
+
+        socket.on('pong', () => {
+            const latency = Math.round(performance.now() - lastPingSent);
+            trackLatency(latency);
+        });
 
         const handleConnect = () => {
             console.log('Connected to game server');
@@ -105,6 +122,15 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
         };
 
         const handleWorldState = (state: WorldState) => {
+            const now = performance.now();
+            const timeSinceLastUpdate = now - lastStateUpdate.current;
+            lastStateUpdate.current = now;
+            
+            // Only track if it's not the first update and within reasonable time
+            if (timeSinceLastUpdate < 5000) { // Ignore gaps > 5s (likely disconnects)
+                trackServerResponse(timeSinceLastUpdate);
+            }
+            
             setActors(state.actors);
         };
 
@@ -117,9 +143,6 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
         };
 
         // Set up event handlers
-        socket.on('connect', handleConnect);
-        socket.on('player:joined', handleJoined);
-        socket.on('disconnect', handleDisconnect);
         const handleError = (error: { message: string }) => {
             console.error('Game server error:', error.message);
             // Disconnect on auth/ownership errors
@@ -130,6 +153,10 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
             }
         };
 
+        // Set up event handlers
+        socket.on('connect', handleConnect);
+        socket.on('player:joined', handleJoined);
+        socket.on('disconnect', handleDisconnect);
         socket.on('connect_error', handleConnectError);
         socket.on('world:state', handleWorldState);
         socket.on('static:actors', handleStaticActors);
@@ -137,6 +164,7 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
         socket.on('error', handleError);
 
         return () => {
+            clearInterval(pingInterval);
             socket.off('connect', handleConnect);
             socket.off('player:joined', handleJoined);
             socket.off('disconnect', handleDisconnect);
@@ -145,6 +173,7 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
             socket.off('static:actors', handleStaticActors);
             socket.off('game:settings', handleGameSettings);
             socket.off('error', handleError);
+            socket.off('pong');
             socket.removeAllListeners();
             socket.disconnect();
             socketRef.current = null;
@@ -154,13 +183,14 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
     // Broadcast position updates but don't wait for response
     const updatePosition = useCallback((position: Position) => {
         if (socketRef.current?.connected && connected) {
+            trackMovementUpdate(); // Track movement frequency
             socketRef.current.emit('player:move', {
                 x: position.x,
                 y: position.y,
                 direction: position.direction
             });
         }
-    }, [connected]);
+    }, [connected, trackMovementUpdate]);
 
     const completeTutorial = useCallback(() => {
         if (socketRef.current?.connected && connected) {
@@ -170,21 +200,22 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
 
     // Handle different modes
     if (IS_SERVERLESS) {
-        return defaultState;  // Completely offline mode
+        return { ...defaultState, metrics };  // Include metrics even in offline mode
     }
 
     // View mode - still connect for world state, but no actions
     if (!tokenId) {
         return {
             ...defaultState,
-            actors: actors,  // Show world state
-            connected: connected  // Show connection state
+            actors,  // Show world state
+            connected,  // Show connection state
+            metrics  // Include performance metrics
         };
     }
 
     // No token - can't connect
     if (!token) {
-        return defaultState;
+        return { ...defaultState, metrics };
     }
 
     return {
@@ -192,6 +223,7 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
         updatePosition,
         completeTutorial,
         actors,
-        gameSettings  // Return server-provided settings
+        gameSettings,  // Server-provided settings
+        metrics  // Performance metrics
     };
 }
