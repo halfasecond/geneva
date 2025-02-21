@@ -23,14 +23,13 @@ interface Props {
 }
 
 const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
-    const [staticActors, setStaticActors] = useState<Actor[]>()
-    const handleStaticActors = (actors: Actor[]) => setStaticActors(actors)
-    const { connected, actors, position, updatePosition, gameSettings, metrics } = useGameServer({ 
-        tokenId, token, onStaticActors: handleStaticActors
-    });
-
     // Track active keys
     const [activeKeys, setActiveKeys] = useState(new Set<string>());
+    const [staticActors, setStaticActors] = useState<Actor[]>()
+
+    const { connected, actors, position, updatePosition, gameSettings, metrics } = useGameServer({ 
+        tokenId, token, onStaticActors: (actors: Actor[]) => setStaticActors(actors)
+    });
 
     // Handle keyboard input
     useEffect(() => {
