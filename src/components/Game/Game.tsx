@@ -5,60 +5,16 @@ import type { Actor } from 'src/server/types/actor';
 import GameActor from "./GameActor"
 import { PerformancePanel } from "./PerformancePanel";
 import { Pond, RainbowPuke, Farm } from "./components/GameElements";
-import { Path, Rivers, paths } from "./components/Environment";
+import { Path, Rivers } from "./components/Environment";
 import Beach from './components/Beach'
 import { Minimap } from "../Minimap";
 import IssuesField from "../IssuesField";
 import * as Styled from './Game.style'
 import { WORLD_WIDTH, WORLD_HEIGHT } from '../../utils/coordinates';
 import { rivers } from '../Paddock/components/Environment/set';
+import { isOnPath, isBlockedByRiver } from "./utils";
 
-const HORSE_SIZE = 100; // Match the size used in GameActor
-
-interface BoundingBox {
-    left: number;
-    right: number;
-    top: number;
-    bottom: number;
-}
-
-// Check if position is blocked by river
-const isBlockedByRiver = (box: BoundingBox, rivers: { left: number; top: number; width: number; height: number }[]): boolean => {
-    return rivers.some(river => {
-        const buffer = 30;
-        const riverBox = {
-            left: river.left + buffer,
-            right: river.left + river.width - buffer,
-            top: river.top + buffer,
-            bottom: river.top + river.height - buffer
-        };
-        return !(
-            box.left >= riverBox.right ||
-            box.right <= riverBox.left ||
-            box.top >= riverBox.bottom ||
-            box.bottom <= riverBox.top
-        );
-    });
-};
-
-// Check if box overlaps with any path
-const isOnPath = (box: BoundingBox): boolean => {
-    return paths.some(path => {
-        const buffer = 80;
-        const pathBox = {
-            left: path.left + buffer,
-            right: path.left + path.width - buffer,
-            top: path.top + buffer,
-            bottom: path.top + path.height - buffer
-        };
-        return !(
-            box.left >= pathBox.right ||
-            box.right <= pathBox.left ||
-            box.top >= pathBox.bottom ||
-            box.bottom <= pathBox.top
-        );
-    });
-};
+const HORSE_SIZE = 100;
 
 interface Props {
     tokenId?: number;
