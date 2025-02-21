@@ -24,6 +24,7 @@ export interface WorldState {
 // Helper to create consistent actor objects
 export interface PlayerActor extends Actor {
     socketId?: string;
+    walletAddress: string;  // Required for all players
 }
 
 export const createActor = (

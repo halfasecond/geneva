@@ -68,11 +68,11 @@ const socket = async (io: Server, web3: any, name: string, Models: Models, Contr
     // Legacy players with their last known positions
     // tokenId is both the NFT ID and the player ID
     const LEGACY_PLAYERS = [
-        { tokenId: 267, position: { x: 1376, y: 1112, direction: 'right' } },
-        { tokenId: 19, position: { x: 1036, y: 940, direction: 'right' } },
-        { tokenId: 18, position: { x: 3072, y: 640, direction: 'left' } },
-        { tokenId: 47, position: { x: 1476, y: 1112, direction: 'left' } },
-        { tokenId: 389, position: { x: 2308, y: 2010, direction: 'right' } }
+        { tokenId: 267, address: '0x137d9174d3bd00f2153dcc0fe7af712d3876a71e', position: { x: 1376, y: 1112, direction: 'right' } },
+        { tokenId: 19, address: '0x92265f4c85619ec8b70bb179ff1f86c56e54d348', position: { x: 1036, y: 940, direction: 'right' } },
+        { tokenId: 18, address: '0xf3aab663fb3f428c8f82f1e0791c23284325f8db', position: { x: 3072, y: 640, direction: 'left' } },
+        { tokenId: 47, address: '0x07c0ca4600dec713a40a7cc5f98bec70770f14c8', position: { x: 1476, y: 1112, direction: 'left' } },
+        { tokenId: 389, address: '0x3fddfc5275a4bc341f3ea4b6ff629747af1eed5e', position: { x: 2308, y: 2010, direction: 'right' } }
     ];
 
     // Initialize world state
@@ -80,7 +80,7 @@ const socket = async (io: Server, web3: any, name: string, Models: Models, Contr
 
     // Add legacy players as disconnected players
     LEGACY_PLAYERS.forEach(player => {
-        const actor = addPlayer(namespace, '', player.position as Position, player.tokenId);  // Empty string for socketId, tokenId for player ID
+        const actor = addPlayer(namespace, '', player.position as Position, player.tokenId, player.address);  // Include address
         setPlayerDisconnected(namespace, actor.id);
     });
 
@@ -250,7 +250,7 @@ const socket = async (io: Server, web3: any, name: string, Models: Models, Contr
 
                 // Default spawn position for new players
                 const spawnPosition = { x: 100, y: 150, direction: 'right' as const };
-                const player = addPlayer(namespace, socket.id, spawnPosition, tokenId);
+                const player = addPlayer(namespace, socket.id, spawnPosition, tokenId, walletAddress);
                 setPlayerConnected(namespace, player.id);
             } catch (error) {
                 console.error('Join error:', error);
@@ -268,6 +268,7 @@ const socket = async (io: Server, web3: any, name: string, Models: Models, Contr
             const player = getPlayerBySocket(namespace, socket.id);
             if (player) {
                 updateActorPosition(namespace, player.id, x, y, direction);
+                console.log(getWorldState(namespace))
             }
         });
 

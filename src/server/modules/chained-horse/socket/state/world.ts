@@ -29,7 +29,7 @@ export const addStaticActor = (namespace: Namespace, actor: Actor): void => {
 };
 
 // Player management
-export const addPlayer = (namespace: Namespace, socketId: string, position: Position, tokenId: number): Actor => {
+export const addPlayer = (namespace: Namespace, socketId: string, position: Position, tokenId: number, walletAddress: string): Actor => {
     const existingPlayer = namespace.worldState.actors.find(
         actor => actor.type === 'player' && actor.id === tokenId  // Compare tokenIds
     );
@@ -50,7 +50,8 @@ export const addPlayer = (namespace: Namespace, socketId: string, position: Posi
             position.y,
             position.direction
         ),
-        socketId
+        socketId,
+        walletAddress
     } as PlayerActor;
     
     namespace.worldState.actors.push(player);
@@ -110,6 +111,7 @@ export const getConnectedPlayers = (namespace: Namespace): Actor[] => {
 
 export interface PlayerActor extends Actor {
     socketId?: string;
+    walletAddress: string;  // Required for all players
 }
 
 export const getPlayerBySocket = (namespace: Namespace, socketId: string): Actor | undefined => {
