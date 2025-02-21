@@ -1,18 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import { useGameServer } from "./hooks/useGameServer";
 import { useViewport } from './hooks/useViewport'
-import type { Actor } from 'src/server/types/actor';
+import type { Actor, Position } from 'src/server/types/actor';
 import GameActor from "./GameActor"
 import { PerformancePanel } from "./PerformancePanel";
 import { Pond, RainbowPuke, Farm } from "./components/GameElements";
 import { Path, Rivers } from "./components/Environment";
 import Beach from './components/Beach'
 import { Minimap } from "../Minimap";
+import Race from "../Race";
 import IssuesField from "../IssuesField";
 import * as Styled from './Game.style'
 import { WORLD_WIDTH, WORLD_HEIGHT } from '../../utils/coordinates';
 import { rivers } from '../Paddock/components/Environment/set';
-import { isOnPath, isBlockedByRiver } from "./utils";
+import { isOnPath, isBlockedByRiver, isInStartBox, RaceState } from "./utils";
 
 const HORSE_SIZE = 100;
 
@@ -23,13 +24,19 @@ interface Props {
 }
 
 const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
-    // Track active keys
+    // Track active keys and race state
     const [activeKeys, setActiveKeys] = useState(new Set<string>());
-    const [staticActors, setStaticActors] = useState<Actor[]>()
+    const [staticActors, setStaticActors] = useState<Actor[]>();
+    const [raceState, setRaceState] = useState<RaceState>('not_started');
 
-    const { connected, actors, position, updatePosition, gameSettings, metrics } = useGameServer({ 
+    const { connected, actors, position, updatePosition, gameSettings, metrics } = useGameServer({
         tokenId, token, onStaticActors: (actors: Actor[]) => setStaticActors(actors)
     });
+
+    // Handle race state changes
+    const handleRaceStateChange = (state: RaceState) => {
+        setRaceState(state);
+    };
 
     // Handle keyboard input
     useEffect(() => {
@@ -41,6 +48,9 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
             if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'w', 'a', 's', 'd'].includes(key)) {
                 e.preventDefault();
                 setActiveKeys(prev => new Set([...prev, key]));
+            }
+            if (['r'].includes(key)) {
+                updatePosition({ x: 180, y: 2060, direction: 'right' } as Position)
             }
         };
 
@@ -108,6 +118,11 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
                     const currentPlayer = actors.find(actor => actor.type === 'player' && actor.id === tokenId);
                     const isIntroActive = Boolean(currentPlayer?.introActive);
 
+                    // Don't allow movement during racing
+                    if (raceState === 'racing' || raceState === 'countdown') {
+                        return;
+                    }
+
                     // Check for river collisions first - hard block
                     if (isBlockedByRiver(horseBox, rivers)) {
                         return;
@@ -115,6 +130,13 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
 
                     // During intro, only allow movement if we overlap with a path
                     if (isIntroActive && !isOnPath(horseBox)) {
+                        return;
+                    }
+
+                    // Check if we entered the start box
+                    if (raceState === 'not_started' && isInStartBox(horseBox)) {
+                        updatePosition({ x: 580, y: 2060, direction: 'right' } as Position)
+                        handleRaceStateChange('countdown');
                         return;
                     }
 
@@ -195,6 +217,22 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
                 >
                     <IssuesField />
                 </Styled.IssuesFieldContainer>
+
+                {/* Race component */}
+                {position && (
+                    <Race
+                        playerHorse={{
+                            tokenId: tokenId?.toString() || '',
+                            position: position
+                        }}
+                        aiHorses={[
+                            // Add AI horses here
+                            { tokenId: '82', position: { x: 580, y: 1800 } },
+                            { tokenId: '186', position: { x: 580, y: 1930 } }
+                        ]}
+                        onStateChange={handleRaceStateChange}
+                    />
+                )}
                 {connected && (
                     <>
                         {/* Static Actors */}

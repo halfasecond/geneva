@@ -44,3 +44,23 @@ export const isOnPath = (box: BoundingBox): boolean => {
         );
     });
 };
+
+// Check if horse's left edge enters race start box
+export const isInStartBox = (box: BoundingBox): boolean => {
+    const startBox = {
+        left: 580,
+        right: 700,
+        top: 2060,
+        bottom: 2160
+    };
+    
+    // Only check if left edge is in horizontal range and horse overlaps vertically
+    return (
+        box.left >= startBox.left &&
+        box.left <= startBox.right &&
+        !(box.top >= startBox.bottom || box.bottom <= startBox.top)
+    );
+};
+
+// Race state type
+export type RaceState = 'not_started' | 'countdown' | 'racing' | 'finished';
