@@ -47,7 +47,7 @@ interface Models {
 const gameSettings = {
     tickRate: 100,  // 100 = 10 updates per second
     movementSpeed: 25,  // pixels per frame
-    broadcastFrames: 10,  // Client broadcasts every 5th frame
+    broadcastFrames: 5,  // Client broadcasts every 5th frame
     smoothing: 0.1  // Animation smoothing factor
 };
 

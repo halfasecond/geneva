@@ -11,8 +11,46 @@ import { Minimap } from "../Minimap";
 import IssuesField from "../IssuesField";
 import * as Styled from './Game.style'
 import { WORLD_WIDTH, WORLD_HEIGHT } from '../../utils/coordinates';
+import { rivers } from '../Paddock/components/Environment/set';
 
 const HORSE_SIZE = 100; // Match the size used in GameActor
+
+interface BoundingBox {
+    left: number;
+    right: number;
+    top: number;
+    bottom: number;
+}
+
+// Check if position is blocked by river
+const isBlockedByRiver = (box: BoundingBox, rivers: { left: number; top: number; width: number; height: number }[]): boolean => {
+    return rivers.some(river => {
+        const buffer = 30;
+        const riverBox = {
+            left: river.left + buffer,
+            right: river.left + river.width - buffer,
+            top: river.top + buffer,
+            bottom: river.top + river.height - buffer
+        };
+        return !(
+            box.left >= riverBox.right ||
+            box.right <= riverBox.left ||
+            box.top >= riverBox.bottom ||
+            box.bottom <= riverBox.top
+        );
+    });
+};
+
+// Pre-calculate safe zones for paths
+const pathsWithSafeZones = paths.map(path => ({
+    ...path,
+    safeZone: {
+        left: path.left + 90,
+        right: path.left + path.width - 90,
+        top: path.top + 85,
+        bottom: path.top + path.height - 85
+    }
+}));
 
 interface Props {
     tokenId?: number;
@@ -68,7 +106,7 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
                 const speed = gameSettings.movementSpeed * frames;
                 lastTime = currentTime - (deltaTime % frameTime);
 
-                const newPosition = { ...position };
+                let newPosition = { ...position };
                 let moved = false;
 
                 if (activeKeys.has('arrowleft') || activeKeys.has('a')) {
@@ -94,6 +132,24 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
                     // Keep within world bounds, accounting for horse size
                     newPosition.x = Math.max(0, Math.min(newPosition.x, WORLD_WIDTH - HORSE_SIZE));
                     newPosition.y = Math.max(0, Math.min(newPosition.y, WORLD_HEIGHT - HORSE_SIZE));
+
+                    // Check for collisions before updating position
+                    const horseBox = {
+                        left: newPosition.x,
+                        right: newPosition.x + HORSE_SIZE,
+                        top: newPosition.y,
+                        bottom: newPosition.y + HORSE_SIZE
+                    };
+
+                    // Get intro state from current player
+                    const currentPlayer = actors.find(actor => actor.type === 'player' && actor.id === tokenId);
+                    const isIntroActive = Boolean(currentPlayer?.introActive);
+
+                    // Check for river collisions first - hard block
+                    if (isBlockedByRiver(horseBox, rivers)) {
+                        return;
+                    }
+                    // Update with either original or bounded position
                     updatePosition(newPosition);
                 }
             }
