@@ -35,13 +35,11 @@ const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn: w
             <MetaMask {...{ handleSignIn, handleSignOut, BASE_URL }} loggedIn={walletAddress} />
             <Styled.Main>
                 <h1>The Paddock</h1>
-                {selectedHorse ? (
+                {selectedHorse !== undefined && selectedHorse >= 0 && (
                     <Paddock
                         tokenId={selectedHorse}
                         {...{ nfts, token }}
                     />
-                ) : (
-                    <p>{selectedHorse}</p>
                 )}
             </Styled.Main>
         </>
