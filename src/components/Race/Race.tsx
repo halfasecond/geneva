@@ -35,35 +35,29 @@ const Race = ({
     );
     const [racingHorsePosition, setRacingHorsePosition] = useState({ x: 580, y: 2060 });  // Match stall position
 
-    // Handle countdown and race state transitions
+    // Handle countdown sequence
+    useEffect(() => {
+        if (raceState === 'countdown' && countdown === null) {
+            setCountdown(3);
+        }
+    }, [raceState, countdown]);
+
     useEffect(() => {
         let timer: NodeJS.Timeout;
-        console.log(raceState)
-        if (raceState === 'countdown') {
-            // Initialize countdown
-            if (countdown === null) {
-                onStateChange('racing');
-                //setCountdown(3);
-            }
-            // Handle countdown ticks
-            else if (countdown > 0) {
-                console.log(raceState, countdown)
-                timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-            }
-            // Transition to racing after showing "GO!"
-            else {
-                timer = setTimeout(() => {
-                    if (onStateChange) {
-                        onStateChange('racing');
-                        setStartTime(Date.now());
-                    }
-                }, 1000);
-            }
+        if (countdown && countdown > 0) {
+            timer = setTimeout(() => { setCountdown(countdown - 1) }, 1000)
+        }
+        if (countdown === 0) {
+            timer = setTimeout(() => { 
+                onStateChange('racing')
+                setStartTime(Date.now())
+            }, 1000)
         }
         return () => {
             if (timer) clearTimeout(timer);
-        };
-    }, [raceState, countdown, onStateChange]);
+        }
+    }, [countdown])
+
 
     // Move horses during race
     useEffect(() => {
@@ -135,11 +129,8 @@ const Race = ({
     // Check race completion
     useEffect(() => {
         if (raceState === 'racing' && startTime) {
-            const allFinished = [{ tokenId: playerTokenId }, ...aiHorses]
-                .every(horse => finishTimes.has(horse.tokenId));
-            
+            const allFinished = [{ tokenId: playerTokenId }, ...aiHorses].every(horse => finishTimes.has(horse.tokenId));
             if (allFinished && racingHorsePosition.x >= 1990) {
-                // Signal race completion
                 onStateChange('finished');
             }
         }
@@ -160,9 +151,9 @@ const Race = ({
             <Styled.FinishLine />
             
             {/* Starting Stalls */}
-            <Styled.StartingStall style={{ left: 580, top: 1790 }} />  {/* Stall 1 (-10px) */}
-            <Styled.StartingStall style={{ left: 580, top: 1920 }} />  {/* Stall 2 (-10px) */}
-            <Styled.StartingStall style={{ left: 580, top: 2060 }} />  {/* Start Box (-10px) */}
+            <Styled.StartingStall style={{ left: 580, top: 1790 }} />
+            <Styled.StartingStall style={{ left: 580, top: 1920 }} />
+            <Styled.StartingStall style={{ left: 580, top: 2060 }} />
 
             {/* Fences */}
             <Styled.Fence className="top" />
@@ -178,7 +169,7 @@ const Race = ({
                         style={{
                             position: 'absolute',
                             left: `${position.x}px`,
-                            top: `${1790 + (index * 130)}px`,  // -10px from base position for vertical centering
+                            top: `${1790 + (index * 130)}px`,
                             transform: 'scaleX(1)',
                             zIndex: Z_LAYERS.TERRAIN_FEATURES + 1
                         }}
@@ -188,7 +179,7 @@ const Race = ({
             })}
 
             {/* Racing Horse (during countdown and racing) */}
-            {(raceState === 'racing' || raceState === 'countdown') && (
+            {(raceState === 'racing') && (
                 <Horse
                     style={{
                         position: 'absolute',
@@ -229,7 +220,7 @@ const Race = ({
                     style={{
                         animation: countdown === 0 ? 'scale 0.5s infinite' : 'none',
                         fontSize: countdown === 0 ? '72px' : '48px',
-                        color: countdown === 0 ? '#00ff00' : '#ffffff',
+                        color: '#000',
                         transition: 'all 0.3s ease'
                     }}
                 >

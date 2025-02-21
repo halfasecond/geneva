@@ -116,7 +116,7 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
 
                     // Get intro state from current player
                     const currentPlayer = actors.find(actor => actor.type === 'player' && actor.id === tokenId);
-                    const isIntroActive = Boolean(currentPlayer?.introActive);
+                    const isIntroActive = Boolean(currentPlayer?.introActive) && raceState !== 'finished';
 
                     // Don't allow movement during racing
                     if (raceState === 'racing' || raceState === 'countdown') {
@@ -191,7 +191,7 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
         dimensions: viewportDimensions,
         minScale: 0.2,
         maxScale: 1.5,
-        trackMovement: false,
+        trackMovement: raceState === 'racing' || raceState === 'countdown',
         edgeThreshold: 0.2
     });
 
@@ -219,21 +219,19 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
                 </Styled.IssuesFieldContainer>
 
                 {/* Race component */}
-                {position && (
-                    <Race
-                        playerHorse={{
-                            tokenId: tokenId?.toString() || '',
-                            position: position
-                        }}
-                        aiHorses={[
-                            // Add AI horses here
-                            { tokenId: '82', position: { x: 580, y: 1800 } },
-                            { tokenId: '186', position: { x: 580, y: 1930 } }
-                        ]}
-                        onStateChange={handleRaceStateChange}
-                        raceState={raceState}
-                    />
-                )}
+                <Race
+                    playerHorse={{
+                        tokenId: tokenId?.toString() || '',
+                        position: position
+                    }}
+                    aiHorses={[
+                        // Add AI horses here
+                        { tokenId: '82', position: { x: 580, y: 1800 } },
+                        { tokenId: '186', position: { x: 580, y: 1930 } }
+                    ]}
+                    onStateChange={handleRaceStateChange}
+                    raceState={raceState}
+                />
                 {connected && (
                     <>
                         {/* Static Actors */}
@@ -250,7 +248,7 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
                             <GameActor
                                 key={`dynamic-${i}`}
                                 actor={actor}
-                                visible={true}
+                                visible={!(raceState === 'racing' && actor.type === 'player' && actor.id === tokenId)}
                                 asset={actor.type === 'player' ? nfts.find((nft: { tokenId: number; svg: string }) => nft.tokenId === actor.id) : undefined}
                             />
                         ))}
