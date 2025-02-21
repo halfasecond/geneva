@@ -2,7 +2,8 @@ import * as Styled from '../../style'
 import MetaMask from 'components/MetaMask'
 import { useState, useEffect } from 'react'
 import { AuthProps } from '../../types/auth'
-import { Paddock } from 'components/Paddock'
+import Game from 'components/Game'
+// import { Paddock } from 'components/Paddock'
 import IntroModal from 'components/IntroModal'
 
 const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn: walletAddress, token, tokenId, BASE_URL }) => {
@@ -35,12 +36,13 @@ const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn: w
             <MetaMask {...{ handleSignIn, handleSignOut, BASE_URL }} loggedIn={walletAddress} />
             <Styled.Main>
                 <h1>The Paddock</h1>
-                {selectedHorse !== undefined && selectedHorse >= 0 && (
+                <Game tokenId={selectedHorse} {...{ nfts, token }} />
+                {/* {selectedHorse !== undefined && selectedHorse >= 0 && (
                     <Paddock
                         tokenId={selectedHorse}
                         {...{ nfts, token }}
                     />
-                )}
+                )} */}
             </Styled.Main>
         </>
     )
