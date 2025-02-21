@@ -4,6 +4,11 @@ import { useViewport } from './hooks/useViewport'
 import type { Actor } from 'src/server/types/actor';
 import GameActor from "./GameActor"
 import { PerformancePanel } from "./PerformancePanel";
+import { Pond, RainbowPuke, Farm } from "./components/GameElements";
+import { Path, Rivers, paths } from "./components/Environment";
+import Beach from './components/Beach'
+import { Minimap } from "../Minimap";
+import IssuesField from "../IssuesField";
 import * as Styled from './Game.style'
 import { WORLD_WIDTH, WORLD_HEIGHT } from '../../utils/coordinates';
 
@@ -134,7 +139,7 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
     }, []);
 
     // Initialize viewport control
-    const { style } = useViewport({
+    const { scale, style, offset } = useViewport({
         position,
         dimensions: viewportDimensions,
         minScale: 0.2,
@@ -151,6 +156,20 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
         <Styled.Container ref={containerRef}>
             <PerformancePanel metrics={metrics} visible={true} />
             <Styled.GameSpace style={style}>
+                <Path active={true} />
+                <Rivers active={true} />
+                <Farm left={1190} top={940} size={100} />
+                <Pond left={1040} top={510} />
+                <Pond left={40} top={2580} />
+                <RainbowPuke left={40} top={2580} />
+                <Beach />
+                <Styled.IssuesFieldContainer
+                    style={{
+                        transform: `scale(${1 / scale})`
+                    }}
+                >
+                    <IssuesField />
+                </Styled.IssuesFieldContainer>
                 {connected && (
                     <>
                         {/* Static Actors */}
@@ -174,6 +193,16 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
                     </>
                 )}
             </Styled.GameSpace>
+            {position && (
+                <Minimap
+                    viewportDimensions={viewportDimensions}
+                    viewportOffset={offset}
+                    scale={scale}
+                    currentPosition={position}
+                    actors={actors}
+                    nfts={nfts}
+                />
+            )}
         </Styled.Container>
     )
 }

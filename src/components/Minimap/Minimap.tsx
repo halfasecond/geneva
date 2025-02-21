@@ -35,10 +35,7 @@ interface MinimapProps {
     viewportDimensions: { width: number; height: number };
     scale: number;
     currentPosition: Position;
-    otherPlayers?: Actor[];
-    isServerless?: boolean;
-    tokenId?: number;  // Optional NFT token ID (undefined for view mode)
-    actors: Actor[];  // All actors from server
+    actors: Actor[];
     nfts: any[];
 }
 
@@ -47,9 +44,6 @@ export const Minimap: React.FC<MinimapProps> = ({
     viewportDimensions,
     scale,
     actors,
-    otherPlayers,
-    isServerless = false,
-    tokenId,
     nfts,
 }) => {
     return (
@@ -144,7 +138,7 @@ export const Minimap: React.FC<MinimapProps> = ({
                 ))}
 
                 {/* Only show player in play mode */}
-                {!isServerless && tokenId && otherPlayers && otherPlayers.map(actor => {
+                {actors.map(actor => {
                     if (actor.type === 'player') {
                         return (
                             <MinimapDot
@@ -158,8 +152,6 @@ export const Minimap: React.FC<MinimapProps> = ({
                     }
                     return null;
                 })}
-
-                {/* Viewport indicator */}
                 <ViewportIndicator
                     x={viewportOffset.x}
                     y={viewportOffset.y}
