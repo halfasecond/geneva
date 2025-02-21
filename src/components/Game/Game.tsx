@@ -41,16 +41,24 @@ const isBlockedByRiver = (box: BoundingBox, rivers: { left: number; top: number;
     });
 };
 
-// Pre-calculate safe zones for paths
-const pathsWithSafeZones = paths.map(path => ({
-    ...path,
-    safeZone: {
-        left: path.left + 90,
-        right: path.left + path.width - 90,
-        top: path.top + 85,
-        bottom: path.top + path.height - 85
-    }
-}));
+// Check if box overlaps with any path
+const isOnPath = (box: BoundingBox): boolean => {
+    return paths.some(path => {
+        const buffer = 80;
+        const pathBox = {
+            left: path.left + buffer,
+            right: path.left + path.width - buffer,
+            top: path.top + buffer,
+            bottom: path.top + path.height - buffer
+        };
+        return !(
+            box.left >= pathBox.right ||
+            box.right <= pathBox.left ||
+            box.top >= pathBox.bottom ||
+            box.bottom <= pathBox.top
+        );
+    });
+};
 
 interface Props {
     tokenId?: number;
@@ -149,7 +157,13 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
                     if (isBlockedByRiver(horseBox, rivers)) {
                         return;
                     }
-                    // Update with either original or bounded position
+
+                    // During intro, only allow movement if we overlap with a path
+                    if (isIntroActive && !isOnPath(horseBox)) {
+                        return;
+                    }
+
+                    // Update position if all checks pass
                     updatePosition(newPosition);
                 }
             }

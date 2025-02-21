@@ -45,9 +45,9 @@ interface Models {
 
 // Game settings that can be adjusted
 const gameSettings = {
-    tickRate: 100,  // 100 = 10 updates per second
-    movementSpeed: 25,  // pixels per frame
-    broadcastFrames: 5,  // Client broadcasts every 5th frame
+    tickRate: 120,  // 100 = 10 updates per second
+    movementSpeed: 16,  // pixels per frame
+    broadcastFrames: 2,  // Client broadcasts every 5th frame
     smoothing: 0.1  // Animation smoothing factor
 };
 
