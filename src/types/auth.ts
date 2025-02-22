@@ -3,6 +3,7 @@ export interface AuthProps {
     handleSignIn: () => void;
     handleSignOut: () => void;
     BASE_URL: string;
+    tokenId: number | undefined;
 }
 
 export interface WalletDetails {

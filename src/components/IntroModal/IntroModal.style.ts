@@ -73,8 +73,67 @@ export const Button = styled.button`
     font-weight: normal;
     cursor: pointer;
     transition: background-color 0.2s;
-
+    display: block;
+    margin: 24px auto 0;
     &:hover {
         background-color: #8b5e3c;
+    }
+`;
+
+export const HorseGrid = styled.div`
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 20px;
+    margin: 20px 0;
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 10px;
+`;
+
+export const HorseCard = styled.div`
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.2s;
+    border: 2px solid transparent;
+
+    img {
+        width: 100%;
+        height: auto;
+        margin-bottom: 10px;
+    }
+
+    span {
+        display: block;
+        font-size: 0.9rem;
+        color: #754c29;
+        font-family: 'Bungee', sans-serif;
+    }
+
+    &:hover {
+        transform: translateY(-2px);
+        background: rgba(255, 255, 255, 0.8);
+        border-color: #754c29;
+    }
+`;
+
+export const MintCTA = styled.div`
+    text-align: center;
+    padding: 20px;
+    background: rgba(117, 76, 41, 0.1);
+    border-radius: 8px;
+    margin: 20px 0;
+
+    h3 {
+        margin-bottom: 10px;
+        color: #754c29;
+        font-family: 'Bungee', sans-serif;
+    }
+
+    p {
+        margin-bottom: 15px;
+        color: #666;
     }
 `;

@@ -3,38 +3,35 @@ import styled from 'styled-components';
 import { getAssetPath } from '../../../../utils/assetPath';
 import { Z_LAYERS } from '../../../../config/zIndex';
 
-interface FlowerProps {
+interface BonsaiProps {
     left: number;
     top: number;
     size?: number;
-    rotation?: number;
 }
 
-const FlowerImage = styled.img`
+const BonsaiImage = styled.img`
     position: absolute;
     height: auto;
     pointer-events: none;
     z-index: ${Z_LAYERS.TERRAIN_FEATURES};
 `;
 
-const Flower: React.FC<FlowerProps> = ({ 
+const Bonsai: React.FC<BonsaiProps> = ({ 
     left, 
     top, 
-    size = 150,
-    rotation = 0
+    size = 200
 }) => {
     return (
-        <FlowerImage
-            src={getAssetPath('horse/Flower.svg')}
-            alt="Flower"
+        <BonsaiImage
+            src={getAssetPath('svg/horse/Bonsai.svg')}
+            alt="Bonsai"
             style={{
                 left,
                 top,
-                width: `${size}px`,
-                transform: `rotate(${rotation}deg)`
+                width: `${size}px`
             }}
         />
     );
 };
 
-export default Flower;
+export default Bonsai;

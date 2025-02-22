@@ -1,0 +1,1 @@
+export { Beach as default } from './Beach';

@@ -1,122 +1,105 @@
-import React, { useEffect, useRef, useCallback, useState } from "react";
+import React, { useEffect, useRef, useCallback, useState, memo } from "react";
 import * as Styled from "./Paddock.style";
-import { getAssetPath } from "../../utils/assetPath";
 import { useMovement } from "./hooks/useMovement";
 import { useZoom } from "./hooks/useZoom";
 import { useGameServer } from "./hooks/useGameServer";
+import { PerformancePanel } from "./components/PerformancePanel";
 import { Position } from "../../server/types";
+import { Actor } from "../../server/types/actor";
 import Beach from "./components/Beach";
 import IssuesField from "../IssuesField";
-import { PathHighlight } from "./components/Environment";
-import { Rivers, paths, rivers } from "./components/Environment";
-import { raceElements, issuesColumns } from "../Bridleway/set";
+import { PathHighlight, Rivers, paths } from "./components/Environment";
 import { introMessages } from "../Bridleway/messages";
-import { Pond } from "./components/GameElements";
-import { RainbowPuke } from "./components/GameElements";
-import { Duck, Flower, Farm } from "./components/GameElements";
+import { Pond, RainbowPuke, Farm } from "./components/GameElements";
 import MuteButton from "../MuteButton";
 import Race from "../Race";
 import { BACKGROUND_MUSIC } from '../../audio';
 import { Minimap } from '../Minimap';
-import { WORLD_WIDTH, WORLD_HEIGHT } from '../../utils/coordinates';
+import { Z_LAYERS } from 'src/config/zIndex';
+import { getAssetPath } from '../../utils/assetPath'
+import { getImage, getSVG } from '../../utils/getImage'
+
+// Render game actors with smooth transitions
+const GameActor = memo(({ actor, visible, asset }: {
+    actor: Actor;
+    visible: boolean;
+    asset: any,
+}) => actor.type === 'player' ? (
+        <img
+            src={asset?.svg ? getSVG(asset.svg) : ''}
+            alt={`${actor.type} ${actor.id}`}
+            style={{
+                width: '100px',
+                height: '100px',
+                left: `${actor.position.x}px`,
+                top: `${actor.position.y}px`,
+                transform: `scaleX(${actor.position.direction === "right" ? 1 : -1})`,
+                display: visible ? 'block' : 'none',
+                position: 'absolute',
+                willChange: 'transform',
+                transition: 'all 0.1s linear',
+                zIndex: Z_LAYERS.CHARACTERS,
+            }}
+        />
+    ) : (
+        <img
+            src={getAssetPath(getImage(actor.type, actor.id))}
+            alt={`${actor.type} ${actor.id}`}
+            style={{
+                width: actor.type === 'flower of goodwill' && actor.size ? `${actor.size}px` : '100px',
+                height: actor.type === 'flower of goodwill' && actor.size ? `${actor.size}px` : '100px',
+                left: `${actor.position.x}px`,
+                top: `${actor.position.y}px`,
+                transform: `scaleX(${actor.position.direction === "right" ? 1 : -1})`,
+                display: visible ? 'block' : 'none',
+                position: 'absolute',
+                willChange: 'transform',
+                transition: 'all 0.1s linear',
+                zIndex: Z_LAYERS.CHARACTERS,
+            }}
+        />
+    )
+);
 
 interface PaddockProps {
-    horseId: string;
-    initialPosition?: Position;
+    tokenId?: number;  // Optional NFT token ID for view-only mode
     introActive?: boolean;
     modalOpen?: boolean;
+    nfts: any;
+    token: string;  // JWT token for socket authentication
 }
+
+// View mode when no tokenId is selected
+const isViewMode = (tokenId: number | undefined): boolean => !tokenId;
 
 // Environment configuration - handle various falsy values
 const IS_SERVERLESS = import.meta.env.VITE_SERVERLESS?.toLowerCase() === 'true';
 
-// Define all restricted areas to avoid
-const RESTRICTED_AREAS = [
-    // Ponds (500x400 each)
-    { left: 1040, top: 510, width: 500, height: 400 },
-    { left: 40, top: 2580, width: 500, height: 400 },
-    // Rivers
-    ...rivers,
-    // Bridleway paths
-    ...paths.map(path => ({
-        ...path,
-        // Add 20px buffer around paths
-        left: path.left - 20,
-        top: path.top - 20,
-        width: path.width + 40,
-        height: path.height + 40
-    })),
-    // Race track elements
-    ...raceElements,
-    // Issues columns
-    ...issuesColumns
-];
-
-interface RestrictedArea {
-    left: number;
-    top: number;
-    width: number;
-    height: number;
-}
-
-// Check if a position overlaps with any restricted area
-const isInRestrictedArea = (x: number, y: number, size: number) => {
-    return RESTRICTED_AREAS.some((area: RestrictedArea) => {
-        // Check if any part of the flower overlaps with water
-        return !(x + size < area.left || // flower is left of water
-                x > area.left + area.width || // flower is right of water
-                y + size < area.top || // flower is above water
-                y > area.top + area.height); // flower is below water
-    });
-};
-
-// Generate random flower positions (avoiding water)
-const FLOWERS = Array.from({ length: 100 }, () => {
-    let left, top, size;
-    do {
-        left = Math.random() * (WORLD_WIDTH - 200); // Leave space for flower size
-        top = Math.random() * (WORLD_HEIGHT - 1000); // Keep away from beach
-        size = 100 + Math.random() * 100;
-    } while (isInRestrictedArea(left, top, size));
-    
-    return {
-        left,
-        top,
-        size,
-        rotation: 0
-    };
-});
-
-// AI horses for the race
+// AI horses for the race - using string tokenIds for Race component
 const AI_HORSES = [
-    { tokenId: "82", position: { x: 580, y: 1800 } },  // Stall 1 (1530 + 270)
-    { tokenId: "186", position: { x: 580, y: 1930 } }   // Stall 2 (1660 + 270)
+    { tokenId: '82', position: { x: 580, y: 1800 } },  // Stall 1 (1530 + 270)
+    { tokenId: '186', position: { x: 580, y: 1930 } }   // Stall 2 (1660 + 270)
 ];
 
 export const Paddock: React.FC<PaddockProps> = ({
-    horseId,
-    initialPosition = { x: 100, y: 150, direction: "right" as const },
+    tokenId,
     introActive = true,
-    modalOpen = false
+    modalOpen = false,
+    nfts,
+    token
 }) => {
     const [isMuted, setIsMuted] = useState(false);
-    const [debugMode, setDebugMode] = useState(false);
+    const [showMetrics, setShowMetrics] = useState(false);
 
-    // Debug mode hotkey
+    // Toggle metrics panel with 'P' key
     useEffect(() => {
         const handleKeyPress = (e: KeyboardEvent) => {
-            if (e.key === '9') {
-                setDebugMode(prev => {
-                    const newDebugMode = !prev;
-                    if (newDebugMode && !isMuted) {
-                        handleMuteToggle();
-                    }
-                    return newDebugMode;
-                });
+            if (e.key.toLowerCase() === 'p') {
+                setShowMetrics(prev => !prev);
             }
         };
-        window.addEventListener('keydown', handleKeyPress);
-        return () => window.removeEventListener('keydown', handleKeyPress);
+        window.addEventListener('keypress', handleKeyPress);
+        return () => window.removeEventListener('keypress', handleKeyPress);
     }, []);
 
     // Handle audio mute/unmute
@@ -155,10 +138,26 @@ export const Paddock: React.FC<PaddockProps> = ({
     const [racingPosition, setRacingPosition] = useState<{ x: number; y: number } | undefined>();
 
     // Initialize game server connection
-    const { connected, players, updatePosition } = useGameServer({
-        horseId,
-        initialPosition
-    });
+    const [staticActors, setStaticActors] = useState<Actor[]>([]);  // Initialize with empty array
+    // Create static actors callback once
+    const handleStaticActors = useCallback((actors: Actor[]) => {
+        setStaticActors(actors);
+    }, []);
+
+    // In view mode, don't connect to game server
+    const { connected, actors, updatePosition, completeTutorial, gameSettings, metrics } = useGameServer(
+        isViewMode(tokenId)
+            ? { // View mode - no server connection
+                tokenId: undefined,
+                token: '',
+                onStaticActors: handleStaticActors  // Use same callback
+            }
+            : { // Play mode - connect with tokenId
+                tokenId: tokenId!,  // Safe to assert as we checked isViewMode
+                token,
+                onStaticActors: handleStaticActors  // Use same callback
+            }
+    );
 
     // Handle message triggers
     const handleMessageTrigger = useCallback((messageIndex: number) => {
@@ -187,7 +186,8 @@ export const Paddock: React.FC<PaddockProps> = ({
             setRacingPosition(undefined);
             setIsRacing(false);
             
-            // Remove path restrictions after race
+            // Complete tutorial and remove path restrictions
+            completeTutorial();
             setPathRestricted(false);
             
             // Show final message
@@ -209,25 +209,36 @@ export const Paddock: React.FC<PaddockProps> = ({
         }
     }, [IS_SERVERLESS, updatePosition]);
 
-    // Track introActive state
     // Track path restriction state separately from visual intro state
     const [pathRestricted, setPathRestricted] = useState(introActive);
 
-    // Initialize movement with current viewport dimensions
+    // Find current player by matching NFT token ID
+    const currentPlayer = actors.find(actor =>
+        actor.type === 'player' &&
+        actor.id === tokenId  // actor.id is number, tokenId is number
+    );
+
+    // Default view position
+    const viewPosition = { x: 100, y: 150, direction: 'right' as const };
+
+    // Use movement hook with disabled state when no tokenId
     const { position, viewportOffset } = useMovement({
         viewportWidth: viewportDimensions.width,
         viewportHeight: viewportDimensions.height,
-        initialPosition,
-        introActive: debugMode ? false : pathRestricted,
-        movementDisabled: debugMode ? false : (isRacing || modalOpen),
+        introActive: pathRestricted,
+        movementDisabled: !tokenId || isRacing,
         onPositionChange: useCallback((pos: Position) => {
-            if (!IS_SERVERLESS && connected) {
+            if (!IS_SERVERLESS && connected && tokenId) {
                 updatePosition(pos);
             }
-        }, [IS_SERVERLESS, connected, updatePosition]),
-        onMessageTrigger: introActive && !debugMode ? handleMessageTrigger : undefined,
-        forcePosition: debugMode ? undefined : forcedPosition,
-        racingHorsePosition: racingPosition
+        }, [IS_SERVERLESS, connected, updatePosition, tokenId]),
+        onMessageTrigger: introActive ? handleMessageTrigger : undefined,
+        forcePosition: !tokenId ? viewPosition : forcedPosition,  // Use view position without tokenId
+        racingHorsePosition: racingPosition,
+        serverPosition: currentPlayer?.position,
+        actors,
+        tokenId: tokenId || 0,  // Provide default to avoid undefined
+        gameSettings
     });
 
     // Initialize zoom control
@@ -266,17 +277,19 @@ export const Paddock: React.FC<PaddockProps> = ({
     return (
         <Styled.Container ref={containerRef}>
             <MuteButton isMuted={isMuted} onToggle={handleMuteToggle} />
+            <PerformancePanel metrics={metrics} visible={showMetrics} />
             <Styled.GameSpace
                 style={{
                     transform: `scale(${scale}) translate(${-viewportOffset.x}px, ${-viewportOffset.y}px)`,
                     transformOrigin: `${zoomOrigin.x}% ${zoomOrigin.y}%`
                 }}
             >
-                {/* Beach with viewport-aware animation */}
+                {/* Beach with continuous animation */}
                 <Beach
                     viewportOffset={viewportOffset}
                     viewportDimensions={viewportDimensions}
                 />
+
 
                 {/* Bridleway Path and Rivers */}
                 <PathHighlight active={introActive} />
@@ -311,38 +324,16 @@ export const Paddock: React.FC<PaddockProps> = ({
                     />
                 ))}
 
-                {/* Random flowers scattered around the paddock */}
-                {FLOWERS.map((flower, index) => (
-                    <Flower
-                        key={`flower-${index}`}
-                        left={flower.left}
-                        top={flower.top}
-                        size={flower.size}
-                        rotation={flower.rotation}
-                    />
-                ))}
-
-                {/* Farm Pond and RainbowPuke Falls */}
-                <Pond left={1040} top={510} />
-                {/* Farm below top pond */}
                 <Farm left={1190} top={940} size={100} />
-                {/* Ducks in first pond */}
-                <Duck key="pond1-duck1" left={1040} top={650} pondWidth={380} />
-                <Duck key="pond1-duck2" left={1040} top={650} pondWidth={380} />
-                <Duck key="pond1-duck3" left={1040} top={650} pondWidth={380} />
-
+                <Pond left={1040} top={510} />
                 <Pond left={40} top={2580} />
-                {/* Ducks in second pond */}
-                <Duck key="pond2-duck1" left={40} top={2720} pondWidth={380} />
-                <Duck key="pond2-duck2" left={40} top={2720} pondWidth={380} />
-                <Duck key="pond2-duck3" left={40} top={2720} pondWidth={380} />
                 <RainbowPuke left={40} top={2580} />
 
-                {/* Race Track */}
-                {introActive && (
+                {/* Race Track - only show in play mode */}
+                {introActive && position && tokenId && (
                     <Race
                         playerHorse={{
-                            tokenId: horseId,
+                            tokenId: tokenId.toString(),
                             position: { x: position.x, y: position.y }
                         }}
                         aiHorses={AI_HORSES}
@@ -360,47 +351,41 @@ export const Paddock: React.FC<PaddockProps> = ({
                     <IssuesField />
                 </Styled.IssuesFieldContainer>
 
-                {/* Current player - hide during racing */}
-                {!isRacing && (
-                    <Styled.Horse
-                        style={{
-                            left: `${position.x}px`,
-                            top: `${position.y}px`,
-                            transform: `scaleX(${position.direction === "right" ? 1 : -1})`
-                        }}
-                    >
-                        <img src={getAssetPath(`horse/${horseId}.svg`)} alt={`#${horseId}`} />
-                    </Styled.Horse>
-                )}
+                {/* Static Actors (flowers) */}
+                {staticActors.map((actor, i) => (
+                    <GameActor
+                        key={`static-${i}`}
+                        actor={actor}
+                        visible={true}
+                        asset={undefined}
+                    />
+                ))}
 
-                {/* Other players - only show in non-serverless mode */}
-                {!IS_SERVERLESS && Array.from(players.entries()).map(([id, player]) => {
-                    if (id === horseId) return null;
-                    return (
-                        <Styled.Horse
-                            key={id}
-                            style={{
-                                left: `${player.position.x}px`,
-                                top: `${player.position.y}px`,
-                                transform: `scaleX(${player.position.direction === "right" ? 1 : -1})`
-                            }}
-                        >
-                            <img src={getAssetPath(`horse/${id}.svg`)} alt={`Horse ${id}`} />
-                        </Styled.Horse>
-                    );
-                })}
+                {/* Dynamic Actors (players, ducks) */}
+                {actors.map((actor, i) => (
+                    <GameActor
+                        key={`dynamic-${i}`}
+                        actor={actor}
+                        visible={!isRacing || actor.type !== 'player'}
+                        asset={actor.type === 'player' ? nfts.find((nft: { tokenId: number; svg: string }) => nft.tokenId === actor.id) : undefined}
+                    />
+                ))}
             </Styled.GameSpace>
 
             {/* Minimap */}
-            <Minimap
-                viewportOffset={viewportOffset}
-                viewportDimensions={viewportDimensions}
-                scale={scale}
-                currentPosition={position}
-                otherPlayers={players}
-                isServerless={IS_SERVERLESS}
-                horseId={horseId}
-            />
+            {position && (
+                <Minimap
+                    viewportDimensions={viewportDimensions}
+                    viewportOffset={viewportOffset}
+                    scale={scale}
+                    currentPosition={position}
+                    tokenId={tokenId}
+                    actors={actors}
+                    nfts={nfts}
+                    otherPlayers={actors}
+                    isServerless={IS_SERVERLESS}
+                />
+            )}
         </Styled.Container>
     );
 };
