@@ -14,6 +14,7 @@ interface UseGameServerProps {
 const defaultState = {
     connected: false,
     updatePosition: () => {},
+    updatePlayerIntroStatus: () => {},
     actors: [],
     player: undefined,
     gameSettings: {
@@ -185,6 +186,12 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
         }
     }, [connected, trackMovementUpdate]);
 
+    const updatePlayerIntroStatus = useCallback(() => {
+        if (socketRef.current?.connected && connected) {
+            socketRef.current.emit('player:complete_tutorial')
+        }
+    }, [connected]);
+
     // View mode - still connect for world state, but no actions
     if (!tokenId) {
         return {
@@ -203,9 +210,10 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
     return {
         connected,
         updatePosition,
+        updatePlayerIntroStatus,
         position: actors.find(actor => actor.id === tokenId)?.position,
         actors,
-        gameSettings,  // Server-provided settings
-        metrics  // Performance metrics
+        gameSettings,
+        metrics
     };
 }

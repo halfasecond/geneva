@@ -73,7 +73,8 @@ export const Button = styled.button`
     font-weight: normal;
     cursor: pointer;
     transition: background-color 0.2s;
-
+    display: block;
+    margin: 24px auto 0;
     &:hover {
         background-color: #8b5e3c;
     }

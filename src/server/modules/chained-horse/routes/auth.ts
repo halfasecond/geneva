@@ -44,7 +44,7 @@ const routes = (Models: Models): Router => {
                 // Return token and horse ID if player exists
                 res.status(200).json({
                     token,
-                    horseId: gameState && gameState.tokenId ? gameState.tokenId : -1
+                    tokenId: gameState && gameState.tokenId ? gameState.tokenId : -1
                 });
             } else {
                 // Authentication failed
@@ -70,7 +70,7 @@ const routes = (Models: Models): Router => {
                     res.status(200).json({ 
                         valid: true,
                         address: userId.toLowerCase(),
-                        horseId: gameState && gameState.tokenId ? gameState.tokenId : -1
+                        tokenId: gameState && gameState.tokenId ? gameState.tokenId : -1
                     });
                 } else {
                     res.status(200).json({ valid: false });

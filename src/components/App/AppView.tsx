@@ -1,5 +1,5 @@
 import * as Styled from '../../style'
-import MetaMask from 'components/MetaMask'
+import Metamask from 'components/Metamask'
 import { useState, useEffect } from 'react'
 import { AuthProps } from '../../types/auth'
 import Game from 'components/Game'
@@ -23,7 +23,7 @@ const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn: w
             }
         };
         loadNFTs();
-    }, []);
+    }, [])
 
     return (
         <>
@@ -31,9 +31,10 @@ const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn: w
                 <IntroModal
                     onSelectHorse={id => setSelectedHorse(id)}
                     {...{ handleSignIn, handleSignOut, BASE_URL, loggedIn: walletAddress, nfts }}
+                    currentHorse={tokenId}
                 />
             )}
-            <MetaMask {...{ handleSignIn, handleSignOut, BASE_URL }} loggedIn={walletAddress} />
+            <Metamask {...{ handleSignIn, handleSignOut, tokenId, BASE_URL }} loggedIn={walletAddress} />
             <Styled.Main>
                 <h1>The Paddock</h1>
                 <Game tokenId={selectedHorse} {...{ nfts, token }} />

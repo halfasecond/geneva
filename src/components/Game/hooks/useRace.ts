@@ -12,7 +12,7 @@ export function useRace({ initialPosition, tokenId }: UseRaceOptions) {
     const [state, setState] = useState<RaceState>('not_started');
     const [racePosition, setRacePosition] = useState(initialPosition);
     const [countdown, setCountdown] = useState<number | null>(null);
-    const [finishResults, setFinishResults] = useState<[string, number][]>([]);
+    const [finishResults, setFinishResults] = useState<{ tokenId: string | number, time: number}[]>([]);
     
     // AI horses state
     const [aiPositions, setAiPositions] = useState([

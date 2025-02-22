@@ -6,7 +6,7 @@ import { useGameServer } from '../Paddock/hooks/useGameServer';
 
 interface IntroModalProps {
     onSelectHorse: (horse: number) => void;  // Callback to select horse
-    nfts: Array<{ tokenId: number; svg: string }>;
+    nfts: any;
     loggedIn: string | undefined;
     handleSignIn: () => void;
     handleSignOut: () => void;
@@ -77,9 +77,8 @@ const IntroModal: React.FC<IntroModalProps> = ({
                             <>
                                 <p>Welcome back!</p>
                                 <img src={selectedNft.svg} alt={`Horse #${selectedNft.tokenId}`} style={{ width: 200 }} />
-                                <p>Continue with Horse #{selectedNft.tokenId}?</p>
-                                <Styled.Button onClick={handleStart}>
-                                    Enter The Paddock
+                                <Styled.Button onClick={() => onSelectHorse(selectedNft.tokenId)}>
+                                    Continue with Horse #{selectedNft.tokenId}?
                                 </Styled.Button>
                             </>
                         ) : (

@@ -14,7 +14,7 @@ import IssuesField from "../IssuesField";
 import * as Styled from './Game.style'
 import { WORLD_WIDTH, WORLD_HEIGHT } from '../../utils/coordinates';
 import { rivers } from '../Paddock/components/Environment/set';
-import { isOnPath, isBlockedByRiver, isInStartBox, RaceState } from "./utils";
+import { isOnPath, isBlockedByRiver, isInStartBox } from "./utils";
 
 const HORSE_SIZE = 100;
 
@@ -29,7 +29,7 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
     const [activeKeys, setActiveKeys] = useState(new Set<string>());
     const [staticActors, setStaticActors] = useState<Actor[]>();
 
-    const { connected, actors, position, updatePosition, gameSettings, metrics } = useGameServer({
+    const { connected, actors, position, updatePosition, updatePlayerIntroStatus, gameSettings, metrics } = useGameServer({
         tokenId, token, onStaticActors: (actors: Actor[]) => setStaticActors(actors)
     });
 
@@ -49,7 +49,8 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
 
     useEffect(() => {
         if (tokenId && finishResults.length > 0) {
-            updatePosition(racePosition)
+            updatePosition({ ...racePosition, direction: 'right' })
+            updatePlayerIntroStatus()
         }
     }, [finishResults, tokenId])
 
@@ -64,9 +65,9 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
                 e.preventDefault();
                 setActiveKeys(prev => new Set([...prev, key]));
             }
-            if (['r'].includes(key)) {
-                updatePosition({ x: 180, y: 2060, direction: 'right' } as Position)
-            }
+            // if (['r'].includes(key)) {
+            //     updatePosition({ x: 180, y: 2060, direction: 'right' } as Position)
+            // }
         };
 
         const handleKeyUp = (e: KeyboardEvent) => {
@@ -207,7 +208,7 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
         minScale: 0.2,
         maxScale: 1.5,
         trackMovement: isRacing,
-        edgeThreshold: 0.2 // No edge threshold during race
+        edgeThreshold: 0.2
     });
 
     if (!dimensionsReady) {
