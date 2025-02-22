@@ -10,7 +10,7 @@ interface UseViewportProps {
     };
     minScale?: number;
     maxScale?: number;
-    trackMovement?: boolean;
+    trackMovement: boolean;
     edgeThreshold?: number;
 }
 

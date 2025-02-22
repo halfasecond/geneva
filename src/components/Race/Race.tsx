@@ -13,135 +13,20 @@ interface RaceProps {
         tokenId: string;
         position: { x: number; y: number };
     }>;
-    onStateChange: (state: RaceState) => void;
-    onRacingPositionChange?: (position: { x: number; y: number }) => void;
     raceState: RaceState;
+    countdown?: number | null;
+    showPodium?: boolean;
+    finishResults?: string[];
 }
+
 const Race = ({
     playerHorse,
     aiHorses,
-    onStateChange,
-    onRacingPositionChange,
-    raceState
+    raceState,
+    countdown = null,
+    showPodium = false,
+    finishResults = []
 }: RaceProps): React.ReactElement => {
-    // Destructure props to make them available in scope
-    const { tokenId: playerTokenId } = playerHorse;
-    const [countdown, setCountdown] = useState<number | null>(null);
-    const [startTime, setStartTime] = useState<number | null>(null);
-    const [finishTimes, setFinishTimes] = useState<Map<string, number>>(new Map());
-    const [showPodium, setShowPodium] = useState(false);
-    const [aiPositions, setAiPositions] = useState<Map<string, { x: number; y: number }>>(
-        new Map(aiHorses.map(horse => [horse.tokenId, horse.position]))
-    );
-    const [racingHorsePosition, setRacingHorsePosition] = useState({ x: 580, y: 2060 });  // Match stall position
-
-    // Handle countdown sequence
-    useEffect(() => {
-        if (raceState === 'countdown' && countdown === null) {
-            setCountdown(3);
-        }
-    }, [raceState, countdown]);
-
-    useEffect(() => {
-        let timer: NodeJS.Timeout;
-        if (countdown && countdown > 0) {
-            timer = setTimeout(() => { setCountdown(countdown - 1) }, 1000)
-        }
-        if (countdown === 0) {
-            timer = setTimeout(() => { 
-                onStateChange('racing')
-                setStartTime(Date.now())
-            }, 1000)
-        }
-        return () => {
-            if (timer) clearTimeout(timer);
-        }
-    }, [countdown])
-
-
-    // Move horses during race
-    useEffect(() => {
-        if (raceState === 'racing') {
-            const moveInterval = setInterval(() => {
-                // Move racing horse
-                setRacingHorsePosition(prev => {
-                    const speed = 2 + Math.random() * 7;  // Random speed between 2-9px like legacy code
-                    const newX = prev.x + speed;
-                    if (newX >= 1990) {
-                        if (!finishTimes.has(playerTokenId)) {
-                            setFinishTimes(times => {
-                                const newTimes = new Map(times).set(playerTokenId, Date.now());
-                                if (newTimes.size === 1) setShowPodium(true); // Show podium on first finish
-                                return newTimes;
-                            });
-                        }
-                        return { ...prev, x: 1990 };  // Cap at finish line
-                    }
-                    return { ...prev, x: newX };
-                });
-
-                // Move AI horses
-                setAiPositions(prev => {
-                    const next = new Map(prev);
-                    aiHorses.forEach(horse => {
-                        if (!finishTimes.has(horse.tokenId)) {
-                            const currentPos = next.get(horse.tokenId);
-                            if (currentPos) {
-                                // Random speed between 2-8 pixels per tick (matching legacy code)
-                                const speed = 2 + Math.random() * 6;
-                                const newX = currentPos.x + speed;
-                                
-                                // Check if horse finished
-                                if (newX >= 1990) {
-                                    setFinishTimes(times => {
-                                        const newTimes = new Map(times).set(horse.tokenId, Date.now());
-                                        if (newTimes.size === 1) setShowPodium(true); // Show podium on first finish
-                                        return newTimes;
-                                    });
-                                    next.set(horse.tokenId, {
-                                        ...currentPos,
-                                        x: 1990  // Cap at finish line
-                                    });
-                                } else {
-                                    next.set(horse.tokenId, {
-                                        ...currentPos,
-                                        x: newX
-                                    });
-                                }
-                            }
-                        }
-                    });
-                    return next;
-                });
-            }, 50);  // Update every 50ms
-            
-            return () => clearInterval(moveInterval);
-        }
-    }, [raceState, aiHorses, finishTimes, playerHorse.tokenId]);
-
-    // Notify parent of racing position changes
-    useEffect(() => {
-        if (onRacingPositionChange && (raceState === 'countdown' || raceState === 'racing')) {
-            onRacingPositionChange(racingHorsePosition);
-        }
-    }, [onRacingPositionChange, racingHorsePosition, raceState]);
-
-    // Check race completion
-    useEffect(() => {
-        if (raceState === 'racing' && startTime) {
-            const allFinished = [{ tokenId: playerTokenId }, ...aiHorses].every(horse => finishTimes.has(horse.tokenId));
-            if (allFinished && racingHorsePosition.x >= 1990) {
-                onStateChange('finished');
-            }
-        }
-    }, [raceState, startTime, finishTimes, playerTokenId, aiHorses, onStateChange, racingHorsePosition.x]);
-
-    // Get sorted race results
-    const getRaceResults = useCallback(() => {
-        return Array.from(finishTimes.entries())
-            .sort(([, timeA], [, timeB]) => timeA - timeB)
-            .map(([tokenId]) => tokenId);
-    }, [finishTimes]);
 
     return (
         <>
@@ -160,31 +45,27 @@ const Race = ({
             <Styled.Fence className="bottom" />
 
             {/* AI Horses */}
-            {aiHorses.map((horse, index) => {
-                const position = aiPositions.get(horse.tokenId);
-                if (!position) return null;
-                return (
-                    <Horse
-                        key={horse.tokenId}
-                        style={{
-                            position: 'absolute',
-                            left: `${position.x}px`,
-                            top: `${1790 + (index * 130)}px`,
-                            transform: 'scaleX(1)',
-                            zIndex: Z_LAYERS.TERRAIN_FEATURES + 1
-                        }}
-                        horseId={horse.tokenId}
-                    />
-                );
-            })}
+            {aiHorses.map((horse, index) => (
+                <Horse
+                    key={horse.tokenId}
+                    style={{
+                        position: 'absolute',
+                        left: `${horse.position.x}px`,
+                        top: `${1790 + (index * 130)}px`,
+                        transform: 'scaleX(1)',
+                        zIndex: Z_LAYERS.TERRAIN_FEATURES + 1
+                    }}
+                    horseId={horse.tokenId}
+                />
+            ))}
 
-            {/* Racing Horse (during countdown and racing) */}
-            {(raceState === 'racing') && (
+            {/* Racing Horse */}
+            {(raceState === 'racing' || raceState === 'countdown') && (
                 <Horse
                     style={{
                         position: 'absolute',
-                        left: `${racingHorsePosition.x}px`,
-                        top: `${racingHorsePosition.y}px`,
+                        left: `${playerHorse.position.x}px`,
+                        top: `${playerHorse.position.y}px`,
                         transform: 'scaleX(1)',
                         zIndex: Z_LAYERS.TERRAIN_FEATURES + 1
                     }}
@@ -195,7 +76,7 @@ const Race = ({
             {/* Podium */}
             {showPodium && (
                 <Styled.Podium data-testid="podium" style={{ opacity: 1 }}>
-                    {getRaceResults().slice(0, 3).map((tokenId, index) => (
+                    {finishResults.slice(0, 3).map((tokenId, index) => (
                         <Horse
                             key={tokenId}
                             style={{

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useGameServer } from "./hooks/useGameServer";
 import { useViewport } from './hooks/useViewport'
+import { useRace } from './hooks/useRace'
 import type { Actor, Position } from 'src/server/types/actor';
 import GameActor from "./GameActor"
 import { PerformancePanel } from "./PerformancePanel";
@@ -24,19 +25,34 @@ interface Props {
 }
 
 const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
-    // Track active keys and race state
+    // Track active keys
     const [activeKeys, setActiveKeys] = useState(new Set<string>());
     const [staticActors, setStaticActors] = useState<Actor[]>();
-    const [raceState, setRaceState] = useState<RaceState>('not_started');
 
     const { connected, actors, position, updatePosition, gameSettings, metrics } = useGameServer({
         tokenId, token, onStaticActors: (actors: Actor[]) => setStaticActors(actors)
     });
 
-    // Handle race state changes
-    const handleRaceStateChange = (state: RaceState) => {
-        setRaceState(state);
-    };
+    // Use race hook
+    const {
+        state: raceState,
+        position: racePosition,
+        isRacing,
+        startRace,
+        countdown,
+        showPodium,
+        finishResults,
+        aiPositions,
+    } = useRace({
+        initialPosition: position || { x: 580, y: 2060, direction: 'right' },
+        tokenId
+    });
+
+    useEffect(() => {
+        if (tokenId && finishResults.includes(tokenId.toString())) {
+            updatePosition({ x: 1990, y: 2060, direction: 'right' })
+        }
+    }, [finishResults, tokenId])
 
     // Handle keyboard input
     useEffect(() => {
@@ -135,8 +151,8 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
 
                     // Check if we entered the start box
                     if (raceState === 'not_started' && isInStartBox(horseBox)) {
-                        updatePosition({ x: 580, y: 2060, direction: 'right' } as Position)
-                        handleRaceStateChange('countdown');
+                        updatePosition({ x: 580, y: 2060, direction: 'right' } as Position);
+                        startRace();
                         return;
                     }
 
@@ -185,14 +201,14 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
         return () => window.removeEventListener("resize", updateDimensions);
     }, []);
 
-    // Initialize viewport control
+    // Initialize viewport control - center immediately when racing
     const { scale, style, offset } = useViewport({
-        position,
+        position: isRacing ? racePosition : position,
         dimensions: viewportDimensions,
         minScale: 0.2,
         maxScale: 1.5,
-        trackMovement: raceState === 'racing' || raceState === 'countdown',
-        edgeThreshold: 0.2
+        trackMovement: isRacing,
+        edgeThreshold: 0.2 // No edge threshold during race
     });
 
     if (!dimensionsReady) {
@@ -222,15 +238,13 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
                 <Race
                     playerHorse={{
                         tokenId: tokenId?.toString() || '',
-                        position: position
+                        position: isRacing ? racePosition : position || { x: 580, y: 2060 }
                     }}
-                    aiHorses={[
-                        // Add AI horses here
-                        { tokenId: '82', position: { x: 580, y: 1800 } },
-                        { tokenId: '186', position: { x: 580, y: 1930 } }
-                    ]}
-                    onStateChange={handleRaceStateChange}
+                    aiHorses={aiPositions}
                     raceState={raceState}
+                    countdown={countdown}
+                    showPodium={showPodium}
+                    finishResults={finishResults}
                 />
                 {connected && (
                     <>
