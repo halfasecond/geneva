@@ -53,10 +53,10 @@ export function useViewport({
         let newOffset = { ...currentState.offset };
 
         if (trackMovement) {
-            // Directly center on position
+            // Position horse at 20% from left, 70% from top during tracking
             newOffset = {
-                x: position.x - (dimensions.width / 2 / currentState.scale),
-                y: position.y - (dimensions.height / 2 / currentState.scale)
+                x: position.x - (dimensions.width * 0.2 / currentState.scale),
+                y: position.y - (dimensions.height * 0.7 / currentState.scale)
             };
         } else {
             // Edge-based scrolling

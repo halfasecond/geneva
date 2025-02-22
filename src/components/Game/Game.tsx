@@ -40,7 +40,6 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
         isRacing,
         startRace,
         countdown,
-        showPodium,
         finishResults,
         aiPositions,
     } = useRace({
@@ -49,8 +48,8 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
     });
 
     useEffect(() => {
-        if (tokenId && finishResults.includes(tokenId.toString())) {
-            updatePosition({ x: 1990, y: 2060, direction: 'right' })
+        if (tokenId && finishResults.length > 0) {
+            updatePosition(racePosition)
         }
     }, [finishResults, tokenId])
 
@@ -243,7 +242,6 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
                     aiHorses={aiPositions}
                     raceState={raceState}
                     countdown={countdown}
-                    showPodium={showPodium}
                     finishResults={finishResults}
                 />
                 {connected && (

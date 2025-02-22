@@ -1,4 +1,3 @@
-import React, { useEffect, useState, useCallback } from 'react';
 import * as Styled from './Race.style';
 import Horse from '../Horse';
 import { Z_LAYERS } from 'src/config/zIndex';
@@ -14,9 +13,8 @@ interface RaceProps {
         position: { x: number; y: number };
     }>;
     raceState: RaceState;
-    countdown?: number | null;
-    showPodium?: boolean;
-    finishResults?: string[];
+    countdown: number | null;
+    finishResults: { tokenId: number | string, time: number }[];
 }
 
 const Race = ({
@@ -24,7 +22,6 @@ const Race = ({
     aiHorses,
     raceState,
     countdown = null,
-    showPodium = false,
     finishResults = []
 }: RaceProps): React.ReactElement => {
 
@@ -74,11 +71,11 @@ const Race = ({
             )}
 
             {/* Podium */}
-            {showPodium && (
+            {finishResults.length > 0 && (
                 <Styled.Podium data-testid="podium" style={{ opacity: 1 }}>
-                    {finishResults.slice(0, 3).map((tokenId, index) => (
+                    {finishResults.slice(0, 3).map((horse: any, index) => (
                         <Horse
-                            key={tokenId}
+                            key={`podium-${horse.tokenId}`}
                             style={{
                                 position: 'absolute',
                                 left: [102, 42, 170][index],
@@ -86,7 +83,7 @@ const Race = ({
                                 width: 50,
                                 height: 50
                             }}
-                            horseId={tokenId}
+                            horseId={horse.tokenId}
                         />
                     ))}
                     <Styled.PodiumPlatform className="first" />

@@ -12,8 +12,7 @@ export function useRace({ initialPosition, tokenId }: UseRaceOptions) {
     const [state, setState] = useState<RaceState>('not_started');
     const [racePosition, setRacePosition] = useState(initialPosition);
     const [countdown, setCountdown] = useState<number | null>(null);
-    const [showPodium, setShowPodium] = useState(false);
-    const [finishResults, setFinishResults] = useState<string[]>([]);
+    const [finishResults, setFinishResults] = useState<[string, number][]>([]);
     
     // AI horses state
     const [aiPositions, setAiPositions] = useState([
@@ -55,7 +54,7 @@ export function useRace({ initialPosition, tokenId }: UseRaceOptions) {
         if (state !== 'racing') return;
 
         const finishedHorses = new Set<string>();
-        const startTimes = new Map<string, number>();
+        const startTimes = [] as any;
         const startTime = Date.now();
 
         const moveInterval = setInterval(() => {
@@ -67,7 +66,7 @@ export function useRace({ initialPosition, tokenId }: UseRaceOptions) {
                 if (newX >= 1990) {
                     if (tokenId && !finishedHorses.has(tokenId.toString())) {
                         finishedHorses.add(tokenId.toString());
-                        startTimes.set(tokenId.toString(), Date.now() - startTime);
+                        startTimes.push({ tokenId, time: Date.now() - startTime });
                     }
                     return { ...prev, x: 1990 };
                 }
@@ -87,7 +86,7 @@ export function useRace({ initialPosition, tokenId }: UseRaceOptions) {
 
                     if (newX >= 1990) {
                         finishedHorses.add(horse.tokenId);
-                        startTimes.set(horse.tokenId, Date.now() - startTime);
+                        startTimes.push({ tokenId: horse.tokenId, time: Date.now() - startTime });
                         return {
                             ...horse,
                             position: { ...horse.position, x: 1990 }
@@ -103,12 +102,8 @@ export function useRace({ initialPosition, tokenId }: UseRaceOptions) {
 
             // Update results whenever a horse finishes
             if (finishedHorses.size > 0) {
-                const results = Array.from(startTimes.entries())
-                    .sort(([, timeA], [, timeB]) => timeA - timeB)
-                    .map(([id]) => id);
+                const results = startTimes.sort((a: any, b: any) => a.time - b.time)
                 setFinishResults(results);
-                setShowPodium(true);
-
                 // End race when all horses finish
                 if (finishedHorses.size === 3) {
                     updateState('finished');
@@ -125,7 +120,6 @@ export function useRace({ initialPosition, tokenId }: UseRaceOptions) {
         countdown,
         isRacing: state === 'racing' || state === 'countdown',
         startRace,
-        showPodium,
         finishResults,
         aiPositions
     };

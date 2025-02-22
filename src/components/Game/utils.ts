@@ -10,7 +10,7 @@ interface BoundingBox {
 // Check if position is blocked by river
 export const isBlockedByRiver = (box: BoundingBox, rivers: { left: number; top: number; width: number; height: number }[]): boolean => {
     return rivers.some(river => {
-        const buffer = 30;
+        const buffer = 20;
         const riverBox = {
             left: river.left + buffer,
             right: river.left + river.width - buffer,
