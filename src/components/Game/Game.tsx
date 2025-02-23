@@ -4,6 +4,8 @@ import { useViewport } from './hooks/useViewport'
 import { useRace } from './hooks/useRace'
 import type { Actor, Position } from 'src/server/types/actor';
 import GameActor from "./GameActor"
+import { BACKGROUND_MUSIC } from '../../audio';
+import MuteButton from "../MuteButton";
 import { PerformancePanel } from "./PerformancePanel";
 import { Pond, RainbowPuke, Farm } from "./components/GameElements";
 import { Path, Rivers } from "./components/Environment";
@@ -16,6 +18,7 @@ import { WORLD_WIDTH, WORLD_HEIGHT } from '../../utils/coordinates';
 import { rivers, introMessages } from './components/Environment/set';
 import { isOnPath, isBlockedByRiver, isInStartBox, handleKeyDown, handleKeyUp } from "./utils";
 
+const { VITE_APP_NODE_ENV } = import.meta.env;
 const HORSE_SIZE = 100;
 
 interface Props {
@@ -28,6 +31,8 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
     // Track active keys
     const [activeKeys, setActiveKeys] = useState(new Set<string>());
     const [staticActors, setStaticActors] = useState<Actor[]>();
+    const [isMuted, setIsMuted] = useState(false);
+    const [showMetrics, setShowMetrics] = useState(false)
 
     const { connected, actors, introActive, position, updatePosition, updatePlayerIntroStatus, gameSettings, metrics } = useGameServer({
         tokenId, token, onStaticActors: (actors: Actor[]) => setStaticActors(actors)
@@ -35,6 +40,15 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
     const [visibleMessages, setVisibleMessages] = useState<boolean[]>(
         new Array(introMessages.length).fill(false)
     );
+
+    const handleMuteToggle = useCallback(() => {
+        setIsMuted(prev => {
+            const newMuted = !prev;
+            BACKGROUND_MUSIC.muted = newMuted;
+            return newMuted;
+        });
+    }, []);
+
 
     // Use race hook
     const {
@@ -79,9 +93,24 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
                 next[0] = true;
                 return next;
             });
-        }, 500);
+            BACKGROUND_MUSIC.play()
+            if (VITE_APP_NODE_ENV === 'development') {
+                handleMuteToggle()
+            }
+        }, 500)
         return () => clearTimeout(timer);
     }, [])
+
+    useEffect(() => {
+        const handleKeyPress = (e: KeyboardEvent) => {
+            if (e.key.toLowerCase() === 'p') {
+                setShowMetrics(prev => !prev);
+            }
+        };
+        window.addEventListener('keypress', handleKeyPress);
+        return () => window.removeEventListener('keypress', handleKeyPress);
+    }, []);
+
 
     // Handle message triggers
     const handleMessageTrigger = useCallback((messageIndex: number) => {
@@ -266,7 +295,8 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
 
     return (
         <Styled.Container ref={containerRef}>
-            <PerformancePanel metrics={metrics} visible={true} />
+            <MuteButton isMuted={isMuted} onToggle={handleMuteToggle} />
+            {showMetrics && <PerformancePanel metrics={metrics} visible={true} />}
             <Styled.GameSpace style={style}>
                 <Path active={true} />
                 <Rivers active={true} />

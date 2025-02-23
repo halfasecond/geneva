@@ -45,14 +45,16 @@ interface Models {
 
 // Game settings that can be adjusted
 const gameSettings = {
-    tickRate: 120,  // 100 = 10 updates per second
+    tickRate: 100,  // 100 = 10 updates per second
     movementSpeed: 16,  // pixels per frame
     broadcastFrames: 2,  // Client broadcasts every 5th frame
-    smoothing: 0.1  // Animation smoothing factor
+    smoothing: 0.1,  // Animation smoothing factor
+    saveStateInterval: 1000 * 60 // Save state every 1 minute
 };
 
 // Slower tick rate for better performance
 const TICK_RATE = gameSettings.tickRate;
+const SAVE_STATE_INTERVAL = gameSettings.saveStateInterval
 
 import { authMiddleware, getWalletAddress } from '../middleware/auth';
 
@@ -63,22 +65,13 @@ const socket = async (io: Server, web3: any, name: string, Models: Models, Contr
     namespace.use(authMiddleware);
     let socketCount = 0;
     let gameLoopInterval: NodeJS.Timeout;
-
-    // Legacy players from previous state
-    const LEGACY_PLAYERS = [
-        { tokenId: 267, address: '0x137d9174d3bd00f2153dcc0fe7af712d3876a71e', position: { x: 1376, y: 1112, direction: 'right' } },
-        { tokenId: 19, address: '0x92265f4c85619ec8b70bb179ff1f86c56e54d348', position: { x: 1036, y: 940, direction: 'right' } },
-        { tokenId: 18, address: '0xf3aab663fb3f428c8f82f1e0791c23284325f8db', position: { x: 3072, y: 640, direction: 'left' } },
-        { tokenId: 47, address: '0x07c0ca4600dec713a40a7cc5f98bec70770f14c8', position: { x: 1476, y: 1112, direction: 'left' } },
-        { tokenId: 389, address: '0x3fddfc5275a4bc341f3ea4b6ff629747af1eed5e', position: { x: 2308, y: 2010, direction: 'right' } }
-    ];
+    let saveInterval: NodeJS.Timeout;
 
     async function processActors() {
         const actors = await Models.GameState.find();
         for (const actor of actors) {
             const bestTime = await Models.Race.findOne({ owner: actor.walletAddress.toLowerCase() }).sort({ time: 1 });
             actor.race = bestTime?.time;
-            console.log(actor)
             addPlayer(namespace, '', actor.position as Position, actor.tokenId, actor.walletAddress.toLowerCase(), actor.race)
         }
         return actors
@@ -87,12 +80,6 @@ const socket = async (io: Server, web3: any, name: string, Models: Models, Contr
     // Initialize world state
     initializeWorldState(namespace, []);
     await processActors()
-
-    // Add legacy players as disconnected players
-    LEGACY_PLAYERS.forEach(player => {
-        const actor = addPlayer(namespace, '', player.position as Position, player.tokenId, player.address, undefined);  // Include address
-        setPlayerDisconnected(namespace, actor.id);
-    });
 
     // Log all unique utility traits
     const horses = await Models.NFT.find();
@@ -107,10 +94,10 @@ const socket = async (io: Server, web3: any, name: string, Models: Models, Contr
             utilityCount[horse.utility] = (utilityCount[horse.utility] || 0) + 1;
         }
     });
-    // console.log('\nUtility Distribution:');
-    // Object.entries(utilityCount).forEach(([utility, count]) => {
-    //     console.log(`${utility}: ${count} horses`);
-    // });
+    console.log('\nUtility Distribution:');
+    Object.entries(utilityCount).forEach(([utility, count]) => {
+        console.log(`${utility}: ${count} horses`);
+    });
     // Create ducks of doom and flowers of goodwill
     const duckHorses = horses.filter(horse => horse.utility === 'duck of doom');
     const flowerHorses = horses.filter(horse => horse.utility === 'flower of goodwill');
@@ -229,6 +216,34 @@ const socket = async (io: Server, web3: any, name: string, Models: Models, Contr
     // Start game loop when server starts
     startGameLoop();
 
+    const startSaveLoop = () => {
+        saveInterval = setInterval(async () => {
+            const connectedPlayers = getConnectedPlayers(namespace);
+            for (const player of connectedPlayers) {
+                await Models.GameState.findOneAndUpdate(
+                    { tokenId: player.id, walletAddress: player.walletAddress?.toLowerCase() },
+                    {
+                        $set: {
+                            position: player.position,
+                            race: player.race,
+                            lastSeen: new Date()
+                        }
+                    },
+                    { upsert: true, new: true }
+                );
+            }
+        }, SAVE_STATE_INTERVAL)
+    }
+
+    // Start save loop when server starts
+    startSaveLoop();
+
+    const stopSaveLoop = () => {
+        if (saveInterval) {
+            clearInterval(saveInterval);
+        }
+    };
+
     namespace.on('connection', (socket: Socket) => {
         socketCount++;
         console.log(`Socket connected: ${socket.id} (Total sockets: ${socketCount})`);
@@ -258,7 +273,9 @@ const socket = async (io: Server, web3: any, name: string, Models: Models, Contr
 
                 console.log(`🐎 Horse #${tokenId} joined the paddock 🐎`);
                 const existingPlayer = await Models.GameState.findOne({ tokenId, walletAddress: walletAddress.toLowerCase() })
-                const position = existingPlayer?.position || { x: 100, y: 150, direction: 'right' as const } // Default spawn position for new players
+                const position = (existingPlayer?.position && existingPlayer?.race)
+                    ? existingPlayer?.position
+                    : { x: 100, y: 150, direction: 'right' as const } // Default spawn position for new players and players or haven't finished the race
                 const player = addPlayer(namespace, socket.id, position, tokenId, walletAddress, existingPlayer?.race);
                 setPlayerConnected(namespace, player.id);
 
@@ -298,7 +315,6 @@ const socket = async (io: Server, web3: any, name: string, Models: Models, Contr
         socket.on('player:complete_tutorial', race => {
             const player = getPlayerBySocket(namespace, socket.id);
             if (player) {
-                console.log(player)
                 completePlayerTutorial(namespace, player.id, race);
                 saveRace(Models, race, player, 'newbIslandRace');
             }
@@ -334,6 +350,9 @@ const socket = async (io: Server, web3: any, name: string, Models: Models, Contr
         
         // Stop the game loop
         stopGameLoop();
+
+        // Stop the save loop
+        stopSaveLoop();
         
         // Clear duck movement state
         duckState.clear();
