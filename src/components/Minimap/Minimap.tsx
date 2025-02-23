@@ -2,9 +2,9 @@ import React from 'react';
 import styled from 'styled-components';
 import { MinimapElement, MinimapDot, ViewportIndicator } from './MinimapElement';
 import { Position } from '../../server/types';
-import { paths, rivers } from '../../components/Paddock/components/Environment';
-import { raceElements, pond, issuesColumns } from '../../components/Bridleway/set';
+import { paths, rivers, raceElements, pond, issuesColumns } from '../../components/Game/components/Environment';
 import { WORLD_WIDTH, WORLD_HEIGHT, MINIMAP_WIDTH, MINIMAP_HEIGHT } from '../../utils/coordinates';
+import { Actor } from '../../server/types/actor';
 
 const Container = styled.div`
     position: fixed;
@@ -34,19 +34,16 @@ interface MinimapProps {
     viewportDimensions: { width: number; height: number };
     scale: number;
     currentPosition: Position;
-    otherPlayers?: Map<string, { position: Position }>;
-    isServerless?: boolean;
-    horseId: string;
+    actors: Actor[];
+    nfts: any[];
 }
 
 export const Minimap: React.FC<MinimapProps> = ({
     viewportOffset,
     viewportDimensions,
     scale,
-    currentPosition,
-    otherPlayers,
-    isServerless = false,
-    horseId
+    actors,
+    nfts,
 }) => {
     return (
         <Container>
@@ -139,29 +136,21 @@ export const Minimap: React.FC<MinimapProps> = ({
                     />
                 ))}
 
-                {/* Current player */}
-                <MinimapDot
-                    x={currentPosition.x}
-                    y={currentPosition.y}
-                    horseId={horseId}
-                    direction={currentPosition.direction}
-                />
-
-                {/* Other players - only show in non-serverless mode */}
-                {!isServerless && otherPlayers && Array.from(otherPlayers.entries()).map(([id, player]) => {
-                    if (id === currentPosition.toString()) return null;
-                    return (
-                        <MinimapDot
-                            key={id}
-                            x={player.position.x}
-                            y={player.position.y}
-                            horseId={id}
-                            direction={player.position.direction}
-                        />
-                    );
+                {/* Only show player in play mode */}
+                {actors.map(actor => {
+                    if (actor.type === 'player') {
+                        return (
+                            <MinimapDot
+                                key={actor.id}
+                                x={actor.position.x}
+                                y={actor.position.y}
+                                svg={nfts.find(nft => nft.tokenId === actor.id)?.svg}
+                                direction={actor.position.direction}
+                            />
+                        );
+                    }
+                    return null;
                 })}
-
-                {/* Viewport indicator */}
                 <ViewportIndicator
                     x={viewportOffset.x}
                     y={viewportOffset.y}

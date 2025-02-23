@@ -4,6 +4,8 @@ import createOwnerModel from './owners';
 import createEventModel from './events';
 import createAccountModel from './accounts';
 import createMessageModel from './messages';
+import createGameStateModel from './gameState';
+import createRaceModel from './races';
 
 interface Models {
     Event: Model<any>;
@@ -11,6 +13,8 @@ interface Models {
     Owner: Model<any>;
     Account: Model<any>;
     Message: Model<any>;
+    GameState: Model<any>;
+    Race: Model<any>;
     [key: string]: Model<any>;
 }
 
@@ -19,5 +23,7 @@ export default (prefix: string, db: Connection): Models => ({
     Owner: createOwnerModel(prefix, db),
     Event: createEventModel(prefix, db),
     Account: createAccountModel(prefix, db),
-    Message: createMessageModel(prefix, db)
+    Message: createMessageModel(prefix, db),
+    GameState: createGameStateModel(prefix, db),
+    Race: createRaceModel(prefix, db)
 });

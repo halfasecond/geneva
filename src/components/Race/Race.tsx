@@ -1,7 +1,7 @@
-import React, { useEffect, useState, useCallback } from 'react';
 import * as Styled from './Race.style';
 import Horse from '../Horse';
 import { Z_LAYERS } from 'src/config/zIndex';
+import { RaceState } from '../Game/utils';
 
 interface RaceProps {
     playerHorse: {
@@ -12,165 +12,18 @@ interface RaceProps {
         tokenId: string;
         position: { x: number; y: number };
     }>;
-    onStateChange?: (state: 'countdown' | 'racing' | 'finished') => void;
-    onRacingPositionChange?: (position: { x: number; y: number }) => void;
+    raceState: RaceState;
+    countdown: number | null;
+    finishResults: { tokenId: number | string, time: number }[];
 }
 
-type RaceState = 'not_started' | 'countdown' | 'racing' | 'finishing' | 'finished';
 const Race = ({
     playerHorse,
     aiHorses,
-    onStateChange,
-    onRacingPositionChange
+    raceState,
+    countdown = null,
+    finishResults = []
 }: RaceProps): React.ReactElement => {
-    // Destructure props to make them available in scope
-    const { tokenId: playerTokenId, position: playerPosition } = playerHorse;
-    const [raceState, setRaceState] = useState<RaceState>('not_started');
-    const [countdown, setCountdown] = useState<number | null>(null);
-    const [startTime, setStartTime] = useState<number | null>(null);
-    const [finishTimes, setFinishTimes] = useState<Map<string, number>>(new Map());
-    const [showPodium, setShowPodium] = useState(false);
-    const [aiPositions, setAiPositions] = useState<Map<string, { x: number; y: number }>>(
-        new Map(aiHorses.map(horse => [horse.tokenId, horse.position]))
-    );
-    const [racingHorsePosition, setRacingHorsePosition] = useState({ x: 580, y: 2060 });  // Match stall position
-    const [hasStarted, setHasStarted] = useState(false);  // Track if race has started
-
-    // Check if player is in starting position - only check once
-    const checkStartPosition = useCallback(() => {
-        if (hasStarted || raceState !== 'not_started') return false;
-
-        // Check if player position is within the valid start range
-        const isInStartRange = 
-            playerPosition.x >= 580 && 
-            playerPosition.x <= 700 &&
-            playerPosition.y >= 2060 &&
-            playerPosition.y <= 2160;
-
-        if (isInStartRange) {
-            setHasStarted(true);  // Lock the start check
-        }
-        return isInStartRange;
-    }, [hasStarted, raceState, playerPosition]);
-
-    // Start countdown when player enters start box
-    useEffect(() => {
-        if (raceState === 'not_started') {
-            const isInStartPosition = checkStartPosition();
-            if (isInStartPosition) {
-                setRaceState('countdown');
-                if (onStateChange) onStateChange('countdown');
-                setCountdown(3);
-            }
-        }
-    }, [raceState, checkStartPosition, onStateChange]);
-
-    // Handle countdown
-    useEffect(() => {
-        let timer: NodeJS.Timeout;
-        if (raceState === 'countdown' && countdown !== null) {
-            if (countdown > 0) {
-                timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-            } else {
-                timer = setTimeout(() => {
-                    setRaceState('racing');
-                    if (onStateChange) onStateChange('racing');
-                    setStartTime(Date.now());
-                }, 1000);  // Show GO! for 1 second
-            }
-        }
-        return () => {
-            if (timer) clearTimeout(timer);
-        };
-    }, [raceState, countdown, onStateChange]);
-
-    // Move horses during race
-    useEffect(() => {
-        if (raceState === 'racing' || raceState === 'finishing') {
-            const moveInterval = setInterval(() => {
-                // Move racing horse
-                setRacingHorsePosition(prev => {
-                    const speed = 2 + Math.random() * 7;  // Random speed between 2-9px like legacy code
-                    const newX = prev.x + speed;
-                    if (newX >= 1990) {
-                        if (!finishTimes.has(playerTokenId)) {
-                            setFinishTimes(times => {
-                                const newTimes = new Map(times).set(playerTokenId, Date.now());
-                                if (newTimes.size === 1) setShowPodium(true); // Show podium on first finish
-                                return newTimes;
-                            });
-                        }
-                        return { ...prev, x: 1990 };  // Cap at finish line
-                    }
-                    return { ...prev, x: newX };
-                });
-
-                // Move AI horses
-                setAiPositions(prev => {
-                    const next = new Map(prev);
-                    aiHorses.forEach(horse => {
-                        if (!finishTimes.has(horse.tokenId)) {
-                            const currentPos = next.get(horse.tokenId);
-                            if (currentPos) {
-                                // Random speed between 2-8 pixels per tick (matching legacy code)
-                                const speed = 2 + Math.random() * 6;
-                                const newX = currentPos.x + speed;
-                                
-                                // Check if horse finished
-                                if (newX >= 1990) {
-                                    setFinishTimes(times => {
-                                        const newTimes = new Map(times).set(horse.tokenId, Date.now());
-                                        if (newTimes.size === 1) setShowPodium(true); // Show podium on first finish
-                                        return newTimes;
-                                    });
-                                    next.set(horse.tokenId, {
-                                        ...currentPos,
-                                        x: 1990  // Cap at finish line
-                                    });
-                                } else {
-                                    next.set(horse.tokenId, {
-                                        ...currentPos,
-                                        x: newX
-                                    });
-                                }
-                            }
-                        }
-                    });
-                    return next;
-                });
-            }, 50);  // Update every 50ms
-            
-            return () => clearInterval(moveInterval);
-        }
-    }, [raceState, aiHorses, finishTimes, playerHorse.tokenId]);
-
-    // Notify parent of racing position changes
-    useEffect(() => {
-        if (onRacingPositionChange && (raceState === 'countdown' || raceState === 'racing' || raceState === 'finishing')) {
-            onRacingPositionChange(racingHorsePosition);
-        }
-    }, [onRacingPositionChange, racingHorsePosition, raceState]);
-
-    // Check race completion
-    useEffect(() => {
-        if (raceState === 'racing' && startTime) {
-            const allFinished = [{ tokenId: playerTokenId }, ...aiHorses]
-                .every(horse => finishTimes.has(horse.tokenId));
-            
-            if (allFinished && racingHorsePosition.x >= 1990) {
-                // Signal race completion
-                setRaceState('finished');
-                if (onStateChange) onStateChange('finished');
-            }
-        }
-    }, [raceState, startTime, finishTimes, playerTokenId, aiHorses, onStateChange, racingHorsePosition.x]);
-
-    // Get sorted race results
-    const getRaceResults = useCallback(() => {
-        return Array.from(finishTimes.entries())
-            .sort(([, timeA], [, timeB]) => timeA - timeB)
-            .map(([tokenId]) => tokenId);
-    }, [finishTimes]);
 
     return (
         <>
@@ -180,40 +33,36 @@ const Race = ({
             <Styled.FinishLine />
             
             {/* Starting Stalls */}
-            <Styled.StartingStall style={{ left: 580, top: 1790 }} />  {/* Stall 1 (-10px) */}
-            <Styled.StartingStall style={{ left: 580, top: 1920 }} />  {/* Stall 2 (-10px) */}
-            <Styled.StartingStall style={{ left: 580, top: 2060 }} />  {/* Start Box (-10px) */}
+            <Styled.StartingStall style={{ left: 580, top: 1790 }} />
+            <Styled.StartingStall style={{ left: 580, top: 1920 }} />
+            <Styled.StartingStall style={{ left: 580, top: 2060 }} />
 
             {/* Fences */}
             <Styled.Fence className="top" />
             <Styled.Fence className="bottom" />
 
             {/* AI Horses */}
-            {aiHorses.map((horse, index) => {
-                const position = aiPositions.get(horse.tokenId);
-                if (!position) return null;
-                return (
-                    <Horse
-                        key={horse.tokenId}
-                        style={{
-                            position: 'absolute',
-                            left: `${position.x}px`,
-                            top: `${1790 + (index * 130)}px`,  // -10px from base position for vertical centering
-                            transform: 'scaleX(1)',
-                            zIndex: Z_LAYERS.TERRAIN_FEATURES + 1
-                        }}
-                        horseId={horse.tokenId}
-                    />
-                );
-            })}
+            {aiHorses.map((horse, index) => (
+                <Horse
+                    key={horse.tokenId}
+                    style={{
+                        position: 'absolute',
+                        left: `${horse.position.x}px`,
+                        top: `${1790 + (index * 130)}px`,
+                        transform: 'scaleX(1)',
+                        zIndex: Z_LAYERS.TERRAIN_FEATURES + 1
+                    }}
+                    horseId={horse.tokenId}
+                />
+            ))}
 
-            {/* Racing Horse (during countdown, racing, and finishing) */}
-            {(raceState === 'racing' || raceState === 'countdown' || raceState === 'finishing') && (
+            {/* Racing Horse */}
+            {(raceState === 'racing' || raceState === 'countdown') && (
                 <Horse
                     style={{
                         position: 'absolute',
-                        left: `${racingHorsePosition.x}px`,
-                        top: `${racingHorsePosition.y}px`,
+                        left: `${playerHorse.position.x}px`,
+                        top: `${playerHorse.position.y}px`,
                         transform: 'scaleX(1)',
                         zIndex: Z_LAYERS.TERRAIN_FEATURES + 1
                     }}
@@ -222,11 +71,11 @@ const Race = ({
             )}
 
             {/* Podium */}
-            {showPodium && (
+            {finishResults.length > 0 && (
                 <Styled.Podium data-testid="podium" style={{ opacity: 1 }}>
-                    {getRaceResults().slice(0, 3).map((tokenId, index) => (
+                    {finishResults.slice(0, 3).map((horse: any, index) => (
                         <Horse
-                            key={tokenId}
+                            key={`podium-${horse.tokenId}`}
                             style={{
                                 position: 'absolute',
                                 left: [102, 42, 170][index],
@@ -234,7 +83,7 @@ const Race = ({
                                 width: 50,
                                 height: 50
                             }}
-                            horseId={tokenId}
+                            horseId={horse.tokenId}
                         />
                     ))}
                     <Styled.PodiumPlatform className="first" />
@@ -245,7 +94,14 @@ const Race = ({
 
             {/* Countdown Display */}
             {raceState === 'countdown' && countdown !== null && (
-                <Styled.CountdownDisplay>
+                <Styled.CountdownDisplay
+                    style={{
+                        animation: countdown === 0 ? 'scale 0.5s infinite' : 'none',
+                        fontSize: countdown === 0 ? '72px' : '48px',
+                        color: '#000',
+                        transition: 'all 0.3s ease'
+                    }}
+                >
                     {countdown === 0 ? 'GO!' : countdown}
                 </Styled.CountdownDisplay>
             )}
