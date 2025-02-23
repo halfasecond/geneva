@@ -112,7 +112,8 @@ export const Wave = styled.div`
 export const Leaderboard = styled.div`
     position: absolute;
     background-color: #FFF;
-    border-radius: 6px;
+    border: 1px solid #CCC;
+    border-radius: 5px;
     padding: 24px;
     display: flex;
     flex-direction: column;

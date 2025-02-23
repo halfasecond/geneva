@@ -2,8 +2,7 @@ import { Server, Socket, Namespace } from 'socket.io';
 import { Model } from 'mongoose';
 import { Actor, Position } from '../../../types/actor';
 import { WORLD_WIDTH, WORLD_HEIGHT } from '../../../../utils/coordinates';
-import { paths, rivers } from '../../../../components/Paddock/components/Environment/set';
-import { raceElements, issuesColumns } from '../../../../components/Bridleway/set';
+import { paths, rivers, raceElements, issuesColumns } from '../../../../components/Game/components/Environment/set';
 
 interface RestrictedArea {
     left: number;
@@ -66,8 +65,6 @@ const socket = async (io: Server, web3: any, name: string, Models: Models, Contr
     let gameLoopInterval: NodeJS.Timeout;
 
     // Legacy players from previous state
-    // Legacy players with their last known positions
-    // tokenId is both the NFT ID and the player ID
     const LEGACY_PLAYERS = [
         { tokenId: 267, address: '0x137d9174d3bd00f2153dcc0fe7af712d3876a71e', position: { x: 1376, y: 1112, direction: 'right' } },
         { tokenId: 19, address: '0x92265f4c85619ec8b70bb179ff1f86c56e54d348', position: { x: 1036, y: 940, direction: 'right' } },
@@ -76,12 +73,24 @@ const socket = async (io: Server, web3: any, name: string, Models: Models, Contr
         { tokenId: 389, address: '0x3fddfc5275a4bc341f3ea4b6ff629747af1eed5e', position: { x: 2308, y: 2010, direction: 'right' } }
     ];
 
+    async function processActors() {
+        const actors = await Models.GameState.find();
+        for (const actor of actors) {
+            const bestTime = await Models.Race.findOne({ owner: actor.walletAddress.toLowerCase() }).sort({ time: 1 });
+            actor.race = bestTime?.time;
+            console.log(actor)
+            addPlayer(namespace, '', actor.position as Position, actor.tokenId, actor.walletAddress.toLowerCase(), actor.race)
+        }
+        return actors
+    }
+
     // Initialize world state
-    initializeWorldState(namespace);
+    initializeWorldState(namespace, []);
+    await processActors()
 
     // Add legacy players as disconnected players
     LEGACY_PLAYERS.forEach(player => {
-        const actor = addPlayer(namespace, '', player.position as Position, player.tokenId, player.address);  // Include address
+        const actor = addPlayer(namespace, '', player.position as Position, player.tokenId, player.address, undefined);  // Include address
         setPlayerDisconnected(namespace, actor.id);
     });
 
@@ -248,10 +257,9 @@ const socket = async (io: Server, web3: any, name: string, Models: Models, Contr
                 }
 
                 console.log(`🐎 Horse #${tokenId} joined the paddock 🐎`);
-
-                // Default spawn position for new players
-                const spawnPosition = { x: 100, y: 150, direction: 'right' as const };
-                const player = addPlayer(namespace, socket.id, spawnPosition, tokenId, walletAddress);
+                const existingPlayer = await Models.GameState.findOne({ tokenId, walletAddress: walletAddress.toLowerCase() })
+                const position = existingPlayer?.position || { x: 100, y: 150, direction: 'right' as const } // Default spawn position for new players
+                const player = addPlayer(namespace, socket.id, position, tokenId, walletAddress, existingPlayer?.race);
                 setPlayerConnected(namespace, player.id);
 
                 // Save to GameState collection
@@ -260,7 +268,7 @@ const socket = async (io: Server, web3: any, name: string, Models: Models, Contr
                     {
                         $set: {
                             tokenId,
-                            position: spawnPosition,
+                            position,
                             connected: true,
                             lastSeen: new Date(),
                             race: undefined
@@ -350,10 +358,11 @@ const socket = async (io: Server, web3: any, name: string, Models: Models, Contr
 
 const saveRace = async (Models: Models, riders: any, player: Actor, name: string) => {
     const _winner = riders.sort((a: any, b: any) => a.time - b.time)[0]
-    const winner = _winner.tokenId === player.id ? player.walletAddress : undefined;
+    const winner = _winner.tokenId === player.id
+    const owner = player.walletAddress?.toLowerCase();
     const time = _winner.time
     const _race = {
-        race: name, tokenId: _winner.tokenId, winner, time, riders
+        race: name, tokenId: player.id, winner, owner, time, riders
     }
     await new Models.Race(_race).save();
     const record = await Models.Race.findOne({ race: name, time: { $lt: time } })

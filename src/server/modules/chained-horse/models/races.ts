@@ -9,7 +9,8 @@ interface Rider {
 interface Race {
     race: string;
     tokenId: number;
-    winner?: string;
+    owner?: string;
+    winner: boolean;
     time: number;
     riders: Rider[];
     timestamp: Date;
@@ -24,7 +25,8 @@ const RiderSchema = new Schema<Rider>({
 const schema = new Schema<Race>({
     race: { type: String, required: true },
     tokenId: { type: Number, required: true },
-    winner: { type: String, default: undefined },
+    owner: { type: String, default: undefined },
+    winner: { type: Boolean, default: false },
     time: { type: Number, required: true },
     riders: [RiderSchema],
     timestamp: { type: Date, required: true, default: Date.now },

@@ -10,9 +10,9 @@ declare module 'socket.io' {
 }
 
 // Initialize world state
-export const initializeWorldState = (namespace: Namespace) => {
+export const initializeWorldState = (namespace: Namespace, actors: Actor[]) => {
     namespace.worldState = {
-        actors: [],
+        actors,
         timestamp: Date.now()
     };
     namespace.staticActors = [];
@@ -29,7 +29,7 @@ export const addStaticActor = (namespace: Namespace, actor: Actor): void => {
 };
 
 // Player management
-export const addPlayer = (namespace: Namespace, socketId: string, position: Position, tokenId: number, walletAddress: string): Actor => {
+export const addPlayer = (namespace: Namespace, socketId: string, position: Position, tokenId: number, walletAddress: string, race: number | undefined): Actor => {
     const existingPlayer = namespace.worldState.actors.find(
         actor => actor.type === 'player' && actor.id === tokenId  // Compare tokenIds
     );
@@ -51,6 +51,7 @@ export const addPlayer = (namespace: Namespace, socketId: string, position: Posi
             position.direction
         ),
         socketId,
+        race,
         walletAddress
     } as PlayerActor;
     
@@ -183,5 +184,6 @@ export const formatActorState = (actor: Actor) => ({
     position: actor.position,
     connected: actor.connected,
     lastSeen: actor.lastSeen,
-    size: actor.size
+    size: actor.size,
+    race: actor.race
 });

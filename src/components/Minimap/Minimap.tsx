@@ -2,8 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { MinimapElement, MinimapDot, ViewportIndicator } from './MinimapElement';
 import { Position } from '../../server/types';
-import { paths, rivers } from '../../components/Paddock/components/Environment';
-import { raceElements, pond, issuesColumns } from '../../components/Bridleway/set';
+import { paths, rivers, raceElements, pond, issuesColumns } from '../../components/Game/components/Environment';
 import { WORLD_WIDTH, WORLD_HEIGHT, MINIMAP_WIDTH, MINIMAP_HEIGHT } from '../../utils/coordinates';
 import { Actor } from '../../server/types/actor';
 

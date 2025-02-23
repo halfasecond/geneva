@@ -20,8 +20,8 @@ const HORSE_SIZE = 100;
 
 interface Props {
     tokenId?: number;
+    token?: string;
     nfts: any;
-    token: string;
 }
 
 const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
@@ -244,7 +244,7 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
     });
 
     const getRecord = () => {
-        const records = actors.filter(({ race }) => race !== undefined).sort((a, b) => a.race - b.race)
+        const records = actors.filter(({ race }) => race !== undefined).sort((a: any, b: any) => a.race - b.race)
         return (
             <div>
                 Track Record: {records.length > 0 ?

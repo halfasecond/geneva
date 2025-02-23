@@ -104,3 +104,28 @@ export const introMessages: IntroMessage[] = [
       message: '<b>Well Done!</b><br />You took part in a race.<br /><br />You are now free to roam around the Paddock. From now on the path you take is up to you.'
   }
 ];
+
+export const issuesColumns = [
+  { left: 1682, top: 510, width: 236, height: 720, backgroundColor: "rgb(139, 69, 19)" },  // Column 1
+  { left: 1942, top: 510, width: 236, height: 720, backgroundColor: "rgb(139, 69, 19)" },  // Column 2 (left + width + gap)
+  { left: 2202, top: 510, width: 236, height: 720, backgroundColor: "rgb(139, 69, 19)" },  // Column 3 (prev + width + gap)
+  { left: 2462, top: 510, width: 236, height: 720, backgroundColor: "rgb(139, 69, 19)" }   // Column 4 (prev + width + gap)
+];
+
+export const raceElements = [
+  { left: 700, top: 1739, width: 1300, height: 40, backgroundColor: "#888" },  // Top fence
+  { left: 700, top: 2150, width: 1300, height: 40, backgroundColor: "#888" },  // Bottom fence
+  { left: 700, top: 1770, width: 10, height: 420, backgroundColor: "#888" },   // Start line
+  { left: 1990, top: 1770, width: 10, height: 420, backgroundColor: "#888" },  // Finish line
+  { left: 580, top: 1790, width: 120, height: 80, backgroundColor: "#CCC" },   // Stall 1
+  { left: 580, top: 1920, width: 120, height: 80, backgroundColor: "#CCC" },   // Stall 2
+  { left: 580, top: 2060, width: 120, height: 80, backgroundColor: "#CCC" }    // Start box
+];
+
+export const pond = {
+  left: 1040,
+  top: 510,
+  width: 500,
+  height: 340,
+  backgroundColor: "#37d7ff"
+};
