@@ -10,10 +10,11 @@ export interface Actor {
     id: number;  // Changed from string to number to match NFT tokenIds
     type: ActorType;
     position: Position;
+    size?: number;        // for flowers only - random size 100-200
+    walletAddress?: string;  // for players only
     connected?: boolean;   // for players only
     lastSeen?: Date;      // for players only
-    introActive?: true;   // only present during tutorial
-    size?: number;        // for flowers only - random size 100-200
+    race?: undefined | number; // for players only
 }
 
 export interface WorldState {
@@ -39,5 +40,5 @@ export const createActor = (
     position: { x, y, direction },
     connected: type === 'player' ? true : undefined,
     lastSeen: type === 'player' ? new Date() : undefined,
-    introActive: type === 'player' ? true : undefined
+    race: undefined
 });

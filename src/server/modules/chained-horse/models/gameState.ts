@@ -7,7 +7,7 @@ interface GameState {
     position: Position;
     connected: boolean;
     lastSeen: Date;
-    introActive?: boolean;
+    race?: number;
 }
 
 export default (prefix: string, db: Connection): Model<GameState> => {
@@ -21,7 +21,7 @@ export default (prefix: string, db: Connection): Model<GameState> => {
         },
         connected: { type: Boolean, default: false },
         lastSeen: { type: Date, default: Date.now },
-        introActive: { type: Boolean }
+        race: { type: Number, default: undefined }
     });
 
     return db.model<GameState>(`${prefix}_GameState`, schema);

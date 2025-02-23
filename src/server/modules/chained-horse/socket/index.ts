@@ -1,6 +1,6 @@
 import { Server, Socket, Namespace } from 'socket.io';
 import { Model } from 'mongoose';
-import { Position } from '../../../types/actor';
+import { Actor, Position } from '../../../types/actor';
 import { WORLD_WIDTH, WORLD_HEIGHT } from '../../../../utils/coordinates';
 import { paths, rivers } from '../../../../components/Paddock/components/Environment/set';
 import { raceElements, issuesColumns } from '../../../../components/Bridleway/set';
@@ -40,6 +40,7 @@ interface Models {
     Owner: Model<any>;
     Account: Model<any>;
     Message: Model<any>;
+    Race: Model<any>;
     [key: string]: Model<any>;
 }
 
@@ -262,7 +263,7 @@ const socket = async (io: Server, web3: any, name: string, Models: Models, Contr
                             position: spawnPosition,
                             connected: true,
                             lastSeen: new Date(),
-                            introActive: true
+                            race: undefined
                         }
                     },
                     { upsert: true, new: true }
@@ -286,10 +287,12 @@ const socket = async (io: Server, web3: any, name: string, Models: Models, Contr
             }
         });
 
-        socket.on('player:complete_tutorial', () => {
+        socket.on('player:complete_tutorial', race => {
             const player = getPlayerBySocket(namespace, socket.id);
             if (player) {
-                completePlayerTutorial(namespace, player.id);
+                console.log(player)
+                completePlayerTutorial(namespace, player.id, race);
+                saveRace(Models, race, player, 'newbIslandRace');
             }
         });
 
@@ -344,5 +347,21 @@ const socket = async (io: Server, web3: any, name: string, Models: Models, Contr
     process.on('SIGTERM', cleanup);
     process.on('SIGINT', cleanup);
 };
+
+const saveRace = async (Models: Models, riders: any, player: Actor, name: string) => {
+    const _winner = riders.sort((a: any, b: any) => a.time - b.time)[0]
+    const winner = _winner.tokenId === player.id ? player.walletAddress : undefined;
+    const time = _winner.time
+    const _race = {
+        race: name, tokenId: _winner.tokenId, winner, time, riders
+    }
+    await new Models.Race(_race).save();
+    const record = await Models.Race.findOne({ race: name, time: { $lt: time } })
+    if (record) {
+        console.log(`🐎 horse #${_winner.tokenId} just won the ${name} in ${time}`)
+    } else {
+        console.log(`🐎 horse #${_winner.tokenId} just set a new record in the ${name} with ${time}`)
+    }
+}
 
 export default socket;

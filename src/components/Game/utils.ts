@@ -27,22 +27,28 @@ export const isBlockedByRiver = (box: BoundingBox, rivers: { left: number; top: 
 };
 
 // Check if box overlaps with any path
-export const isOnPath = (box: BoundingBox): boolean => {
-    return paths.some(path => {
-        const buffer = 80;
+export const isOnPath = (box: BoundingBox): number => {
+    const buffer = 80;
+    // Iterate backwards so that the first match is the highest index
+    for (let i = paths.length - 1; i >= 0; i--) {
+        const path = paths[i];
         const pathBox = {
             left: path.left + buffer,
             right: path.left + path.width - buffer,
             top: path.top + buffer,
             bottom: path.top + path.height - buffer
         };
-        return !(
-            box.left >= pathBox.right ||
-            box.right <= pathBox.left ||
-            box.top >= pathBox.bottom ||
-            box.bottom <= pathBox.top
-        );
-    });
+        // Check for overlap using AABB collision detection
+        if (
+            !(box.left >= pathBox.right ||
+                box.right <= pathBox.left ||
+                box.top >= pathBox.bottom ||
+                box.bottom <= pathBox.top)
+        ) {
+            return i;
+        }
+    }
+    return -1;
 };
 
 // Check if horse's left edge enters race start box
@@ -64,3 +70,27 @@ export const isInStartBox = (box: BoundingBox): boolean => {
 
 // Race state type
 export type RaceState = 'not_started' | 'countdown' | 'racing' | 'finished';
+
+export const handleKeyDown = (e: KeyboardEvent, setActiveKeys) => {
+    if (e.repeat) return; // Ignore key repeat
+    const key = e.key.toLowerCase();
+    if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'w', 'a', 's', 'd'].includes(key)) {
+        e.preventDefault();
+        setActiveKeys(prev => new Set([...prev, key]));
+    }
+    // if (['r'].includes(key)) {
+    //     updatePosition({ x: 180, y: 2060, direction: 'right' } as Position)
+    // }
+};
+
+export const handleKeyUp = (e: KeyboardEvent, setActiveKeys) => {
+    const key = e.key.toLowerCase();
+    if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'w', 'a', 's', 'd'].includes(key)) {
+        e.preventDefault();
+        setActiveKeys(prev => {
+            const next = new Set(prev);
+            next.delete(key);
+            return next;
+        });
+    }
+};

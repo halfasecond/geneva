@@ -37,7 +37,7 @@ const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn: w
             <Metamask {...{ handleSignIn, handleSignOut, tokenId, BASE_URL }} loggedIn={walletAddress} />
             <Styled.Main>
                 <h1>The Paddock</h1>
-                <Game tokenId={selectedHorse} {...{ nfts, token }} />
+                {nfts.length && <Game tokenId={selectedHorse} {...{ nfts, token }} />}
                 {/* {selectedHorse !== undefined && selectedHorse >= 0 && (
                     <Paddock
                         tokenId={selectedHorse}

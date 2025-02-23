@@ -94,12 +94,15 @@ export const setPlayerDisconnected = (namespace: Namespace, id: number): void =>
     }
 };
 
-export const completePlayerTutorial = (namespace: Namespace, id: number): void => {
+export const completePlayerTutorial = (namespace: Namespace, id: number, race: any): void => {
     const player = namespace.worldState.actors.find(
         actor => actor.type === 'player' && actor.id === id
-    );
-    if (player) {
-        delete player.introActive;  // Remove the flag entirely
+    )
+    if (player && race.find((r: any) => r.tokenId === id)) {
+        const time = race.find((r: any) => r.tokenId === id).time
+        if (player.race === undefined || player.race > time) {
+            player.race = time // either sets a time (ending the tutorial sequence) or updates to their best time
+        } 
     }
 };
 
@@ -151,7 +154,8 @@ export const isInRestrictedArea = (x: number, y: number, size: number, areas: Re
         return !(x + size < area.left ||
                 x > area.left + area.width ||
                 y + size < area.top ||
-                y > area.top + area.height);
+                y > area.top + area.height
+            );
     });
 };
 

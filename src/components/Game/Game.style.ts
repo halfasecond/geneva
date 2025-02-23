@@ -108,3 +108,34 @@ export const Wave = styled.div`
     transform-origin: center bottom;
     backface-visibility: hidden;
 `;
+
+export const Leaderboard = styled.div`
+    position: absolute;
+    background-color: #FFF;
+    border-radius: 6px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-items: center;
+    > b {
+        display: block;
+        margin-bottom: 12px;
+        font-weight: bold;
+    }
+    > div {
+        width: 100%;
+        text-align: center;
+        overflow: hidden;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-height: 24px;
+        > span {
+            display: inline-block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    }
+`

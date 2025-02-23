@@ -186,9 +186,9 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
         }
     }, [connected, trackMovementUpdate]);
 
-    const updatePlayerIntroStatus = useCallback(() => {
+    const updatePlayerIntroStatus = useCallback((race: any) => {
         if (socketRef.current?.connected && connected) {
-            socketRef.current.emit('player:complete_tutorial')
+            socketRef.current.emit('player:complete_tutorial', race)
         }
     }, [connected]);
 
@@ -211,6 +211,7 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
         connected,
         updatePosition,
         updatePlayerIntroStatus,
+        introActive: actors.find(actor => actor.id === tokenId)?.race === undefined,
         position: actors.find(actor => actor.id === tokenId)?.position,
         actors,
         gameSettings,

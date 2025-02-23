@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useGameServer } from "./hooks/useGameServer";
 import { useViewport } from './hooks/useViewport'
 import { useRace } from './hooks/useRace'
@@ -13,8 +13,8 @@ import Race from "../Race";
 import IssuesField from "../IssuesField";
 import * as Styled from './Game.style'
 import { WORLD_WIDTH, WORLD_HEIGHT } from '../../utils/coordinates';
-import { rivers } from '../Paddock/components/Environment/set';
-import { isOnPath, isBlockedByRiver, isInStartBox } from "./utils";
+import { rivers, introMessages } from './components/Environment/set';
+import { isOnPath, isBlockedByRiver, isInStartBox, handleKeyDown, handleKeyUp } from "./utils";
 
 const HORSE_SIZE = 100;
 
@@ -29,9 +29,12 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
     const [activeKeys, setActiveKeys] = useState(new Set<string>());
     const [staticActors, setStaticActors] = useState<Actor[]>();
 
-    const { connected, actors, position, updatePosition, updatePlayerIntroStatus, gameSettings, metrics } = useGameServer({
+    const { connected, actors, introActive, position, updatePosition, updatePlayerIntroStatus, gameSettings, metrics } = useGameServer({
         tokenId, token, onStaticActors: (actors: Actor[]) => setStaticActors(actors)
     });
+    const [visibleMessages, setVisibleMessages] = useState<boolean[]>(
+        new Array(introMessages.length).fill(false)
+    );
 
     // Use race hook
     const {
@@ -48,40 +51,65 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
     });
 
     useEffect(() => {
-        if (tokenId && finishResults.length > 0) {
-            updatePosition({ ...racePosition, direction: 'right' })
-            updatePlayerIntroStatus()
+        if (isRacing) {
+            if (finishResults.find(({ tokenId: id }) => id === tokenId) === undefined) {
+                updatePosition({ ...racePosition, direction: 'right' })
+            }
         }
-    }, [finishResults, tokenId])
+    }, [raceState, racePosition])
+
+    useEffect(() => {
+        if (raceState === 'finished') {
+            const horse = finishResults.find(({ tokenId: id }) => id === tokenId)
+            horse && updatePlayerIntroStatus(finishResults)
+        }
+    }, [raceState])
+
+    useEffect(() => {
+       if (introActive && raceState === 'finished' && !visibleMessages[introMessages.length - 1]) {
+            handleMessageTrigger(introMessages.length - 1)
+        }
+    }, [raceState, introActive])
+
+    // Fade in first message after mount
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setVisibleMessages(prev => {
+                const next = [...prev];
+                next[0] = true;
+                return next;
+            });
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [])
+
+    // Handle message triggers
+    const handleMessageTrigger = useCallback((messageIndex: number) => {
+        setVisibleMessages(prev => {
+            if (prev[messageIndex]) return prev;
+            const next = [...prev];
+            next[messageIndex] = true;
+            return next;
+        });
+        if (messageIndex === introMessages.length - 1) {
+            setTimeout(() => { // Hide all message except the first one after the tutorial sequence
+                setVisibleMessages(prev => {
+                    const next = [...prev];
+                    for (let i = 1; i < next.length; i++) {
+                        next[i] = false;
+                    }
+                    return next;
+                });
+            }, 10000)
+        }
+    }, []);
+
+    const keyDown = (e: KeyboardEvent) => handleKeyDown(e, setActiveKeys);
+    const keyUp = (e: KeyboardEvent) => handleKeyUp(e, setActiveKeys);
 
     // Handle keyboard input
     useEffect(() => {
         if (!connected || !position) return;
-
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.repeat) return; // Ignore key repeat
-            const key = e.key.toLowerCase();
-            if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'w', 'a', 's', 'd'].includes(key)) {
-                e.preventDefault();
-                setActiveKeys(prev => new Set([...prev, key]));
-            }
-            // if (['r'].includes(key)) {
-            //     updatePosition({ x: 180, y: 2060, direction: 'right' } as Position)
-            // }
-        };
-
-        const handleKeyUp = (e: KeyboardEvent) => {
-            const key = e.key.toLowerCase();
-            if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'w', 'a', 's', 'd'].includes(key)) {
-                e.preventDefault();
-                setActiveKeys(prev => {
-                    const next = new Set(prev);
-                    next.delete(key);
-                    return next;
-                });
-            }
-        };
-
         let lastTime = performance.now();
         const targetFPS = 60;
         const frameTime = 1000 / targetFPS;
@@ -130,10 +158,6 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
                         bottom: newPosition.y + HORSE_SIZE
                     };
 
-                    // Get intro state from current player
-                    const currentPlayer = actors.find(actor => actor.type === 'player' && actor.id === tokenId);
-                    const isIntroActive = Boolean(currentPlayer?.introActive) && raceState !== 'finished';
-
                     // Don't allow movement during racing
                     if (raceState === 'racing' || raceState === 'countdown') {
                         return;
@@ -145,8 +169,16 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
                     }
 
                     // During intro, only allow movement if we overlap with a path
-                    if (isIntroActive && !isOnPath(horseBox)) {
-                        return;
+                    if (introActive) {
+                        const path = isOnPath(horseBox)
+                        if (path === -1) {
+                            return;
+                        } else {
+                            const index = introMessages.findIndex(({ triggerSegment }) => triggerSegment === path)
+                            if (index !== -1 && !visibleMessages[index]) {
+                                handleMessageTrigger(index);
+                            }
+                        }
                     }
 
                     // Check if we entered the start box
@@ -163,13 +195,13 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
             frameRef.current = requestAnimationFrame(updateFrame);
         };
 
-        window.addEventListener('keydown', handleKeyDown);
-        window.addEventListener('keyup', handleKeyUp);
+        window.addEventListener('keydown', keyDown);
+        window.addEventListener('keyup', keyUp);
         const frameRef = { current: requestAnimationFrame(updateFrame) };
 
         return () => {
-            window.removeEventListener('keydown', handleKeyDown);
-            window.removeEventListener('keyup', handleKeyUp);
+            window.removeEventListener('keydown', keyDown);
+            window.removeEventListener('keyup', keyUp);
             cancelAnimationFrame(frameRef.current);
         };
     }, [connected, position, gameSettings.movementSpeed, updatePosition]);
@@ -211,6 +243,23 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
         edgeThreshold: 0.2
     });
 
+    const getRecord = () => {
+        const records = actors.filter(({ race }) => race !== undefined).sort((a, b) => a.race - b.race)
+        return (
+            <div>
+                Track Record: {records.length > 0 ?
+                (
+                    <>
+                        Horse #{records[0].id} - {records[0].race && records[0].race / 1000}s<br />
+                        rider: {records[0].walletAddress}
+                    </>
+                ) : (
+                    <>...<br />rider: ...</>
+                )}
+            </div>
+        )
+    }
+
     if (!dimensionsReady) {
         return <Styled.Container ref={containerRef} />;
     }
@@ -245,6 +294,27 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
                     countdown={countdown}
                     finishResults={finishResults}
                 />
+                {/* Intro Messages */}
+                {introMessages.map((message, index) => (
+                    <Styled.Message
+                        key={`message-${index}`}
+                        style={{
+                            left: `${message.left}px`,
+                            top: `${message.top}px`,
+                            width: `${message.width}px`,
+                            opacity: visibleMessages[index] ? 1 : 0
+                        }}
+                        dangerouslySetInnerHTML={{ __html: message.message }}
+                    />
+                ))}
+                <Styled.Leaderboard style={{ 
+                    left: 1050,
+                    top: 1620,
+                    width: 600
+                }}>
+                    <b>🐎 {'Newb Island Race'} 🐎</b>
+                    {getRecord()}
+                </Styled.Leaderboard>
                 {connected && (
                     <>
                         {/* Static Actors */}

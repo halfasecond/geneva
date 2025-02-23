@@ -116,7 +116,7 @@ export function useRace({ initialPosition, tokenId }: UseRaceOptions) {
 
     return {
         state,
-        position: state === 'racing' || state === 'countdown' ? racePosition : initialPosition,
+        position: state === 'finished' || state === 'racing' || state === 'countdown' ? racePosition : initialPosition,
         countdown,
         isRacing: state === 'racing' || state === 'countdown',
         startRace,
