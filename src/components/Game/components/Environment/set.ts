@@ -14,7 +14,11 @@ export const paths = [
   { left: 900, top: 1290, width: 100, height: 300, backgroundColor: "#EEE" },
   { left: 200, top: 1290, width: 800, height: 80, backgroundColor: "#EEE" },
   { left: 200, top: 1290, width: 100, height: 860, backgroundColor: "#EEE" },
-  { left: 200, top: 2070, width: 500, height: 80, backgroundColor: "#EEE" }
+  { left: 200, top: 2070, width: 500, height: 80, backgroundColor: "#EEE" },
+  // Bridges
+  { left: 740, top: 2810, width: 100, height: 100, backgroundColor: "#EEE" },
+  { left: 2420, top: 2380, width: 100, height: 120, backgroundColor: "#EEE" },
+  { left: 3500, top: 1800, width: 140, height: 100, backgroundColor: "#EEE" },
 ];
 
 export interface PathSegment {
@@ -42,12 +46,21 @@ export interface RiverSegment extends PathSegment {
 }
 
 export const rivers: RiverSegment[] = [
-  { left: 540, top: 2820, width: 1000, height: 80, backgroundColor: "#37d7ff" },
+  // Before bridge
+  { left: 540, top: 2820, width: 200, height: 80, backgroundColor: "#37d7ff" },
+  // After bridge
+  { left: 840, top: 2820, width: 700, height: 80, backgroundColor: "#37d7ff" },
   { left: 1540, top: 2400, width: 100, height: 500, backgroundColor: "#37d7ff" },
-  { left: 1620, top: 2400, width: 1500, height: 80, backgroundColor: "#37d7ff" },
+  // Before bridge
+  { left: 1620, top: 2400, width: 800, height: 80, backgroundColor: "#37d7ff" },
+  // After bridge
+  { left: 2520, top: 2400, width: 600, height: 80, backgroundColor: "#37d7ff" },
   { left: 3120, top: 1980, width: 100, height: 500, backgroundColor: "#37d7ff" },
   { left: 3120, top: 1980, width: 400, height: 80, backgroundColor: "#37d7ff" },
-  { left: 3520, top: 1660, width: 100, height: 400, backgroundColor: "#37d7ff" },
+  // Before bridge
+  { left: 3520, top: 1660, width: 100, height: 140, backgroundColor: "#37d7ff" },
+  // After bridge
+  { left: 3520, top: 1900, width: 100, height: 160, backgroundColor: "#37d7ff" },
   { left: 3520, top: 1660, width: 1800, height: 80, backgroundColor: "#37d7ff" }
 ];
 

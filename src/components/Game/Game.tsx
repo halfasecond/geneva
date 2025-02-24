@@ -94,9 +94,11 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
                     next[0] = true;
                     return next;
                 });
-                BACKGROUND_MUSIC.play()
+                
                 if (VITE_APP_NODE_ENV === 'development') {
                     handleMuteToggle()
+                } else {
+                    BACKGROUND_MUSIC.play()
                 }
             }, 500)
             return () => clearTimeout(timer);
