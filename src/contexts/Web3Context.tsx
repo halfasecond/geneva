@@ -4,7 +4,6 @@ import Web3 from 'web3';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import {
-  EIP1193Provider,
   ExtendedProvider,
   ProviderEvent,
   RpcMethod,
