@@ -16,8 +16,8 @@ export function useRace({ initialPosition, tokenId }: UseRaceOptions) {
     
     // AI horses state
     const [aiPositions, setAiPositions] = useState([
-        { tokenId: '82', position: { x: 580, y: 1800 } },
-        { tokenId: '186', position: { x: 580, y: 1930 } }
+        { tokenId: 82, position: { x: 580, y: 1800 } },
+        { tokenId: 186, position: { x: 580, y: 1930 } }
     ]);
 
     // Handle state changes

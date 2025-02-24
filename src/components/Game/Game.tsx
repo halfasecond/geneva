@@ -323,6 +323,7 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
                     raceState={raceState}
                     countdown={countdown}
                     finishResults={finishResults}
+                    nfts={nfts}
                 />
                 {/* Intro Messages */}
                 {introMessages.map((message, index) => (
@@ -361,7 +362,7 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
                             <GameActor
                                 key={`dynamic-${i}`}
                                 actor={actor}
-                                visible={!(raceState === 'racing' && actor.type === 'player' && actor.id === tokenId)}
+                                visible={true}
                                 asset={actor.type === 'player' ? nfts.find((nft: { tokenId: number; svg: string }) => nft.tokenId === actor.id) : undefined}
                             />
                         ))}

@@ -4,10 +4,6 @@ import { Z_LAYERS } from 'src/config/zIndex';
 import { RaceState } from '../Game/utils';
 
 interface RaceProps {
-    playerHorse: {
-        tokenId: string;
-        position: { x: number; y: number };
-    };
     aiHorses: Array<{
         tokenId: string;
         position: { x: number; y: number };
@@ -15,14 +11,15 @@ interface RaceProps {
     raceState: RaceState;
     countdown: number | null;
     finishResults: { tokenId: number | string, time: number }[];
+    nfts: any[];
 }
 
 const Race = ({
-    playerHorse,
     aiHorses,
     raceState,
     countdown = null,
-    finishResults = []
+    finishResults = [],
+    nfts,
 }: RaceProps): React.ReactElement => {
 
     return (
@@ -42,34 +39,21 @@ const Race = ({
             <Styled.Fence className="bottom" />
 
             {/* AI Horses */}
-            {aiHorses.map((horse, index) => (
-                <Horse
-                    key={horse.tokenId}
-                    style={{
-                        position: 'absolute',
-                        left: `${horse.position.x}px`,
-                        top: `${1790 + (index * 130)}px`,
-                        transform: 'scaleX(1)',
-                        zIndex: Z_LAYERS.TERRAIN_FEATURES + 1
-                    }}
-                    horseId={horse.tokenId}
-                />
-            ))}
-
-            {/* Racing Horse */}
-            {(raceState === 'racing' || raceState === 'countdown') && (
-                <Horse
-                    style={{
-                        position: 'absolute',
-                        left: `${playerHorse.position.x}px`,
-                        top: `${playerHorse.position.y}px`,
-                        transform: 'scaleX(1)',
-                        zIndex: Z_LAYERS.TERRAIN_FEATURES + 1
-                    }}
-                    horseId={playerHorse.tokenId}
-                />
-            )}
-
+            {aiHorses.map((horse, index) => {
+                return (
+                    <Horse
+                        key={horse.tokenId}
+                        style={{
+                            position: 'absolute',
+                            left: `${horse.position.x}px`,
+                            top: `${1790 + (index * 130)}px`,
+                            transform: 'scaleX(1)',
+                            zIndex: Z_LAYERS.TERRAIN_FEATURES + 1
+                        }}
+                        horse={nfts.find(nft => nft.tokenId === horse.tokenId)}
+                    />
+                )})
+            }
             {/* Podium */}
             {finishResults.length > 0 && (
                 <Styled.Podium data-testid="podium" style={{ opacity: 1 }}>
@@ -83,7 +67,7 @@ const Race = ({
                                 width: 50,
                                 height: 50
                             }}
-                            horseId={horse.tokenId}
+                            horse={nfts.find(nft => nft.tokenId === horse.tokenId)}
                         />
                     ))}
                     <Styled.PodiumPlatform className="first" />

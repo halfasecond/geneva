@@ -1,10 +1,11 @@
 import React from 'react';
 import styled from 'styled-components';
 import { getAssetPath } from '../../utils/assetPath';
+import { getSVG } from 'src/utils/getImage';
 import { Z_LAYERS } from 'src/config/zIndex';
 
 interface HorseProps {
-    horseId: string;
+    horse: any;
     style?: React.CSSProperties;
 }
 
@@ -22,10 +23,10 @@ const HorseContainer = styled.div`
     }
 `;
 
-export const Horse: React.FC<HorseProps> = ({ horseId, style }) => {
+export const Horse: React.FC<HorseProps> = ({ horse, style }) => {
     return (
         <HorseContainer style={style}>
-            <img src={getAssetPath(`horse/${horseId}.svg`)} alt={`Horse #${horseId}`} />
+            <img src={getSVG(horse.svg)} alt={`Horse #${horse.tokenId}`} />
         </HorseContainer>
     );
 };

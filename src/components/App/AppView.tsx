@@ -14,7 +14,7 @@ const AppView: React.FC<AuthProps> = ({
     BASE_URL
 }) => {
     const [nfts, setNFTs] = useState<any[]>([]);
-    const [selectedHorse, setSelectedHorse] = useState<number | undefined>(tokenId);
+    const [selectedHorse, setSelectedHorse] = useState<number | undefined>(undefined);
 
     // Load and analyze NFT data
     useEffect(() => {
