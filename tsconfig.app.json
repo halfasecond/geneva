@@ -5,7 +5,7 @@
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "skipLibCheck": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
@@ -17,15 +17,15 @@
     "noFallthroughCasesInSwitch": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-  "types": ["node", "react"],
-  "baseUrl": ".",
+    "types": ["vite/client", "node", "react", "react-dom"],
+    "baseUrl": ".",
     "paths": {
       "src/*": ["./src/*"],
       "contracts/*": ["./src/contracts/*"],
       "components/*": ["./src/components/*"],
       "pages/*": ["./src/pages/*"],
       "style/*": ["./src/style/*"],
-      "utils/*": ["./src/utils/*"],
+      "utils/*": ["./src/utils/*"]
     }
   },
   "include": ["src/**/*"],
