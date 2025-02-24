@@ -40,6 +40,9 @@ const Race = ({
 
             {/* AI Horses */}
             {aiHorses.map((horse, index) => {
+                const _horse = finishResults.filter(({ tokenId }) => tokenId === horse.tokenId).length === 1
+                    ? nfts.find(nft => nft.tokenId === 151)
+                    : nfts.find(nft => nft.tokenId === horse.tokenId)
                 return (
                     <Horse
                         key={horse.tokenId}
@@ -50,14 +53,14 @@ const Race = ({
                             transform: 'scaleX(1)',
                             zIndex: Z_LAYERS.TERRAIN_FEATURES + 1
                         }}
-                        horse={nfts.find(nft => nft.tokenId === horse.tokenId)}
+                        horse={_horse}
                     />
                 )})
             }
             {/* Podium */}
             {finishResults.length > 0 && (
                 <Styled.Podium data-testid="podium" style={{ opacity: 1 }}>
-                    {finishResults.slice(0, 3).map((horse: any, index) => (
+                    {finishResults.map((horse: any, index) => (
                         <Horse
                             key={`podium-${horse.tokenId}`}
                             style={{

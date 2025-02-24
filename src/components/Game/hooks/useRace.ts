@@ -77,7 +77,7 @@ export function useRace({ initialPosition, tokenId }: UseRaceOptions) {
             // Move AI horses
             setAiPositions(prevPositions =>
                 prevPositions.map(horse => {
-                    if (finishedHorses.has(horse.tokenId)) {
+                    if (finishedHorses.has(horse.tokenId.toString())) {
                         return horse;
                     }
 
@@ -85,7 +85,7 @@ export function useRace({ initialPosition, tokenId }: UseRaceOptions) {
                     const newX = horse.position.x + speed;
 
                     if (newX >= 1990) {
-                        finishedHorses.add(horse.tokenId);
+                        finishedHorses.add(horse.tokenId.toString());
                         startTimes.push({ tokenId: horse.tokenId, time: Date.now() - startTime });
                         return {
                             ...horse,
