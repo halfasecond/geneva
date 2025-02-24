@@ -4,8 +4,8 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "yarn vite",
-    "build": "yarn vite build",
-    "start": "NODE_NO_WARNINGS=1 babel-node -r @babel/register --extensions '.ts' src/server/index.ts",
+    "build": "rm -rf dist && VITE_APP_NODE_ENV=production yarn vite build",
+    "start": "yarn build && NODE_NO_WARNINGS=1 babel-node -r @babel/register --extensions '.ts' src/server/index.ts",
     "lint": "yarn eslint .",
     "preview": "yarn vite preview",
     "test:browser": "yarn vitest --workspace=vitest.workspace.ts",

@@ -11,7 +11,7 @@ COPY . ./
 RUN yarn
 
 # Expose the port that the app will run on (optional)
-EXPOSE 8080
+EXPOSE 3131
 
 # Default command to keep the container running
-CMD ["sh", "-c", "yarn build && yarn serve"]
+CMD ["sh", "-c", "yarn start"]
