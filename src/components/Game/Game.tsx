@@ -295,7 +295,7 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
 
     return (
         <Styled.Container ref={containerRef}>
-            <MuteButton isMuted={isMuted} onToggle={handleMuteToggle} />
+            {connected && tokenId && (<MuteButton isMuted={isMuted} onToggle={handleMuteToggle} />)}
             {showMetrics && <PerformancePanel metrics={metrics} visible={true} />}
             <Styled.GameSpace style={style}>
                 <Path active={true} />

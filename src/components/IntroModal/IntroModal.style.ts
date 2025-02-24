@@ -82,7 +82,7 @@ export const Button = styled.button`
 
 export const HorseGrid = styled.div`
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    grid-template-columns: repeat(3, 1fr); /* Exactly 3 columns */
     gap: 20px;
     margin: 20px 0;
     max-height: 300px;
@@ -98,11 +98,16 @@ export const HorseCard = styled.div`
     cursor: pointer;
     transition: transform 0.2s, background 0.2s;
     border: 2px solid transparent;
+    aspect-ratio: 1; /* Keep card square */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 
     img {
-        width: 100%;
+        width: 95%;
         height: auto;
         margin-bottom: 10px;
+        object-fit: contain;
     }
 
     span {
