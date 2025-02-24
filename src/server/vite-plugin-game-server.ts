@@ -82,7 +82,7 @@ export function gameServer(): Plugin {
                 modules(app, io, web3, db);
                 
                 // Mount Express app on Vite middleware under /api
-                server.middlewares.use('/api', app);
+                server.middlewares.use('/', app);
 
                 // Set up signal handlers for clean shutdown
                 process.on('SIGINT', cleanup);

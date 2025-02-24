@@ -92,9 +92,7 @@ const runModule = (config: ModuleConfig) => {
     Routes(app, name, Models);
     Socket(io, web3, name || '', Models, Contracts);
 
-    if (Object.keys(Contracts).length && 
-        Contracts[Object.keys(Contracts)[0]].abi && 
-        Contracts[Object.keys(Contracts)[0]].addr) {
+    if (Object.keys(Contracts).length) {
         const module = { 
             Contracts, 
             Models, 

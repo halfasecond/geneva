@@ -1,4 +1,4 @@
-import abi from './Core.json';
+import abi from './Core';
 
 interface Contract {
     abi: any[];

@@ -15,6 +15,7 @@ export interface Actor {
     connected?: boolean;   // for players only
     lastSeen?: Date;      // for players only
     race?: undefined | number; // for players only
+    socketId?: string;
 }
 
 export interface WorldState {

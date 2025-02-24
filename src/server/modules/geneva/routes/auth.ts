@@ -1,7 +1,7 @@
 import Web3 from 'web3';
 import express, { Router, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import { Model } from 'mongoose';
+import { Models } from './index';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -9,15 +9,6 @@ const { JWT_SECRET } = process.env;
 
 if (!JWT_SECRET) {
     throw new Error('JWT_SECRET environment variable is required');
-}
-
-interface Account {
-    address: string;
-    token?: string;
-}
-
-interface Models {
-    Account: Model<Account>;
 }
 
 // Initialize Web3 without a provider since we only need it for account recovery

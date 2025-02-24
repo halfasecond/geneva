@@ -60,6 +60,7 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
 
             // Use environment variable with fallback for development
             const serverUrl = import.meta.env.VITE_APP_GAME_SERVER_URL;
+            console.log(serverUrl)
             const socket = io(`${serverUrl}chained-horse`, {
                 reconnection: true,
                 reconnectionAttempts: maxReconnectAttempts,

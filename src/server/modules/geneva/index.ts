@@ -1,12 +1,11 @@
-import { Model } from 'mongoose';
-import { ModuleConfig, Models } from '../../types/shared.js';
-import _Models from './models/index.js';
-import Routes from './routes/index.js';
+import { ModuleConfig } from '../../types/shared';
+import _Models from './models';
+import Routes from './routes';
 // import Socket from './socket';
 
 const runModule = (config: ModuleConfig) => {
-    const { app, io, web3, db, name, prefix } = config;
-    const Models = _Models(prefix, db);
+    const { app, db, name } = config;
+    const Models = _Models('', db);
     Routes(app, name, Models);
     // Socket(io, web3, name ? name : '', Models);
 };

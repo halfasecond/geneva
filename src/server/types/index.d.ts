@@ -18,12 +18,12 @@ export interface ModuleConfig {
 
 // Web3 connection
 declare module '../config/web3.js' {
-    export default function createWeb3Connection(socketUrl: string): Web3;
+    export function createWeb3Connection(socketUrl: string): Web3;
 }
 
 // Module system
 declare module '../modules/index.js' {
-    export default function modules(
+    export function modules(
         app: any,
         io: any,
         web3: any,

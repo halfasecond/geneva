@@ -29,7 +29,7 @@ const routes = (Models: Models): Router => {
         try {
             const owner = await Models.Owner.findOne({ address: req.params.address.toLowerCase() });
             if (!owner) {
-                return res.status(404).json({ error: 'Owner not found' });
+                res.status(404).json({ error: 'Owner not found' });
             }
             res.json(owner);
         } catch (err) {
