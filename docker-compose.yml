@@ -17,8 +17,6 @@ services:
   mongo:
     image: mongo:latest
     container_name: geneva-mongo
-    ports:
-      - "27017:27017"
     volumes:
       - ${MONGO_LOCAL_DIR}:/data/db
     networks:
