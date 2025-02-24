@@ -29,7 +29,7 @@ const routes = (Models: Models): Router => {
         try {
             const nft = await Models.NFT.findOne({ tokenId: Number(req.params.tokenId) });
             if (!nft) {
-                return res.status(404).json({ error: 'NFT not found' });
+                res.status(404).json({ error: 'NFT not found' });
             }
             res.json(nft);
         } catch (err) {

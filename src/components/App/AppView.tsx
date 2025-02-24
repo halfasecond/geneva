@@ -20,7 +20,7 @@ const AppView: React.FC<AuthProps> = ({
     useEffect(() => {
         const loadNFTs = async () => {
             try {
-                const response = await fetch('/api/chained-horse/nfts');
+                const response = await fetch('/chained-horse/nfts');
                 const nfts = await response.json();
                 setNFTs(nfts)
             } catch (error) {

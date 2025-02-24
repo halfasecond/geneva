@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { GitHubAPIError } from './types.js';
+import { GitHubAPIError } from './types';
 
 export function sendSuccessResponse(res: Response, data: any) {
     res.json({

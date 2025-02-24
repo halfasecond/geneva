@@ -89,7 +89,7 @@ const DynamicIssuesField: React.FC = () => {
         try {
             setLoading(true);
             
-            const response = await fetch(`/api/github/projects/${PROJECT_NUMBER}/board`, {
+            const response = await fetch(`/github/projects/${PROJECT_NUMBER}/board`, {
                 headers: {
                     'x-agent-id': AGENT_ID,
                     'Content-Type': 'application/json'

@@ -1,6 +1,6 @@
-import { ModuleFunction } from '../types/shared.js';
-import defaultModule from './geneva/index.js';
-import chainedHorseModule from './chained-horse/index.js';
+import { ModuleFunction } from '../types/shared';
+import defaultModule from './geneva';
+import chainedHorseModule from './chained-horse';
 
 const modules: ModuleFunction = (app, io, web3, db) => {
     // Initialize default (geneva) module

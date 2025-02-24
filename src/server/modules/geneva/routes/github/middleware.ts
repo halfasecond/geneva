@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { GitHubAPIError, GitHubRequest } from './types.js';
+import { GitHubAPIError, GitHubRequest } from './types';
 
 // Rate limiting
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute

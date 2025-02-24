@@ -101,7 +101,7 @@ const getPastEvents = async (abi: any[], address: string, fromBlock: number, toB
                 toBlock: toBlock,
                 filter: {} // Add empty filter to ensure we get all events
             });
-            _events.forEach(event => {
+            _events.forEach((event: any) => {
                 pastEvents.push({ ...event, event: eventName });
             });
         } catch (error) {

@@ -1,4 +1,4 @@
-import { GitHubAPIError, ProjectMetadata, CreateDiscussionInput, CreateIssueInput, CreatePullRequestInput, CreatePullRequestReviewInput, MergePullRequestInput } from './types.js';
+import { GitHubAPIError, ProjectMetadata, CreateDiscussionInput, CreateIssueInput, CreatePullRequestInput, CreatePullRequestReviewInput, MergePullRequestInput } from './types';
 import dotenv from 'dotenv';
 dotenv.config();
 

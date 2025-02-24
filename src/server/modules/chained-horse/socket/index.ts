@@ -1,16 +1,10 @@
 import { Server, Socket, Namespace } from 'socket.io';
 import { Model } from 'mongoose';
 import { Actor, Position } from '../../../types/actor';
-import { WORLD_WIDTH, WORLD_HEIGHT } from '../../../../utils/coordinates';
-import { paths, rivers, raceElements, issuesColumns } from '../../../../components/Game/components/Environment/set';
+import { paths, rivers, raceElements, issuesColumns } from './set';
 
-interface RestrictedArea {
-    left: number;
-    top: number;
-    width: number;
-    height: number;
-    backgroundColor?: string;
-}
+const WORLD_WIDTH = 5000;
+const WORLD_HEIGHT = 5000;
 
 import {
     initializeWorldState,
@@ -59,7 +53,7 @@ const SAVE_STATE_INTERVAL = gameSettings.saveStateInterval
 import { authMiddleware, getWalletAddress } from '../middleware/auth';
 
 const socket = async (io: Server, web3: any, name: string, Models: Models, Contracts: any) => {
-    const namespace: Namespace = io.of(`/api/${name}`);
+    const namespace: Namespace = io.of(`/${name}`);
     
     // Apply auth middleware to namespace
     namespace.use(authMiddleware);
@@ -166,15 +160,15 @@ const socket = async (io: Server, web3: any, name: string, Models: Models, Contr
             namespace.worldState.actors.forEach(actor => {
                 if (actor.type === 'duck of doom') {
                     // Initialize state if needed
-                    if (!duckState.has(actor.id)) {
-                        duckState.set(actor.id, {
+                    if (!duckState.has(actor.id.toString())) {
+                        duckState.set(actor.id.toString(), {
                             spawnX: actor.position.x,
                             direction: 'right',
                             speed: 0.2 + (Math.random() * 0.2) // Slower speed range (0.2-0.4)
                         });
                     }
 
-                    const state = duckState.get(actor.id)!;
+                    const state = duckState.get(actor.id.toString())!;
                     const MOVEMENT_RANGE = 100; // 100px each direction
                     const DUCK_SPEED = state.speed * (delta * 0.06);
 

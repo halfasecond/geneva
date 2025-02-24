@@ -1,6 +1,6 @@
 import express, { Router, Request, Response } from 'express';
-import { GitHubClient } from './client.js';
-import { asyncHandler } from './errors.js';
+import { GitHubClient } from './client';
+import { asyncHandler } from './errors';
 import {
     validateAgent,
     validateBody,
@@ -12,8 +12,8 @@ import {
     validateDiscussionNumber,
     logRequest,
     rateLimit
-} from './middleware.js';
-import { PullRequestReviewEvent } from './types.js';
+} from './middleware';
+import { PullRequestReviewEvent } from './types';
 
 export default function createGitHubRouter(): Router {
     const router = express.Router();
