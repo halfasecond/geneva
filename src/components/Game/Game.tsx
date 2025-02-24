@@ -87,19 +87,21 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
 
     // Fade in first message after mount
     useEffect(() => {
-        const timer = setTimeout(() => {
-            setVisibleMessages(prev => {
-                const next = [...prev];
-                next[0] = true;
-                return next;
-            });
-            BACKGROUND_MUSIC.play()
-            if (VITE_APP_NODE_ENV === 'development') {
-                handleMuteToggle()
-            }
-        }, 500)
-        return () => clearTimeout(timer);
-    }, [])
+        if (tokenId && tokenId >= 0) {
+            const timer = setTimeout(() => {
+                setVisibleMessages(prev => {
+                    const next = [...prev];
+                    next[0] = true;
+                    return next;
+                });
+                BACKGROUND_MUSIC.play()
+                if (VITE_APP_NODE_ENV === 'development') {
+                    handleMuteToggle()
+                }
+            }, 500)
+            return () => clearTimeout(timer);
+        }
+    }, [tokenId])
 
     useEffect(() => {
         const handleKeyPress = (e: KeyboardEvent) => {
