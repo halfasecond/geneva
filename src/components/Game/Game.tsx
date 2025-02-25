@@ -49,13 +49,13 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
         });
     }, []);
 
-
     // Use race hook
     const {
         state: raceState,
         position: racePosition,
         isRacing,
         startRace,
+        resetRace,
         countdown,
         finishResults,
         aiPositions,
@@ -114,7 +114,6 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
         window.addEventListener('keypress', handleKeyPress);
         return () => window.removeEventListener('keypress', handleKeyPress);
     }, []);
-
 
     // Handle message triggers
     const handleMessageTrigger = useCallback((messageIndex: number) => {
@@ -191,7 +190,7 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
                         bottom: newPosition.y + HORSE_SIZE
                     };
 
-                    // Don't allow movement during racing
+                    // Don't allow movement during racing or countdown
                     if (raceState === 'racing' || raceState === 'countdown') {
                         return;
                     }
@@ -218,6 +217,13 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
                     if (raceState === 'not_started' && isInStartBox(horseBox)) {
                         updatePosition({ x: 580, y: 2060, direction: 'right' } as Position);
                         startRace();
+                        return;
+                    }
+
+                    // Check if we entered the start box after race finished
+                    if (raceState === 'finished' && isInStartBox(horseBox)) {
+                        updatePosition({ x: 580, y: 2060, direction: 'right' } as Position);
+                        resetRace();
                         return;
                     }
 
@@ -319,10 +325,6 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
 
                 {/* Race component */}
                 <Race
-                    playerHorse={{
-                        tokenId: tokenId?.toString() || '',
-                        position: isRacing ? racePosition : position || { x: 580, y: 2060 }
-                    }}
                     aiHorses={aiPositions}
                     raceState={raceState}
                     countdown={countdown}

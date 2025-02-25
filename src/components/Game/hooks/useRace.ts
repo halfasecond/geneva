@@ -16,13 +16,25 @@ export function useRace({ initialPosition, tokenId }: UseRaceOptions) {
     
     // AI horses state
     const [aiPositions, setAiPositions] = useState([
-        { tokenId: 82, position: { x: 580, y: 1800 } },
-        { tokenId: 186, position: { x: 580, y: 1930 } }
+        { tokenId: '82', position: { x: 580, y: 1800 } },
+        { tokenId: '186', position: { x: 580, y: 1930 } }
     ]);
 
     // Handle state changes
     const updateState = (newState: RaceState) => {
         setState(newState);
+    };
+
+    // Reset race
+    const resetRace = () => {
+        setState('not_started');
+        setRacePosition(initialPosition);
+        setCountdown(null);
+        setFinishResults([]);
+        setAiPositions([
+            { tokenId: '82', position: { x: 580, y: 1800 } },
+            { tokenId: '186', position: { x: 580, y: 1930 } }
+        ]);
     };
 
     // Start race sequence
@@ -77,7 +89,7 @@ export function useRace({ initialPosition, tokenId }: UseRaceOptions) {
             // Move AI horses
             setAiPositions(prevPositions =>
                 prevPositions.map(horse => {
-                    if (finishedHorses.has(horse.tokenId.toString())) {
+                    if (finishedHorses.has(horse.tokenId)) {
                         return horse;
                     }
 
@@ -85,7 +97,7 @@ export function useRace({ initialPosition, tokenId }: UseRaceOptions) {
                     const newX = horse.position.x + speed;
 
                     if (newX >= 1990) {
-                        finishedHorses.add(horse.tokenId.toString());
+                        finishedHorses.add(horse.tokenId);
                         startTimes.push({ tokenId: horse.tokenId, time: Date.now() - startTime });
                         return {
                             ...horse,
@@ -120,6 +132,7 @@ export function useRace({ initialPosition, tokenId }: UseRaceOptions) {
         countdown,
         isRacing: state === 'racing' || state === 'countdown',
         startRace,
+        resetRace,
         finishResults,
         aiPositions
     };

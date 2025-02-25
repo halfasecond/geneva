@@ -42,7 +42,8 @@ const Race = ({
             {aiHorses.map((horse, index) => {
                 const _horse = finishResults.filter(({ tokenId }) => tokenId === horse.tokenId).length === 1
                     ? nfts.find(nft => nft.tokenId === 151)
-                    : nfts.find(nft => nft.tokenId === horse.tokenId)
+                    : nfts.find(nft => nft.tokenId === parseInt(horse.tokenId))
+                if (!_horse) return null;
                 return (
                     <Horse
                         key={horse.tokenId}
@@ -60,19 +61,22 @@ const Race = ({
             {/* Podium */}
             {finishResults.length > 0 && (
                 <Styled.Podium data-testid="podium" style={{ opacity: 1 }}>
-                    {finishResults.map((horse: any, index) => (
-                        <Horse
-                            key={`podium-${horse.tokenId}`}
-                            style={{
-                                position: 'absolute',
-                                left: [102, 42, 170][index],
-                                top: [8, 18, 28][index],
-                                width: 50,
-                                height: 50
-                            }}
-                            horse={nfts.find(nft => nft.tokenId === horse.tokenId)}
-                        />
-                    ))}
+                    {finishResults.map((horse: any, index) => {
+                        const podiumHorse = nfts.find(nft => nft.tokenId === parseInt(horse.tokenId))
+                        return (
+                            <Horse
+                                key={`podium-${horse.tokenId}`}
+                                style={{
+                                    position: 'absolute',
+                                    left: [102, 42, 170][index],
+                                    top: [8, 18, 28][index],
+                                    width: 50,
+                                    height: 50
+                                }}
+                                horse={podiumHorse}
+                            />
+                        );
+                    })}
                     <Styled.PodiumPlatform className="first" />
                     <Styled.PodiumPlatform className="second" />
                     <Styled.PodiumPlatform className="third" />
