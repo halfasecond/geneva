@@ -61,6 +61,7 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
         aiPositions,
     } = useRace({
         initialPosition: position || { x: 580, y: 2060, direction: 'right' },
+        nfts,
         tokenId
     });
 

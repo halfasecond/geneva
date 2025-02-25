@@ -119,6 +119,7 @@ export const Leaderboard = styled.div`
     flex-direction: column;
     align-items: center;
     justify-items: center;
+    background-color: #F6F6F6;
     > b {
         display: block;
         margin-bottom: 12px;

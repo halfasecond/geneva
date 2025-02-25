@@ -4,10 +4,37 @@ import { RaceState } from '../utils';
 
 interface UseRaceOptions {
     initialPosition: Position;
+    nfts: any[];
     tokenId: number | undefined;
 }
 
-export function useRace({ initialPosition, tokenId }: UseRaceOptions) {
+const getTwoRandomHorses = (tokenId, nfts) => {
+    // Filter out NFTs that match the tokenId or have an invalid owner
+    const validNFTs = nfts.filter(nft => nft.tokenId !== tokenId && nft.owner !== '0x0');
+  
+    if (validNFTs.length < 2) {
+      // Not enough valid NFTs to choose two unique ones
+      return [];
+    }
+  
+    // Shuffle the array using the Fisher-Yates algorithm
+    for (let i = validNFTs.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [validNFTs[i], validNFTs[j]] = [validNFTs[j], validNFTs[i]];
+    }
+  
+    // Return the tokenIds of the first two NFTs from the shuffled list
+    return [validNFTs[0].tokenId, validNFTs[1].tokenId];
+};
+
+const getOpponents = (tokenId: number, nfts: any[]) => {
+    const opponents = getTwoRandomHorses(tokenId, nfts)
+    return opponents.map((tokenId, i) => (
+        { tokenId, position: { x: 580, y: 1800 + (i * 130) } }
+    ))
+}
+
+export function useRace({ initialPosition, nfts, tokenId }: UseRaceOptions) {
     // Race state
     const [state, setState] = useState<RaceState>('not_started');
     const [racePosition, setRacePosition] = useState(initialPosition);
@@ -15,10 +42,8 @@ export function useRace({ initialPosition, tokenId }: UseRaceOptions) {
     const [finishResults, setFinishResults] = useState<{ tokenId: string | number, time: number}[]>([]);
     
     // AI horses state
-    const [aiPositions, setAiPositions] = useState([
-        { tokenId: '82', position: { x: 580, y: 1800 } },
-        { tokenId: '186', position: { x: 580, y: 1930 } }
-    ]);
+    const positions = getOpponents(tokenId, nfts)
+    const [aiPositions, setAiPositions] = useState(positions);
 
     // Handle state changes
     const updateState = (newState: RaceState) => {
@@ -31,10 +56,8 @@ export function useRace({ initialPosition, tokenId }: UseRaceOptions) {
         setRacePosition(initialPosition);
         setCountdown(null);
         setFinishResults([]);
-        setAiPositions([
-            { tokenId: '82', position: { x: 580, y: 1800 } },
-            { tokenId: '186', position: { x: 580, y: 1930 } }
-        ]);
+        const positions = getOpponents(tokenId, nfts)
+        setAiPositions(positions);
     };
 
     // Start race sequence

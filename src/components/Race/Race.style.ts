@@ -63,7 +63,7 @@ export const Podium = styled.div`
     top: 1650px;
     width: 260px;
     height: 80px;
-    background-color: #FFF;
+    background-color: #F6F6F6;
     border: 1px solid #CCC;
     border-radius: 5px;
     opacity: 0;
