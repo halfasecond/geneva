@@ -64,6 +64,11 @@ export const Message = styled.div`
     text-align: center;
     padding: 12px;
     background-color: #FFF;
+    > b {
+        font-weight: bold;
+        display: inline-block;
+        margin-bottom: 6px;
+    }
 `
 
 export const Sand = styled.div`
