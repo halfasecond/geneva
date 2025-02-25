@@ -9,6 +9,7 @@ import MuteButton from "../MuteButton";
 import { PerformancePanel } from "./PerformancePanel";
 import { Pond, RainbowPuke, Farm } from "./components/GameElements";
 import { Path, Rivers } from "./components/Environment";
+import Clock from './components/Clock'
 import Beach from './components/Beach'
 import { Minimap } from "../Minimap";
 import Race from "../Race";
@@ -34,7 +35,7 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
     const [isMuted, setIsMuted] = useState(false);
     const [showMetrics, setShowMetrics] = useState(false)
 
-    const { connected, actors, introActive, position, updatePosition, updatePlayerIntroStatus, gameSettings, metrics } = useGameServer({
+    const { connected, actors, introActive, position, updatePosition, updatePlayerIntroStatus, gameSettings, metrics, block } = useGameServer({
         tokenId, token, onStaticActors: (actors: Actor[]) => setStaticActors(actors)
     });
     const [visibleMessages, setVisibleMessages] = useState<boolean[]>(
@@ -314,6 +315,7 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
                 <Farm left={1190} top={940} size={100} />
                 <Pond left={1040} top={510} />
                 <Pond left={40} top={2580} />
+                <Clock left={3640} top={900} {...{ block }} />
                 <RainbowPuke left={40} top={2580} />
                 <Beach />
                 <Styled.IssuesFieldContainer

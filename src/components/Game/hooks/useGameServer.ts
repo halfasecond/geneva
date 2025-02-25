@@ -42,7 +42,7 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
         broadcastFrames: 5,
         smoothing: 0.1
     });
-    
+    const [block, setBlock] = useState(undefined)
     const { metrics, trackMovementUpdate, trackServerResponse, trackLatency } = usePerformanceMetrics();
     const lastPingTime = useRef<number>(0);
     const lastStateUpdate = useRef<number>(performance.now());
@@ -155,6 +155,7 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
             socket.on('static:actors', handleStaticActors);
             socket.on('game:settings', handleGameSettings);
             socket.on('error', handleError);
+            socket.on('newEthBlock', (_block: any) => setBlock(_block))
 
             return () => {
                 clearInterval(pingInterval);
@@ -215,6 +216,7 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
         position: actors.find(actor => actor.id === tokenId)?.position,
         actors,
         gameSettings,
-        metrics
+        metrics,
+        block
     };
 }

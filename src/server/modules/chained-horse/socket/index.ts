@@ -52,7 +52,7 @@ const SAVE_STATE_INTERVAL = gameSettings.saveStateInterval
 
 import { authMiddleware, getWalletAddress } from '../middleware/auth';
 
-const socket = async (io: Server, web3: any, name: string, Models: Models, Contracts: any) => {
+const socket = async (io: Server, web3: any, name: string, Models: Models, Contracts: any, emitter: any) => {
     const namespace: Namespace = io.of(`/${name}`);
     
     // Apply auth middleware to namespace
@@ -238,6 +238,14 @@ const socket = async (io: Server, web3: any, name: string, Models: Models, Contr
         }
     };
 
+    let latestEthBlock = { blocknumber: 0, timestamp: 0 }
+    emitter.on('newEthBlock', ({ number, timestamp }) => {
+        console.log(number, timestamp)
+        latestEthBlock.blocknumber = Number(number)
+        latestEthBlock.timestamp = Number(timestamp)
+        namespace.emit('newEthBlock', latestEthBlock)
+    })
+
     namespace.on('connection', (socket: Socket) => {
         socketCount++;
         console.log(`Socket connected: ${socket.id} (Total sockets: ${socketCount})`);
@@ -272,7 +280,7 @@ const socket = async (io: Server, web3: any, name: string, Models: Models, Contr
                     : { x: 100, y: 150, direction: 'right' as const } // Default spawn position for new players and players or haven't finished the race
                 const player = addPlayer(namespace, socket.id, position, tokenId, walletAddress, existingPlayer?.race);
                 setPlayerConnected(namespace, player.id);
-
+                socket.emit('newEthBlock', latestEthBlock)
                 // Save to GameState collection
                 await Models.GameState.findOneAndUpdate(
                     { walletAddress: walletAddress.toLowerCase() },

@@ -18,6 +18,7 @@ interface ModuleConfig {
     deployed?: number;
     increment?: number;
     eventsToWatch?: string[];
+    emitter: any;
 }
 
 interface Models {
@@ -86,11 +87,11 @@ const logEvent = async (event: any, Models: Models, web3: any) =>
     handleStandardERC721Event(event, processEvent, Models, web3);
 
 const runModule = (config: ModuleConfig) => {
-    const { app, io, web3, db, name, prefix, deployed = 0, increment = 1000, eventsToWatch = ['Transfer'] } = config;
+    const { app, io, web3, db, name, prefix, deployed = 0, increment = 1000, eventsToWatch = ['Transfer'], emitter } = config;
     const Models = _Models(prefix, db);
 
     Routes(app, name, Models);
-    Socket(io, web3, name || '', Models, Contracts);
+    Socket(io, web3, name || '', Models, Contracts, emitter);
 
     if (Object.keys(Contracts).length) {
         const module = { 
