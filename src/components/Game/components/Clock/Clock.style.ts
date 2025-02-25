@@ -55,6 +55,44 @@ const quickSpin = keyframes`
     }
 `
 
+const vitalikFlash = keyframes`
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.8);
+    }
+    50% {
+        opacity: 0.5;
+        transform: translate(-50%, -50%) scale(1.1);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.8);
+    }
+`
+
+export const VitalikFlash = styled.div<{ show: boolean }>`
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 150px;
+    height: 150px;
+    z-index: ${Z_LAYERS['TERRAIN_FEATURES'] + 1};
+    pointer-events: none;
+    opacity: 0;
+    display: ${props => props.show ? 'block' : 'none'};
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+    &.flash {
+        animation: ${vitalikFlash} 0.5s ease-out forwards;
+    }
+`
+
 export const TimerEmoji = styled.span`
     display: inline-block;
     font-size: 48px;

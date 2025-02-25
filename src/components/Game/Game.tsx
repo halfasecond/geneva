@@ -9,7 +9,6 @@ import MuteButton from "../MuteButton";
 import { PerformancePanel } from "./PerformancePanel";
 import { Pond, RainbowPuke, Farm } from "./components/GameElements";
 import { Path, Rivers } from "./components/Environment";
-import Clock from './components/Clock'
 import Beach from './components/Beach'
 import { Minimap } from "../Minimap";
 import Race from "../Race";
@@ -18,6 +17,7 @@ import * as Styled from './Game.style'
 import { WORLD_WIDTH, WORLD_HEIGHT } from '../../utils/coordinates';
 import { rivers, introMessages } from './components/Environment/set';
 import { isOnPath, isBlockedByRiver, isInStartBox, handleKeyDown, handleKeyUp } from "./utils";
+import Clock from './components/Clock/Clock';
 
 const { VITE_APP_NODE_ENV } = import.meta.env;
 const HORSE_SIZE = 100;
@@ -25,7 +25,7 @@ const HORSE_SIZE = 100;
 interface Props {
     tokenId?: number;
     token?: string;
-    nfts: any;
+    nfts: any[];
 }
 
 const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
@@ -315,9 +315,9 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
                 <Farm left={1190} top={940} size={100} />
                 <Pond left={1040} top={510} />
                 <Pond left={40} top={2580} />
-                <Clock left={3640} top={900} {...{ block }} />
                 <RainbowPuke left={40} top={2580} />
                 <Beach />
+                <Clock block={block} />
                 <Styled.IssuesFieldContainer
                     style={{
                         transform: `scale(${1 / scale})`
@@ -386,6 +386,7 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
                     currentPosition={position}
                     actors={actors}
                     nfts={nfts}
+                    block={block}
                 />
             )}
         </Styled.Container>

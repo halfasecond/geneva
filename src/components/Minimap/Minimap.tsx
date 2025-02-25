@@ -1,10 +1,17 @@
-import React from 'react';
-import styled from 'styled-components';
+import React, { useEffect, useState } from 'react';
+import styled, { keyframes } from 'styled-components';
 import { MinimapElement, MinimapDot, ViewportIndicator } from './MinimapElement';
 import { Position } from '../../server/types';
 import { paths, rivers, raceElements, pond, issuesColumns } from '../../components/Game/components/Environment';
 import { WORLD_WIDTH, WORLD_HEIGHT, MINIMAP_WIDTH, MINIMAP_HEIGHT } from '../../utils/coordinates';
 import { Actor } from '../../server/types/actor';
+import { CLOCK_DIMENSIONS } from '../Game/components/Clock/constants';
+
+const pulse = keyframes`
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+`;
 
 const Container = styled.div`
     position: fixed;
@@ -36,6 +43,7 @@ interface MinimapProps {
     currentPosition: Position;
     actors: Actor[];
     nfts: any[];
+    block?: { blocknumber: number };
 }
 
 export const Minimap: React.FC<MinimapProps> = ({
@@ -44,7 +52,19 @@ export const Minimap: React.FC<MinimapProps> = ({
     scale,
     actors,
     nfts,
+    block
 }) => {
+    const [isPulsing, setIsPulsing] = useState(false);
+
+    // Handle block changes
+    useEffect(() => {
+        if (block?.blocknumber) {
+            setIsPulsing(true);
+            const timer = setTimeout(() => setIsPulsing(false), 500);
+            return () => clearTimeout(timer);
+        }
+    }, [block?.blocknumber]);
+
     return (
         <Container>
             <MinimapContent>
@@ -75,6 +95,13 @@ export const Minimap: React.FC<MinimapProps> = ({
                             : 'rgba(238, 238, 238, 0.5)'}
                     />
                 ))}
+
+                {/* Clock */}
+                <MinimapElement
+                    worldRect={CLOCK_DIMENSIONS}
+                    backgroundColor="#EEE"
+                    opacity={isPulsing ? 1 : 0.6}
+                />
 
                 {/* Ponds */}
                 <MinimapElement

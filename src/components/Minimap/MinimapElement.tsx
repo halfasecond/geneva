@@ -48,14 +48,22 @@ const StyledDot = styled.div`
     }
 `;
 
-export const MinimapDot: React.FC<{
+interface MinimapDotProps {
     x: number;
     y: number;
     size?: number;
-    svg: string;
+    svg?: string | null;
     direction?: 'left' | 'right';
     className?: string;
-}> = ({ x, y, svg, direction = 'right', className }) => {
+}
+
+export const MinimapDot: React.FC<MinimapDotProps> = ({ 
+    x, 
+    y, 
+    svg = null, 
+    direction = 'right', 
+    className 
+}) => {
     const pos = CoordinateTransformer.worldToMinimap({ x, y });
 
     return (
@@ -67,7 +75,7 @@ export const MinimapDot: React.FC<{
                 transform: `translate(-50%, -50%) scaleX(${direction === 'left' ? -1 : 1})`
             }}
         >
-            <img src={getSVG(svg)} alt={''} />
+            {svg && <img src={getSVG(svg)} alt="" />}
         </StyledDot>
     );
 };
