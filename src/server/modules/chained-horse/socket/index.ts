@@ -1,7 +1,8 @@
 import { Server, Socket, Namespace } from 'socket.io';
-import { Model } from 'mongoose';
+import { ScareCityState } from './state/scarecity';
 import { Actor, Position } from '../../../types/actor';
 import { paths, rivers, raceElements, issuesColumns } from './set';
+import { Models, Horse, BlockData } from '../types';
 
 const WORLD_WIDTH = 5000;
 const WORLD_HEIGHT = 5000;
@@ -27,16 +28,6 @@ interface UtilityCount {
     [key: string]: number;
 }
 
-interface Models {
-    Event: Model<any>;
-    NFT: Model<any>;
-    Owner: Model<any>;
-    Account: Model<any>;
-    Message: Model<any>;
-    Race: Model<any>;
-    [key: string]: Model<any>;
-}
-
 // Game settings that can be adjusted
 const gameSettings = {
     tickRate: 100,  // 100 = 10 updates per second
@@ -60,6 +51,8 @@ const socket = async (io: Server, web3: any, name: string, Models: Models, Contr
     let socketCount = 0;
     let gameLoopInterval: NodeJS.Timeout;
     let saveInterval: NodeJS.Timeout;
+    let blockCounter = 0;
+    let latestEthBlock = { blocknumber: 0, timestamp: 0 };
 
     async function processActors() {
         const actors = await Models.GameState.find();
@@ -76,14 +69,11 @@ const socket = async (io: Server, web3: any, name: string, Models: Models, Contr
     await processActors()
 
     // Log all unique utility traits
-    const horses = await Models.NFT.find();
-    // console.log('\n=== Horse Utility Traits ===');
-    // const utilities = new Set(horses.map(horse => horse.utility).filter(Boolean));
-    // console.log('Unique utilities:', Array.from(utilities));
+    const horses: Horse[] = await Models.NFT.find();
     
     // Log distribution
     const utilityCount: UtilityCount = {};
-    horses.forEach(horse => {
+    horses.forEach((horse: Horse) => {
         if (horse.utility) {
             utilityCount[horse.utility] = (utilityCount[horse.utility] || 0) + 1;
         }
@@ -92,6 +82,7 @@ const socket = async (io: Server, web3: any, name: string, Models: Models, Contr
     Object.entries(utilityCount).forEach(([utility, count]) => {
         console.log(`${utility}: ${count} horses`);
     });
+
     // Create ducks of doom and flowers of goodwill
     const duckHorses = horses.filter(horse => horse.utility === 'duck of doom');
     const flowerHorses = horses.filter(horse => horse.utility === 'flower of goodwill');
@@ -117,8 +108,7 @@ const socket = async (io: Server, web3: any, name: string, Models: Models, Contr
     ];
 
     console.log(`🦆 Creating ${duckHorses.length} Ducks of Doom`);
-    duckHorses.forEach((horse, index) => {
-        
+    duckHorses.forEach((horse: Horse, index: number) => {
         // First 3 ducks in first pond, next 3 in second pond
         let x, y;
         if (index < 3) {
@@ -131,13 +121,13 @@ const socket = async (io: Server, web3: any, name: string, Models: Models, Contr
             y = 2820 + (Math.random() * 40 - 20); // ±20px random height
         }
         
-        addDuck(namespace, x, y, horse.tokenId);  // Already a number
+        addDuck(namespace, x, y, horse.tokenId);
     });
 
     console.log(`🌼 Creating ${flowerHorses.length} Flowers of Goodwill`);
-    flowerHorses.forEach(horse => {
+    flowerHorses.forEach((horse: Horse) => {
         const { x, y } = getRandomPosition(RESTRICTED_AREAS, WORLD_WIDTH, WORLD_HEIGHT);
-        addFlower(namespace, x, y, horse.tokenId);  // Already a number
+        addFlower(namespace, x, y, horse.tokenId);
     });
 
     // Track duck movement state
@@ -238,12 +228,17 @@ const socket = async (io: Server, web3: any, name: string, Models: Models, Contr
         }
     };
 
-    let latestEthBlock = { blocknumber: 0, timestamp: 0 }
-    emitter.on('newEthBlock', ({ number, timestamp }) => {
-        console.log(number, timestamp)
+    const scareCityState = new ScareCityState();
+    emitter.on('newEthBlock', ({ number, timestamp }: BlockData) => {
         latestEthBlock.blocknumber = Number(number)
         latestEthBlock.timestamp = Number(timestamp)
         namespace.emit('newEthBlock', latestEthBlock)
+        // Increment block counter and check for ScareCityGame reset
+        blockCounter++;
+        if (blockCounter >= 10) {
+            blockCounter = 0;
+            scareCityState.handleBlockUpdate(latestEthBlock.blocknumber);
+        }
     })
 
     namespace.on('connection', (socket: Socket) => {
@@ -314,7 +309,7 @@ const socket = async (io: Server, web3: any, name: string, Models: Models, Contr
             }
         });
 
-        socket.on('player:complete_tutorial', race => {
+        socket.on('player:complete_tutorial', (race: any) => {
             const player = getPlayerBySocket(namespace, socket.id);
             if (player) {
                 completePlayerTutorial(namespace, player.id, race);
