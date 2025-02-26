@@ -23,17 +23,17 @@ interface ScareCityProps {
     gameData: any;
 }
 
+const attributeTypes = [
+    'background', 'bodyAccessory', 'bodyColor', 'headAccessory',
+    'hoofColor', 'mane', 'maneColor', 'pattern', 'patternColor',
+    'tail', 'utility'
+];
+
 // Process NFTs to get attribute counts
 const getAttributeCounts = (nfts: NFT[]) => {
     const counts: Record<string, { value: string; amount: number }[]> = {};
     
     // Get all possible attribute types
-    const attributeTypes = [
-        'background', 'bodyAccessory', 'bodyColor', 'headAccessory',
-        'hoofColor', 'mane', 'maneColor', 'pattern', 'patternColor',
-        'tail', 'utility'
-    ];
-
     // Count occurrences of each value for each attribute type
     attributeTypes.forEach(type => {
         const valueCounts = new Map<string, number>();
@@ -57,9 +57,7 @@ const getAttributeCounts = (nfts: NFT[]) => {
 
 export const ScareCity: React.FC<ScareCityProps> = ({ nfts, player, gameData, block }) => {
     if (!gameData?.gameStart) return null;
-
     const attributeCounts = getAttributeCounts(nfts);
-    const attributeTypes = Object.keys(attributeCounts);
 
     return (
         <Styled.Container>
