@@ -1,155 +1,58 @@
-import { EventEmitter } from 'events';
-import { Horse, ScareCityAnswers } from '../../models/types';
+import { Namespace } from 'socket.io';
 
-export type TraitType = 
-    | 'background'
-    | 'bodyAccessory'
-    | 'bodyColor'
-    | 'headAccessory'
-    | 'hoofColor'
-    | 'mane'
-    | 'maneColor'
-    | 'pattern'
-    | 'patternColor'
-    | 'tail'
-    | 'utility';
+export const initializeScareCityState = (namespace: Namespace, utilities: any, initialBlock: number) => {
+    let blockCounter = 0;
+    let currentGame: any = null;
 
-const TRAIT_TYPES: TraitType[] = [
-    'background',
-    'bodyAccessory',
-    'bodyColor',
-    'headAccessory',
-    'hoofColor',
-    'mane',
-    'maneColor',
-    'pattern',
-    'patternColor',
-    'tail',
-    'utility'
-];
-
-interface GameState {
-    gameStart: number;
-    gameLength: number;
-    ghosts: string[];
-    totalPaidOut: number;
-    traits: Record<TraitType, ScareCityAnswers>;
-}
-
-interface TraitAttribute {
-    name: TraitType;
-    value: string;
-    amount: number;
-    percentage: number;
-}
-
-export class ScareCityState extends EventEmitter {
-    private state: GameState | null = null;
-    private attributes: TraitAttribute[] = [];
-
-    constructor() {
-        super();
-        this.initializeState();
-    }
-
-    private async initializeState() {
-        // Load initial attributes from births
-        const horses = await Birth.find()
-            .sort({ blockNumber: -1, tokenId: -1 })
-            .limit(1000)
-            .lean();
-
-        // Calculate trait attributes
-        TRAIT_TYPES.forEach((traitType) => {
-            const uniqueTraits = [...new Set(horses.map((horse: Horse) => horse[traitType]))]
-                .filter((trait): trait is string => trait !== undefined);
-
-            uniqueTraits.forEach((trait) => {
-                const amount = horses.filter((horse: Horse) => horse[traitType] === trait).length;
-                this.attributes.push({
-                    name: traitType,
-                    value: trait,
-                    amount,
-                    percentage: (100 / horses.length) * amount
-                });
-            });
-        });
-    }
-
-    async createNewGame(blockNumber: number, gameLength: number) {
-        const newState: GameState = {
+    const createNewGame = (blockNumber: number) => {
+        currentGame = {
             gameStart: blockNumber,
-            gameLength,
+            gameLength: 10,
             ghosts: [],
             totalPaidOut: 0,
-            traits: {} as Record<TraitType, ScareCityAnswers>
+            traits: {}
         };
 
-        // Initialize trait answers
-        TRAIT_TYPES.forEach((trait) => {
-            const traitsOfType = this.attributes.filter(({ name }) => name === trait);
-            const randomIndex = Math.floor(Math.random() * traitsOfType.length);
-            const answer = traitsOfType[randomIndex]?.value || '';
-
-            newState.traits[trait] = {
-                answer,
+        // Initialize traits from utilities
+        Object.entries(utilities).forEach(([trait, count]) => {
+            currentGame.traits[trait] = {
+                answer: trait,
                 discounted: [],
                 discounters: [],
                 foundBy: null,
-                foundAtBlock: null
+                foundAtBlock: null,
+                count
             };
         });
 
-        this.state = newState;
-        this.emit('gameUpdated', this.state);
+        namespace.emit('scarecity:reset', { gameStart: blockNumber });
+        return currentGame;
+    };
 
-        // Save to database
-        const gameDoc = new ScareCityGame(newState);
-        await gameDoc.save();
-    }
+    // Create initial game on boot
+    createNewGame(initialBlock);
 
-    async handleBlockUpdate(blockNumber: number) {
-        if (!this.state) {
-            await this.createNewGame(blockNumber, 10);
-            return;
+    const handleBlockUpdate = (blockNumber: number) => {
+        blockCounter++;
+        if (blockCounter >= 10) {
+            currentGame = createNewGame(blockNumber);
+            blockCounter = 0;
         }
+        // Always emit current state
+        namespace.emit('scarecity:gameState', currentGame);
+    };
 
-        const gameEnded = this.state.gameStart + this.state.gameLength <= blockNumber;
-        if (gameEnded) {
-            await this.handleGameEnd();
-            await this.createNewGame(blockNumber, 10);
-        }
-    }
+    const handleScan = (account: string, scanType: string, scanResult: string, blockNumber: number) => {
+        if (!currentGame) return;
 
-    private async handleGameEnd() {
-        if (!this.state) return;
-
-        // Check if anyone played
-        const someonePlayed = TRAIT_TYPES.some(trait => 
-            this.state?.traits[trait].foundBy || 
-            this.state?.traits[trait].discounted.length > 0
-        );
-
-        if (someonePlayed) {
-            // Calculate and distribute rewards
-            // TODO: Implement reward distribution
-            
-            // Save game results
-            const gameDoc = new ScareCityGame(this.state);
-            await gameDoc.save();
-        }
-    }
-
-    handleScan(account: string, scanType: TraitType, scanResult: string, blockNumber: number) {
-        if (!this.state) return;
-
-        const trait = this.state.traits[scanType];
+        const trait = currentGame.traits[scanType];
+        if (!trait) return;
         
         // Found correct trait
         if (trait.foundBy === null && trait.answer === scanResult) {
             trait.foundBy = account;
             trait.foundAtBlock = blockNumber;
-            this.emit('traitFound', { account, scanType, scanResult });
+            namespace.emit('scarecity:traitFound', { account, scanType, scanResult });
         } 
         // Wrong trait but not previously discounted
         else if (trait.answer !== scanResult && !trait.discounters.includes(account)) {
@@ -159,24 +62,28 @@ export class ScareCityState extends EventEmitter {
             }
 
             // Check if player has discounted all traits
-            const allTraitsDiscounted = TRAIT_TYPES.every(traitType => 
-                this.state?.traits[traitType].discounters.includes(account)
-            );
+            const allTraitsDiscounted = Object.values(currentGame.traits)
+                .every((t: any) => t.discounters.includes(account));
 
-            if (allTraitsDiscounted && this.state) {
-                this.state.ghosts.push(account);
-                this.emit('becameGhost', { account });
+            if (allTraitsDiscounted) {
+                currentGame.ghosts.push(account);
+                namespace.emit('scarecity:becameGhost', { account });
             }
         }
 
-        this.emit('gameUpdated', this.state);
-    }
+        namespace.emit('scarecity:gameState', currentGame);
+    };
 
-    getState() {
-        return this.state;
-    }
+    const getState = () => currentGame;
 
-    getAttributes() {
-        return this.attributes;
-    }
-}
+    // Send initial state to new connections
+    namespace.on('connection', (socket) => {
+        socket.emit('scarecity:gameState', currentGame);
+    });
+
+    return {
+        handleBlockUpdate,
+        handleScan,
+        getState
+    };
+};

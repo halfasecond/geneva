@@ -146,3 +146,10 @@ export const Leaderboard = styled.div`
         }
     }
 `
+export const ScareCityContainer = styled.div`
+    left: 2840px;
+    top: 900px;
+    transform-origin: top left;
+    z-index: ${Z_LAYERS['UI']};
+`
+

@@ -22,7 +22,9 @@ const defaultState = {
         movementSpeed: 3.75,
         broadcastFrames: 5,
         smoothing: 0.1
-    }
+    },
+    socket: null,
+    scareCityState: null
 };
 
 interface GameSettings {
@@ -42,7 +44,8 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
         broadcastFrames: 5,
         smoothing: 0.1
     });
-    const [block, setBlock] = useState(undefined)
+    const [block, setBlock] = useState(undefined);
+    const [scareCityState, setScareCityState] = useState<any>(null);
     const { metrics, trackMovementUpdate, trackServerResponse, trackLatency } = usePerformanceMetrics();
     const lastPingTime = useRef<number>(0);
     const lastStateUpdate = useRef<number>(performance.now());
@@ -135,6 +138,24 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
                 setGameSettings(settings);
             };
 
+            // Handle ScareCityGame state
+            const handleScareCityState = (state: any) => {
+                console.log('ScareCityGame State:', state);
+                setScareCityState(state);
+            };
+
+            const handleScareCityReset = (data: any) => {
+                console.log('ScareCityGame Reset:', data);
+            };
+
+            const handleTraitFound = (data: any) => {
+                console.log('ScareCityGame Trait Found:', data);
+            };
+
+            const handleBecameGhost = (data: any) => {
+                console.log('ScareCityGame Became Ghost:', data);
+            };
+
             // Set up event handlers
             const handleError = (error: { message: string }) => {
                 console.error('Game server error:', error.message);
@@ -155,7 +176,13 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
             socket.on('static:actors', handleStaticActors);
             socket.on('game:settings', handleGameSettings);
             socket.on('error', handleError);
-            socket.on('newEthBlock', (_block: any) => setBlock(_block))
+            socket.on('newEthBlock', (_block: any) => setBlock(_block));
+
+            // ScareCityGame events
+            socket.on('scarecity:gameState', handleScareCityState);
+            socket.on('scarecity:reset', handleScareCityReset);
+            socket.on('scarecity:traitFound', handleTraitFound);
+            socket.on('scarecity:becameGhost', handleBecameGhost);
 
             return () => {
                 clearInterval(pingInterval);
@@ -168,6 +195,10 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
                 socket.off('game:settings', handleGameSettings);
                 socket.off('error', handleError);
                 socket.off('pong');
+                socket.off('scarecity:gameState', handleScareCityState);
+                socket.off('scarecity:reset', handleScareCityReset);
+                socket.off('scarecity:traitFound', handleTraitFound);
+                socket.off('scarecity:becameGhost', handleBecameGhost);
                 socket.removeAllListeners();
                 socket.disconnect();
                 socketRef.current = null;
@@ -199,7 +230,9 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
             ...defaultState,
             actors,  // Show world state
             connected,  // Show connection state
-            metrics  // Include performance metrics
+            metrics,  // Include performance metrics
+            scareCityState,
+            socket: socketRef.current
         };
     }
 
@@ -208,15 +241,20 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
         return { ...defaultState, metrics };
     }
 
+    const player = actors.find(actor => actor.id === tokenId)
+
     return {
         connected,
         updatePosition,
         updatePlayerIntroStatus,
-        introActive: actors.find(actor => actor.id === tokenId)?.race === undefined,
-        position: actors.find(actor => actor.id === tokenId)?.position,
+        introActive: player?.race === undefined,
+        player,
+        position: player?.position,
         actors,
         gameSettings,
         metrics,
-        block
+        block,
+        scareCityState,
+        socket: socketRef.current
     };
 }

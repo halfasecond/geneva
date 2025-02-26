@@ -18,6 +18,7 @@ import { WORLD_WIDTH, WORLD_HEIGHT } from '../../utils/coordinates';
 import { rivers, introMessages } from './components/Environment/set';
 import { isOnPath, isBlockedByRiver, isInStartBox, handleKeyDown, handleKeyUp } from "./utils";
 import Clock from './components/Clock/Clock';
+import { ScareCity } from './components/ScareCity';
 
 const { VITE_APP_NODE_ENV } = import.meta.env;
 const HORSE_SIZE = 100;
@@ -35,7 +36,7 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
     const [isMuted, setIsMuted] = useState(false);
     const [showMetrics, setShowMetrics] = useState(false)
 
-    const { connected, actors, introActive, position, updatePosition, updatePlayerIntroStatus, gameSettings, metrics, block } = useGameServer({
+    const { connected, actors, introActive, player, position, updatePosition, updatePlayerIntroStatus, gameSettings, metrics, block, scareCityState } = useGameServer({
         tokenId, token, onStaticActors: (actors: Actor[]) => setStaticActors(actors)
     });
     const [visibleMessages, setVisibleMessages] = useState<boolean[]>(
@@ -325,6 +326,16 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
                 >
                     <IssuesField />
                 </Styled.IssuesFieldContainer>
+
+                {/* ScareCity component */}
+                {connected && block && player && (
+                    <ScareCity 
+                        nfts={nfts}
+                        player={player}
+                        block={block}
+                        gameData={scareCityState}
+                    />
+                )}
 
                 {/* Race component */}
                 <Race

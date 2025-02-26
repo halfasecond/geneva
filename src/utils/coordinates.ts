@@ -1,7 +1,7 @@
 import { Position } from '../server/types';
 
 // Game world dimensions (matching GameSpace)
-export const WORLD_WIDTH = 5000;
+export const WORLD_WIDTH = 8000;
 export const WORLD_HEIGHT = 5000;
 
 // Minimap dimensions

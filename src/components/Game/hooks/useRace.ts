@@ -10,7 +10,7 @@ interface UseRaceOptions {
 
 const getTwoRandomHorses = (tokenId, nfts) => {
     // Filter out NFTs that match the tokenId or have an invalid owner
-    const validNFTs = nfts.filter(nft => nft.tokenId !== tokenId && nft.owner !== '0x0');
+    const validNFTs = nfts.filter(nft => nft.tokenId !== tokenId && nft.owner !== '0x0000000000000000000000000000000000000000');
   
     if (validNFTs.length < 2) {
       // Not enough valid NFTs to choose two unique ones
