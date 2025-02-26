@@ -35,12 +35,20 @@ interface Props {
     nfts: any[];
 }
 
+interface BuildingDimensions {
+    width: number;
+    height: number;
+    left: number;
+    top: number;
+}
+
 const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
     // Track active keys
     const [activeKeys, setActiveKeys] = useState(new Set<string>());
     const [staticActors, setStaticActors] = useState<Actor[]>();
     const [isMuted, setIsMuted] = useState(false);
-    const [showMetrics, setShowMetrics] = useState(false)
+    const [showMetrics, setShowMetrics] = useState(false);
+    const [buildingDimensions, setBuildingDimensions] = useState<Record<string, BuildingDimensions>>({});
 
     const { 
         connected,
@@ -59,6 +67,7 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
     } = useGameServer({
         tokenId, token, onStaticActors: (actors: Actor[]) => setStaticActors(actors)
     });
+
     const [visibleMessages, setVisibleMessages] = useState<boolean[]>(
         new Array(introMessages.length).fill(false)
     );
@@ -356,8 +365,12 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
                         block={block}
                         attributeTypes={attributeTypes}
                         scanTrait={scanTrait}
-                        left={4000}
-                        top={40}
+                        onBuildingDimensions={(dimensions) => {
+                            setBuildingDimensions(prev => ({
+                                ...prev,
+                                ...dimensions
+                            }));
+                        }}
                     />
                 )}
 
@@ -422,6 +435,8 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
                     actors={actors}
                     nfts={nfts}
                     block={block}
+                    scareCityDimensions={buildingDimensions}
+                    scareCityState={scareCityState}
                 />
             )}
             {connected && player && (

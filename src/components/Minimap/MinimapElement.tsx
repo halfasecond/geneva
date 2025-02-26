@@ -115,3 +115,47 @@ export const ViewportIndicator: React.FC<{
         />
     );
 };
+
+interface BuildingProps {
+    isFound: boolean;
+}
+
+const StyledBuilding = styled(StyledElement)<BuildingProps>`
+    position: relative;
+    background-color: #dadee9;
+    border-radius: 2px;
+    opacity: 0.6;
+
+    &::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 40%;
+        height: 40%;
+        background-color: ${props => props.isFound ? '#49aa43' : 'transparent'};
+        border-radius: 1px;
+    }
+`;
+
+interface MinimapBuildingProps {
+    worldRect: Rect;
+    isFound: boolean;
+}
+
+export const MinimapBuilding: React.FC<MinimapBuildingProps> = ({ worldRect, isFound }) => {
+    const minimapRect = CoordinateTransformer.worldRectToMinimap(worldRect);
+
+    return (
+        <StyledBuilding
+            style={{
+                left: `${minimapRect.left}px`,
+                top: `${minimapRect.top}px`,
+                width: `${Math.max(minimapRect.width, 1)}px`,
+                height: `${Math.max(minimapRect.height, 1)}px`,
+            }}
+            isFound={isFound}
+        />
+    );
+};

@@ -30,6 +30,8 @@ export const AttributeType: React.FC<AttributeTypeProps> = ({
 }) => {
     const [canscan, setCanscan] = useState(false);
     const scanningAreaRef = useRef<HTMLDivElement>(null);
+    const buildingRef = useRef<HTMLDivElement>(null);
+
     useEffect(() => {
         if (player && scanningAreaRef.current) {
             const saRect = scanningAreaRef.current.getBoundingClientRect();
@@ -62,7 +64,7 @@ export const AttributeType: React.FC<AttributeTypeProps> = ({
     }, [canscan]);
 
     return (
-        <Styled.Building>
+        <Styled.Building ref={buildingRef}>
             <h4>{traitType.replace(/([A-Z])/g, ' $1').trim()}</h4>
             <ul>
                 {attributes

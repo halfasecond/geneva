@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
-import { MinimapElement, MinimapDot, ViewportIndicator } from './MinimapElement';
+import { MinimapElement, MinimapDot, ViewportIndicator, MinimapBuilding } from './MinimapElement';
 import { Position } from '../../server/types';
 import { paths, rivers, raceElements, pond, issuesColumns } from '../../components/Game/components/Environment';
 import { WORLD_WIDTH, WORLD_HEIGHT, MINIMAP_WIDTH, MINIMAP_HEIGHT } from '../../utils/coordinates';
@@ -36,6 +36,13 @@ const MinimapContent = styled.div`
     height: 100%;
 `;
 
+interface BuildingDimensions {
+    width: number;
+    height: number;
+    left: number;
+    top: number;
+}
+
 interface MinimapProps {
     viewportOffset: { x: number; y: number };
     viewportDimensions: { width: number; height: number };
@@ -44,6 +51,8 @@ interface MinimapProps {
     actors: Actor[];
     nfts: any[];
     block?: { blocknumber: number };
+    scareCityDimensions?: Record<string, BuildingDimensions>;
+    scareCityState?: Record<string, { foundBy: string | null }>;
 }
 
 export const Minimap: React.FC<MinimapProps> = ({
@@ -52,7 +61,9 @@ export const Minimap: React.FC<MinimapProps> = ({
     scale,
     actors,
     nfts,
-    block
+    block,
+    scareCityDimensions,
+    scareCityState
 }) => {
     const [isPulsing, setIsPulsing] = useState(false);
 
@@ -160,6 +171,20 @@ export const Minimap: React.FC<MinimapProps> = ({
                             height: element.height
                         }}
                         backgroundColor={element.backgroundColor}
+                    />
+                ))}
+
+                {/* ScareCity Buildings */}
+                {scareCityDimensions && scareCityState && Object.entries(scareCityDimensions).map(([type, dimensions]) => (
+                    <MinimapBuilding
+                        key={`building-${type}`}
+                        worldRect={{
+                            left: dimensions.left,
+                            top: dimensions.top,
+                            width: dimensions.width,
+                            height: dimensions.height
+                        }}
+                        isFound={!!scareCityState[type]?.foundBy}
                     />
                 ))}
 
