@@ -16,14 +16,16 @@ export const Container = styled.div`
 `;
 
 export const Header = styled.div`
-    padding-top: 40px;
-    color: #000;
+    color: #FFF;
     position: absolute;
+    bottom: -170px;
+    background-color: rgba(0, 0, 0, 0.8);
+    padding: 20px;
+    border-radius: 5px;
 
     h2 {
         font-size: 24px;
         margin-bottom: 10px;
-        opacity: 0.4;
 
         span {
             margin-left: 10px;
@@ -32,8 +34,7 @@ export const Header = styled.div`
     }
 
     p {
-        opacity: 0.4;
-        font-size: 12px;
+        font-size: 16px;
         margin: 5px 0;
     }
 `;
@@ -55,6 +56,10 @@ export const Building = styled.div`
     h4 {
         font-size: 14px;
         margin-bottom: 20px;
+        background-color: #EEE;
+        display: inline-block;
+        padding: 8px;
+        font-weight: bold;
     }
 
     ul {
@@ -110,9 +115,10 @@ export const Door = styled.div<DoorProps>`
 export const Results = styled.div`
     padding: 20px;
     background: rgba(0, 0, 0, 0.8);
-    border-radius: 8px;
+    border-radius: 5px;
     color: white;
     margin-left: 80px;
+    width: 600px;
 
     h4 {
         margin: 15px 0 10px;
@@ -121,11 +127,12 @@ export const Results = styled.div`
     ul {
         list-style: none;
         padding: 0;
-        margin: 0 0 15px;
+        margin: 36px 0 36px;
 
         li {
             margin: 5px 0;
             color: #ccc;
+            font-size: 16px;
 
             b {
                 color: #fff;

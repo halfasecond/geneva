@@ -117,13 +117,13 @@ export const ScareCity: React.FC<ScareCityProps> = ({ nfts, player, gameData, bl
 
                 <h4>How the scores work</h4>
                 <ul>
-                    <li>Fully Spooked: 5 x <b>$HAY</b></li>
-                    <li>Not scared: amount x <b>$HAY</b></li>
-                    <li>All rewards have a "not scared" + 1<br />horse multiplier</li>
-                    <li><b>$HAY</b> is paid out according to<br />trait rarity of the participating horse</li>
+                    <li>👻 Fully Spooked: 5 x <b>$HAY</b></li>
+                    <li>🥷🏻 Not scared: amount x <b>$HAY</b></li>
+                    <li>🐎 All rewards have a "not scared" + 1 horse multiplier</li>
+                    <li>🚜 <b>$HAY</b> is paid out in accordance with trait rarity</li>
                 </ul>
 
-                <h4>Game ends: {block && gameData.gameStart + gameData.gameLength - block.blocknumber} blocks</h4>
+                <h4>Next game starts: {block && gameData.gameStart + gameData.gameLength - block.blocknumber} blocks</h4>
             </Styled.Results>
         </Styled.Container>
     );
