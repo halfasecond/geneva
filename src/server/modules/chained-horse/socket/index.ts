@@ -19,7 +19,8 @@ import {
     getWorldState,
     formatActorState,
     completePlayerTutorial,
-    getStaticActors
+    getStaticActors,
+    incrementBalance
 } from './state/world';
 
 interface UtilityCount {
@@ -226,6 +227,7 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
                     {
                         $set: {
                             position: player.position,
+                            hay: player.hay,
                             race: player.race,
                             lastSeen: new Date()
                         }

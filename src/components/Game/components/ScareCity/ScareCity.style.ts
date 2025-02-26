@@ -24,6 +24,7 @@ export const Header = styled.div`
     background-color: rgba(0, 0, 0, 0.8);
     padding: 20px;
     border-radius: 5px;
+    zIndex: ${Z_LAYERS['UI']};
 
     h2 {
         font-size: 24px;

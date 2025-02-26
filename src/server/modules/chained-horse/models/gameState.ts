@@ -8,6 +8,7 @@ interface GameState {
     connected: boolean;
     lastSeen: Date;
     race?: number;
+    hay: number;
 }
 
 export default (prefix: string, db: Connection): Model<GameState> => {
@@ -21,7 +22,8 @@ export default (prefix: string, db: Connection): Model<GameState> => {
         },
         connected: { type: Boolean, default: false },
         lastSeen: { type: Date, default: Date.now },
-        race: { type: Number, default: undefined }
+        race: { type: Number, default: undefined },
+        hay: { type: Number, default: 0 }
     });
 
     return db.model<GameState>(`${prefix}_GameState`, schema);

@@ -15,6 +15,7 @@ export interface Actor {
     connected?: boolean;   // for players only
     lastSeen?: Date;      // for players only
     race?: undefined | number; // for players only
+    hay: number | undefined; // for players only
     socketId?: string;
 }
 
@@ -39,6 +40,7 @@ export const createActor = (
     id,
     type,
     position: { x, y, direction },
+    hay: type === 'player' ? 0 : undefined,
     connected: type === 'player' ? true : undefined,
     lastSeen: type === 'player' ? new Date() : undefined,
     race: undefined

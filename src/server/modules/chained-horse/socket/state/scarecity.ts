@@ -1,3 +1,5 @@
+import { incrementBalance } from "./world";
+
 interface Attribute {
     name: string;    // The attribute type (e.g. 'background', 'bodyColor')
     value: string;   // The specific value of this attribute
@@ -17,7 +19,7 @@ interface AttributeState {
 interface GameState {
     gameStart: number;      // Starting block number
     gameLength: number;     // Game duration in blocks
-    ghosts: string[];      // Players who found all wrong answers
+    ghosts: number[];      // Players who found all wrong answers
     totalPaidOut: number;  // Total rewards distributed
     attributes: Record<string, AttributeState>;  // State for each attribute type
 }
@@ -166,17 +168,7 @@ export const initializeScareCityState = (namespace: any, nfts: any[], attributeT
                     try {
                         // Update hay balances for all payees
                         for (const [payee, amount] of Object.entries(payeeTotals)) {
-                            const user = await Models.Account.findOne({ address: payee.toLowerCase() });
-                            if (user) {
-                                user.hay += amount;
-                                console.log(user.hay)
-                                // await user.save();
-                                namespace.emit('notification', {
-                                    to: payee,
-                                    type: 'Hay distribution',
-                                    message: `you received ${amount} $HAY`
-                                });
-                            }
+                            incrementBalance(namespace, amount, payee, 389, 'hay')      
                         }
 
                         // Save game state
@@ -226,9 +218,9 @@ export const initializeScareCityState = (namespace: any, nfts: any[], attributeT
                 .every((attr) => attr.discounters.includes(account));
 
             if (allAttributesDiscounted) {
-                currentGame.ghosts.push(account);
-                console.log('wasn\'t scared...')
-                namespace.emit('scarecity:becameGhost', { account });
+                currentGame.ghosts.push(tokenId);
+                console.log(`🐎 Horse #${tokenId} wasn't scared... 🐎`)
+                namespace.emit('scarecity:becameGhost', { tokenId });
             }
         }
         namespace.emit('scarecity:gameState', currentGame);

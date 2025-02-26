@@ -1,14 +1,6 @@
 import { Actor, Position, WorldState, createActor } from '../../../../types/actor';
 import { Namespace } from 'socket.io';
 
-// Track world state
-declare module 'socket.io' {
-    interface Namespace {
-        worldState: WorldState;
-        staticActors: Actor[];  // Non-moving actors like flowers
-    }
-}
-
 // Initialize world state
 export const initializeWorldState = (namespace: Namespace, actors: Actor[]) => {
     namespace.worldState = {
@@ -52,7 +44,8 @@ export const addPlayer = (namespace: Namespace, socketId: string, position: Posi
         ),
         socketId,
         race,
-        walletAddress
+        walletAddress,
+        hay: 0,
     } as PlayerActor;
     
     namespace.worldState.actors.push(player);
@@ -66,7 +59,7 @@ export const updateActorPosition = (
     y: number,
     direction: 'left' | 'right'
 ): void => {
-    const actor = namespace.worldState.actors.find(a => a.id === id);
+    const actor = namespace.worldState.actors.find(a => a.id === id); // TODO - could this move e.g. ducks if the player owned one.. ?
     if (actor) {
         actor.position = { x, y, direction };
         if (actor.type === 'player') {
@@ -74,6 +67,24 @@ export const updateActorPosition = (
         }
     }
 };
+
+export const incrementBalance = (
+    namespace: any,
+    amount: number,
+    payee: string,
+    tokenId: number,
+    balanceType: string
+) => {
+    console.log(amount, payee, tokenId, balanceType)
+    const actor = namespace.worldState.actors.find(a => a.id === tokenId && a.type === 'player' && a.walletAddress.toLowerCase() === payee.toLowerCase())
+    try {
+        actor[balanceType] += amount
+        console.log(tokenId, 'earnt: ', amount, ' new balance: $HAY', actor[balanceType])
+    } catch (e) {
+        console.log(e, tokenId, actor, balanceType, amount)
+    }
+    
+}
 
 export const setPlayerConnected = (namespace: Namespace, id: number): void => {
     const player = namespace.worldState.actors.find(

@@ -19,6 +19,7 @@ import { rivers, introMessages } from './components/Environment/set';
 import { isOnPath, isBlockedByRiver, isInStartBox, handleKeyDown, handleKeyUp } from "./utils";
 import Clock from './components/Clock/Clock';
 import { ScareCity } from './components/ScareCity';
+import Hay from './components/Hay'
 
 const { VITE_APP_NODE_ENV } = import.meta.env;
 export const HORSE_SIZE = 100;
@@ -47,6 +48,7 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
         introActive,
         player,
         position,
+        hay,
         updatePosition,
         updatePlayerIntroStatus,
         gameSettings,
@@ -421,6 +423,9 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
                     nfts={nfts}
                     block={block}
                 />
+            )}
+            {connected && player && (
+                <Hay hay={player.hay} />
             )}
         </Styled.Container>
     )
