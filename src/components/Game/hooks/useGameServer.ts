@@ -206,6 +206,16 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
         }
     }, [tokenId, token]);  // Re-initialize socket when tokenId or token changes
 
+    const scanTrait = useCallback((data: { 
+        scanType: string,
+        scanResult: string,
+        tokenId: number
+    }) => {
+        if (socketRef.current?.connected && connected) {
+            socketRef.current.emit('scarecity:scan', data);
+        }
+    }, [connected]);
+
     // Broadcast position updates but don't wait for response
     const updatePosition = useCallback((position: Position) => {
         if (socketRef.current?.connected && connected) {
@@ -255,6 +265,6 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
         metrics,
         block,
         scareCityState,
-        socket: socketRef.current
+        scanTrait
     };
 }

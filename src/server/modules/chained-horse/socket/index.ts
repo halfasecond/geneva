@@ -1,5 +1,3 @@
-import { Server, Socket, Namespace } from 'socket.io';
-import { Model } from 'mongoose';
 import { Actor, Position } from '../../../types/actor';
 import { paths, rivers, raceElements, issuesColumns } from './set';
 import { initializeScareCityState } from './state/scarecity';
@@ -29,15 +27,27 @@ interface UtilityCount {
 }
 
 interface Models {
-    Event: Model<any>;
-    NFT: Model<any>;
-    Owner: Model<any>;
-    Account: Model<any>;
-    Message: Model<any>;
-    Race: Model<any>;
-    ScareCityGame: Model<any>;
-    [key: string]: Model<any>;
+    Event: any;
+    NFT: any;
+    Owner: any;
+    Account: any;
+    Message: any;
+    Race: any;
+    ScareCityGame: any;
+    [key: string]: any;
 }
+
+interface Horse {
+    tokenId: number;
+    utility: string;
+    [key: string]: any;
+}
+
+const attributeTypes = [
+    'background', 'bodyAccessory', 'bodyColor', 'headAccessory',
+    'hoofColor', 'mane', 'maneColor', 'pattern', 'patternColor',
+    'tail', 'utility'
+]
 
 // Game settings that can be adjusted
 const gameSettings = {
@@ -54,8 +64,8 @@ const SAVE_STATE_INTERVAL = gameSettings.saveStateInterval
 
 import { authMiddleware, getWalletAddress } from '../middleware/auth';
 
-const socket = async (io: Server, web3: any, name: string, Models: Models, Contracts: any, emitter: any) => {
-    const namespace: Namespace = io.of(`/${name}`);
+const socket = async (io: any, web3: any, name: string, Models: Models, Contracts: any, emitter: any) => {
+    const namespace = io.of(`/${name}`);
     
     // Apply auth middleware to namespace
     namespace.use(authMiddleware);
@@ -83,26 +93,16 @@ const socket = async (io: Server, web3: any, name: string, Models: Models, Contr
     latestEthBlock.blocknumber = Number(initialBlock);
 
     // Log all unique utility traits
-    const horses = await Models.NFT.find();
-    
+    const nfts = await Models.NFT.find({ owner: { $ne: '0x0000000000000000000000000000000000000000' } });
     // Log distribution
-    const utilityCount: UtilityCount = {};
-    horses.forEach(horse => {
-        if (horse.utility) {
-            utilityCount[horse.utility] = (utilityCount[horse.utility] || 0) + 1;
-        }
-    });
-    console.log('\nUtility Distribution:');
-    Object.entries(utilityCount).forEach(([utility, count]) => {
-        console.log(`${utility}: ${count} horses`);
-    });
+    console.log(nfts.length)
 
     // Initialize ScareCityGame state with utilities and initial block
-    const scareCityState = initializeScareCityState(namespace, utilityCount, latestEthBlock.blocknumber);
+    const scareCityState = initializeScareCityState(namespace, nfts, attributeTypes, latestEthBlock.blocknumber, Models);
 
     // Create ducks of doom and flowers of goodwill
-    const duckHorses = horses.filter(horse => horse.utility === 'duck of doom');
-    const flowerHorses = horses.filter(horse => horse.utility === 'flower of goodwill');
+    const duckHorses = nfts.filter((horse: Horse) => horse.utility === 'duck of doom');
+    const flowerHorses = nfts.filter((horse: Horse) => horse.utility === 'flower of goodwill');
 
     // Define all restricted areas for flower placement
     const RESTRICTED_AREAS = [
@@ -125,7 +125,7 @@ const socket = async (io: Server, web3: any, name: string, Models: Models, Contr
     ];
 
     console.log(`🦆 Creating ${duckHorses.length} Ducks of Doom`);
-    duckHorses.forEach((horse, index) => {
+    duckHorses.forEach((horse: Horse, index: number) => {
         // First 3 ducks in first pond, next 3 in second pond
         let x, y;
         if (index < 3) {
@@ -142,7 +142,7 @@ const socket = async (io: Server, web3: any, name: string, Models: Models, Contr
     });
 
     console.log(`🌼 Creating ${flowerHorses.length} Flowers of Goodwill`);
-    flowerHorses.forEach(horse => {
+    flowerHorses.forEach((horse: Horse) => {
         const { x, y } = getRandomPosition(RESTRICTED_AREAS, WORLD_WIDTH, WORLD_HEIGHT);
         addFlower(namespace, x, y, horse.tokenId);
     });
@@ -164,7 +164,7 @@ const socket = async (io: Server, web3: any, name: string, Models: Models, Contr
             lastTime = now;
 
             // Update duck positions
-            namespace.worldState.actors.forEach(actor => {
+            namespace.worldState.actors.forEach((actor: Actor) => {
                 if (actor.type === 'duck of doom') {
                     // Initialize state if needed
                     if (!duckState.has(actor.id.toString())) {
@@ -245,7 +245,7 @@ const socket = async (io: Server, web3: any, name: string, Models: Models, Contr
         }
     };
 
-    emitter.on('newEthBlock', ({ number, timestamp }) => {
+    emitter.on('newEthBlock', ({ number, timestamp }: { number: number; timestamp: number }) => {
         latestEthBlock.blocknumber = Number(number)
         latestEthBlock.timestamp = Number(timestamp)
         namespace.emit('newEthBlock', latestEthBlock)
@@ -254,7 +254,7 @@ const socket = async (io: Server, web3: any, name: string, Models: Models, Contr
         scareCityState.handleBlockUpdate(latestEthBlock.blocknumber);
     })
 
-    namespace.on('connection', (socket: Socket) => {
+    namespace.on('connection', (socket: any) => {
         socketCount++;
         console.log(`Socket connected: ${socket.id} (Total sockets: ${socketCount})`);
 
@@ -322,7 +322,7 @@ const socket = async (io: Server, web3: any, name: string, Models: Models, Contr
             }
         });
 
-        socket.on('player:complete_tutorial', race => {
+        socket.on('player:complete_tutorial', (race: any) => {
             const player = getPlayerBySocket(namespace, socket.id);
             if (player) {
                 completePlayerTutorial(namespace, player.id, race);
@@ -330,10 +330,11 @@ const socket = async (io: Server, web3: any, name: string, Models: Models, Contr
             }
         });
 
-        socket.on('scarecity:scan', ({ scanType, scanResult }) => {
+        socket.on('scarecity:scan', ({ scanType, scanResult }: { scanType: string; scanResult: string }) => {
             const player = getPlayerBySocket(namespace, socket.id);
             if (player && player.walletAddress) {
                 scareCityState.handleScan(
+                    player.id,
                     player.walletAddress,
                     scanType,
                     scanResult,

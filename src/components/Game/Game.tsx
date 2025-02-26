@@ -21,7 +21,12 @@ import Clock from './components/Clock/Clock';
 import { ScareCity } from './components/ScareCity';
 
 const { VITE_APP_NODE_ENV } = import.meta.env;
-const HORSE_SIZE = 100;
+export const HORSE_SIZE = 100;
+const attributeTypes = [
+    'background', 'bodyAccessory', 'bodyColor', 'headAccessory',
+    'hoofColor', 'mane', 'maneColor', 'pattern', 'patternColor',
+    'tail', 'utility'
+]
 
 interface Props {
     tokenId?: number;
@@ -36,7 +41,20 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
     const [isMuted, setIsMuted] = useState(false);
     const [showMetrics, setShowMetrics] = useState(false)
 
-    const { connected, actors, introActive, player, position, updatePosition, updatePlayerIntroStatus, gameSettings, metrics, block, scareCityState } = useGameServer({
+    const { 
+        connected,
+        actors,
+        introActive,
+        player,
+        position,
+        updatePosition,
+        updatePlayerIntroStatus,
+        gameSettings,
+        metrics,
+        block,
+        scareCityState,
+        scanTrait
+    } = useGameServer({
         tokenId, token, onStaticActors: (actors: Actor[]) => setStaticActors(actors)
     });
     const [visibleMessages, setVisibleMessages] = useState<boolean[]>(
@@ -328,12 +346,16 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
                 </Styled.IssuesFieldContainer>
 
                 {/* ScareCity component */}
-                {connected && block && player && (
+                {connected && player && (
                     <ScareCity 
-                        nfts={nfts}
+                        nfts={nfts.filter(nft => nft.owner !== '0x0000000000000000000000000000000000000000')}
                         player={player}
-                        block={block}
                         gameData={scareCityState}
+                        block={block}
+                        attributeTypes={attributeTypes}
+                        scanTrait={scanTrait}
+                        left={4000}
+                        top={40}
                     />
                 )}
 

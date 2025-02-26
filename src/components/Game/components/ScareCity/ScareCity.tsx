@@ -1,27 +1,5 @@
+import { AttributeType } from './AttributeType';
 import * as Styled from './ScareCity.style';
-
-interface NFT {
-    tokenId: number;
-    background: string;
-    bodyAccessory: string;
-    bodyColor: string;
-    headAccessory: string;
-    hoofColor: string;
-    mane: string;
-    maneColor: string;
-    pattern: string;
-    patternColor: string;
-    tail: string;
-    utility: string;
-    owner: string;
-}
-
-interface ScareCityProps {
-    nfts: NFT[];
-    player?: NFT;
-    block: number;
-    gameData: any;
-}
 
 const attributeTypes = [
     'background', 'bodyAccessory', 'bodyColor', 'headAccessory',
@@ -30,85 +8,52 @@ const attributeTypes = [
 ];
 
 // Process NFTs to get attribute counts
-const getAttributeCounts = (nfts: NFT[]) => {
+const getAttributeCounts = (nfts: any[], type: string) => {
     const counts: Record<string, { value: string; amount: number }[]> = {};
-    
-    // Get all possible attribute types
     // Count occurrences of each value for each attribute type
-    attributeTypes.forEach(type => {
-        const valueCounts = new Map<string, number>();
-        nfts.forEach(nft => {
-            if (!(nft.owner === '0x0000000000000000000000000000000000000000')) {
-                const value = nft[type as keyof NFT] as string;
-                valueCounts.set(value, (valueCounts.get(value) || 0) + 1);
-            }
-        });
-
-        counts[type] = Array.from(valueCounts.entries()).map(([value, amount]) => (
-            {
-                value,
-                amount
-            }
-        ));
-    });
-
+    const values = nfts.map(nft => nft[type]).filter(Boolean);
+    const uniqueValues = [...new Set(values)];
+    counts[type] = uniqueValues.map(value => ({
+        value,
+        amount: values.filter(v => v === value).length
+    }))
     return counts;
 };
 
-export const ScareCity: React.FC<ScareCityProps> = ({ nfts, player, gameData, block }) => {
+export const ScareCity = ({ nfts, player, gameData, block, scanTrait, left, top }) => {
     if (!gameData?.gameStart) return null;
-    const attributeCounts = getAttributeCounts(nfts);
-
     return (
-        <Styled.Container>
+        <Styled.Container style={{ left, top }}>
             <Styled.Header>
                 <h2>Scare City<span>Check if you're rare but don't get a scare!</span></h2>
-                <p>Run past the windows of all the skyscrapers but don't get spooked by a spooky ghost of death!</p>
-                <p>Game finishes in {block && gameData.gameStart + gameData.gameLength - block?.blocknumber} blocks</p>
+                <p>Stand in the doorway of all the skyscrapers but don't get spooked by a spooky ghost of death!</p>
+                <p>Next game starts in {block && gameData.gameStart + gameData.gameLength - block.blocknumber} blocks</p>
             </Styled.Header>
 
             <Styled.Buildings>
-                {attributeTypes.map((type) => (
-                    <Styled.Building key={type}>
-                        <h4>{type.replace(/([A-Z])/g, ' $1').trim()}</h4>
-                        <ul>
-                            {attributeCounts[type]
-                                .sort((a, b) => a.amount - b.amount)
-                                .map((attr, i) => {
-                                    const isDiscounted = gameData[type]?.discounted?.includes(attr.value);
-                                    const isFound = gameData[type]?.foundBy && gameData[type]?.answer === attr.value;
-                                    const percentage = ((attr.amount / nfts.length) * 100).toFixed(2);
-                                    
-                                    return (
-                                        <li 
-                                            key={i}
-                                            style={{
-                                                textDecoration: isDiscounted ? 'line-through' : 
-                                                               isFound ? 'underline' : 'none'
-                                            }}
-                                        >
-                                            {attr.value} ({attr.amount}) {percentage}%
-                                        </li>
-                                    );
-                                })}
-                        </ul>
-                        <Styled.Door 
-                            canscan={true}
-                            ismatch={gameData[type]?.foundBy && 
-                                   gameData[type]?.answer === player?.[type as keyof NFT]}
-                        >
-                            <div />
-                        </Styled.Door>
-                    </Styled.Building>
-                ))}
+                {Object.keys(gameData.attributes).map((type) => {
+                    const nft = nfts.find(({ tokenId }) => tokenId === player.id)
+                    player = {...player, ...nft }
+                    return (
+                        <AttributeType
+                            key={type}
+                            attributes={getAttributeCounts(nfts, type)[type]}
+                            traitType={type}
+                            player={player}
+                            offset={{ left, top }}
+                            gameData={gameData.attributes[type]}
+                            scanTrait={scanTrait}
+                        />
+                    )
+                })}
             </Styled.Buildings>
 
             <Styled.Results>
                 <h4>Results</h4>
                 <ul>
                     <li>
-                        Spooked: {attributeTypes.filter(type => gameData[type]?.foundBy).length} - 
-                        {((attributeTypes.filter(type => gameData[type]?.foundBy).length / 11) * 100).toFixed(2)}%
+                        Spooked: {attributeTypes.filter(type => gameData.attributes[type]?.foundBy).length} - 
+                        {((attributeTypes.filter(type => gameData.attributes[type]?.foundBy).length / 11) * 100).toFixed(2)}%
                     </li>
                     <li>Not scared: {gameData.ghosts?.length || 0}</li>
                 </ul>

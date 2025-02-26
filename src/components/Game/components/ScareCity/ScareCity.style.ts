@@ -1,4 +1,5 @@
 import styled from 'styled-components';
+import { Z_LAYERS } from 'src/config/zIndex';
 import ghost from '/svg/horse/Ghost.svg';
 import { bgColors } from 'style/config';
 
@@ -13,6 +14,7 @@ export const Container = styled.div`
     top: 40px;
     width: 4000px;
     display: flex;
+    z-index: ${Z_LAYERS['BACKGROUND']};
 `;
 
 export const Header = styled.div`
@@ -85,6 +87,7 @@ export const Door = styled.div<DoorProps>`
         'transparent'
     };
     padding-top: 15px;
+    width: 150px;
 
     > div {
         background-image: ${({ ismatch }) => 
