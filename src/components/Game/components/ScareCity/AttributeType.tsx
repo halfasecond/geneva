@@ -89,8 +89,8 @@ export const AttributeType: React.FC<AttributeTypeProps> = ({
             </ul>
             <Styled.Door
                 ref={scanningAreaRef}
-                canscan={canscan}
-                ismatch={gameData.answer === player[traitType] && gameData.foundBy}
+                canscan={canscan && !gameData.foundBy}
+                ismatch={gameData.foundBy}
             >
                 <div />
             </Styled.Door>
