@@ -25,6 +25,19 @@ interface ScareCityProps {
     }) => void;
 }
 
+const getAttributeCounts = (nfts: any[], type: string) => {
+    const counts: Record<string, { value: string; amount: number }[]> = {};
+    // Count occurrences of each value for each attribute type
+    const values = nfts.map(nft => nft[type]).filter(Boolean);
+    const uniqueValues = [...new Set(values)];
+    counts[type] = uniqueValues.map(value => ({
+        value,
+        amount: values.filter(v => v === value).length
+    }))
+    return counts;
+};
+
+
 export const ScareCity = ({ 
     nfts, 
     player, 
@@ -35,12 +48,13 @@ export const ScareCity = ({
     scanTrait
 }: ScareCityProps) => {
     const buildingsRef = useRef<HTMLDivElement>(null);
+const resultsRef = useRef<HTMLDivElement>(null);
     const dimensionsRef = useRef<Record<string, BuildingDimensions>>({});
     const measurementDone = useRef(false);
 
     // Measure all buildings after they're rendered
     useEffect(() => {
-        if (buildingsRef.current && !measurementDone.current) {
+        if (buildingsRef.current && resultsRef.current && !measurementDone.current) {
             const buildings = buildingsRef.current.children;
             const newDimensions: Record<string, BuildingDimensions> = {};
 
@@ -55,8 +69,25 @@ export const ScareCity = ({
                     left: rect.left - parentRect.left + SCARECITY_OFFSET.left,
                     top: rect.top - parentRect.top + SCARECITY_OFFSET.top
                 };
-                console.log(newDimensions[type])
             });
+
+            // Find the rightmost building
+            let lastBuildingRight = 0;
+            Object.values(newDimensions).forEach(dim => {
+                const buildingRight = dim.left + dim.width;
+                if (buildingRight > lastBuildingRight) {
+                    lastBuildingRight = buildingRight;
+                }
+            });
+
+            // Add Results dimensions after the last building
+            const resultsRect = resultsRef.current.getBoundingClientRect();
+            newDimensions.results = {
+                width: 600, // Fixed from styles
+                height: resultsRect.height,
+                left: lastBuildingRight + 80, // Add margin after last building
+                top: SCARECITY_OFFSET.top
+            };
 
             dimensionsRef.current = newDimensions;
             onBuildingDimensions?.(newDimensions);
@@ -65,16 +96,6 @@ export const ScareCity = ({
     }, [attributeTypes]);
 
     if (!gameData?.gameStart) return null;
-
-    // Process NFTs to get attribute counts
-    const getAttributeCounts = (type: string) => {
-        const values = nfts.map(nft => nft[type]).filter(Boolean);
-        const uniqueValues = [...new Set(values)];
-        return uniqueValues.map(value => ({
-            value,
-            amount: values.filter(v => v === value).length
-        }));
-    };
 
     return (
         <Styled.Container>
@@ -85,25 +106,30 @@ export const ScareCity = ({
             </Styled.Header>
 
             <Styled.Buildings ref={buildingsRef}>
-                {attributeTypes.map((type) => (
-                    <AttributeType
-                        key={type}
-                        attributes={getAttributeCounts(type)}
-                        traitType={type}
-                        player={player}
-                        gameData={gameData[type] || { discounters: [], foundBy: null }}
-                        offset={SCARECITY_OFFSET}
-                        scanTrait={scanTrait}
-                    />
-                ))}
+            {Object.keys(gameData.attributes).map((type) => {
+                    const nft = nfts.find(({ tokenId }) => tokenId === player.id)
+                    player = {...player, ...nft }
+                    return (
+                        <AttributeType
+                            key={type}
+                            attributes={getAttributeCounts(nfts, type)[type]}
+                            traitType={type}
+                            player={player}
+                            offset={SCARECITY_OFFSET}
+                            gameData={gameData.attributes[type]}
+                            scanTrait={scanTrait}
+                        />
+                    )
+                })}
+
             </Styled.Buildings>
 
-            <Styled.Results>
+            <Styled.Results ref={resultsRef}>
                 <h4>Results</h4>
                 <ul>
                     <li>
-                        Spooked: {attributeTypes.filter(type => gameData[type]?.foundBy).length} - 
-                        {((attributeTypes.filter(type => gameData[type]?.foundBy).length / 11) * 100).toFixed(2)}%
+                        Spooked: {attributeTypes.filter(type => gameData.attributes[type]?.foundBy).length} - 
+                        {((attributeTypes.filter(type => gameData.attributes[type]?.foundBy).length / 11) * 100).toFixed(2)}%
                     </li>
                     <li>Not scared: {gameData.ghosts?.length || 0}</li>
                 </ul>

@@ -6,6 +6,7 @@ import createAccountModel from './accounts';
 import createMessageModel from './messages';
 import createGameStateModel from './gameState';
 import createRaceModel from './races';
+import createScareCityGameModel from './scareCityGames';
 
 interface Models {
     Event: Model<any>;
@@ -15,6 +16,7 @@ interface Models {
     Message: Model<any>;
     GameState: Model<any>;
     Race: Model<any>;
+    ScareCityGame: Model<any>;
     [key: string]: Model<any>;
 }
 
@@ -25,5 +27,6 @@ export default (prefix: string, db: Connection): Models => ({
     Account: createAccountModel(prefix, db),
     Message: createMessageModel(prefix, db),
     GameState: createGameStateModel(prefix, db),
-    Race: createRaceModel(prefix, db)
+    Race: createRaceModel(prefix, db),
+    ScareCityGame: createScareCityGameModel(prefix, db)
 });

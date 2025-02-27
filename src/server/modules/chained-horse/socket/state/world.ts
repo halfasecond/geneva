@@ -21,7 +21,7 @@ export const addStaticActor = (namespace: Namespace, actor: Actor): void => {
 };
 
 // Player management
-export const addPlayer = (namespace: Namespace, socketId: string, position: Position, tokenId: number, walletAddress: string, race: number | undefined): Actor => {
+export const addPlayer = (namespace: Namespace, socketId: string, position: Position, tokenId: number, walletAddress: string, race: number | undefined, hay: number): Actor => {
     const existingPlayer = namespace.worldState.actors.find(
         actor => actor.type === 'player' && actor.id === tokenId  // Compare tokenIds
     );
@@ -45,7 +45,7 @@ export const addPlayer = (namespace: Namespace, socketId: string, position: Posi
         socketId,
         race,
         walletAddress,
-        hay: 0,
+        hay,
     } as PlayerActor;
     
     namespace.worldState.actors.push(player);
@@ -75,7 +75,6 @@ export const incrementBalance = (
     tokenId: number,
     balanceType: string
 ) => {
-    console.log(amount, payee, tokenId, balanceType)
     const actor = namespace.worldState.actors.find(a => a.id === tokenId && a.type === 'player' && a.walletAddress.toLowerCase() === payee.toLowerCase())
     try {
         actor[balanceType] += amount

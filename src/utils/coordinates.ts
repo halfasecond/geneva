@@ -6,7 +6,8 @@ export const WORLD_HEIGHT = 5000;
 
 // Minimap dimensions
 export const MINIMAP_WIDTH = 300;
-export const MINIMAP_HEIGHT = (MINIMAP_WIDTH * WORLD_HEIGHT) / WORLD_WIDTH; // Maintain aspect ratio (will be square)
+export const MINIMAP_HEIGHT = (MINIMAP_WIDTH * WORLD_HEIGHT) / WORLD_WIDTH; // Maintain aspect ratio
+export const MINIMAP_SCALE = MINIMAP_WIDTH / WORLD_WIDTH; // Consistent scale factor
 
 export interface Vector2D {
     x: number;
@@ -30,8 +31,8 @@ export class CoordinateTransformer {
      */
     static worldToMinimap(worldPos: Vector2D, scale: number = 1): Vector2D {
         return {
-            x: ((worldPos.x / WORLD_WIDTH) * MINIMAP_WIDTH) * scale,
-            y: ((worldPos.y / WORLD_HEIGHT) * MINIMAP_HEIGHT) * scale
+            x: worldPos.x * MINIMAP_SCALE * scale,
+            y: worldPos.y * MINIMAP_SCALE * scale
         };
     }
 
@@ -40,8 +41,8 @@ export class CoordinateTransformer {
      */
     static minimapToWorld(minimapPos: Vector2D): Vector2D {
         return {
-            x: (minimapPos.x / MINIMAP_WIDTH) * WORLD_WIDTH,
-            y: (minimapPos.y / MINIMAP_HEIGHT) * WORLD_HEIGHT
+            x: minimapPos.x / MINIMAP_SCALE,
+            y: minimapPos.y / MINIMAP_SCALE
         };
     }
 
@@ -50,10 +51,10 @@ export class CoordinateTransformer {
      */
     static worldRectToMinimap(worldRect: Rect): Rect {
         return {
-            left: (worldRect.left / WORLD_WIDTH) * MINIMAP_WIDTH,
-            top: (worldRect.top / WORLD_HEIGHT) * MINIMAP_HEIGHT,
-            width: (worldRect.width / WORLD_WIDTH) * MINIMAP_WIDTH,
-            height: (worldRect.height / WORLD_HEIGHT) * MINIMAP_HEIGHT
+            left: worldRect.left * MINIMAP_SCALE,
+            top: worldRect.top * MINIMAP_SCALE,
+            width: worldRect.width * MINIMAP_SCALE,
+            height: worldRect.height * MINIMAP_SCALE
         };
     }
 
@@ -62,10 +63,10 @@ export class CoordinateTransformer {
      */
     static getViewportRect(viewportOffset: Vector2D, viewportDimensions: { width: number; height: number }, scale: number): Rect {
         return {
-            left: (viewportOffset.x / WORLD_WIDTH) * MINIMAP_WIDTH,
-            top: (viewportOffset.y / WORLD_HEIGHT) * MINIMAP_HEIGHT,
-            width: (viewportDimensions.width / (scale * WORLD_WIDTH)) * MINIMAP_WIDTH,
-            height: (viewportDimensions.height / (scale * WORLD_HEIGHT)) * MINIMAP_HEIGHT
+            left: viewportOffset.x * MINIMAP_SCALE,
+            top: viewportOffset.y * MINIMAP_SCALE,
+            width: (viewportDimensions.width / scale) * MINIMAP_SCALE,
+            height: (viewportDimensions.height / scale) * MINIMAP_SCALE
         };
     }
 

@@ -1,8 +1,8 @@
 import React from 'react';
 import styled from 'styled-components';
 import { Rect, CoordinateTransformer } from '../../utils/coordinates';
-import { getAssetPath } from '../../utils/assetPath';
-import { getImage, getSVG } from '../../utils/getImage';
+import ghost from '/svg/horse/Ghost.svg'
+import { getSVG } from '../../utils/getImage';
 
 const StyledElement = styled.div`
     position: absolute;
@@ -116,13 +116,20 @@ export const ViewportIndicator: React.FC<{
     );
 };
 
+export const StyledResults = styled(StyledElement)`
+    background-color: rgba(0, 0, 0, 0.8);
+    border-radius: 2px;
+    opacity: 0.6;
+`;
+
 interface BuildingProps {
-    isFound: boolean;
+    isFound: string;
 }
 
-const StyledBuilding = styled(StyledElement)<BuildingProps>`
-    position: relative;
+const StyledBuilding = styled.div<BuildingProps>`
+    position: absolute;
     background-color: #dadee9;
+    box-sizing: border-box;
     border-radius: 2px;
     opacity: 0.6;
 
@@ -132,11 +139,25 @@ const StyledBuilding = styled(StyledElement)<BuildingProps>`
         bottom: 0;
         left: 50%;
         transform: translateX(-50%);
-        width: 40%;
-        height: 40%;
-        background-color: ${props => props.isFound ? '#49aa43' : 'transparent'};
+        width: 10px;
+        height: 10px;
+        background-color: ${props => props.isFound === 'true' ? '#FFF' : 'transparent'};
+        background-image:  ${props => props.isFound === 'true' ? `url(${ghost})` : 'none'};
+        animation:  ${props => props.isFound === 'true' ? 'flashImage .25s infinite' : 'none'};
+        animation-iteration-count: 4;
+        background-size: 350% auto;
+        background-position: 105% 210%;
         border-radius: 1px;
     }
+
+    @keyframes flashImage {
+        0%, 100% {
+          background-image: url(${ghost});
+        }
+        50% {
+          background-image: none;
+        }
+      }
 `;
 
 interface MinimapBuildingProps {
@@ -155,7 +176,7 @@ export const MinimapBuilding: React.FC<MinimapBuildingProps> = ({ worldRect, isF
                 width: `${Math.max(minimapRect.width, 1)}px`,
                 height: `${Math.max(minimapRect.height, 1)}px`,
             }}
-            isFound={isFound}
+            isFound={isFound ? 'true' : 'false'}
         />
     );
 };

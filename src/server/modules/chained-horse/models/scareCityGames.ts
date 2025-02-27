@@ -1,7 +1,7 @@
-import mongoose from 'mongoose';
+import { Schema, Connection, Model } from 'mongoose';
 import { ScareCityGameDocument, ScareCityAnswers } from './types';
 
-const AnswersSchema = new mongoose.Schema<ScareCityAnswers>({
+const AnswersSchema = new Schema<ScareCityAnswers>({
     answer: String,
     discounted: [String],
     discounters: [String],
@@ -9,11 +9,11 @@ const AnswersSchema = new mongoose.Schema<ScareCityAnswers>({
     foundAtBlock: { type: Number, default: null }
 });
 
-const ScareCityGameSchema = new mongoose.Schema<ScareCityGameDocument>({
-    gameStart: Number,
-    gameLength: Number,
+const schema = new Schema<ScareCityGameDocument>({
+    gameStart: { type: Number, required: true },
+    gameLength: { type: Number, required: true },
     ghosts: [String],
-    totalPaidOut: Number,
+    totalPaidOut: { type: Number, required: true },
     background: AnswersSchema,
     bodyAccessory: AnswersSchema,
     bodyColor: AnswersSchema,
@@ -25,8 +25,13 @@ const ScareCityGameSchema = new mongoose.Schema<ScareCityGameDocument>({
     patternColor: AnswersSchema,
     tail: AnswersSchema,
     utility: AnswersSchema,
+}, {
+    timestamps: true
 });
 
-ScareCityGameSchema.index({ gameStart: 1 }, { unique: true });
+schema.index({ gameStart: 1 }, { unique: true });
 
-export const ScareCityGame = mongoose.model<ScareCityGameDocument>('ch_scarecitygame', ScareCityGameSchema);
+export default (prefix: string, db: Connection): Model<ScareCityGameDocument> => {
+    const modelName = `${prefix}_scarecitygames`;
+    return db.model<ScareCityGameDocument>(modelName, schema);
+};

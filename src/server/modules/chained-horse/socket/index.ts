@@ -80,7 +80,7 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
         for (const actor of actors) {
             const bestTime = await Models.Race.findOne({ owner: actor.walletAddress.toLowerCase() }).sort({ time: 1 });
             actor.race = bestTime?.time;
-            addPlayer(namespace, '', actor.position as Position, actor.tokenId, actor.walletAddress.toLowerCase(), actor.race)
+            addPlayer(namespace, '', actor.position as Position, actor.tokenId, actor.walletAddress.toLowerCase(), actor.race, actor.hay)
         }
         return actors
     }

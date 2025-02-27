@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
-import { MinimapElement, MinimapDot, ViewportIndicator, MinimapBuilding } from './MinimapElement';
+import { MinimapElement, MinimapDot, ViewportIndicator, MinimapBuilding, StyledResults } from './MinimapElement';
 import { Position } from '../../server/types';
 import { paths, rivers, raceElements, pond, issuesColumns } from '../../components/Game/components/Environment';
 import { WORLD_WIDTH, WORLD_HEIGHT, MINIMAP_WIDTH, MINIMAP_HEIGHT } from '../../utils/coordinates';
@@ -19,6 +19,7 @@ const Container = styled.div`
     right: 34px;
     width: ${MINIMAP_WIDTH}px;
     height: ${MINIMAP_HEIGHT}px;
+    aspect-ratio: ${WORLD_WIDTH} / ${WORLD_HEIGHT};
     background: rgba(0, 0, 0, 0.1);
     border: 1px solid rgba(0, 0, 0, 0.2);
     border-radius: 4px;
@@ -36,13 +37,6 @@ const MinimapContent = styled.div`
     height: 100%;
 `;
 
-interface BuildingDimensions {
-    width: number;
-    height: number;
-    left: number;
-    top: number;
-}
-
 interface MinimapProps {
     viewportOffset: { x: number; y: number };
     viewportDimensions: { width: number; height: number };
@@ -51,7 +45,12 @@ interface MinimapProps {
     actors: Actor[];
     nfts: any[];
     block?: { blocknumber: number };
-    scareCityDimensions?: Record<string, BuildingDimensions>;
+    scareCityDimensions?: Record<string, {
+        width: number;
+        height: number;
+        left: number;
+        top: number;
+    }>;
     scareCityState?: Record<string, { foundBy: string | null }>;
 }
 
@@ -175,18 +174,36 @@ export const Minimap: React.FC<MinimapProps> = ({
                 ))}
 
                 {/* ScareCity Buildings */}
-                {scareCityDimensions && scareCityState && Object.entries(scareCityDimensions).map(([type, dimensions]) => (
-                    <MinimapBuilding
-                        key={`building-${type}`}
-                        worldRect={{
-                            left: dimensions.left,
-                            top: dimensions.top,
-                            width: dimensions.width,
-                            height: dimensions.height
-                        }}
-                        isFound={!!scareCityState[type]?.foundBy}
-                    />
-                ))}
+                {scareCityDimensions && scareCityState && Object.entries(scareCityDimensions).map(([type, dimensions]) => {
+                    if (type === 'results') {
+                        return (
+                            <MinimapElement
+                                key="results"
+                                worldRect={{
+                                    left: dimensions.left,
+                                    top: dimensions.top,
+                                    width: dimensions.width,
+                                    height: dimensions.height
+                                }}
+                                backgroundColor="rgba(0, 0, 0, 0.8)"
+                                opacity={0.6}
+                                borderRadius="2px"
+                            />
+                        );
+                    }
+                    return (
+                        <MinimapBuilding
+                            key={`building-${type}`}
+                            worldRect={{
+                                left: dimensions.left,
+                                top: dimensions.top,
+                                width: dimensions.width,
+                                height: dimensions.height
+                            }}
+                            isFound={!!scareCityState?.attributes[type]?.foundBy}
+                        />
+                    );
+                })}
 
                 {/* Only show player in play mode */}
                 {actors.map(actor => {
