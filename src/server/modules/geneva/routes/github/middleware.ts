@@ -99,6 +99,6 @@ export const validateStatus = (req: Request, _res: Response, next: NextFunction)
 };
 
 export const logRequest = (req: Request, _res: Response, next: NextFunction) => {
-    console.log(`${req.method} ${req.path}`);
+    // console.log(`${req.method} ${req.path}`);
     next();
 };
