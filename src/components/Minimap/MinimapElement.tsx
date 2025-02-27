@@ -139,8 +139,8 @@ const StyledBuilding = styled.div<BuildingProps>`
         bottom: 0;
         left: 50%;
         transform: translateX(-50%);
-        width: 10px;
-        height: 10px;
+        width: 6px;
+        height: 6px;
         background-color: ${props => props.isFound === 'true' ? '#FFF' : 'transparent'};
         background-image:  ${props => props.isFound === 'true' ? `url(${ghost})` : 'none'};
         animation:  ${props => props.isFound === 'true' ? 'flashImage .25s infinite' : 'none'};

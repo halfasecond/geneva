@@ -68,19 +68,24 @@ export const updateActorPosition = (
     }
 };
 
-export const incrementBalance = (
+export const incrementBalance = async (
     namespace: any,
+    blockNumber: any,
     amount: number,
     payee: string,
-    tokenId: number,
-    balanceType: string
+    balanceType: string, // e.g. hay - hardcoded for now as this is the only game balance planned for launch
+    activity: string, // e.g. "ScareCity" / "TheGreaterTractor"
+    Models: any
 ) => {
-    const actor = namespace.worldState.actors.find(a => a.id === tokenId && a.type === 'player' && a.walletAddress.toLowerCase() === payee.toLowerCase())
+    const actor = namespace.worldState.actors.find(a => a.type === 'player' && a.walletAddress.toLowerCase() === payee.toLowerCase())
     try {
         actor[balanceType] += amount
-        console.log(tokenId, 'earnt: ', amount, ' new balance: $HAY', actor[balanceType])
+        await new Models.Hay({
+            blockNumber, amount, address: payee.toLowerCase(), tokenId: actor.id, activity
+        }).save();
+        console.log(`🐎 horse #${actor.id}`, 'earnt:', amount, balanceType, 'playing', activity, 'new balance: $HAY', actor[balanceType])
     } catch (e) {
-        console.log(e, tokenId, actor, balanceType, amount)
+        console.log(e)
     }
     
 }

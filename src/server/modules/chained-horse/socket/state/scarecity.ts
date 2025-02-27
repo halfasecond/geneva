@@ -11,15 +11,17 @@ interface AttributeState {
     answer: string;          // Randomly selected value for this attribute type
     discounted: string[];    // Wrong values that have been guessed
     discounters: string[];   // Players who made wrong guesses
+    discounterIds: number[]; // And the horse they rode in on...
     foundBy: string | null;  // Player who found the correct value
-    foundByTokenId: number | null; // And the horse they rode in on...
+    foundById: number | null; // And the horse they rode in on...
     foundAtBlock: number | null;
 }
 
 interface GameState {
     gameStart: number;      // Starting block number
     gameLength: number;     // Game duration in blocks
-    ghosts: number[];      // Players who found all wrong answers
+    ghosts: string[];      // Players who found all wrong answers
+    ghostIds: number[];     // And the horse they rode in on...
     totalPaidOut: number;  // Total rewards distributed
     attributes: Record<string, AttributeState>;  // State for each attribute type
 }
@@ -118,6 +120,7 @@ export const initializeScareCityState = (namespace: any, nfts: any[], attributeT
             gameStart: blockNumber,
             gameLength: 10,
             ghosts: [],
+            ghostIds: [],
             totalPaidOut: 0,
             attributes: {}
         };
@@ -133,8 +136,9 @@ export const initializeScareCityState = (namespace: any, nfts: any[], attributeT
                     answer: selectedAttribute.value,
                     discounted: [],
                     discounters: [],
+                    discounterIds: [],
                     foundBy: null,
-                    foundByTokenId: null,
+                    foundById: null,
                     foundAtBlock: null
                 };
             }
@@ -168,18 +172,21 @@ export const initializeScareCityState = (namespace: any, nfts: any[], attributeT
                     try {
                         // Update hay balances for all payees
                         for (const [payee, amount] of Object.entries(payeeTotals)) {
-                            incrementBalance(namespace, amount, payee, 389, 'hay')      
+                            incrementBalance(namespace, blockNumber, amount, payee, 'hay', 'scarecity', Models)      
                         }
 
                         // Save game state
                         const gameState = {
-                            ...currentGame,
-                            blockNumber,
-                            payeeTotals
+                            gameStart: currentGame.gameStart,
+                            gameLength: currentGame.gameLength,
+                            ghostIds: currentGame.ghostIds || [],
+                            ghosts: currentGame.ghosts,
+                            totalPaidOut: currentGame.totalPaidOut,
+                            ...currentGame.attributes
                         };
-                        console.log(gameState.totalPaidOut)
-                        // const newGame = new Models.ScareCityGame(gameState);
-                        // await newGame.save();
+                        console.log(`👻 $HAY: ${gameState.totalPaidOut}`)
+                        const newGame = new Models.ScareCityGame(gameState)
+                        await newGame.save()
                     } catch (error) {
                         console.error('Error saving ScareCityGame:', error);
                     }
@@ -202,13 +209,14 @@ export const initializeScareCityState = (namespace: any, nfts: any[], attributeT
         // Found correct attribute
         if (attribute.foundBy === null && attribute.answer === scanResult) {
             attribute.foundBy = account;
-            attribute.foundByTokenId = tokenId;
+            attribute.foundById = tokenId;
             attribute.foundAtBlock = blockNumber;
             namespace.emit('scarecity:traitFound', { account, scanType, scanResult });
         } 
         // Wrong attribute but not previously discounted
         else if (attribute.answer !== scanResult && !attribute.discounters.includes(account)) {
             attribute.discounters.push(account);
+            attribute.discounterIds.push(tokenId);
             if (!attribute.discounted.includes(scanResult)) {
                 attribute.discounted.push(scanResult);
             }
@@ -218,7 +226,8 @@ export const initializeScareCityState = (namespace: any, nfts: any[], attributeT
                 .every((attr) => attr.discounters.includes(account));
 
             if (allAttributesDiscounted) {
-                currentGame.ghosts.push(tokenId);
+                currentGame.ghosts.push(account);
+                currentGame.ghostIds.push(tokenId);
                 console.log(`🐎 Horse #${tokenId} wasn't scared... 🐎`)
                 namespace.emit('scarecity:becameGhost', { tokenId });
             }

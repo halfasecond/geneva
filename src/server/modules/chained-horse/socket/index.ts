@@ -84,7 +84,7 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
         }
         return actors
     }
-
+ 
     // Initialize world state
     initializeWorldState(namespace, []);
     await processActors()

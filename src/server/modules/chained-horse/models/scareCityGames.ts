@@ -5,13 +5,16 @@ const AnswersSchema = new Schema<ScareCityAnswers>({
     answer: String,
     discounted: [String],
     discounters: [String],
+    discounterIds: [Number],
     foundBy: { type: String, default: null },
+    foundById: { type: Number },
     foundAtBlock: { type: Number, default: null }
 });
 
 const schema = new Schema<ScareCityGameDocument>({
     gameStart: { type: Number, required: true },
     gameLength: { type: Number, required: true },
+    ghostIds: [Number],
     ghosts: [String],
     totalPaidOut: { type: Number, required: true },
     background: AnswersSchema,
