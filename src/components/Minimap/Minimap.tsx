@@ -205,6 +205,8 @@ export const Minimap: React.FC<MinimapProps> = ({
                     );
                 })}
 
+                {/* Probably Wood */}
+
                 {/* Only show player in play mode */}
                 {actors.map(actor => {
                     if (actor.type === 'player') {

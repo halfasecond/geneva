@@ -18,6 +18,7 @@ import { WORLD_WIDTH, WORLD_HEIGHT } from '../../utils/coordinates';
 import { rivers, introMessages } from './components/Environment/set';
 import { isOnPath, isBlockedByRiver, isInStartBox, handleKeyDown, handleKeyUp } from "./utils";
 import Clock from './components/Clock/Clock';
+import ProbablyWood from "./components/ProbablyWood";
 import { ScareCity } from './components/ScareCity';
 import Hay from './components/Hay'
 
@@ -425,6 +426,8 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
                         ))}
                     </>
                 )}
+                {/* Probably Wood */}
+                <ProbablyWood left={5500} top={1440} />
             </Styled.GameSpace>
             {position && (
                 <Minimap
