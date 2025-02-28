@@ -6,6 +6,7 @@ import { paths, rivers, raceElements, pond, issuesColumns } from '../../componen
 import { WORLD_WIDTH, WORLD_HEIGHT, MINIMAP_WIDTH, MINIMAP_HEIGHT } from '../../utils/coordinates';
 import { Actor } from '../../server/types/actor';
 import { CLOCK_DIMENSIONS } from '../Game/components/Clock/constants';
+import { getAssetPath } from 'src/utils/assetPath';
 
 const pulse = keyframes`
     0% { opacity: 0.6; }
@@ -51,7 +52,16 @@ interface MinimapProps {
         left: number;
         top: number;
     }>;
-    scareCityState?: Record<string, { foundBy: string | null }>;
+    scareCityState?: {
+        attributes: Record<string, { foundBy: string | null }>;
+        [key: string]: any;
+    };
+    probablyWoodDimensions?: Record<string, {
+        width: number;
+        height: number;
+        left: number;
+        top: number;
+    }>;
 }
 
 export const Minimap: React.FC<MinimapProps> = ({
@@ -62,7 +72,8 @@ export const Minimap: React.FC<MinimapProps> = ({
     nfts,
     block,
     scareCityDimensions,
-    scareCityState
+    scareCityState,
+    probablyWoodDimensions
 }) => {
     const [isPulsing, setIsPulsing] = useState(false);
 
@@ -200,10 +211,25 @@ export const Minimap: React.FC<MinimapProps> = ({
                                 width: dimensions.width,
                                 height: dimensions.height
                             }}
-                            isFound={!!scareCityState?.attributes[type]?.foundBy}
+                            isFound={!!scareCityState?.attributes?.[type]?.foundBy}
                         />
                     );
                 })}
+
+                {/* Probably Wood */}
+                {probablyWoodDimensions && Object.entries(probablyWoodDimensions).map(([type, dimensions]) => (
+                    <MinimapElement
+                        key={`probablyWood-${type}`}
+                        worldRect={{
+                            left: dimensions.left,
+                            top: dimensions.top,
+                            width: dimensions.width,
+                            height: dimensions.height
+                        }}
+                        backgroundImage={type.includes('forest') ? getAssetPath('svg/forest.svg') : getAssetPath('svg/31db13b10188de1afd6cff09cf65a0ae.svg')} // Green for forests, brown for bear
+                        opacity={0.7}
+                    />
+                ))}
 
                 {/* Only show player in play mode */}
                 {actors.map(actor => {

@@ -1,8 +1,6 @@
-import { useState } from 'react'
 import * as Styled from './IntroModal.style'
 import Metamask from '../Metamask'
 import { getAssetPath } from '../../utils/assetPath';
-import { useGameServer } from '../Paddock/hooks/useGameServer';
 
 interface IntroModalProps {
     onSelectHorse: (horse: number) => void;  // Callback to select horse
@@ -35,8 +33,6 @@ const HorseSelect: React.FC<HorseSelectProps> = ({ nfts, onSelect }) => {
     );
 };
 
-import { BACKGROUND_MUSIC } from '../../audio';
-
 const IntroModal: React.FC<IntroModalProps> = ({
     onSelectHorse,
     handleSignIn,
@@ -46,13 +42,6 @@ const IntroModal: React.FC<IntroModalProps> = ({
     nfts,
     currentHorse
 }) => {
-    // Use socket passed from AppView
-    const handleStart = () => {
-        // Start playing music when entering paddock
-        //BACKGROUND_MUSIC.play()
-          //  .catch(error => console.error('Error playing audio:', error));
-        // onStart();
-    };
 
     // If we have a current horse, show it
     const selectedNft = currentHorse ? nfts.find(nft => nft.tokenId === currentHorse) : undefined;

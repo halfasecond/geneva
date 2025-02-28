@@ -103,14 +103,14 @@ const resultsRef = useRef<HTMLDivElement>(null);
             <Styled.Header>
                 <Styled.Ghost />
                 <h2>Scare City<span>Check if you're rare but don't get a scare!</span></h2>
-                <p>Stand in the doorway of all the skyscrapers but don't get spooked by a spooky ghost of death!</p>
+                <p>Run past the windows of all the skyscrapers but don't get spooked by a spooky ghost of death!</p>
                 {gameData.lastGame && (<p>
                     <> 
                         Last Game: 👻 Spooked {attributeTypes.filter(type => gameData.lastGame[type]?.foundBy).length} - {((attributeTypes.filter(type => gameData.lastGame[type]?.foundBy).length / 11) * 100).toFixed(2)}%
                         - 🥷🏼 Not scared: {gameData.lastGame.ghosts?.length || 0} - 🚜 Paid out: $HAY {gameData.lastGame.totalPaidOut}
                     </>
                 </p>)}
-                <p>This Game: finishes in {block && gameData.gameStart + gameData.gameLength - block.blocknumber} block{block && gameData.gameStart + gameData.gameLength - block.blocknumber === 1 ? ' ' : 's '}
+                <p>Current Game: finishes in {block && gameData.gameStart + gameData.gameLength - block.blocknumber} block{block && gameData.gameStart + gameData.gameLength - block.blocknumber === 1 ? ' ' : 's '}
                     - 👻 Spooked {attributeTypes.filter(type => gameData.attributes[type]?.foundBy).length} - 🥷🏼 Not scared: {gameData.ghosts?.length || 0}
                 </p>
             </Styled.Header>
@@ -149,7 +149,7 @@ const resultsRef = useRef<HTMLDivElement>(null);
                     </>
                 )}
                 
-                <h4>This Game</h4>
+                <h4>Current Game: ends in {block && gameData.gameStart + gameData.gameLength - block.blocknumber} block{block && gameData.gameStart + gameData.gameLength - block.blocknumber === 1 ? '' : 's'}</h4>
                 <ul>
                     <li>
                         👻 Spooked: {attributeTypes.filter(type => gameData.attributes[type]?.foundBy).length} - {((attributeTypes.filter(type => gameData.attributes[type]?.foundBy).length / 11) * 100).toFixed(2)}%
@@ -164,8 +164,6 @@ const resultsRef = useRef<HTMLDivElement>(null);
                     <li>🐎 All rewards have a "not scared" + 1 horse multiplier</li>
                     <li>🚜 <b>$HAY</b> is paid out in accordance with trait rarity</li>
                 </ul>
-
-                <h4>Next game starts: {block && gameData.gameStart + gameData.gameLength - block.blocknumber} blocks</h4>
             </Styled.Results>
         </Styled.Container>
     );
