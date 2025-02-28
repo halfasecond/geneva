@@ -7,6 +7,8 @@ import { getSVG } from '../../utils/getImage';
 const StyledElement = styled.div`
     position: absolute;
     box-sizing: border-box;  /* Include border in size calculations */
+    background-repeat: no-repeat;
+    background-size: contain;
 `;
 
 export const MinimapElement: React.FC<{
@@ -14,8 +16,9 @@ export const MinimapElement: React.FC<{
     backgroundColor?: string;
     opacity?: number;
     borderRadius?: string;
+    backgroundImage?: string;
     className?: string;
-}> = ({ worldRect, backgroundColor, opacity, borderRadius, className }) => {
+}> = ({ worldRect, backgroundColor, backgroundImage, opacity, borderRadius, className }) => {
     const minimapRect = CoordinateTransformer.worldRectToMinimap(worldRect);
 
     return (
@@ -26,7 +29,8 @@ export const MinimapElement: React.FC<{
                 top: `${minimapRect.top}px`,
                 width: `${Math.max(minimapRect.width, 1)}px`,
                 height: `${Math.max(minimapRect.height, 1)}px`,
-                backgroundColor: backgroundColor || 'rgba(238, 238, 238, 0.5)',
+                backgroundColor: backgroundColor || 'transparent',
+                backgroundImage: backgroundImage ? `url(${backgroundImage})` : 'none',
                 opacity: opacity || 1,
                 borderRadius: borderRadius || '0'
             }}
