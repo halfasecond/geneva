@@ -3,6 +3,7 @@ import { Schema, Connection, Model } from 'mongoose';
 interface Account {
     address: string;
     token?: string;
+    avatar?: number;
 }
 
 const schema = new Schema<Account>({
@@ -13,6 +14,9 @@ const schema = new Schema<Account>({
     },
     token: {
         type: String
+    },
+    avatar: {
+        type: Number
     }
 }, {
     timestamps: true

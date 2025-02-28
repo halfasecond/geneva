@@ -4,6 +4,7 @@ import { Position } from '../../../server/types';
 import { Actor, WorldState } from '../../../server/types/actor';
 import { usePerformanceMetrics } from './usePerformanceMetrics';
 import { ghostFound } from 'src/audio';
+import messages from 'src/server/modules/chained-horse/models/messages';
 
 interface UseGameServerProps {
     tokenId?: number; 
@@ -25,7 +26,8 @@ const defaultState = {
         smoothing: 0.1
     },
     socket: null,
-    scareCityState: null
+    scareCityState: null,
+    messages: [],
 };
 
 interface GameSettings {
@@ -47,6 +49,7 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
     });
     const [block, setBlock] = useState(undefined);
     const [scareCityState, setScareCityState] = useState<any>(null);
+    const [messages, setMessages] = useState([])
     const { metrics, trackMovementUpdate, trackServerResponse, trackLatency } = usePerformanceMetrics();
     const lastPingTime = useRef<number>(0);
     const lastStateUpdate = useRef<number>(performance.now());
@@ -168,6 +171,10 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
                 }
             };
 
+            const handleMessages = (data: any) => {
+                setMessages([...data] as any)
+            }
+
             // Set up event handlers
             socket.on('connect', handleConnect);
             socket.on('player:joined', handleJoined);
@@ -185,6 +192,9 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
             socket.on('scarecity:traitFound', handleTraitFound);
             socket.on('scarecity:becameGhost', handleBecameGhost);
 
+            // web3 chatroom
+            socket.on('messages', handleMessages)
+
             return () => {
                 clearInterval(pingInterval);
                 socket.off('connect', handleConnect);
@@ -194,6 +204,7 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
                 socket.off('world:state', handleWorldState);
                 socket.off('static:actors', handleStaticActors);
                 socket.off('game:settings', handleGameSettings);
+                socket.off('messages', handleMessages)
                 socket.off('error', handleError);
                 socket.off('pong');
                 socket.off('scarecity:gameState', handleScareCityState);
@@ -267,6 +278,7 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
         metrics,
         block,
         scareCityState,
-        scanTrait
+        scanTrait,
+        messages
     };
 }

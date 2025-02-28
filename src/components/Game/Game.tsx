@@ -65,7 +65,8 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
         metrics,
         block,
         scareCityState,
-        scanTrait
+        scanTrait,
+        messages,
     } = useGameServer({
         tokenId, token, onStaticActors: (actors: Actor[]) => setStaticActors(actors)
     });
@@ -341,6 +342,7 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
         <Styled.Container ref={containerRef}>
             {connected && tokenId && (<MuteButton isMuted={isMuted} onToggle={handleMuteToggle} />)}
             {showMetrics && <PerformancePanel metrics={metrics} visible={true} />}
+            {messages && console.log(messages)}
             <Styled.GameSpace style={style}>
                 <Path active={true} />
                 <Rivers active={true} />

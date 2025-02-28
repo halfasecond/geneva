@@ -315,6 +315,7 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
             socket.emit('game:settings', gameSettings);  // Send game settings
             socket.emit('static:actors', getStaticActors(namespace));  // Send static actors once
             namespace.emit('world:state', getWorldState(namespace));  // Broadcast dynamic actors
+            getMessages(socket, Models.Message)
         });
 
         socket.on('player:move', async ({ x, y, direction }: Position) => {
@@ -344,6 +345,14 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
                 );
             }
         });
+
+        socket.on('getMessages', () => getMessages(socket, Models.Message))
+        socket.on('getAccounts', () => getAccounts(socket, Models.Account))
+        socket.on('addMessage', req => {
+            const { message, account } = req
+            let _Message = new Models.Message({ message, account })
+            _Message.save().then(() => getMessages(namespace, Models.Message))
+        })
 
         socket.on('disconnect', async () => {
             socketCount--;
@@ -415,6 +424,16 @@ const saveRace = async (Models: Models, riders: any, player: Actor, name: string
     } else {
         console.log(`🐎 horse #${_winner.tokenId} just set a new record in the ${name} with ${time}`)
     }
+}
+
+const getAccounts = (socket: any, Model: any) => {
+    Model.find({})
+        .then(data => socket.emit('accounts', data))
+        .catch(err => console.log(err))
+}
+
+const getMessages = (io, Model) => {
+    Model.find({}, {  "_id": 0 }).then((data) => io.emit('messages', data)).catch((err) => console.log(err))
 }
 
 export default socket;
