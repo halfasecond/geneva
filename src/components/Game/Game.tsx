@@ -67,7 +67,7 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
         scareCityState,
         scanTrait
     } = useGameServer({
-        tokenId, token: token || '', onStaticActors: (actors: Actor[]) => setStaticActors(actors)
+        tokenId, token, onStaticActors: (actors: Actor[]) => setStaticActors(actors)
     });
 
     const [visibleMessages, setVisibleMessages] = useState<boolean[]>(
