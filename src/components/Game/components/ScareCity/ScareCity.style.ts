@@ -123,6 +123,7 @@ export const Results = styled.div`
     color: white;
     margin-left: 80px;
     width: 600px;
+    position: relative;
 
     h4 {
         margin: 15px 0 10px;
@@ -144,3 +145,13 @@ export const Results = styled.div`
         }
     }
 `;
+
+export const Ghost = styled.div`
+    background-image: url(${ghost});
+    background-size: 350% auto;
+    background-position: 105% 210%;
+    width: 40px;
+    height: 40px;
+    position: absolute;
+    right: 12px;
+`

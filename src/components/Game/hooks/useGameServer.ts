@@ -140,20 +140,19 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
 
             // Handle ScareCityGame state
             const handleScareCityState = (state: any) => {
-                console.log('ScareCityGame State:', state);
                 setScareCityState(state);
             };
 
             const handleScareCityReset = (data: any) => {
-                console.log('ScareCityGame Reset:', data);
+                // console.log('ScareCityGame Reset:', data);
             };
 
             const handleTraitFound = (data: any) => {
-                console.log('ScareCityGame Trait Found:', data);
+                // console.log('ScareCityGame Trait Found:', data);
             };
 
             const handleBecameGhost = (data: any) => {
-                console.log('ScareCityGame Became Ghost:', data);
+                // console.log('ScareCityGame Became Ghost:', data);
             };
 
             // Set up event handlers

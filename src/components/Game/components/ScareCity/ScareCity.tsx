@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { AttributeType } from './AttributeType';
+import { getAssetPath } from 'src/utils/assetPath';
 import * as Styled from './ScareCity.style';
 
 const SCARECITY_OFFSET = { left: 4000, top: 40 };
@@ -125,11 +126,19 @@ const resultsRef = useRef<HTMLDivElement>(null);
             </Styled.Buildings>
 
             <Styled.Results ref={resultsRef}>
-                <h4>Results</h4>
+                <Styled.Ghost />
+                <h4>Last Game</h4>
                 <ul>
                     <li>
-                        Spooked: {attributeTypes.filter(type => gameData.attributes[type]?.foundBy).length} - 
-                        {((attributeTypes.filter(type => gameData.attributes[type]?.foundBy).length / 11) * 100).toFixed(2)}%
+                        Spooked: {attributeTypes.filter(type => gameData.lastGame[type]?.foundBy).length} - {((attributeTypes.filter(type => gameData.lastGame[type]?.foundBy).length / 11) * 100).toFixed(2)}%
+                    </li>
+                    <li>Not scared: {gameData.lastGame.ghosts?.length || 0}</li>
+                    <li>Paid out: $HAY {gameData.lastGame.totalPaidOut}</li>
+                </ul>
+                <h4>This Game</h4>
+                <ul>
+                    <li>
+                        Spooked: {attributeTypes.filter(type => gameData.attributes[type]?.foundBy).length} - {((attributeTypes.filter(type => gameData.attributes[type]?.foundBy).length / 11) * 100).toFixed(2)}%
                     </li>
                     <li>Not scared: {gameData.ghosts?.length || 0}</li>
                 </ul>

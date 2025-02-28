@@ -24,6 +24,14 @@ interface GameState {
     ghostIds: number[];     // And the horse they rode in on...
     totalPaidOut: number;  // Total rewards distributed
     attributes: Record<string, AttributeState>;  // State for each attribute type
+    lastGame: {
+        gameStart: number;      // Starting block number
+        gameLength: number;     // Game duration in blocks
+        ghosts: string[];      // Players who found all wrong answers
+        ghostIds: number[];     // And the horse they rode in on...
+        totalPaidOut: number;  // Total rewards distributed
+        attributes: Record<string, AttributeState>;    
+    } | null;
 }
 
 interface Payment {
@@ -33,7 +41,18 @@ interface Payment {
 
 export const initializeScareCityState = (namespace: any, nfts: any[], attributeTypes: string[], initialBlock: number, Models: any) => {
     let blockCounter = 0;
+    let lastGame: GameState | null = null;
     let currentGame: GameState | null = null;
+
+    const getLastGame = async () => {
+        const _lastGame = await Models.ScareCityGame.findOne({}, { 
+            '_id': 0,
+            '__v': 0,
+        }).sort({ gameStart : -1 }).exec()
+        lastGame = { ..._lastGame }
+    }
+
+    getLastGame()
 
     const getAttributes = (nfts: any[]): Attribute[] => {
         const attributes: Attribute[] = [];
@@ -122,7 +141,8 @@ export const initializeScareCityState = (namespace: any, nfts: any[], attributeT
             ghosts: [],
             ghostIds: [],
             totalPaidOut: 0,
-            attributes: {}
+            attributes: {},
+            lastGame,
         };
 
         // Initialize each attribute type with a random answer
@@ -186,6 +206,7 @@ export const initializeScareCityState = (namespace: any, nfts: any[], attributeT
                         };
                         console.log(`👻 $HAY: ${gameState.totalPaidOut}`)
                         const newGame = new Models.ScareCityGame(gameState)
+                        lastGame = { ...gameState }
                         await newGame.save()
                     } catch (error) {
                         console.error('Error saving ScareCityGame:', error);
