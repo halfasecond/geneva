@@ -20,15 +20,15 @@ export const Container = styled.div`
 export const Header = styled.div`
     color: #FFF;
     position: absolute;
-    bottom: -170px;
+    bottom: -214px;
     background-color: rgba(0, 0, 0, 0.8);
-    padding: 20px;
+    padding: 32px 20px 20px;
     border-radius: 5px;
     zIndex: ${Z_LAYERS['UI']};
 
     h2 {
         font-size: 24px;
-        margin-bottom: 10px;
+        margin-bottom: 18px;
 
         span {
             margin-left: 10px;
@@ -58,7 +58,7 @@ export const Building = styled.div`
 
     h4 {
         font-size: 14px;
-        margin-bottom: 20px;
+        margin-bottom: 24px;
         background-color: #EEE;
         display: inline-block;
         padding: 8px;
@@ -126,7 +126,7 @@ export const Results = styled.div`
     position: relative;
 
     h4 {
-        margin: 15px 0 10px;
+        margin: 15px 0 0px;
     }
 
     ul {
@@ -154,4 +154,5 @@ export const Ghost = styled.div`
     height: 40px;
     position: absolute;
     right: 12px;
+    top: 20px;
 `

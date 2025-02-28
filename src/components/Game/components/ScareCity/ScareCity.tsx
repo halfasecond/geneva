@@ -101,9 +101,18 @@ const resultsRef = useRef<HTMLDivElement>(null);
     return (
         <Styled.Container>
             <Styled.Header>
+                <Styled.Ghost />
                 <h2>Scare City<span>Check if you're rare but don't get a scare!</span></h2>
                 <p>Stand in the doorway of all the skyscrapers but don't get spooked by a spooky ghost of death!</p>
-                <p>Game finishes in {block && gameData.gameStart + gameData.gameLength - block.blocknumber} blocks</p>
+                {gameData.lastGame && (<p>
+                    <> 
+                        Last Game: 👻 Spooked {attributeTypes.filter(type => gameData.lastGame[type]?.foundBy).length} - {((attributeTypes.filter(type => gameData.lastGame[type]?.foundBy).length / 11) * 100).toFixed(2)}%
+                        - 🥷🏼 Not scared: {gameData.lastGame.ghosts?.length || 0} - 🚜 Paid out: $HAY {gameData.lastGame.totalPaidOut}
+                    </>
+                </p>)}
+                <p>This Game: finishes in {block && gameData.gameStart + gameData.gameLength - block.blocknumber} block{block && gameData.gameStart + gameData.gameLength - block.blocknumber === 1 ? ' ' : 's '}
+                    - 👻 Spooked {attributeTypes.filter(type => gameData.attributes[type]?.foundBy).length} - 🥷🏼 Not scared: {gameData.ghosts?.length || 0}
+                </p>
             </Styled.Header>
 
             <Styled.Buildings ref={buildingsRef}>
@@ -127,20 +136,25 @@ const resultsRef = useRef<HTMLDivElement>(null);
 
             <Styled.Results ref={resultsRef}>
                 <Styled.Ghost />
-                <h4>Last Game</h4>
-                <ul>
-                    <li>
-                        Spooked: {attributeTypes.filter(type => gameData.lastGame[type]?.foundBy).length} - {((attributeTypes.filter(type => gameData.lastGame[type]?.foundBy).length / 11) * 100).toFixed(2)}%
-                    </li>
-                    <li>Not scared: {gameData.lastGame.ghosts?.length || 0}</li>
-                    <li>Paid out: $HAY {gameData.lastGame.totalPaidOut}</li>
-                </ul>
+                {gameData.lastGame && (
+                    <> 
+                        <h4>Last Game</h4>
+                        <ul>
+                            <li>
+                                Spooked: {attributeTypes.filter(type => gameData.lastGame[type]?.foundBy).length} - {((attributeTypes.filter(type => gameData.lastGame[type]?.foundBy).length / 11) * 100).toFixed(2)}%
+                            </li>
+                            <li>🥷🏻 Not scared: {gameData.lastGame.ghosts?.length || 0}</li>
+                            <li>🚜 Paid out: <b>$HAY {gameData.lastGame.totalPaidOut}</b></li>
+                        </ul>
+                    </>
+                )}
+                
                 <h4>This Game</h4>
                 <ul>
                     <li>
-                        Spooked: {attributeTypes.filter(type => gameData.attributes[type]?.foundBy).length} - {((attributeTypes.filter(type => gameData.attributes[type]?.foundBy).length / 11) * 100).toFixed(2)}%
+                        👻 Spooked: {attributeTypes.filter(type => gameData.attributes[type]?.foundBy).length} - {((attributeTypes.filter(type => gameData.attributes[type]?.foundBy).length / 11) * 100).toFixed(2)}%
                     </li>
-                    <li>Not scared: {gameData.ghosts?.length || 0}</li>
+                    <li>🥷🏻 Not scared: {gameData.ghosts?.length || 0}</li>
                 </ul>
 
                 <h4>How the scores work</h4>

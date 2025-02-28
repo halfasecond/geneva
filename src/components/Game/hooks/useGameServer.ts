@@ -3,6 +3,7 @@ import { io, Socket } from 'socket.io-client';
 import { Position } from '../../../server/types';
 import { Actor, WorldState } from '../../../server/types/actor';
 import { usePerformanceMetrics } from './usePerformanceMetrics';
+import { ghostFound } from 'src/audio';
 
 interface UseGameServerProps {
     tokenId?: number; 
@@ -148,6 +149,7 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
             };
 
             const handleTraitFound = (data: any) => {
+                ghostFound()
                 // console.log('ScareCityGame Trait Found:', data);
             };
 

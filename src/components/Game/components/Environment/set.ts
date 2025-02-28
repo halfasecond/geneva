@@ -19,6 +19,7 @@ export const paths = [
   { left: 740, top: 2810, width: 100, height: 100, backgroundColor: "#EEE" },
   { left: 2420, top: 2380, width: 100, height: 120, backgroundColor: "#EEE" },
   { left: 3500, top: 1800, width: 140, height: 100, backgroundColor: "#EEE" },
+  { left: 7520, top: 1280, width: 200, height: 120, backgroundColor: "#EEE" },
 ];
 
 export interface PathSegment {
@@ -61,7 +62,10 @@ export const rivers: RiverSegment[] = [
   { left: 3520, top: 1660, width: 100, height: 140, backgroundColor: "#37d7ff" },
   // After bridge
   { left: 3520, top: 1900, width: 100, height: 160, backgroundColor: "#37d7ff" },
-  { left: 3520, top: 1660, width: 1800, height: 80, backgroundColor: "#37d7ff" }
+  { left: 3520, top: 1660, width: 1800, height: 80, backgroundColor: "#37d7ff" },
+  { left: 5320, top: 1300, width: 100, height: 440, backgroundColor: "#37d7ff" },
+  { left: 5420, top: 1300, width: 2100, height: 80, backgroundColor: "#37d7ff" },
+  { left: 7720, top: 1300, width: 280, height: 80, backgroundColor: "#37d7ff" },
 ];
 
 export interface IntroMessage {
