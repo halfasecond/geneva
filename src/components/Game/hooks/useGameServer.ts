@@ -5,14 +5,46 @@ import { Actor, WorldState } from '../../../server/types/actor';
 import { usePerformanceMetrics } from './usePerformanceMetrics';
 import { ghostFound } from 'src/audio';
 
+interface Message {
+    message: string;
+    account: string;
+    timestamp?: number;
+    avatar?: number;
+}
+
 interface UseGameServerProps {
     tokenId?: number; 
     token: string;
     onStaticActors?: (actors: Actor[]) => void;
 }
 
+type ScanTraitFn = (data: { scanType: string; scanResult: string; tokenId: number; }) => void;
+
+interface GameServerState {
+    connected: boolean;
+    updatePosition: (position: Position) => void;
+    updatePlayerIntroStatus: (race: any) => void;
+    introActive?: boolean;
+    player?: Actor;
+    hay?: number;
+    position?: Position;
+    actors: Actor[];
+    gameSettings: {
+        tickRate: number;
+        movementSpeed: number;
+        broadcastFrames: number;
+        smoothing: number;
+    };
+    metrics: any;
+    block: any;
+    scareCityState: any;
+    scanTrait: ScanTraitFn;
+    messages: Message[];
+    addMessage: (message: string) => void;
+}
+
 // Default state for view mode
-const defaultState = {
+const defaultState: GameServerState = {
     connected: false,
     updatePosition: () => {},
     updatePlayerIntroStatus: () => {},
@@ -24,8 +56,12 @@ const defaultState = {
         broadcastFrames: 5,
         smoothing: 0.1
     },
-    socket: null,
-    scareCityState: null
+    scareCityState: null,
+    messages: [],
+    metrics: {},
+    block: null,
+    scanTrait: () => {},
+    addMessage: () => {}
 };
 
 interface GameSettings {
@@ -35,19 +71,21 @@ interface GameSettings {
     smoothing: number;
 }
 
-export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerProps) {
+export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerProps): GameServerState {
     const socketRef = useRef<Socket | null>(null);
     const [connected, setConnected] = useState(false);
     const [actors, setActors] = useState<Actor[]>([]);
     const [gameSettings, setGameSettings] = useState<GameSettings>({
-        tickRate: 100, // Default values, will be overridden by server
+        tickRate: 100,
         movementSpeed: 3.75,
         broadcastFrames: 5,
         smoothing: 0.1
     });
     const [block, setBlock] = useState(undefined);
     const [scareCityState, setScareCityState] = useState<any>(null);
+    const [messages, setMessages] = useState<Message[]>([]);
     const { metrics, trackMovementUpdate, trackServerResponse, trackLatency } = usePerformanceMetrics();
+
     const lastPingTime = useRef<number>(0);
     const lastStateUpdate = useRef<number>(performance.now());
     const reconnectAttempts = useRef(0);
@@ -72,7 +110,7 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
                 timeout: 10000,
                 transports: ['websocket'],
                 auth: {
-                    token  // Pass JWT token for authentication
+                    token
                 }
             });
             socketRef.current = socket;
@@ -92,8 +130,6 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
             const handleConnect = () => {
                 console.log('Connected to game server');
                 reconnectAttempts.current = 0;
-                
-                // Join game with authenticated token
                 socket.emit('player:join', { tokenId });
             };
 
@@ -105,7 +141,6 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
             const handleDisconnect = (reason: string) => {
                 console.log('Disconnected from game server:', reason);
                 setConnected(false);
-                // Only clear actors on permanent disconnects
                 if (reason === 'io server disconnect' || reason === 'io client disconnect') {
                     setActors([]);
                 }
@@ -124,8 +159,7 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
                 const now = performance.now();
                 const timeSinceLastUpdate = now - lastStateUpdate.current;
                 lastStateUpdate.current = now;
-                // Only track if it's not the first update and within reasonable time
-                if (timeSinceLastUpdate < 5000) { // Ignore gaps > 5s (likely disconnects)
+                if (timeSinceLastUpdate < 5000) {
                     trackServerResponse(timeSinceLastUpdate);
                 }
                 setActors(state.actors);
@@ -139,28 +173,22 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
                 setGameSettings(settings);
             };
 
-            // Handle ScareCityGame state
             const handleScareCityState = (state: any) => {
                 setScareCityState(state);
             };
 
-            const handleScareCityReset = (data: any) => {
-                // console.log('ScareCityGame Reset:', data);
-            };
-
+            const handleScareCityReset = (data: any) => {};
             const handleTraitFound = (data: any) => {
-                ghostFound()
-                // console.log('ScareCityGame Trait Found:', data);
+                ghostFound();
             };
+            const handleBecameGhost = (data: any) => {};
 
-            const handleBecameGhost = (data: any) => {
-                // console.log('ScareCityGame Became Ghost:', data);
-            };
+            const handleMessages = (data: any) => {
+                setMessages(data)
+            }
 
-            // Set up event handlers
             const handleError = (error: { message: string }) => {
                 console.error('Game server error:', error.message);
-                // Disconnect on auth/ownership errors
                 if (error.message.includes('auth') || error.message.includes('own')) {
                     socket.disconnect();
                     setConnected(false);
@@ -168,7 +196,6 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
                 }
             };
 
-            // Set up event handlers
             socket.on('connect', handleConnect);
             socket.on('player:joined', handleJoined);
             socket.on('disconnect', handleDisconnect);
@@ -178,12 +205,11 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
             socket.on('game:settings', handleGameSettings);
             socket.on('error', handleError);
             socket.on('newEthBlock', (_block: any) => setBlock(_block));
-
-            // ScareCityGame events
             socket.on('scarecity:gameState', handleScareCityState);
             socket.on('scarecity:reset', handleScareCityReset);
             socket.on('scarecity:traitFound', handleTraitFound);
             socket.on('scarecity:becameGhost', handleBecameGhost);
+            socket.on('messages', handleMessages);
 
             return () => {
                 clearInterval(pingInterval);
@@ -194,6 +220,7 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
                 socket.off('world:state', handleWorldState);
                 socket.off('static:actors', handleStaticActors);
                 socket.off('game:settings', handleGameSettings);
+                socket.off('messages', handleMessages);
                 socket.off('error', handleError);
                 socket.off('pong');
                 socket.off('scarecity:gameState', handleScareCityState);
@@ -205,7 +232,13 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
                 socketRef.current = null;
             };
         }
-    }, [tokenId, token]);  // Re-initialize socket when tokenId or token changes
+    }, [tokenId]);
+
+    const addMessage = (message) => {
+        if (socketRef.current?.connected && connected) {
+            socketRef.current.emit('addMessage', message);
+        }
+    }
 
     const scanTrait = useCallback((data: { 
         scanType: string,
@@ -217,10 +250,9 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
         }
     }, [connected]);
 
-    // Broadcast position updates but don't wait for response
     const updatePosition = useCallback((position: Position) => {
         if (socketRef.current?.connected && connected) {
-            trackMovementUpdate(); // Track movement frequency
+            trackMovementUpdate();
             socketRef.current.emit('player:move', {
                 x: position.x,
                 y: position.y,
@@ -231,28 +263,28 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
 
     const updatePlayerIntroStatus = useCallback((race: any) => {
         if (socketRef.current?.connected && connected) {
-            socketRef.current.emit('player:complete_tutorial', race)
+            socketRef.current.emit('player:complete_tutorial', race);
         }
     }, [connected]);
 
-    // View mode - still connect for world state, but no actions
     if (!tokenId) {
         return {
             ...defaultState,
-            actors,  // Show world state
-            connected,  // Show connection state
-            metrics,  // Include performance metrics
+            actors,
+            connected,
+            metrics,
             scareCityState,
-            socket: socketRef.current
+            messages,
+            block: null,
+            scanTrait
         };
     }
 
-    // No token - can't connect
     if (!token) {
         return { ...defaultState, metrics };
     }
 
-    const player = actors.find(actor => actor.id === tokenId)
+    const player = actors.find(actor => actor.id === tokenId);
 
     return {
         connected,
@@ -267,6 +299,8 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
         metrics,
         block,
         scareCityState,
-        scanTrait
+        scanTrait,
+        messages,
+        addMessage
     };
 }

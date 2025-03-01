@@ -74,7 +74,7 @@ export type RaceState = 'not_started' | 'countdown' | 'racing' | 'finished';
 export const handleKeyDown = (e: KeyboardEvent, setActiveKeys) => {
     if (e.repeat) return; // Ignore key repeat
     const key = e.key.toLowerCase();
-    if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'w', 'a', 's', 'd'].includes(key)) {
+    if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) {
         e.preventDefault();
         setActiveKeys(prev => new Set([...prev, key]));
     }
@@ -85,7 +85,7 @@ export const handleKeyDown = (e: KeyboardEvent, setActiveKeys) => {
 
 export const handleKeyUp = (e: KeyboardEvent, setActiveKeys) => {
     const key = e.key.toLowerCase();
-    if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'w', 'a', 's', 'd'].includes(key)) {
+    if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) {
         e.preventDefault();
         setActiveKeys(prev => {
             const next = new Set(prev);

@@ -95,8 +95,6 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
 
     // Log all unique utility traits
     const nfts = await Models.NFT.find({ owner: { $ne: '0x0000000000000000000000000000000000000000' } });
-    // Log distribution
-    console.log(nfts.length)
 
     // Initialize ScareCityGame state with utilities and initial block
     const scareCityState = initializeScareCityState(namespace, nfts, attributeTypes, latestEthBlock.blocknumber, Models);
@@ -315,6 +313,7 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
             socket.emit('game:settings', gameSettings);  // Send game settings
             socket.emit('static:actors', getStaticActors(namespace));  // Send static actors once
             namespace.emit('world:state', getWorldState(namespace));  // Broadcast dynamic actors
+            getMessages(namespace, Models.Message)
         });
 
         socket.on('player:move', async ({ x, y, direction }: Position) => {
@@ -344,6 +343,18 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
                 );
             }
         });
+
+        socket.on('getMessages', () => getMessages(namespace, Models.Message))
+        socket.on('getAccounts', () => getAccounts(socket, Models.Account))
+        socket.on('addMessage', (message: string) => {
+            const player = getPlayerBySocket(namespace, socket.id)
+            if (player && player.walletAddress ) {
+                let _Message = new Models.Message({ message, account: player.walletAddress })
+                _Message.save().then(() => {
+                    getMessages(namespace, Models.Message)
+                })
+            }
+        })
 
         socket.on('disconnect', async () => {
             socketCount--;
@@ -415,6 +426,25 @@ const saveRace = async (Models: Models, riders: any, player: Actor, name: string
     } else {
         console.log(`🐎 horse #${_winner.tokenId} just set a new record in the ${name} with ${time}`)
     }
+}
+
+const getAccounts = (socket: any, Model: any) => {
+    Model.find({})
+        .then(data => socket.emit('accounts', data))
+        .catch(err => console.log(err))
+}
+
+const getMessages = (namespace, Model) => {
+    const players = getConnectedPlayers(namespace)
+    Model.find({}, {  "_id": 0 }).then((data) => {
+        const messages = [] as any
+        data.forEach(d => {
+            const avatar = players.find(({ walletAddress }) => walletAddress?.toLowerCase() === d.account.toLowerCase())?.id
+            const message = { ...d._doc, avatar }
+            messages.push(message)
+        })
+        namespace.emit('messages', messages)
+    }).catch((err) => console.log(err))
 }
 
 export default socket;

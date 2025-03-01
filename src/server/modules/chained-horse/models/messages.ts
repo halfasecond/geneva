@@ -1,28 +1,18 @@
 import { Schema, Connection, Model } from 'mongoose';
 
 interface Message {
-    from: string;
-    to: string;
+    account: string;
     message: string;
-    timestamp?: Date;
 }
 
 const schema = new Schema<Message>({
-    from: {
-        type: String,
-        required: true
-    },
-    to: {
+    account: {
         type: String,
         required: true
     },
     message: {
         type: String,
         required: true
-    },
-    timestamp: {
-        type: Date,
-        default: Date.now
     }
 }, {
     timestamps: true
