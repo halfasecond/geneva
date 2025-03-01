@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import ChatRoom from "./components/ChatRoom";
 import { useGameServer } from "./hooks/useGameServer";
 import { useViewport } from './hooks/useViewport'
 import { useRace } from './hooks/useRace'
@@ -43,14 +44,27 @@ interface BuildingDimensions {
     top: number;
 }
 
+interface Message {
+    message: string;
+    account: string;
+    createdAt?: string | number;
+    timestamp?: number;
+    avatar?: number;
+}
+
 const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
-    // Track active keys
     const [activeKeys, setActiveKeys] = useState(new Set<string>());
     const [staticActors, setStaticActors] = useState<Actor[]>();
     const [isMuted, setIsMuted] = useState(false);
     const [showMetrics, setShowMetrics] = useState(false);
     const [buildingDimensions, setBuildingDimensions] = useState<Record<string, BuildingDimensions>>({});
     const [probablyWoodDimensions, setProbablyWoodDimensions] = useState<Record<string, BuildingDimensions>>({});
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [dimensionsReady, setDimensionsReady] = useState(false);
+    const [viewportDimensions, setViewportDimensions] = useState({
+        width: window.innerWidth,
+        height: window.innerHeight
+    });
 
     const { 
         connected,
@@ -67,6 +81,7 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
         scareCityState,
         scanTrait,
         messages,
+        addMessage
     } = useGameServer({
         tokenId, token, onStaticActors: (actors: Actor[]) => setStaticActors(actors)
     });
@@ -193,21 +208,21 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
                 let newPosition = { ...position };
                 let moved = false;
 
-                if (activeKeys.has('arrowleft') || activeKeys.has('a')) {
+                if (activeKeys.has('arrowleft')) {
                     newPosition.x -= speed;
                     newPosition.direction = 'left';
                     moved = true;
                 }
-                if (activeKeys.has('arrowright') || activeKeys.has('d')) {
+                if (activeKeys.has('arrowright')) {
                     newPosition.x += speed;
                     newPosition.direction = 'right';
                     moved = true;
                 }
-                if (activeKeys.has('arrowup') || activeKeys.has('w')) {
+                if (activeKeys.has('arrowup')) {
                     newPosition.y -= speed;
                     moved = true;
                 }
-                if (activeKeys.has('arrowdown') || activeKeys.has('s')) {
+                if (activeKeys.has('arrowdown')) {
                     newPosition.y += speed;
                     moved = true;
                 }
@@ -280,13 +295,6 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
         };
     }, [connected, position, gameSettings.movementSpeed, updatePosition]);
 
-    const containerRef = useRef<HTMLDivElement>(null);
-    const [viewportDimensions, setViewportDimensions] = useState({
-        width: window.innerWidth,
-        height: window.innerHeight
-    });
-    const [dimensionsReady, setDimensionsReady] = useState(false);
-    
     // Update viewport dimensions on resize and initial mount
     useEffect(() => {
         const updateDimensions = () => {
@@ -339,124 +347,132 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
     }
 
     return (
-        <Styled.Container ref={containerRef}>
-            {connected && tokenId && (<MuteButton isMuted={isMuted} onToggle={handleMuteToggle} />)}
-            {showMetrics && <PerformancePanel metrics={metrics} visible={true} />}
-            {messages && console.log(messages)}
-            <Styled.GameSpace style={style}>
-                <Path active={true} />
-                <Rivers active={true} />
-                <Farm left={1190} top={940} size={100} />
-                <Pond left={1040} top={510} />
-                <Pond left={40} top={2580} />
-                <RainbowPuke left={40} top={2580} />
-                <Beach />
-                <Clock block={block} />
-                <Styled.IssuesFieldContainer
-                    style={{
-                        transform: `scale(${1 / scale})`
-                    }}
-                >
-                    <IssuesField />
-                </Styled.IssuesFieldContainer>
-
-                {/* ScareCity component */}
-                {connected && player && (
-                    <ScareCity 
-                        nfts={nfts.filter(nft => nft.owner !== '0x0000000000000000000000000000000000000000')}
-                        player={player}
-                        gameData={scareCityState}
-                        block={block}
-                        attributeTypes={attributeTypes}
-                        scanTrait={scanTrait}
-                        onBuildingDimensions={(dimensions) => {
-                            setBuildingDimensions(prev => ({
-                                ...prev,
-                                ...dimensions
-                            }));
-                        }}
-                    />
-                )}
-
-                {/* Race component */}
-                <Race
-                    aiHorses={aiPositions}
-                    raceState={raceState}
-                    countdown={countdown}
-                    finishResults={finishResults}
-                    nfts={nfts}
+        <>
+            {connected && (
+                <ChatRoom 
+                    messages={messages || []}
+                    {...{ nfts }}
+                    onSendMessage={(message) => addMessage(message)}
                 />
-                {/* Intro Messages */}
-                {introMessages.map((message, index) => (
-                    <Styled.Message
-                        key={`message-${index}`}
+            )}
+            <Styled.Container ref={containerRef}>
+                {connected && tokenId && (<MuteButton isMuted={isMuted} onToggle={handleMuteToggle} />)}
+                {showMetrics && <PerformancePanel metrics={metrics} visible={true} />}
+                <Styled.GameSpace style={style}>
+                    <Path active={true} />
+                    <Rivers active={true} />
+                    <Farm left={1190} top={940} size={100} />
+                    <Pond left={1040} top={510} />
+                    <Pond left={40} top={2580} />
+                    <RainbowPuke left={40} top={2580} />
+                    <Beach />
+                    <Clock block={block} />
+                    <Styled.IssuesFieldContainer
                         style={{
-                            left: `${message.left}px`,
-                            top: `${message.top}px`,
-                            width: `${message.width}px`,
-                            opacity: visibleMessages[index] ? 1 : 0
+                            transform: `scale(${1 / scale})`
                         }}
-                        dangerouslySetInnerHTML={{ __html: message.message }}
-                    />
-                ))}
-                <Styled.Leaderboard style={{ 
-                    left: 1050,
-                    top: 1620,
-                    width: 600
-                }}>
-                    <b>🐎 {'Newb Island Race'} 🐎</b>
-                    {getRecord()}
-                </Styled.Leaderboard>
-                {connected && (
-                    <>
-                        {/* Static Actors */}
-                        {staticActors && staticActors.map((actor, i) => (
-                            <GameActor
-                                key={`static-${i}`}
-                                actor={actor}
-                                visible={true}
-                                asset={undefined}
-                            />
-                        ))}
-                        {/* Dynamic Actors (players, ducks) */}
-                        {actors.map((actor, i) => (
-                            <GameActor
-                                key={`dynamic-${i}`}
-                                actor={actor}
-                                visible={true}
-                                asset={actor.type === 'player' ? nfts.find((nft: { tokenId: number; svg: string }) => nft.tokenId === actor.id) : undefined}
-                            />
-                        ))}
-                    </>
-                )}
-                {/* Probably Wood */}
-                <ProbablyWood 
-                    left={5500} 
-                    top={1440} 
-                    onElementDimensions={(dimensions: Record<string, BuildingDimensions>) => {
-                        setProbablyWoodDimensions(dimensions);
-                    }}
-                />
-            </Styled.GameSpace>
-            {position && (
-                <Minimap
-                    viewportDimensions={viewportDimensions}
-                    viewportOffset={offset}
-                    scale={scale}
-                    currentPosition={position}
-                    actors={actors}
-                    nfts={nfts}
-                    block={block}
-                    scareCityDimensions={buildingDimensions}
-                    scareCityState={scareCityState}
-                    probablyWoodDimensions={probablyWoodDimensions}
-                />
-            )}
-            {connected && player && (
-                <Hay hay={player.hay} />
-            )}
-        </Styled.Container>
-    )
-}
+                    >
+                        <IssuesField />
+                    </Styled.IssuesFieldContainer>
 
-export default Game
+                    {/* ScareCity component */}
+                    {connected && player && (
+                        <ScareCity 
+                            nfts={nfts.filter(nft => nft.owner !== '0x0000000000000000000000000000000000000000')}
+                            player={player}
+                            gameData={scareCityState}
+                            block={block}
+                            attributeTypes={attributeTypes}
+                            scanTrait={scanTrait}
+                            onBuildingDimensions={(dimensions) => {
+                                setBuildingDimensions(prev => ({
+                                    ...prev,
+                                    ...dimensions
+                                }));
+                            }}
+                        />
+                    )}
+
+                    {/* Race component */}
+                    <Race
+                        aiHorses={aiPositions}
+                        raceState={raceState}
+                        countdown={countdown}
+                        finishResults={finishResults}
+                        nfts={nfts}
+                    />
+                    {/* Intro Messages */}
+                    {introMessages.map((message, index) => (
+                        <Styled.Message
+                            key={`message-${index}`}
+                            style={{
+                                left: `${message.left}px`,
+                                top: `${message.top}px`,
+                                width: `${message.width}px`,
+                                opacity: visibleMessages[index] ? 1 : 0
+                            }}
+                            dangerouslySetInnerHTML={{ __html: message.message }}
+                        />
+                    ))}
+                    <Styled.Leaderboard style={{ 
+                        left: 1050,
+                        top: 1620,
+                        width: 600
+                    }}>
+                        <b>🐎 {'Newb Island Race'} 🐎</b>
+                        {getRecord()}
+                    </Styled.Leaderboard>
+                    {connected && (
+                        <>
+                            {/* Static Actors */}
+                            {staticActors && staticActors.map((actor, i) => (
+                                <GameActor
+                                    key={`static-${i}`}
+                                    actor={actor}
+                                    visible={true}
+                                    asset={undefined}
+                                />
+                            ))}
+                            {/* Dynamic Actors (players, ducks) */}
+                            {actors.map((actor, i) => (
+                                <GameActor
+                                    key={`dynamic-${i}`}
+                                    actor={actor}
+                                    visible={true}
+                                    asset={actor.type === 'player' ? nfts.find((nft: { tokenId: number; svg: string }) => nft.tokenId === actor.id) : undefined}
+                                />
+                            ))}
+                        </>
+                    )}
+                    {/* Probably Wood */}
+                    <ProbablyWood 
+                        left={5500} 
+                        top={1440} 
+                        onElementDimensions={(dimensions: Record<string, BuildingDimensions>) => {
+                            setProbablyWoodDimensions(dimensions);
+                        }}
+                    />
+                </Styled.GameSpace>
+                {position && (
+                    <Minimap
+                        viewportDimensions={viewportDimensions}
+                        viewportOffset={offset}
+                        scale={scale}
+                        currentPosition={position}
+                        actors={actors}
+                        nfts={nfts}
+                        block={block}
+                        scareCityDimensions={buildingDimensions}
+                        scareCityState={scareCityState}
+                        probablyWoodDimensions={probablyWoodDimensions}
+                    />
+                )}
+                {connected && player && (
+                    <Hay hay={player.hay} />
+                )}
+            </Styled.Container>
+        </>
+    );
+};
+
+export default Game;
