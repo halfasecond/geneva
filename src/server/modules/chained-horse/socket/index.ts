@@ -2,7 +2,7 @@ import { Actor, Position } from '../../../types/actor';
 import { paths, rivers, raceElements, issuesColumns } from './set';
 import { initializeScareCityState } from './state/scarecity';
 
-const WORLD_WIDTH = 5000;
+const WORLD_WIDTH = 8000;
 const WORLD_HEIGHT = 5000;
 
 import {
@@ -15,13 +15,14 @@ import {
     getPlayerBySocket,
     addDuck,
     addFlower,
+    addTurtle,
     getRandomPosition,
     getWorldState,
     formatActorState,
     completePlayerTutorial,
     getStaticActors,
-    incrementBalance
 } from './state/world';
+import { Namespace } from 'socket.io';
 
 interface UtilityCount {
     [key: string]: number;
@@ -99,9 +100,12 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
     // Initialize ScareCityGame state with utilities and initial block
     const scareCityState = initializeScareCityState(namespace, nfts, attributeTypes, latestEthBlock.blocknumber, Models);
 
-    // Create ducks of doom and flowers of goodwill
-    const duckHorses = nfts.filter((horse: Horse) => horse.utility === 'duck of doom');
-    const flowerHorses = nfts.filter((horse: Horse) => horse.utility === 'flower of goodwill');
+    // Static Actors - e.g. flowers of goodwill
+    const flowers = nfts.filter((horse: Horse) => horse.utility === 'flower of goodwill');
+
+    // Moving actors - e.g. ducks of doom / turtles of speed
+    const ducks = nfts.filter((horse: Horse) => horse.utility === 'duck of doom');
+    const turtles = nfts.filter((horse: Horse) => horse.utility === 'turtle of speed');
 
     // Define all restricted areas for flower placement
     const RESTRICTED_AREAS = [
@@ -123,28 +127,34 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
         ...issuesColumns
     ];
 
-    console.log(`🦆 Creating ${duckHorses.length} Ducks of Doom`);
-    duckHorses.forEach((horse: Horse, index: number) => {
+    console.log(`🦆 Creating ${ducks.length} Ducks of Doom`);
+    ducks.forEach((horse: Horse, index: number) => {
         // First 3 ducks in first pond, next 3 in second pond
         let x, y;
         if (index < 3) {
-            // First pond (1140, 750) - moved right 100px, down 100px
+            // First pond
             x = 1140 + (index * 100);
             y = 750 + (Math.random() * 40 - 20); // ±20px random height
         } else {
-            // Second pond (140, 2820) - moved right 100px, down 100px
+            // Second pond 
             x = 140 + ((index - 3) * 100);
             y = 2820 + (Math.random() * 40 - 20); // ±20px random height
         }
-        
         addDuck(namespace, x, y, horse.tokenId);
     });
 
-    console.log(`🌼 Creating ${flowerHorses.length} Flowers of Goodwill`);
-    flowerHorses.forEach((horse: Horse) => {
+    console.log(`🌼 Creating ${flowers.length} Flowers of Goodwill`);
+    flowers.forEach((horse: Horse) => {
         const { x, y } = getRandomPosition(RESTRICTED_AREAS, WORLD_WIDTH, WORLD_HEIGHT);
         addFlower(namespace, x, y, horse.tokenId);
     });
+
+    // Initialize first turtle
+    if (turtles.length > 0) {
+        console.log(`🐢 Creating Turtle of Speed`);
+        const { y } = { y: 100 } //getRandomPosition(RESTRICTED_AREAS, WORLD_WIDTH, WORLD_HEIGHT);
+        addTurtle(namespace, 0, y, turtles[0].tokenId);
+    }
 
     // Track duck movement state
     const duckState = new Map<string, {
@@ -152,6 +162,25 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
         direction: 'left' | 'right';
         speed: number;
     }>();
+
+    // Track turtle movement state
+    const turtleState = {
+        activeTurtleIndex: 0,
+        totalTurtles: turtles.length,
+        lastSwitchTime: Date.now(),
+        position: { 
+            x: 0, 
+            y: 100, // getRandomPosition(RESTRICTED_AREAS, WORLD_WIDTH, WORLD_HEIGHT).y,
+            direction: 'left'
+        }
+    };
+
+    // Calculate turtle speed based on total turtles
+    const calculateTurtleSpeed = (delta: number): number => {
+        const SECONDS_PER_DAY = 86;
+        const pixelsPerSecond = WORLD_WIDTH / (SECONDS_PER_DAY / turtleState.totalTurtles);
+        return pixelsPerSecond * (delta / 1000); // Convert to pixels per delta time
+    };
 
     // Start game loop
     const startGameLoop = () => {
@@ -162,9 +191,26 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
             const delta = now - lastTime;
             lastTime = now;
 
-            // Update duck positions
+            // Update actor positions
             namespace.worldState.actors.forEach((actor: Actor) => {
-                if (actor.type === 'duck of doom') {
+                if (actor.type === 'turtle of speed') {
+                    // Only move if this is the active turtle
+                    if (actor.id === turtles[turtleState.activeTurtleIndex]?.tokenId) {
+                        const speed = calculateTurtleSpeed(delta);
+                        turtleState.position.x += speed;
+
+                        // If turtle reaches the end, switch to next turtle
+                        if (turtleState.position.x >= WORLD_WIDTH) {
+                            turtleState.activeTurtleIndex = (turtleState.activeTurtleIndex + 1) % turtleState.totalTurtles;
+                            turtleState.position.x = 0;
+                            turtleState.position.y = 100// getRandomPosition(RESTRICTED_AREAS, WORLD_WIDTH, WORLD_HEIGHT).y;
+                            turtleState.lastSwitchTime = now;
+                        }
+
+                        // Update actor position
+                        actor.position = { ...turtleState.position };
+                    }
+                } else if (actor.type === 'duck of doom') {
                     // Initialize state if needed
                     if (!duckState.has(actor.id.toString())) {
                         duckState.set(actor.id.toString(), {
@@ -286,7 +332,7 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
                 const position = (existingPlayer?.position && existingPlayer?.race)
                     ? existingPlayer?.position
                     : { x: 100, y: 150, direction: 'right' as const } // Default spawn position for new players and players or haven't finished the race
-                const player = addPlayer(namespace, socket.id, position, tokenId, walletAddress, existingPlayer?.race);
+                const player = addPlayer(namespace, socket.id, position, tokenId, walletAddress, existingPlayer?.race, 0);
                 setPlayerConnected(namespace, player.id);
                 socket.emit('newEthBlock', latestEthBlock)
                 // Save to GameState collection
@@ -430,21 +476,21 @@ const saveRace = async (Models: Models, riders: any, player: Actor, name: string
 
 const getAccounts = (socket: any, Model: any) => {
     Model.find({})
-        .then(data => socket.emit('accounts', data))
-        .catch(err => console.log(err))
+        .then((data: any) => socket.emit('accounts', data))
+        .catch((err: Error) => console.log(err))
 }
 
-const getMessages = (namespace, Model) => {
+const getMessages = (namespace: Namespace, Model: any) => {
     const players = getConnectedPlayers(namespace)
-    Model.find({}, {  "_id": 0 }).then((data) => {
-        const messages = [] as any
-        data.forEach(d => {
+    Model.find({}, {  "_id": 0 }).then((data: any[]) => {
+        const messages = [] as any[]
+        data.forEach((d: { account: string; _doc: any }) => {
             const avatar = players.find(({ walletAddress }) => walletAddress?.toLowerCase() === d.account.toLowerCase())?.id
             const message = { ...d._doc, avatar }
             messages.push(message)
         })
         namespace.emit('messages', messages)
-    }).catch((err) => console.log(err))
+    }).catch((err: Error) => console.log(err))
 }
 
 export default socket;

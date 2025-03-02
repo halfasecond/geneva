@@ -146,6 +146,13 @@ export const addDuck = (namespace: Namespace, x: number, y: number, horseId: num
     return duck;
 };
 
+// Turtle management
+export const addTurtle = (namespace: Namespace, x: number, y: number, horseId: number): Actor => {
+    const turtle = createActor('turtle of speed', horseId, x, y, 'right');
+    namespace.worldState.actors.push(turtle);
+    return turtle;
+};
+
 // Flower management (static actors)
 export const addFlower = (namespace: Namespace, x: number, y: number, horseId: number): Actor => {
     const size = 100 + Math.random() * 100; // Random size 100-200

@@ -10,6 +10,8 @@ export const getImage = (type: ActorType, id?: number): string => {
             return 'svg/horse/Duck.svg';
         case 'flower of goodwill':
             return 'svg/horse/Flower.svg';
+        case 'turtle of speed':
+            return 'svg/horse/Turtle.svg';
         default:
             throw new Error(`Unknown actor type: ${type}`);
     }
