@@ -11,4 +11,10 @@ export const Div = styled.div`
     left: 20px;
     font-weight: bold;
     box-shadow: 2px 2px 2px 1px rgba(0, 0, 255, .2);
+    display: flex;
+    align-items: center;
+    > img {
+        width: 22px;
+        margin-right: 10px;
+    }
 `

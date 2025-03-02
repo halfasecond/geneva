@@ -16,13 +16,14 @@ const pulse = keyframes`
 
 const Container = styled.div`
     position: fixed;
-    bottom: 90px;
+    bottom: 118px;
     right: 34px;
     width: ${MINIMAP_WIDTH}px;
     height: ${MINIMAP_HEIGHT}px;
     aspect-ratio: ${WORLD_WIDTH} / ${WORLD_HEIGHT};
-    background: rgba(0, 0, 0, 0.1);
-    border: 1px solid rgba(0, 0, 0, 0.2);
+    background: rgba(170, 255, 207, 0.95);
+    border: 2px solid rgba(0, 0, 0, 0.2);
+    box-shadow: 2px 2px 4px rgba(0,0,0,0.2);
     border-radius: 4px;
     overflow: hidden;
     z-index: 1000;

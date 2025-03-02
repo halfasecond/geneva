@@ -22,6 +22,7 @@ import Clock from './components/Clock/Clock';
 import ProbablyWood from "./components/ProbablyWood";
 import { ScareCity } from './components/ScareCity';
 import Hay from './components/Hay'
+import { getAssetPath } from "src/utils/assetPath";
 
 const { VITE_APP_NODE_ENV } = import.meta.env;
 export const HORSE_SIZE = 100;
@@ -65,6 +66,9 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
         width: window.innerWidth,
         height: window.innerHeight
     });
+
+    const [isOpen, setIsOpen] = useState<number>(-1);
+    const [showMinimap, setShowMinimap] = useState(false);
 
     const { 
         connected,
@@ -348,15 +352,7 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
 
     return (
         <>
-            {connected && (
-                <ChatRoom 
-                    messages={messages || []}
-                    {...{ nfts }}
-                    onSendMessage={(message) => addMessage(message)}
-                />
-            )}
             <Styled.Container ref={containerRef}>
-                {connected && tokenId && (<MuteButton isMuted={isMuted} onToggle={handleMuteToggle} />)}
                 {showMetrics && <PerformancePanel metrics={metrics} visible={true} />}
                 <Styled.GameSpace style={style}>
                     <Path active={true} />
@@ -453,7 +449,7 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
                         }}
                     />
                 </Styled.GameSpace>
-                {position && (
+                {position && showMinimap && (
                     <Minimap
                         viewportDimensions={viewportDimensions}
                         viewportOffset={offset}
@@ -471,6 +467,51 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
                     <Hay hay={player.hay} />
                 )}
             </Styled.Container>
+            {connected && (
+                <>
+                    <h1>The Paddock</h1>
+                    <Styled.Menu>
+                        {['farm','noun-horse-6722191','noun-news-7120948'].map((img, i) => {
+                            return (
+                                <div 
+                                    key={i} 
+                                    style={{ 
+                                        opacity: isOpen === i ? .5 : 1,
+                                        cursor: isOpen === i ? 'default' : 'pointer'
+                                    }}
+                                    onClick={() => isOpen === i ? setIsOpen(-1) : setIsOpen(i) }
+                                >
+                                    <img src={getAssetPath(`/svg/${img}.svg`)}  />
+                                </div>
+                            )
+                        })}
+                        <div style={{
+                                opacity: showMinimap ? .5 : 1,
+                                cursor: 'pointer'
+                            }} 
+                            onClick={() => setShowMinimap(prevState => !prevState)}
+                        >
+                            <img src={getAssetPath('svg/noun-map-3047883.svg')} />
+                        </div>
+                        <div style={{
+                                opacity: isMuted ? .5 : 1,
+                                cursor: 'pointer'
+                            }} 
+                            onClick={handleMuteToggle}
+                        >
+                            <img src={getAssetPath('svg/noun-audio-2524823.svg')} />
+                        </div>
+                    </Styled.Menu>
+                </>
+            )}
+            {connected && (
+                <ChatRoom 
+                    messages={messages || []}
+                    {...{ nfts, setIsOpen }}
+                    isOpen={isOpen}
+                    onSendMessage={(message) => addMessage(message)}
+                />
+            )}
         </>
     );
 };
