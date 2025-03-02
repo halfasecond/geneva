@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import * as Styled from '../../style'
 import Metamask from 'components/Metamask'
 import { AuthProps } from '../../types/auth'
-import IntroModal from 'components/IntroModal'
+import IntroModal from 'components/Game/components/IntroModal'
 import Game from 'components/Game'
 
 const AppView: React.FC<AuthProps> = ({ 

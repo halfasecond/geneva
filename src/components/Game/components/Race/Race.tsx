@@ -1,5 +1,5 @@
 import * as Styled from './Race.style';
-import Horse from 'components/Horse';
+import Horse from '../Horse';
 import { Z_LAYERS } from 'src/config/zIndex';
 import { RaceState } from 'components/Game/utils';
 

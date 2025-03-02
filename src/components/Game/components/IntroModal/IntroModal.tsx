@@ -1,6 +1,6 @@
 import * as Styled from './IntroModal.style'
-import Metamask from '../Metamask'
-import { getAssetPath } from '../../utils/assetPath';
+import Metamask from 'components/Metamask'
+import { getAssetPath } from 'utils/assetPath';
 
 interface IntroModalProps {
     onSelectHorse: (horse: number) => void;  // Callback to select horse

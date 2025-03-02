@@ -1,27 +1,27 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import ChatRoom from "./components/ChatRoom";
+import * as Styled from './Game.style'
 import { useGameServer } from "./hooks/useGameServer";
 import { useViewport } from './hooks/useViewport'
 import { useRace } from './hooks/useRace'
 import type { Actor, Position } from 'src/server/types/actor';
 import GameActor from "./GameActor"
 import { BACKGROUND_MUSIC } from '../../audio';
-import { PerformancePanel } from "./PerformancePanel";
+import Beach from './components/Beach'
+import ChatRoom from "./components/ChatRoom";
+import Clock from './components/Clock/Clock';
+import Hay from './components/Hay'
+import IssuesField from "./components/IssuesField";
+import ProbablyWood from "./components/ProbablyWood";
+import Race from "./components/Race";
+import { PerformancePanel } from "./components/PerformancePanel";
 import { Pond, RainbowPuke, Farm } from "./components/GameElements";
 import { Path, Rivers } from "./components/Environment";
-import Beach from './components/Beach'
-import { Minimap } from "./components/Minimap";
-import Race from "./components/Race";
-import IssuesField from "../IssuesField";
-import * as Styled from './Game.style'
-import { WORLD_WIDTH, WORLD_HEIGHT } from '../../utils/coordinates';
 import { rivers, introMessages } from './components/Environment/set';
-import { isOnPath, isBlockedByRiver, isInStartBox, handleKeyDown, handleKeyUp } from "./utils";
-import Clock from './components/Clock/Clock';
-import ProbablyWood from "./components/ProbablyWood";
 import { ScareCity } from './components/ScareCity';
-import Hay from './components/Hay'
-import { getAssetPath } from "src/utils/assetPath";
+import { Minimap } from "./components/Minimap";
+import { isOnPath, isBlockedByRiver, isInStartBox, handleKeyDown, handleKeyUp } from "./utils";
+import { WORLD_WIDTH, WORLD_HEIGHT } from 'utils/coordinates';
+import { getAssetPath } from "utils/assetPath";
 
 const { VITE_APP_NODE_ENV } = import.meta.env;
 export const HORSE_SIZE = 100;
@@ -42,14 +42,6 @@ interface BuildingDimensions {
     height: number;
     left: number;
     top: number;
-}
-
-interface Message {
-    message: string;
-    account: string;
-    createdAt?: string | number;
-    timestamp?: number;
-    avatar?: number;
 }
 
 const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
@@ -75,7 +67,6 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
         introActive,
         player,
         position,
-        hay,
         updatePosition,
         updatePlayerIntroStatus,
         gameSettings,
@@ -114,7 +105,8 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
     } = useRace({
         initialPosition: position || { x: 580, y: 2060, direction: 'right' },
         nfts,
-        tokenId
+        tokenId,
+        bonus: introActive ? 1 : 0
     });
 
     useEffect(() => {

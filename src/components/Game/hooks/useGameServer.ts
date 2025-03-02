@@ -292,7 +292,6 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
         updatePlayerIntroStatus,
         introActive: player?.race === undefined,
         player,
-        hay: player?.hay,
         position: player?.position,
         actors,
         gameSettings,

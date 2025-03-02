@@ -2,10 +2,13 @@ import { useState, useEffect } from 'react';
 import { Position } from '../../../server/types/actor';
 import { RaceState } from '../utils';
 
+const HORSE_SPEED = 6
+
 interface UseRaceOptions {
     initialPosition: Position;
     nfts: any[];
     tokenId: number | undefined;
+    bonus: number;
 }
 
 const getTwoRandomHorses = (tokenId, nfts) => {
@@ -34,7 +37,7 @@ const getOpponents = (tokenId: number, nfts: any[]) => {
     ))
 }
 
-export function useRace({ initialPosition, nfts, tokenId }: UseRaceOptions) {
+export function useRace({ initialPosition, nfts, tokenId, bonus=0 }: UseRaceOptions) {
     // Race state
     const [state, setState] = useState<RaceState>('not_started');
     const [racePosition, setRacePosition] = useState(initialPosition);
@@ -95,7 +98,7 @@ export function useRace({ initialPosition, nfts, tokenId }: UseRaceOptions) {
         const moveInterval = setInterval(() => {
             // Move player horse
             setRacePosition(prev => {
-                const speed = 2 + Math.random() * 7;
+                const speed = 2 + Math.random() * (HORSE_SPEED + bonus) ;
                 const newX = prev.x + speed;
                 
                 if (newX >= 1990) {
@@ -116,7 +119,7 @@ export function useRace({ initialPosition, nfts, tokenId }: UseRaceOptions) {
                         return horse;
                     }
 
-                    const speed = 2 + Math.random() * 6;
+                    const speed = 2 + Math.random() * HORSE_SPEED;
                     const newX = horse.position.x + speed;
 
                     if (newX >= 1990) {

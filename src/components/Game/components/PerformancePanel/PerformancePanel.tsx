@@ -1,10 +1,9 @@
-import React from 'react';
 import styled from '@emotion/styled';
 
 const Panel = styled.div`
     position: fixed;
     top: 10px;
-    right: 10px;
+    left: 10px;
     background: rgba(0, 0, 0, 0.8);
     color: #00ff00;
     padding: 10px;
