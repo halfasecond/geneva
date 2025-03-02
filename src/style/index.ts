@@ -1,4 +1,5 @@
 import styled from 'styled-components'
+import { Z_LAYERS } from 'src/config/zIndex'
 
 export const Main = styled.main`
     position: relative;
@@ -9,12 +10,14 @@ export const Main = styled.main`
 
     > h1 {
         position: fixed;
-        bottom: 18px;
+        bottom: 50px;
         right: 24px;
-        z-index: 100;
+        z-index: ${Z_LAYERS['UI']};
         margin: 0;
         padding: 12px;
         border-radius: 4px;
         pointer-events: none;
+        color: #000000;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
     }
 `

@@ -62,9 +62,13 @@ export const FieldHeader = styled.div`
 
 export const FieldTitle = styled.h2`
   color: #2C1810;
-  font-size: 28px;
+  font-size: 18px;
   margin: 0;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  > span {
+    display: inline-block;
+    margin-right: 14px; 
+  }
 `;
 
 export const LoadingSpinner = styled.div`

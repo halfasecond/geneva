@@ -1,4 +1,5 @@
 import styled from 'styled-components';
+import { Z_LAYERS } from 'src/config/zIndex';
 
 export const Header = styled.div`
     padding: 16px 20px;
@@ -31,7 +32,7 @@ export const Container = styled.div<{ isOpen: boolean }>`
     transition: right 0.3s ease;
     display: flex;
     flex-direction: column;
-    z-index: 1000;
+    z-index: ${Z_LAYERS['UI'] - 1};
 `;
 
 export const ToggleButton = styled.button<{ isOpen: boolean }>`
@@ -52,6 +53,7 @@ export const ToggleButton = styled.button<{ isOpen: boolean }>`
     border-radius: 4px 0 0 4px;
     box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
     transition: all 0.2s ease;
+    display: ${({ isOpen }) => isOpen ? 'block' : 'none'};
     
     &:hover {
         background: rgba(47, 49, 54, 1);
@@ -193,3 +195,18 @@ export const Input = styled.input`
         color: #72767d;
     }
 `;
+
+export const Panel = styled.div`
+    height: 118px;
+    border-top: 2px solid #000;
+`
+
+export const Grid = styled.div`
+    display: flex;
+    justify-content: space-evenly;
+    flex-wrap: wrap;
+    > * {
+        width: 32%;
+        margin-bottom: 4px;
+    }
+`

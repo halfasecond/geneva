@@ -147,3 +147,30 @@ export const Leaderboard = styled.div`
     }
 `
 
+export const Menu = styled.div`
+    z-index: ${Z_LAYERS['UI']};
+    position: fixed;
+    right: 42px;
+    bottom: 18px;
+    width: 270px;
+    display: flex;
+    justify-content: flex-end;
+    padding: 4px 0;
+    border-radius: 4px;
+    > div {
+        background-color: #F6F6F6;
+        padding: 4px;
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        box-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        > img {
+            width: 100%;
+        }
+        margin-left: 12px;
+        &:hover {
+            box-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+    }
+`
+

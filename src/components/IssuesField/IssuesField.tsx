@@ -197,7 +197,7 @@ const DynamicIssuesField: React.FC = () => {
     return (
         <FieldContainer data-loading={loading.toString()}>
             <FieldHeader>
-                <FieldTitle>🚜 Issue Tractor</FieldTitle>
+                <FieldTitle><span>🚜</span>Imprhoovements</FieldTitle>
             </FieldHeader>
             <KanbanBoard
                 columns={board.columns}
