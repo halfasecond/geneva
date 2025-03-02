@@ -6,13 +6,12 @@ import { useRace } from './hooks/useRace'
 import type { Actor, Position } from 'src/server/types/actor';
 import GameActor from "./GameActor"
 import { BACKGROUND_MUSIC } from '../../audio';
-import MuteButton from "../MuteButton";
 import { PerformancePanel } from "./PerformancePanel";
 import { Pond, RainbowPuke, Farm } from "./components/GameElements";
 import { Path, Rivers } from "./components/Environment";
 import Beach from './components/Beach'
-import { Minimap } from "../Minimap";
-import Race from "../Race";
+import { Minimap } from "./components/Minimap";
+import Race from "./components/Race";
 import IssuesField from "../IssuesField";
 import * as Styled from './Game.style'
 import { WORLD_WIDTH, WORLD_HEIGHT } from '../../utils/coordinates';

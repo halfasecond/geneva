@@ -71,23 +71,20 @@ export const isInStartBox = (box: BoundingBox): boolean => {
 // Race state type
 export type RaceState = 'not_started' | 'countdown' | 'racing' | 'finished';
 
-export const handleKeyDown = (e: KeyboardEvent, setActiveKeys) => {
+export const handleKeyDown = (e: KeyboardEvent, setActiveKeys: any) => {
     if (e.repeat) return; // Ignore key repeat
     const key = e.key.toLowerCase();
     if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) {
         e.preventDefault();
-        setActiveKeys(prev => new Set([...prev, key]));
+        setActiveKeys((prev: string) => new Set([...prev, key]));
     }
-    // if (['r'].includes(key)) {
-    //     updatePosition({ x: 180, y: 2060, direction: 'right' } as Position)
-    // }
 };
 
-export const handleKeyUp = (e: KeyboardEvent, setActiveKeys) => {
+export const handleKeyUp = (e: KeyboardEvent, setActiveKeys: any) => {
     const key = e.key.toLowerCase();
     if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) {
         e.preventDefault();
-        setActiveKeys(prev => {
+        setActiveKeys((prev: string) => {
             const next = new Set(prev);
             next.delete(key);
             return next;

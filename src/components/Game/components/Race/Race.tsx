@@ -1,7 +1,7 @@
 import * as Styled from './Race.style';
-import Horse from '../Horse';
+import Horse from 'components/Horse';
 import { Z_LAYERS } from 'src/config/zIndex';
-import { RaceState } from '../Game/utils';
+import { RaceState } from 'components/Game/utils';
 
 interface RaceProps {
     aiHorses: Array<{

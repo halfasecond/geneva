@@ -1,8 +1,8 @@
 import React from 'react';
 import styled from 'styled-components';
-import { Rect, CoordinateTransformer } from '../../utils/coordinates';
+import { Rect, CoordinateTransformer } from 'utils/coordinates';
 import ghost from '/svg/horse/Ghost.svg'
-import { getSVG } from '../../utils/getImage';
+import { getSVG } from 'utils/getImage';
 
 const StyledElement = styled.div`
     position: absolute;

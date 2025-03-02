@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { MinimapElement, MinimapDot, ViewportIndicator, MinimapBuilding, StyledResults } from './MinimapElement';
-import { Position } from '../../server/types';
-import { paths, rivers, raceElements, pond, issuesColumns } from '../../components/Game/components/Environment';
-import { WORLD_WIDTH, WORLD_HEIGHT, MINIMAP_WIDTH, MINIMAP_HEIGHT } from '../../utils/coordinates';
-import { Actor } from '../../server/types/actor';
-import { CLOCK_DIMENSIONS } from '../Game/components/Clock/constants';
+import { Position } from 'server/types';
+import { paths, rivers, raceElements, pond, issuesColumns } from 'components/Game/components/Environment';
+import { WORLD_WIDTH, WORLD_HEIGHT, MINIMAP_WIDTH, MINIMAP_HEIGHT } from 'utils/coordinates';
+import { Actor } from 'server/types/actor';
+import { CLOCK_DIMENSIONS } from 'components/Game/components/Clock/constants';
 import { getAssetPath } from 'src/utils/assetPath';
 
 const pulse = keyframes`

@@ -1,5 +1,5 @@
 import styled from 'styled-components'
-import { getAssetPath } from '../../utils/assetPath';
+import { getAssetPath } from 'utils/assetPath';
 import { Z_LAYERS } from 'src/config/zIndex';
 
 export const RaceTrack = styled.div`
