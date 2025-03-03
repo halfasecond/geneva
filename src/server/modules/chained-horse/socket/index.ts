@@ -152,8 +152,8 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
     // Initialize first turtle
     if (turtles.length > 0) {
         console.log(`🐢 Creating Turtle of Speed`);
-        const { y } = { y: 100 } //getRandomPosition(RESTRICTED_AREAS, WORLD_WIDTH, WORLD_HEIGHT);
-        addTurtle(namespace, 0, y, turtles[0].tokenId);
+        const { y } = getRandomPosition(RESTRICTED_AREAS, WORLD_WIDTH, WORLD_HEIGHT);
+        addTurtle(namespace, -100, y, turtles[0].tokenId);
     }
 
     // Track duck movement state
@@ -163,24 +163,12 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
         speed: number;
     }>();
 
-    // Track turtle movement state
-    const turtleState = {
-        activeTurtleIndex: 0,
-        totalTurtles: turtles.length,
-        lastSwitchTime: Date.now(),
-        position: { 
-            x: 0, 
-            y: 100, // getRandomPosition(RESTRICTED_AREAS, WORLD_WIDTH, WORLD_HEIGHT).y,
-            direction: 'left'
-        }
-    };
-
-    // Calculate turtle speed based on total turtles
-    const calculateTurtleSpeed = (delta: number): number => {
-        const SECONDS_PER_DAY = 86;
-        const pixelsPerSecond = WORLD_WIDTH / (SECONDS_PER_DAY / turtleState.totalTurtles);
-        return pixelsPerSecond * (delta / 1000); // Convert to pixels per delta time
-    };
+    // Track turtle movement state (like ducks but with larger range)
+    const turtleState = new Map<string, {
+        spawnX: number;
+        direction: 'left' | 'right';
+        speed: number;
+    }>();
 
     // Start game loop
     const startGameLoop = () => {
@@ -194,22 +182,37 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
             // Update actor positions
             namespace.worldState.actors.forEach((actor: Actor) => {
                 if (actor.type === 'turtle of speed') {
-                    // Only move if this is the active turtle
-                    if (actor.id === turtles[turtleState.activeTurtleIndex]?.tokenId) {
-                        const speed = calculateTurtleSpeed(delta);
-                        turtleState.position.x += speed;
-
-                        // If turtle reaches the end, switch to next turtle
-                        if (turtleState.position.x >= WORLD_WIDTH) {
-                            turtleState.activeTurtleIndex = (turtleState.activeTurtleIndex + 1) % turtleState.totalTurtles;
-                            turtleState.position.x = 0;
-                            turtleState.position.y = 100// getRandomPosition(RESTRICTED_AREAS, WORLD_WIDTH, WORLD_HEIGHT).y;
-                            turtleState.lastSwitchTime = now;
-                        }
-
-                        // Update actor position
-                        actor.position = { ...turtleState.position };
+                    // Initialize state if needed
+                    if (!turtleState.has(actor.id.toString())) {
+                        turtleState.set(actor.id.toString(), {
+                            spawnX: actor.position.x,
+                            direction: 'right',
+                            speed: 1 + (Math.random() * 0.1)
+                        });
                     }
+
+                    const state = turtleState.get(actor.id.toString())!;
+                    const MOVEMENT_RANGE = WORLD_WIDTH;
+                    const TURTLE_SPEED = state.speed * (delta);
+
+                    // Update position
+                    let newX = state.direction === 'right'
+                        ? actor.position.x + TURTLE_SPEED
+                        : actor.position.x - TURTLE_SPEED;
+
+                    // Change direction at boundaries
+                    if (newX >= state.spawnX + MOVEMENT_RANGE + 101) {
+                        newX = state.spawnX + MOVEMENT_RANGE + 100;
+                        state.direction = 'left';
+                    } else if (newX <= state.spawnX) {
+                        newX = state.spawnX;
+                        state.direction = 'right';
+                    }
+
+                    // Update actor position
+                    actor.position.x = newX;
+                    // Direction should be opposite of movement (face left when moving right)
+                    actor.position.direction = state.direction === 'right' ? 'left' : 'right';
                 } else if (actor.type === 'duck of doom') {
                     // Initialize state if needed
                     if (!duckState.has(actor.id.toString())) {
@@ -436,8 +439,9 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
         // Stop the save loop
         stopSaveLoop();
         
-        // Clear duck movement state
+        // Clear movement states
         duckState.clear();
+        turtleState.clear();
 
         // Log final state
         const connectedPlayers = getConnectedPlayers(namespace);
