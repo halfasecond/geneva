@@ -1,10 +1,9 @@
-import { Actor } from 'server/types/Actor'
 import { getSVG, getImage } from 'src/utils/getImage';
 import { getAssetPath } from 'src/utils/assetPath';
 import { Z_LAYERS } from 'src/config/zIndex';
 
 const GameActor = ({ actor, visible, asset }: {
-    actor: Actor;
+    actor: any;
     visible: boolean;
     asset: any,
 }) => actor.type === 'player' ? (
@@ -29,11 +28,11 @@ const GameActor = ({ actor, visible, asset }: {
         src={getAssetPath(getImage(actor.type, actor.id))}
         alt={`${actor.type} ${actor.id}`}
         style={{
-            width: actor.type === 'flower of goodwill' && actor.size ? `${actor.size}px` : '100px',
-            height: actor.type === 'flower of goodwill' && actor.size ? `${actor.size}px` : '100px',
+            width: actor.size ? `${actor.size}px` : '100px',
+            height: actor.size ? `${actor.size}px` : '100px',
             left: `${actor.position.x}px`,
             top: `${actor.position.y}px`,
-            transform: `scaleX(${actor.position.direction === "right" ? 1 : -1})`,
+            transform: `scaleX(${actor.position.direction === "left" ? 1 : -1})`,
             display: visible ? 'block' : 'none',
             position: 'absolute',
             willChange: 'transform',

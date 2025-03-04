@@ -1,4 +1,19 @@
-import { Actor, Position } from '../../../types/actor';
+import { Position } from '../../../types/actor';
+
+// Extend the Actor interface to include minimal movement properties
+interface Actor {
+    id: number;
+    type: string;
+    position: Position;
+    walletAddress?: string;
+    socketId?: string;
+    connected?: boolean;
+    race?: number;
+    hay?: number;
+    // Add spawn property that matches position structure
+    spawn?: Position;
+    speed?: number;
+}
 import { paths, rivers, raceElements, issuesColumns } from './set';
 import { initializeScareCityState } from './state/scarecity';
 
@@ -156,19 +171,78 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
         addTurtle(namespace, -100, y, turtles[0].tokenId);
     }
 
-    // Track duck movement state
-    const duckState = new Map<string, {
-        spawnX: number;
-        direction: 'left' | 'right';
-        speed: number;
-    }>();
-
-    // Track turtle movement state (like ducks but with larger range)
-    const turtleState = new Map<string, {
-        spawnX: number;
-        direction: 'left' | 'right';
-        speed: number;
-    }>();
+    // Define movement behavior configuration for different actor types
+    const movementConfig = {
+        'duck of doom': {
+            speedRange: { min: 0.2, max: 0.4 },
+            movementRange: 100,
+            speedMultiplier: 0.06
+        },
+        'turtle of speed': {
+            speedRange: { min: 1.0, max: 1.1 },
+            movementRange: WORLD_WIDTH + 100,
+            speedMultiplier: 1.0
+        }
+    };
+    
+    // Function to update moving actor position
+    const updateMovingActor = (actor: Actor, delta: number) => {
+        // Skip if not a moving actor type
+        if (!movementConfig[actor.type as keyof typeof movementConfig]) {
+            return;
+        }
+    
+        // Initialize movement properties if they don't exist
+        if (!actor.spawn) {
+            const config = movementConfig[actor.type as keyof typeof movementConfig];
+            // Store spawn position for boundary calculations
+            actor.spawn = {
+                x: actor.position.x,
+                y: actor.position.y,
+                direction: 'right'
+            };
+            // Set initial direction
+            actor.position.direction = 'right';
+            // Set movement speed based on actor type
+            actor.speed = config.speedRange.min + (Math.random() * (config.speedRange.max - config.speedRange.min));
+        }
+    
+        const config = movementConfig[actor.type as keyof typeof movementConfig];
+        const movementRange = config.movementRange;
+        const speed = actor.speed! * (delta * config.speedMultiplier);
+    
+        // Update position based on current direction
+        let newX = actor.position.direction === 'right'
+            ? actor.position.x + speed
+            : actor.position.x - speed;
+    
+        // Change direction at boundaries
+        if (actor.type === 'turtle of speed') {
+            // Special case for turtle which has different boundary logic
+            if (newX >= actor.spawn.x + movementRange) {
+                newX = actor.spawn.x + movementRange;
+                actor.position.direction = 'left';
+                const { y } = getRandomPosition(RESTRICTED_AREAS, WORLD_WIDTH, WORLD_HEIGHT)
+                actor.position.y = y
+            } else if (newX <= actor.spawn.x) {
+                newX = actor.spawn.x;
+                actor.position.direction = 'right';
+                const { y } = getRandomPosition(RESTRICTED_AREAS, WORLD_WIDTH, WORLD_HEIGHT)
+                actor.position.y = y
+            }
+        } else {
+            // Standard boundary logic for other actors (like ducks)
+            if (newX >= actor.spawn.x + movementRange) {
+                newX = actor.spawn.x + movementRange;
+                actor.position.direction = 'left';
+            } else if (newX <= actor.spawn.x - movementRange) {
+                newX = actor.spawn.x - movementRange;
+                actor.position.direction = 'right';
+            }
+        }
+        // Update actor position
+        actor.position.x = newX;
+    };
 
     // Start game loop
     const startGameLoop = () => {
@@ -179,73 +253,9 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
             const delta = now - lastTime;
             lastTime = now;
 
-            // Update actor positions
+            // Update actor positions using the unified function
             namespace.worldState.actors.forEach((actor: Actor) => {
-                if (actor.type === 'turtle of speed') {
-                    // Initialize state if needed
-                    if (!turtleState.has(actor.id.toString())) {
-                        turtleState.set(actor.id.toString(), {
-                            spawnX: actor.position.x,
-                            direction: 'right',
-                            speed: 1 + (Math.random() * 0.1)
-                        });
-                    }
-
-                    const state = turtleState.get(actor.id.toString())!;
-                    const MOVEMENT_RANGE = WORLD_WIDTH;
-                    const TURTLE_SPEED = state.speed * (delta);
-
-                    // Update position
-                    let newX = state.direction === 'right'
-                        ? actor.position.x + TURTLE_SPEED
-                        : actor.position.x - TURTLE_SPEED;
-
-                    // Change direction at boundaries
-                    if (newX >= state.spawnX + MOVEMENT_RANGE + 101) {
-                        newX = state.spawnX + MOVEMENT_RANGE + 100;
-                        state.direction = 'left';
-                    } else if (newX <= state.spawnX) {
-                        newX = state.spawnX;
-                        state.direction = 'right';
-                    }
-
-                    // Update actor position
-                    actor.position.x = newX;
-                    // Direction should be opposite of movement (face left when moving right)
-                    actor.position.direction = state.direction === 'right' ? 'left' : 'right';
-                } else if (actor.type === 'duck of doom') {
-                    // Initialize state if needed
-                    if (!duckState.has(actor.id.toString())) {
-                        duckState.set(actor.id.toString(), {
-                            spawnX: actor.position.x,
-                            direction: 'right',
-                            speed: 0.2 + (Math.random() * 0.2) // Slower speed range (0.2-0.4)
-                        });
-                    }
-
-                    const state = duckState.get(actor.id.toString())!;
-                    const MOVEMENT_RANGE = 100; // 100px each direction
-                    const DUCK_SPEED = state.speed * (delta * 0.06);
-
-                    // Update position
-                    let newX = state.direction === 'right'
-                        ? actor.position.x + DUCK_SPEED
-                        : actor.position.x - DUCK_SPEED;
-
-                    // Change direction at boundaries
-                    if (newX >= state.spawnX + MOVEMENT_RANGE) {
-                        newX = state.spawnX + MOVEMENT_RANGE;
-                        state.direction = 'left';
-                    } else if (newX <= state.spawnX - MOVEMENT_RANGE) {
-                        newX = state.spawnX - MOVEMENT_RANGE;
-                        state.direction = 'right';
-                    }
-
-                    // Update actor position
-                    actor.position.x = newX;
-                    // Direction should be opposite of movement (face left when moving right)
-                    actor.position.direction = state.direction === 'right' ? 'left' : 'right';
-                }
+                updateMovingActor(actor, delta);
             });
 
             // Broadcast if there are actors
@@ -439,9 +449,7 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
         // Stop the save loop
         stopSaveLoop();
         
-        // Clear movement states
-        duckState.clear();
-        turtleState.clear();
+        // No need to clear movement states as they're now part of the actors
 
         // Log final state
         const connectedPlayers = getConnectedPlayers(namespace);
