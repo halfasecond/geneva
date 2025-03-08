@@ -462,7 +462,7 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
                 <>
                     <h1>The Paddock</h1>
                     <Styled.Menu>
-                        {['farm','noun-horse-6722191','noun-news-7120948'].map((img, i) => {
+                        {['farm','noun-horse-6722191','noun-news-7120948', 'noun-stable-3890878'].map((img, i) => {
                             return (
                                 <div 
                                     key={i} 
@@ -498,7 +498,7 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
             {connected && (
                 <ChatRoom 
                     messages={messages || []}
-                    {...{ nfts, setIsOpen }}
+                    {...{ nfts, player, setIsOpen }}
                     isOpen={isOpen}
                     onSendMessage={(message) => addMessage(message)}
                 />

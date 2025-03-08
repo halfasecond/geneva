@@ -16,6 +16,11 @@ export interface Actor {
     lastSeen?: Date;      // for players only
     race?: undefined | number; // for players only
     hay: number | undefined; // for players only
+    game: {
+        level: number;
+        greaterTractor: string | undefined;
+        stable: number;
+    }
     socketId?: string;
 }
 
@@ -43,5 +48,10 @@ export const createActor = (
     hay: type === 'player' ? 0 : undefined,
     connected: type === 'player' ? true : undefined,
     lastSeen: type === 'player' ? new Date() : undefined,
-    race: undefined
+    race: undefined,
+    game: {
+        level: 0,
+        stable: 0,
+        greaterTractor: undefined,
+    }
 });

@@ -345,7 +345,11 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
                 const position = (existingPlayer?.position && existingPlayer?.race)
                     ? existingPlayer?.position
                     : { x: 100, y: 150, direction: 'right' as const } // Default spawn position for new players and players or haven't finished the race
-                const player = addPlayer(namespace, socket.id, position, tokenId, walletAddress, existingPlayer?.race, 0);
+                const game = (existingPlayer?.game)
+                    ? existingPlayer.game
+                    : { level: 0, greaterTractor: null, stable: 0 }
+
+                const player = addPlayer(namespace, socket.id, position, tokenId, walletAddress, existingPlayer?.race, 0, game);
                 setPlayerConnected(namespace, player.id);
                 socket.emit('newEthBlock', latestEthBlock)
                 // Save to GameState collection

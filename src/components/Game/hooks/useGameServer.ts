@@ -14,7 +14,7 @@ interface Message {
 
 interface UseGameServerProps {
     tokenId?: number; 
-    token: string;
+    token?: string;
     onStaticActors?: (actors: Actor[]) => void;
 }
 
