@@ -1,16 +1,11 @@
-import { useEffect } from 'react'
 import * as Styled from './Stables.style'
 import { getAssetPath } from 'src/utils/assetPath'
-import { A } from 'ollama/dist/shared/ollama.f6b57f53'
 
 const stables = ['shitty', 'less shitty', 'ok', 'nice', 'plush', 'luxury']
 const emojis = ['💩', '🏚️', '🏠', '🏡', '🌆', '🏰']
 const upgradeCost = ['...', 10, 1000, 100000, 10000000, 10000000000]
 
-const Stables: React.FC<{ player: any }> = ({ nfts, player }) => {
-    useEffect(() => {
-        console.log(player)
-    }, [])
+const Stables: React.FC<{ nfts: any, player: any }> = ({ nfts, player }) => {
     return (
         <Styled.Div>
             <p><img src={getAssetPath('/svg/hay.svg')} /> <b>$HAY: {player.hay}</b></p>
