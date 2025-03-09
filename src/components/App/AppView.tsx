@@ -42,7 +42,7 @@ const AppView: React.FC<AuthProps> = ({
             )}
             <Metamask {...{ handleSignIn, handleSignOut, token, tokenId, BASE_URL }} loggedIn={walletAddress} />
             <Styled.Main>
-                {nfts.length && token && (
+                {nfts.length && (
                     <Game 
                         tokenId={selectedHorse === - 1 ? undefined : selectedHorse}
                         {...{ nfts, token }}
