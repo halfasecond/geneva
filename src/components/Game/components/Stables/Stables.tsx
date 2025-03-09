@@ -1,15 +1,18 @@
 import * as Styled from './Stables.style'
+import { upgrades, stables, emojis, getAorAn } from 'src/server/modules/chained-horse/config/stables'
 import { getAssetPath } from 'src/utils/assetPath'
 
-const stables = ['shitty', 'less shitty', 'ok', 'nice', 'plush', 'luxury']
-const emojis = ['💩', '🏚️', '🏠', '🏡', '🌆', '🏰']
-const upgradeCost = ['...', 10, 1000, 100000, 10000000, 10000000000]
+interface Props {
+    nfts: any;
+    player: any;
+    upgradeStable: (stable: number) => void;
+}
 
-const Stables: React.FC<{ nfts: any, player: any }> = ({ nfts, player }) => {
+const Stables: React.FC<Props> = ({ nfts, player, upgradeStable }) => {
     return (
         <Styled.Div>
             <p><img src={getAssetPath('/svg/hay.svg')} /> <b>$HAY: {player.hay}</b></p>
-            <p><span>{emojis[player.game.stable]}</span>{`You have a ${stables[player.game.stable]} stable`}</p>
+            <p><span>{emojis[player.game.stable]}</span>{`You have ${getAorAn(stables[player.game.stable])} ${stables[player.game.stable]} stable`}</p>
             <h2>Upgrade your stable</h2>
             <ul>
                 {stables.map((stable, i) => {
@@ -17,21 +20,24 @@ const Stables: React.FC<{ nfts: any, player: any }> = ({ nfts, player }) => {
                         <li 
                             key={i} 
                             style={{ 
-                                opacity: i === player.game.stable ? .5 : 1,
-                                cursor: i === player.game.stable ? 'default' : 'pointer'
+                                opacity: i <= player.game.stable ? .5 : 1,
+                                cursor: i <= player.game.stable ? 'default' : 'pointer'
                             }}
                             role={'button'}
                             onClick={() => {
-                                if (player.hay < upgradeCost[i]) {
+                                if (i <= player.game.stable) return
+                                if (player.hay < upgrades[i]) {
                                     alert(`🧑🏽‍🌾 you do not have enough $HAY to buy a ${stables[i]} stable 🧑🏽‍🌾`)
+                                } else {
+                                    upgradeStable(i)
                                 }
                             }}
                         >
                             <span>{emojis[i]} {stable}</span>
                             {i === 0 ? (
-                                <span>{upgradeCost[i]}</span>
+                                <span>{upgrades[i]}</span>
                             ) : (
-                                <span>$HAY {upgradeCost[i].toLocaleString()}</span>
+                                <span>$HAY {upgrades[i].toLocaleString()}</span>
                             )}
                         </li>
                     )

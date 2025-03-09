@@ -11,16 +11,17 @@ interface Message {
     avatar?: number;
 }
 
-interface ChatRoomProps {
+interface Props {
     messages: Message[];
     nfts: any[];
     player: any;
     onSendMessage: (message: string) => void;
     isOpen: number;
     setIsOpen: any;
+    upgradeStable: any;
 }
 
-const ChatRoom: React.FC<ChatRoomProps> = ({ messages, nfts, player, onSendMessage, isOpen, setIsOpen }) => {
+const ChatRoom: React.FC<Props> = ({ messages, nfts, player, onSendMessage, isOpen, setIsOpen, upgradeStable }) => {
     const [input, setInput] = useState('');
     const [backgroundColor, setBackgroundColor] = useState('transparent');
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -156,7 +157,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ messages, nfts, player, onSendMessa
             )}
             {isOpen === 3 && (
                 <Styled.MessagesContainer>
-                    <Stables {...{ nfts, player }} />
+                    <Stables {...{ nfts, player, upgradeStable }} />
                 </Styled.MessagesContainer>
             )}
             <Styled.Panel style={{ backgroundColor }} />

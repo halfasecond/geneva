@@ -44,6 +44,7 @@ interface GameServerState {
     notifications?: any[];
     removeNotification: (id: string) => void;
     addMessage: (message: string) => void;
+    upgradeStable?: (stable: number) => void;
 }
 
 // Default state for view mode
@@ -65,8 +66,9 @@ const defaultState: GameServerState = {
     metrics: {},
     block: null,
     scanTrait: () => {},
+    removeNotification: () => {},
     addMessage: () => {},
-    removeNotification: () => {}
+    upgradeStable: () => {}
 };
 
 interface GameSettings {
@@ -263,7 +265,7 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
         }
     }, [tokenId]);
 
-    const addMessage = (message) => {
+    const addMessage = (message: string) => {
         if (socketRef.current?.connected && connected) {
             socketRef.current.emit('addMessage', message);
         }
@@ -297,6 +299,12 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
     const updatePlayerIntroStatus = useCallback((race: any) => {
         if (socketRef.current?.connected && connected) {
             socketRef.current.emit('player:complete_tutorial', race);
+        }
+    }, [connected]);
+
+    const upgradeStable = useCallback((stable: number) => {
+        if (socketRef.current?.connected && connected) {
+            socketRef.current.emit('player:upgrade_stable', stable);
         }
     }, [connected]);
 
@@ -335,6 +343,7 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
         notifications,
         removeNotification,
         messages,
-        addMessage
+        addMessage,
+        upgradeStable
     };
 }

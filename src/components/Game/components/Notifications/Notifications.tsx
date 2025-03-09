@@ -1,5 +1,6 @@
 // In src/components/Game/components/Notifications/Notifications.tsx
 import { useState, useEffect } from 'react';
+import { getAorAn, stables } from 'src/server/modules/chained-horse/config/stables';
 import * as Styled from './Notifications.style';
 
 interface NotificationData {
@@ -18,8 +19,9 @@ interface Notification {
     time? : number;
     record?: boolean;
     tokenId?: number;
-    scanResult?: string;
-    scanType?: string;
+    scanType?: string; // e.g. "background color"
+    scanResult?: string; // e.g. "martini with alchohol"
+    stable?: number; // e.g. stable_upgrade level 2
 }
 
 interface NotificationsProps {
@@ -68,7 +70,8 @@ const Notifications: React.FC<NotificationsProps> = ({
     const getIcon = (type: string, tokenId?: number) => {
         switch (type) {
             case 'stable_upgrade':
-                return '🏇';
+                return <div className={'stable'} style={{ backgroundImage: `url('/svg/stable.svg')` }} />;
+                // return <div className={'horse'} style={{ backgroundImage: `url(${nfts.find(nft => nft.tokenId === tokenId).svg}`}} />
             case 'wasnt_scared':
                 return <div className={'ghost'} style={{ backgroundImage: `url(${nfts.find(nft => nft.tokenId === 60).svg}`}} />;
             case 'spotted_by_ghost':
@@ -85,10 +88,9 @@ const Notifications: React.FC<NotificationsProps> = ({
     const renderAdditionalContent = (notification: Notification) => {
         switch (notification.type) {
             case 'stable_upgrade':
-                return notification.data ? (
+                return notification.tokenId && notification.stable ? (
                     <Styled.Content>
-                        <p>New stable level: {notification.data.level}</p>
-                        <p>Cost: {notification.data.cost} $HAY</p>
+                        <p><b>Horse #{notification.tokenId}</b> pimped their crib... and now resides in {getAorAn(stables[notification.stable])} <b>{stables[notification.stable]} stable</b></p>
                     </Styled.Content>
                 ) : null;
             case 'spotted_by_ghost':
@@ -106,12 +108,12 @@ const Notifications: React.FC<NotificationsProps> = ({
             case 'newbIslandRace':
                 return notification.tokenId && notification.time ? (
                     notification.record ? (
-                        <Styled.Content>{console.log(notification)}
+                        <Styled.Content>
                             <p><b>Horse #{notification.tokenId}</b> set a new record in the <b>{formatNotificationType(notification.type)}</b> clocking in at <b>{notification.time / 1000}s</b></p>
                         </Styled.Content>
                     ) : (
-                        <Styled.Content>{console.log(notification)}
-                            <p><b>Horse #{notification.tokenId}</b> won the <b>{formatNotificationType(notification.type)}</b> in <b>{notification.time / 1000}s</b></p>
+                        <Styled.Content>
+                            <p><b>Horse #{notification.tokenId}</b> won the <b>{formatNotificationType(notification.type)}</b> with a time of <b>{notification.time / 1000}s</b></p>
                         </Styled.Content>
                     )
                 ) : null;

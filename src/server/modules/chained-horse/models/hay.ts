@@ -5,6 +5,7 @@ interface Hay {
     address: string;
     tokenId?: number;
     activity: string;
+    level?: number; // e.g. stable_upgrade level 2
     amount: number;
 }
 
@@ -17,6 +18,7 @@ const schema = new Schema<Hay>({
     tokenId: Number,
     activity: String,
     amount: Number,
+    level: Number,
 }, {
     timestamps: true
 });

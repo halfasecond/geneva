@@ -5,7 +5,7 @@ export const Container = styled.div`
     position: fixed;
     top: 70px;
     left: 20px;
-    width: 420px;
+    width: 410px;
     max-height: 80vh;
     z-index: ${Z_LAYERS.UI};
     display: flex;
@@ -63,6 +63,7 @@ export const Title = styled.h3`
         height: 56px;
         fill: #333;
         margin-right: 18px;
+        background-size: contain;
         &.ghost {
             background-size: 350% auto;
             background-position: 105% 210%;
@@ -90,9 +91,11 @@ export const CloseButton = styled.button`
 `;
 
 export const Content = styled.div`
-    font-size: 14px;
-    color: #333;
-    b {
-        font-weight: 600;
+    > p {
+        font-size: 12px;
+        color: #333;
+        > b {
+            font-weight: 600;
+        }
     }
 `;

@@ -78,7 +78,8 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
         notifications,
         messages,
         addMessage,
-        removeNotification
+        removeNotification,
+        upgradeStable,
     } = useGameServer({
         tokenId, token, onStaticActors: (actors: Actor[]) => setStaticActors(actors)
     });
@@ -466,7 +467,7 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
                 <>
                     <h1>The Paddock</h1>
                     <Styled.Menu>
-                        {['farm','noun-horse-6722191','noun-news-7120948', 'noun-stable-3890878'].map((img, i) => {
+                        {['farm','noun-horse-6722191','noun-news-7120948', 'stable'].map((img, i) => {
                             return (
                                 <div 
                                     key={i} 
@@ -501,7 +502,7 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
             )}
             {connected && (
                 <ChatRoom 
-                    {...{ isOpen, setIsOpen, nfts, player, messages }}
+                    {...{ isOpen, setIsOpen, nfts, player, messages, upgradeStable }}
                     onSendMessage={addMessage}
                 />
             )}

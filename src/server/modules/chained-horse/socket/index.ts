@@ -1,4 +1,5 @@
 import { Position } from '../../../types/actor';
+import { upgrades } from '../config/stables'
 
 // Extend the Actor interface to include minimal movement properties
 interface Actor {
@@ -286,6 +287,7 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
                             position: player.position,
                             hay: player.hay,
                             race: player.race,
+                            game: player.game,
                             lastSeen: new Date()
                         }
                     },
@@ -391,6 +393,26 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
             if (player) {
                 completePlayerTutorial(namespace, player.id, race);
                 saveRace(Models, namespace, race, player, 'newbIslandRace');
+            }
+        });
+
+        socket.on('player:upgrade_stable', async (stable: number) => {
+            const player = getPlayerBySocket(namespace, socket.id);
+            if (player) {
+                const amount = upgrades[stable] as number
+                if (player.walletAddress && player.hay && player.hay >= amount && stable > player.game.stable) {
+                    player.hay -= amount
+                    player.game.stable = stable
+                    await new Models.Hay({
+                        blockNumber: latestEthBlock.blocknumber,
+                        amount,
+                        address: player.walletAddress.toLowerCase(),
+                        tokenId: player.id,
+                        activity: 'stable_upgrade',
+                        level: stable
+                    }).save();
+                    namespace.emit('notification', { tokenId: player.id, type: 'stable_upgrade', stable })
+                }
             }
         });
 
