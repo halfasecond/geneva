@@ -164,6 +164,9 @@ export const Menu = styled.div`
         height: 28px;
         border-radius: 6px;
         box-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
         > img {
             width: 100%;
         }

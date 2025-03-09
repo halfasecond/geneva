@@ -11,6 +11,7 @@ import ChatRoom from "./components/ChatRoom";
 import Clock from './components/Clock/Clock';
 import Hay from './components/Hay'
 import IssuesField from "./components/IssuesField";
+import Notifications from "./components/Notifications";
 import ProbablyWood from "./components/ProbablyWood";
 import Race from "./components/Race";
 import { PerformancePanel } from "./components/PerformancePanel";
@@ -74,8 +75,10 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
         block,
         scareCityState,
         scanTrait,
+        notifications,
         messages,
-        addMessage
+        addMessage,
+        removeNotification
     } = useGameServer({
         tokenId, token, onStaticActors: (actors: Actor[]) => setStaticActors(actors)
     });
@@ -343,6 +346,7 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
 
     return (
         <>
+            <Notifications {...{ nfts, notifications, removeNotification }} />
             <Styled.Container ref={containerRef}>
                 {showMetrics && <PerformancePanel metrics={metrics} visible={true} />}
                 <Styled.GameSpace style={style}>
@@ -462,7 +466,7 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
                 <>
                     <h1>The Paddock</h1>
                     <Styled.Menu>
-                        {['farm','noun-horse-6722191','noun-news-7120948'].map((img, i) => {
+                        {['farm','noun-horse-6722191','noun-news-7120948', 'noun-stable-3890878'].map((img, i) => {
                             return (
                                 <div 
                                     key={i} 
@@ -497,10 +501,8 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
             )}
             {connected && (
                 <ChatRoom 
-                    messages={messages || []}
-                    {...{ nfts, setIsOpen }}
-                    isOpen={isOpen}
-                    onSendMessage={(message) => addMessage(message)}
+                    {...{ isOpen, setIsOpen, nfts, player, messages }}
+                    onSendMessage={addMessage}
                 />
             )}
         </>

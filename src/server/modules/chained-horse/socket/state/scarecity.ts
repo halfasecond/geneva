@@ -232,7 +232,7 @@ export const initializeScareCityState = (namespace: any, nfts: any[], attributeT
             attribute.foundBy = account;
             attribute.foundById = tokenId;
             attribute.foundAtBlock = blockNumber;
-            namespace.emit('scarecity:traitFound', { account, scanType, scanResult });
+            namespace.emit('scarecity:traitFound', { tokenId, scanType, scanResult, type: 'spotted_by_ghost' });
         } 
         // Wrong attribute but not previously discounted
         else if (attribute.answer !== scanResult && !attribute.discounters.includes(account)) {
@@ -249,8 +249,7 @@ export const initializeScareCityState = (namespace: any, nfts: any[], attributeT
             if (allAttributesDiscounted) {
                 currentGame.ghosts.push(account);
                 currentGame.ghostIds.push(tokenId);
-                console.log(`🐎 Horse #${tokenId} wasn't scared... 🐎`)
-                namespace.emit('scarecity:becameGhost', { tokenId });
+                namespace.emit('scarecity:becameGhost', { tokenId, type: 'wasnt_scared' });
             }
         }
         namespace.emit('scarecity:gameState', currentGame);

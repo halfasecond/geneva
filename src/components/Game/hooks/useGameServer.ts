@@ -4,6 +4,7 @@ import { Position } from '../../../server/types';
 import { Actor, WorldState } from '../../../server/types/actor';
 import { usePerformanceMetrics } from './usePerformanceMetrics';
 import { ghostFound } from 'src/audio';
+import { Namespace } from 'socket.io';
 
 interface Message {
     message: string;
@@ -14,7 +15,7 @@ interface Message {
 
 interface UseGameServerProps {
     tokenId?: number; 
-    token: string;
+    token?: string;
     onStaticActors?: (actors: Actor[]) => void;
 }
 
@@ -40,6 +41,8 @@ interface GameServerState {
     scareCityState: any;
     scanTrait: ScanTraitFn;
     messages: Message[];
+    notifications?: any[];
+    removeNotification: (id: string) => void;
     addMessage: (message: string) => void;
 }
 
@@ -58,10 +61,12 @@ const defaultState: GameServerState = {
     },
     scareCityState: null,
     messages: [],
+    notifications: [],
     metrics: {},
     block: null,
     scanTrait: () => {},
-    addMessage: () => {}
+    addMessage: () => {},
+    removeNotification: () => {}
 };
 
 interface GameSettings {
@@ -84,6 +89,14 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
     const [block, setBlock] = useState(undefined);
     const [scareCityState, setScareCityState] = useState<any>(null);
     const [messages, setMessages] = useState<Message[]>([]);
+    const [notifications, setNotifications] = useState<any[]>([
+        // { 
+        //     id: "1741501270328-0uu5kh8",
+        //     time: 14251,
+        //     tokenId: 21,
+        //     type:"newbIslandRace"
+        // }
+    ]);
     const { metrics, trackMovementUpdate, trackServerResponse, trackLatency } = usePerformanceMetrics();
 
     const lastPingTime = useRef<number>(0);
@@ -180,11 +193,26 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
             const handleScareCityReset = (data: any) => {};
             const handleTraitFound = (data: any) => {
                 ghostFound();
+                console.log(data)
+                handleNotification(data);
             };
-            const handleBecameGhost = (data: any) => {};
+            const handleBecameGhost = (data: any) => {
+                console.log(data)
+                handleNotification(data)
+            };
 
             const handleMessages = (data: any) => {
                 setMessages(data)
+            }
+
+            const handleNotification = (data: any) => {
+                const _data = {
+                    ...data,
+                    id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
+                };
+                setNotifications((prev) => {
+                    return [...prev, _data]
+                })
             }
 
             const handleError = (error: { message: string }) => {
@@ -209,6 +237,7 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
             socket.on('scarecity:reset', handleScareCityReset);
             socket.on('scarecity:traitFound', handleTraitFound);
             socket.on('scarecity:becameGhost', handleBecameGhost);
+            socket.on('notification', (data: any) => handleNotification(data));
             socket.on('messages', handleMessages);
 
             return () => {
@@ -239,6 +268,10 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
             socketRef.current.emit('addMessage', message);
         }
     }
+
+    const removeNotification = useCallback((id: string) => {
+        setNotifications(prev => prev.filter(notification => notification.id !== id));
+    }, [])
 
     const scanTrait = useCallback((data: { 
         scanType: string,
@@ -299,6 +332,8 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
         block,
         scareCityState,
         scanTrait,
+        notifications,
+        removeNotification,
         messages,
         addMessage
     };

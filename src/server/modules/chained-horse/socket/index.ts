@@ -345,7 +345,11 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
                 const position = (existingPlayer?.position && existingPlayer?.race)
                     ? existingPlayer?.position
                     : { x: 100, y: 150, direction: 'right' as const } // Default spawn position for new players and players or haven't finished the race
-                const player = addPlayer(namespace, socket.id, position, tokenId, walletAddress, existingPlayer?.race, 0);
+                const game = (existingPlayer?.game)
+                    ? existingPlayer.game
+                    : { level: 0, greaterTractor: null, stable: 0 }
+
+                const player = addPlayer(namespace, socket.id, position, tokenId, walletAddress, existingPlayer?.race, 0, game);
                 setPlayerConnected(namespace, player.id);
                 socket.emit('newEthBlock', latestEthBlock)
                 // Save to GameState collection
@@ -386,7 +390,7 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
             const player = getPlayerBySocket(namespace, socket.id);
             if (player) {
                 completePlayerTutorial(namespace, player.id, race);
-                saveRace(Models, race, player, 'newbIslandRace');
+                saveRace(Models, namespace, race, player, 'newbIslandRace');
             }
         });
 
@@ -469,7 +473,7 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
     process.on('SIGINT', cleanup);
 };
 
-const saveRace = async (Models: Models, riders: any, player: Actor, name: string) => {
+const saveRace = async (Models: Models, namespace: any, riders: any, player: Actor, name: string) => {
     const _winner = riders.sort((a: any, b: any) => a.time - b.time)[0]
     const winner = _winner.tokenId === player.id
     const owner = player.walletAddress?.toLowerCase();
@@ -478,11 +482,9 @@ const saveRace = async (Models: Models, riders: any, player: Actor, name: string
         race: name, tokenId: player.id, winner, owner, time, riders
     }
     await new Models.Race(_race).save();
-    const record = await Models.Race.findOne({ race: name, time: { $lt: time } })
-    if (record) {
-        console.log(`🐎 horse #${_winner.tokenId} just won the ${name} in ${time}`)
-    } else {
-        console.log(`🐎 horse #${_winner.tokenId} just set a new record in the ${name} with ${time}`)
+    const isNotRecord = await Models.Race.findOne({ race: name, time: { $lt: time } })
+    if (winner) {
+        namespace.emit('notification', { tokenId: player.id, type: name, time, record: !(isNotRecord) })
     }
 }
 

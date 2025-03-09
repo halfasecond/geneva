@@ -21,12 +21,13 @@ export const addStaticActor = (namespace: Namespace, actor: Actor): void => {
 };
 
 // Player management
-export const addPlayer = (namespace: Namespace, socketId: string, position: Position, tokenId: number, walletAddress: string, race: number | undefined, hay: number): Actor => {
+export const addPlayer = (namespace: Namespace, socketId: string, position: Position, tokenId: number, walletAddress: string, race: number | undefined, hay: number, game: any): Actor => {
     const existingPlayer = namespace.worldState.actors.find(
         actor => actor.type === 'player' && actor.id === tokenId  // Compare tokenIds
     );
 
     if (existingPlayer) {
+        existingPlayer.game = game
         // Only update connection state and sprite, preserve position
         existingPlayer.connected = true;
         existingPlayer.lastSeen = new Date();
@@ -46,6 +47,7 @@ export const addPlayer = (namespace: Namespace, socketId: string, position: Posi
         race,
         walletAddress,
         hay,
+        game
     } as PlayerActor;
     
     namespace.worldState.actors.push(player);

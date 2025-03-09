@@ -9,6 +9,11 @@ interface GameState {
     lastSeen: Date;
     race?: number;
     hay: number;
+    game: {
+        level: number;
+        greaterTractor: 'left' | 'right' | undefined;
+        stable: number;
+    }
 }
 
 export default (prefix: string, db: Connection): Model<GameState> => {
@@ -23,7 +28,12 @@ export default (prefix: string, db: Connection): Model<GameState> => {
         connected: { type: Boolean, default: false },
         lastSeen: { type: Date, default: Date.now },
         race: { type: Number, default: undefined },
-        hay: { type: Number, default: 0 }
+        hay: { type: Number, default: 0 },
+        game: {
+            level: { type: Number, default: 0 },
+            greaterTractor: { type: String, default: undefined },
+            stable: { type: Number, default: 0 }
+        }
     });
 
     return db.model<GameState>(`${prefix}_GameState`, schema);

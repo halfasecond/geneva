@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import * as Styled from './ChatRoom.style';
 import { bgColors } from 'src/style/config';
-import { hostname } from 'os';
+import Stables from '../Stables';
 
 interface Message {
     message: string;
@@ -13,11 +13,14 @@ interface Message {
 
 interface ChatRoomProps {
     messages: Message[];
+    nfts: any[];
+    player: any;
     onSendMessage: (message: string) => void;
     isOpen: number;
+    setIsOpen: any;
 }
 
-const ChatRoom: React.FC<ChatRoomProps> = ({ messages, nfts, onSendMessage, isOpen, setIsOpen }) => {
+const ChatRoom: React.FC<ChatRoomProps> = ({ messages, nfts, player, onSendMessage, isOpen, setIsOpen }) => {
     const [input, setInput] = useState('');
     const [backgroundColor, setBackgroundColor] = useState('transparent');
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -72,8 +75,8 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ messages, nfts, onSendMessage, isOp
         return `${address.slice(0, 6)}...${address.slice(-4)}`;
     };
 
-    const emojis = ['🚜', '🐎', '📰']
-    const headers = ['Engagement Farm', 'Chained Horses', 'Latest News']
+    const emojis = ['🚜', '🐎', '📰', ['💩', '🏚️', '🏠', '🏡', '🌆', '🏰'][player?.game?.stable || 0]]
+    const headers = ['Engagement Farm', 'Chained Horses', 'Latest News', 'Your Stable']
 
     return (
         <Styled.Container isOpen={isOpen >= 0}>
@@ -150,6 +153,11 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ messages, nfts, onSendMessage, isOp
             )}
             {isOpen === 2 && (
                 <Styled.MessagesContainer></Styled.MessagesContainer>
+            )}
+            {isOpen === 3 && (
+                <Styled.MessagesContainer>
+                    <Stables {...{ nfts, player }} />
+                </Styled.MessagesContainer>
             )}
             <Styled.Panel style={{ backgroundColor }} />
         </Styled.Container>

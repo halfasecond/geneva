@@ -98,7 +98,7 @@ export function useRace({ initialPosition, nfts, tokenId, bonus=0 }: UseRaceOpti
         const moveInterval = setInterval(() => {
             // Move player horse
             setRacePosition(prev => {
-                const speed = 2 + Math.random() * (HORSE_SPEED + bonus) ;
+                const speed = 4 + Math.random() * (HORSE_SPEED + bonus) ;
                 const newX = prev.x + speed;
                 
                 if (newX >= 1990) {
@@ -119,7 +119,7 @@ export function useRace({ initialPosition, nfts, tokenId, bonus=0 }: UseRaceOpti
                         return horse;
                     }
 
-                    const speed = 2 + Math.random() * HORSE_SPEED;
+                    const speed = 4 + Math.random() * HORSE_SPEED;
                     const newX = horse.position.x + speed;
 
                     if (newX >= 1990) {
