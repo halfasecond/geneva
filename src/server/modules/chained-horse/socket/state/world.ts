@@ -148,6 +148,12 @@ export const addDuck = (namespace: Namespace, x: number, y: number, horseId: num
     return duck;
 };
 
+export const addChainface = (namespace: Namespace, x: number, y: number, tokenId: number): Actor => {
+    const chainface = createActor('chainface', tokenId, x, y, 'right');
+    namespace.worldState.actors.push(chainface);
+    return chainface;
+};
+
 // Turtle management
 export const addTurtle = (namespace: Namespace, x: number, y: number, horseId: number): Actor => {
     const turtle = createActor('turtle of speed', horseId, x, y, 'right');

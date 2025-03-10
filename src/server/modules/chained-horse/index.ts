@@ -91,7 +91,7 @@ const runModule = (config: ModuleConfig) => {
     const Models = _Models(prefix, db);
 
     Routes(app, name, Models);
-    Socket(io, web3, name || '', Models, Contracts, emitter);
+    Socket(io, web3, name || '', Models, Contracts, emitter, db);
 
     if (Object.keys(Contracts).length) {
         const module = { 

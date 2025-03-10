@@ -30,6 +30,7 @@ import {
     getConnectedPlayers,
     getPlayerBySocket,
     addDuck,
+    addChainface,
     addFlower,
     addTurtle,
     getRandomPosition,
@@ -82,7 +83,7 @@ const SAVE_STATE_INTERVAL = gameSettings.saveStateInterval
 
 import { authMiddleware, getWalletAddress } from '../middleware/auth';
 
-const socket = async (io: any, web3: any, name: string, Models: Models, Contracts: any, emitter: any) => {
+const socket = async (io: any, web3: any, name: string, Models: Models, Contracts: any, emitter: any, db: any) => {
     const namespace = io.of(`/${name}`);
     
     // Apply auth middleware to namespace
@@ -122,6 +123,7 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
     // Moving actors - e.g. ducks of doom / turtles of speed
     const ducks = nfts.filter((horse: Horse) => horse.utility === 'duck of doom');
     const turtles = nfts.filter((horse: Horse) => horse.utility === 'turtle of speed');
+    const chainfaces = await db.collection('cf_nfts').aggregate([{ $sample: { size: 50 } }]).toArray();
 
     // Define all restricted areas for flower placement
     const RESTRICTED_AREAS = [
@@ -158,6 +160,7 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
         }
         addDuck(namespace, x, y, horse.tokenId);
     });
+    
 
     console.log(`🌼 Creating ${flowers.length} Flowers of Goodwill`);
     flowers.forEach((horse: Horse) => {
@@ -172,6 +175,15 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
         addTurtle(namespace, -100, y, turtles[0].tokenId);
     }
 
+    console.log(`🔗 Creating ${chainfaces.length} Chainfaces`);
+    chainfaces.forEach((cf: any, index: number) => {
+        let x, y;
+        // First pond
+        x = 3250 + (index * 40);
+        y = 2100 + (Math.random() * 1000); // ±20px random height
+        addChainface(namespace, x, y, cf.face);
+    });
+
     // Define movement behavior configuration for different actor types
     const movementConfig = {
         'duck of doom': {
@@ -183,6 +195,11 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
             speedRange: { min: 1.0, max: 1.1 },
             movementRange: WORLD_WIDTH + 100,
             speedMultiplier: 1.0
+        },
+        'chainface': {
+            speedRange: { min: 0.5, max: 0.6 },
+            movementRange: 100,
+            speedMultiplier: 0.06 
         }
     };
     

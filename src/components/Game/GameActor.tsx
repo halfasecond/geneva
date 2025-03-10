@@ -24,22 +24,37 @@ const GameActor = ({ actor, visible, asset }: {
         }}
     />
 ) : (
-    <img
-        src={getAssetPath(getImage(actor.type, actor.id))}
-        alt={`${actor.type} ${actor.id}`}
-        style={{
-            width: actor.size ? `${actor.size}px` : '100px',
-            height: actor.size ? `${actor.size}px` : '100px',
-            left: `${actor.position.x}px`,
-            top: `${actor.position.y}px`,
-            transform: `scaleX(${actor.position.direction === "left" ? 1 : -1})`,
-            display: visible ? 'block' : 'none',
-            position: 'absolute',
-            willChange: 'transform',
-            transition: 'all 0.1s linear',
-            zIndex: Z_LAYERS.CHARACTERS,
-        }}
-    />
+    actor.type === 'chainface' ? (
+        <div
+            style={{
+                left: `${actor.position.x}px`,
+                top: `${actor.position.y}px`,
+                display: visible ? 'block' : 'none',
+                position: 'absolute',
+                willChange: 'transform',
+                transition: 'all 0.1s linear',
+                zIndex: Z_LAYERS.CHARACTERS,
+                fontSize: '48px',
+            }}
+        >{actor.id}</div>
+    ) : (
+        <img
+            src={getAssetPath(getImage(actor.type, actor.id))}
+            alt={`${actor.type} ${actor.id}`}
+            style={{
+                width: actor.size ? `${actor.size}px` : '100px',
+                height: actor.size ? `${actor.size}px` : '100px',
+                left: `${actor.position.x}px`,
+                top: `${actor.position.y}px`,
+                transform: `scaleX(${actor.position.direction === "left" ? 1 : -1})`,
+                display: visible ? 'block' : 'none',
+                position: 'absolute',
+                willChange: 'transform',
+                transition: 'all 0.1s linear',
+                zIndex: Z_LAYERS.CHARACTERS,
+            }}
+        />
+    )
 );
 
 export default GameActor

@@ -9,6 +9,7 @@ import { BACKGROUND_MUSIC } from '../../audio';
 import Beach from './components/Beach'
 import ChatRoom from "./components/ChatRoom";
 import Clock from './components/Clock/Clock';
+import Golf from './components/Golf';
 import Hay from './components/Hay'
 import IssuesField from "./components/IssuesField";
 import LostAndFound from "./components/LostAndFound";
@@ -454,6 +455,12 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
                             setLostAndFoundDimensions(dimensions);
                         }}
                         {...{ nfts }}
+                    />
+                    {/* Golf */}
+                    <Golf left={3250} top={2100} 
+                        onElementDimensions={(dimensions: Record<string, BuildingDimensions>) => {
+                            console.log(dimensions)
+                        }}
                     />
                 </Styled.GameSpace>
                 {position && showMinimap && (
