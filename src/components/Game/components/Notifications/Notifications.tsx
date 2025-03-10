@@ -96,7 +96,7 @@ const Notifications: React.FC<NotificationsProps> = ({
             case 'spotted_by_ghost':
                 return notification.tokenId && notification.scanType && notification.scanResult ? (
                     <Styled.Content>
-                        <p><b>Horse #{notification.tokenId}</b> was spotted by a ghost who saw their <b>{notification.scanResult}  {formatNotificationType(notification.scanType).toLowerCase()}...</b></p>
+                        <p><b>Horse #{notification.tokenId}</b> was <b>spooked by a ghost</b> who spotted their <b>{notification.scanResult} {formatNotificationType(notification.scanType).toLowerCase()}...</b></p>
                     </Styled.Content>
                 ) : null;
             case 'wasnt_scared':
@@ -109,7 +109,7 @@ const Notifications: React.FC<NotificationsProps> = ({
                 return notification.tokenId && notification.time ? (
                     notification.record ? (
                         <Styled.Content>
-                            <p><b>Horse #{notification.tokenId}</b> set a new record in the <b>{formatNotificationType(notification.type)}</b> clocking in at <b>{notification.time / 1000}s</b></p>
+                            <p><b>Horse #{notification.tokenId}</b> set a new record in the <b>{formatNotificationType(notification.type)}</b> with a time of <b>{notification.time / 1000}s</b></p>
                         </Styled.Content>
                     ) : (
                         <Styled.Content>

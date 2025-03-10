@@ -11,6 +11,7 @@ import ChatRoom from "./components/ChatRoom";
 import Clock from './components/Clock/Clock';
 import Hay from './components/Hay'
 import IssuesField from "./components/IssuesField";
+import LostAndFound from "./components/LostAndFound";
 import Notifications from "./components/Notifications";
 import ProbablyWood from "./components/ProbablyWood";
 import Race from "./components/Race";
@@ -52,6 +53,7 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
     const [showMetrics, setShowMetrics] = useState(false);
     const [buildingDimensions, setBuildingDimensions] = useState<Record<string, BuildingDimensions>>({});
     const [probablyWoodDimensions, setProbablyWoodDimensions] = useState<Record<string, BuildingDimensions>>({});
+    const [lostAndFoundDimensions, setLostAndFoundDimensions] = useState<Record<string, BuildingDimensions>>({});
     const containerRef = useRef<HTMLDivElement>(null);
     const [dimensionsReady, setDimensionsReady] = useState(false);
     const [viewportDimensions, setViewportDimensions] = useState({
@@ -444,6 +446,15 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
                             setProbablyWoodDimensions(dimensions);
                         }}
                     />
+                    {/* Lost and Found */}
+                    <LostAndFound
+                        left={7840}
+                        top={1490}
+                        onElementDimensions={(dimensions: Record<string, BuildingDimensions>) => {
+                            setLostAndFoundDimensions(dimensions);
+                        }}
+                        {...{ nfts }}
+                    />
                 </Styled.GameSpace>
                 {position && showMinimap && (
                     <Minimap
@@ -457,6 +468,7 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
                         scareCityDimensions={buildingDimensions}
                         scareCityState={scareCityState}
                         probablyWoodDimensions={probablyWoodDimensions}
+                        lostAndFoundDimensions={lostAndFoundDimensions}
                     />
                 )}
                 {connected && player && (
