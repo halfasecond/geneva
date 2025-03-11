@@ -20,6 +20,7 @@
     "@octokit/graphql-schema": "^15.25.0",
     "@octokit/rest": "^21.1.0",
     "@openzeppelin/contracts": "^5.1.0",
+    "@types/uuid": "^10.0.0",
     "axios": "^1.7.7",
     "bn.js": "^5.2.1",
     "express": "^4.21.2",
@@ -34,6 +35,7 @@
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
     "styled-components": "^6.1.13",
+    "uuid": "^11.1.0",
     "web3": "^4.13.0",
     "web3-utils": "^4.3.3",
     "web3-validator": "^2.0.6"

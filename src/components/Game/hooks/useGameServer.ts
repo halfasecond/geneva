@@ -45,6 +45,7 @@ interface GameServerState {
     removeNotification: (id: string) => void;
     addMessage: (message: string) => void;
     upgradeStable?: (stable: number) => void;
+    sendGolfCommand?: (command: string) => void; // Add function to send golf commands
 }
 
 // Default state for view mode
@@ -68,7 +69,8 @@ const defaultState: GameServerState = {
     scanTrait: () => {},
     removeNotification: () => {},
     addMessage: () => {},
-    upgradeStable: () => {}
+    upgradeStable: () => {},
+    sendGolfCommand: () => {}
 };
 
 interface GameSettings {
@@ -114,20 +116,26 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
                 socketRef.current.disconnect();
                 socketRef.current = null;
             }
+// Use environment variable with fallback for development
+const serverUrl = import.meta.env.VITE_APP_GAME_SERVER_URL;
+console.log('useGameServer: Connecting to server URL:', serverUrl);
+console.log('useGameServer: Token available:', !!token);
 
-            // Use environment variable with fallback for development
-            const serverUrl = import.meta.env.VITE_APP_GAME_SERVER_URL;
-            const socket = io(`${serverUrl}chained-horse`, {
-                reconnection: true,
-                reconnectionAttempts: maxReconnectAttempts,
-                reconnectionDelay: 1000,
-                reconnectionDelayMax: 5000,
-                timeout: 10000,
-                transports: ['websocket'],
-                auth: {
-                    token
-                }
-            });
+const socket = io(`${serverUrl}chained-horse`, {
+    reconnection: true,
+    reconnectionAttempts: maxReconnectAttempts,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
+    timeout: 10000,
+    transports: ['websocket'],
+    auth: {
+        token
+    }
+});
+
+console.log('useGameServer: Socket created:', !!socket);
+socketRef.current = socket;
+console.log('useGameServer: Socket reference set');
             socketRef.current = socket;
 
             // Track socket.io latency
@@ -143,29 +151,34 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
             });
 
             const handleConnect = () => {
-                console.log('Connected to game server');
+                console.log('useGameServer: Connected to game server');
                 reconnectAttempts.current = 0;
+                console.log('useGameServer: Emitting player:join with tokenId:', tokenId);
                 socket.emit('player:join', { tokenId });
             };
 
             const handleJoined = () => {
-                console.log('Joined game successfully');
+                console.log('useGameServer: Joined game successfully');
                 setConnected(true);
+                console.log('useGameServer: Connected state set to true');
             };
 
             const handleDisconnect = (reason: string) => {
-                console.log('Disconnected from game server:', reason);
+                console.log('useGameServer: Disconnected from game server:', reason);
                 setConnected(false);
+                console.log('useGameServer: Connected state set to false');
                 if (reason === 'io server disconnect' || reason === 'io client disconnect') {
                     setActors([]);
+                    console.log('useGameServer: Actors cleared due to disconnect');
                 }
             };
 
             const handleConnectError = (error: Error) => {
-                console.error('Connection error:', error);
+                console.error('useGameServer: Connection error:', error);
                 reconnectAttempts.current++;
+                console.log(`useGameServer: Reconnect attempt ${reconnectAttempts.current} of ${maxReconnectAttempts}`);
                 if (reconnectAttempts.current >= maxReconnectAttempts) {
-                    console.error('Max reconnection attempts reached');
+                    console.error('useGameServer: Max reconnection attempts reached');
                     socket.disconnect();
                 }
             };
@@ -218,14 +231,17 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
             }
 
             const handleError = (error: { message: string }) => {
-                console.error('Game server error:', error.message);
+                console.error('useGameServer: Game server error:', error.message);
                 if (error.message.includes('auth') || error.message.includes('own')) {
+                    console.log('useGameServer: Auth error detected, disconnecting socket');
                     socket.disconnect();
                     setConnected(false);
                     setActors([]);
+                    console.log('useGameServer: Connected state set to false and actors cleared');
                 }
             };
 
+            console.log('useGameServer: Registering socket event handlers');
             socket.on('connect', handleConnect);
             socket.on('player:joined', handleJoined);
             socket.on('disconnect', handleDisconnect);
@@ -234,13 +250,20 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
             socket.on('static:actors', handleStaticActors);
             socket.on('game:settings', handleGameSettings);
             socket.on('error', handleError);
-            socket.on('newEthBlock', (_block: any) => setBlock(_block));
+            socket.on('newEthBlock', (_block: any) => {
+                console.log('useGameServer: Received new ETH block');
+                setBlock(_block);
+            });
             socket.on('scarecity:gameState', handleScareCityState);
             socket.on('scarecity:reset', handleScareCityReset);
             socket.on('scarecity:traitFound', handleTraitFound);
             socket.on('scarecity:becameGhost', handleBecameGhost);
-            socket.on('notification', (data: any) => handleNotification(data));
+            socket.on('notification', (data: any) => {
+                console.log('useGameServer: Received notification', data);
+                handleNotification(data);
+            });
             socket.on('messages', handleMessages);
+            console.log('useGameServer: All socket event handlers registered');
 
             return () => {
                 clearInterval(pingInterval);
@@ -308,6 +331,19 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
         }
     }, [connected]);
 
+    const sendGolfCommand = useCallback((command: string) => {
+        console.log('useGameServer: Attempting to send golf command:', command);
+        console.log('Socket connected status:', connected);
+        console.log('Socket reference exists:', !!socketRef.current);
+        
+        if (socketRef.current?.connected && connected) {
+            console.log('useGameServer: Socket is connected, sending command to server');
+            socketRef.current.emit('golf:command', { command });
+        } else {
+            console.warn('useGameServer: Socket is not connected or not available');
+        }
+    }, [connected]);
+
     if (!tokenId) {
         return {
             ...defaultState,
@@ -344,6 +380,7 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
         removeNotification,
         messages,
         addMessage,
-        upgradeStable
+        upgradeStable,
+        sendGolfCommand
     };
 }

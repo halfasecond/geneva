@@ -14,9 +14,12 @@ interface Actor {
     // Add spawn property that matches position structure
     spawn?: Position;
     speed?: number;
+    // Add y-direction for 2D movement
+    yDirection?: 'up' | 'down';
 }
 import { paths, rivers, raceElements, issuesColumns } from './set';
 import { initializeScareCityState } from './state/scarecity';
+import { initializeGolfGame } from './golf';
 
 const WORLD_WIDTH = 8000;
 const WORLD_HEIGHT = 5000;
@@ -98,7 +101,7 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
         for (const actor of actors) {
             const bestTime = await Models.Race.findOne({ owner: actor.walletAddress.toLowerCase() }).sort({ time: 1 });
             actor.race = bestTime?.time;
-            addPlayer(namespace, '', actor.position as Position, actor.tokenId, actor.walletAddress.toLowerCase(), actor.race, actor.hay)
+            addPlayer(namespace, '', actor.position as Position, actor.tokenId, actor.walletAddress.toLowerCase(), actor.race, actor.hay, actor.game || { level: 0, greaterTractor: null, stable: 0 })
         }
         return actors
     }
@@ -116,6 +119,9 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
 
     // Initialize ScareCityGame state with utilities and initial block
     const scareCityState = initializeScareCityState(namespace, nfts, attributeTypes, latestEthBlock.blocknumber, Models);
+    
+    // Initialize Golf game
+    initializeGolfGame(io, namespace, db);
 
     // Static Actors - e.g. flowers of goodwill
     const flowers = nfts.filter((horse: Horse) => horse.utility === 'flower of goodwill');
@@ -197,9 +203,9 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
             speedMultiplier: 1.0
         },
         'chainface': {
-            speedRange: { min: 0.5, max: 0.6 },
-            movementRange: 100,
-            speedMultiplier: 0.06 
+            speedRange: { min: 1.0, max: 2.0 },
+            movementRange: 500,
+            speedMultiplier: 0.2
         }
     };
     
@@ -229,27 +235,23 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
         const movementRange = config.movementRange;
         const speed = actor.speed! * (delta * config.speedMultiplier);
     
-        // Update position based on current direction
-        let newX = actor.position.direction === 'right'
-            ? actor.position.x + speed
-            : actor.position.x - speed;
-    
-        // Change direction at boundaries
-        if (actor.type === 'turtle of speed') {
-            // Special case for turtle which has different boundary logic
-            if (newX >= actor.spawn.x + movementRange) {
-                newX = actor.spawn.x + movementRange;
-                actor.position.direction = 'left';
-                const { y } = getRandomPosition(RESTRICTED_AREAS, WORLD_WIDTH, WORLD_HEIGHT)
-                actor.position.y = y
-            } else if (newX <= actor.spawn.x) {
-                newX = actor.spawn.x;
-                actor.position.direction = 'right';
-                const { y } = getRandomPosition(RESTRICTED_AREAS, WORLD_WIDTH, WORLD_HEIGHT)
-                actor.position.y = y
+        // For chainfaces, use a more dynamic movement pattern
+        if (actor.type === 'chainface') {
+            // If we don't have a y-direction yet, initialize it
+            if (!actor.yDirection) {
+                actor.yDirection = Math.random() > 0.5 ? 'up' : 'down';
             }
-        } else {
-            // Standard boundary logic for other actors (like ducks)
+            
+            // Update position based on current direction (x and y)
+            let newX = actor.position.direction === 'right'
+                ? actor.position.x + speed
+                : actor.position.x - speed;
+                
+            let newY = actor.yDirection === 'down'
+                ? actor.position.y + speed * 0.5 // Move slower on y-axis
+                : actor.position.y - speed * 0.5;
+            
+            // Change x-direction at boundaries
             if (newX >= actor.spawn.x + movementRange) {
                 newX = actor.spawn.x + movementRange;
                 actor.position.direction = 'left';
@@ -257,9 +259,63 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
                 newX = actor.spawn.x - movementRange;
                 actor.position.direction = 'right';
             }
+            
+            // Change y-direction at boundaries (use a smaller range for y)
+            const yRange = movementRange * 0.5;
+            if (newY >= actor.spawn.y + yRange) {
+                newY = actor.spawn.y + yRange;
+                actor.yDirection = 'up';
+            } else if (newY <= actor.spawn.y - yRange) {
+                newY = actor.spawn.y - yRange;
+                actor.yDirection = 'down';
+            }
+            
+            // Add some randomness to make movement less predictable
+            if (Math.random() < 0.01) { // 1% chance to change direction randomly
+                actor.position.direction = actor.position.direction === 'right' ? 'left' : 'right';
+            }
+            
+            if (Math.random() < 0.01) { // 1% chance to change y-direction randomly
+                actor.yDirection = actor.yDirection === 'down' ? 'up' : 'down';
+            }
+            
+            // Update actor position
+            actor.position.x = newX;
+            actor.position.y = newY;
+        } else {
+            // Standard movement for other actors
+            // Update position based on current direction
+            let newX = actor.position.direction === 'right'
+                ? actor.position.x + speed
+                : actor.position.x - speed;
+        
+            // Change direction at boundaries
+            if (actor.type === 'turtle of speed') {
+                // Special case for turtle which has different boundary logic
+                if (newX >= actor.spawn.x + movementRange) {
+                    newX = actor.spawn.x + movementRange;
+                    actor.position.direction = 'left';
+                    const { y } = getRandomPosition(RESTRICTED_AREAS, WORLD_WIDTH, WORLD_HEIGHT)
+                    actor.position.y = y
+                } else if (newX <= actor.spawn.x) {
+                    newX = actor.spawn.x;
+                    actor.position.direction = 'right';
+                    const { y } = getRandomPosition(RESTRICTED_AREAS, WORLD_WIDTH, WORLD_HEIGHT)
+                    actor.position.y = y
+                }
+            } else {
+                // Standard boundary logic for other actors (like ducks)
+                if (newX >= actor.spawn.x + movementRange) {
+                    newX = actor.spawn.x + movementRange;
+                    actor.position.direction = 'left';
+                } else if (newX <= actor.spawn.x - movementRange) {
+                    newX = actor.spawn.x - movementRange;
+                    actor.position.direction = 'right';
+                }
+            }
+            // Update actor position
+            actor.position.x = newX;
         }
-        // Update actor position
-        actor.position.x = newX;
     };
 
     // Start game loop
@@ -430,6 +486,371 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
                     }).save();
                     namespace.emit('notification', { tokenId: player.id, type: 'stable_upgrade', stable })
                 }
+            }
+        });
+
+        // Handle golf commands
+        socket.on('golf:command', ({ command }: { command: string }) => {
+            console.log(`SERVER: Golf command received: ${command}`);
+            console.log(`SERVER: Socket ID: ${socket.id}`);
+            
+            // Get all chainfaces
+            const chainfaces = namespace.worldState.actors.filter((actor: Actor) => actor.type === 'chainface');
+            console.log(`SERVER: Found ${chainfaces.length} chainfaces to modify`);
+            
+            // Apply different effects based on the command
+            console.log(`SERVER: Processing golf command: ${command}`);
+            console.log(`SERVER: Movement config before command:`, JSON.stringify(movementConfig['chainface']));
+            
+            switch(command) {
+                case 'quantum-driver':
+                    console.log(`SERVER: Executing quantum-driver command`);
+                    // Create quantum superposition effect - split movement patterns
+                    chainfaces.forEach((face: Actor, index: number) => {
+                        console.log(`SERVER: Modifying chainface ${index} with ID ${face.id}`);
+                        console.log(`SERVER: Original position:`, JSON.stringify(face.position));
+                        console.log(`SERVER: Original speed:`, face.speed);
+                        
+                        // Dramatically increase speed
+                        if (face.speed) face.speed *= 5;
+                        
+                        // Randomize both x and y directions
+                        face.position.direction = Math.random() > 0.5 ? 'left' : 'right';
+                        face.yDirection = Math.random() > 0.5 ? 'up' : 'down';
+                        
+                        // Add large position jumps to simulate quantum teleportation
+                        face.position.x += (Math.random() * 400 - 200);
+                        face.position.y += (Math.random() * 400 - 200);
+                        
+                        // Modify the movement config for this type to allow more dramatic movement
+                        movementConfig['chainface'].movementRange = 1000;
+                        
+                        console.log(`SERVER: New position:`, JSON.stringify(face.position));
+                        console.log(`SERVER: New speed:`, face.speed);
+                    });
+                    
+                    console.log(`SERVER: Movement config after command:`, JSON.stringify(movementConfig['chainface']));
+                    
+                    // Broadcast immediately for instant feedback
+                    namespace.emit('world:state', getWorldState(namespace));
+                    
+                    // Reset after 5 seconds
+                    console.log(`SERVER: Setting timeout for quantum-driver reset in 5 seconds`);
+                    setTimeout(() => {
+                        console.log(`SERVER: Executing quantum-driver reset`);
+                        console.log(`SERVER: Chainfaces count for reset:`, chainfaces.length);
+                        
+                        chainfaces.forEach((face: Actor, index: number) => {
+                            console.log(`SERVER: Resetting chainface ${index} with ID ${face.id}`);
+                            console.log(`SERVER: Speed before reset:`, face.speed);
+                            
+                            if (face.speed) face.speed /= 5;
+                            
+                            console.log(`SERVER: Speed after reset:`, face.speed);
+                        });
+                        
+                        console.log(`SERVER: Resetting movement range from ${movementConfig['chainface'].movementRange} to 500`);
+                        movementConfig['chainface'].movementRange = 500;
+                        
+                        // Broadcast updated state
+                        console.log(`SERVER: Broadcasting updated state after quantum-driver reset`);
+                        namespace.emit('world:state', getWorldState(namespace));
+                    }, 5000);
+                    break;
+                    
+                case 'non-euclidean-wedge':
+                    console.log(`SERVER: Executing non-euclidean-wedge command`);
+                    // Create a wormhole effect - teleport to new positions in a pattern
+                    const centerX = 3250 + 1000;
+                    const centerY = 2100 + 550;
+                    
+                    console.log(`SERVER: Center point for spiral: (${centerX}, ${centerY})`);
+                    console.log(`SERVER: Original speedMultiplier:`, movementConfig['chainface'].speedMultiplier);
+                    
+                    // Modify the movement config to allow more dramatic movement
+                    movementConfig['chainface'].speedMultiplier = 0.5; // Increase speed multiplier
+                    console.log(`SERVER: New speedMultiplier:`, movementConfig['chainface'].speedMultiplier);
+                    
+                    console.log(`SERVER: Processing ${chainfaces.length} chainfaces for non-euclidean-wedge`);
+                    chainfaces.forEach((face: Actor, index: number) => {
+                        console.log(`SERVER: Processing chainface ${index} with ID ${face.id}`);
+                        console.log(`SERVER: Original position:`, JSON.stringify(face.position));
+                        console.log(`SERVER: Original speed:`, face.speed);
+                        
+                        // Create a spiral pattern
+                        const angle = (index / chainfaces.length) * Math.PI * 6; // Multiple rotations
+                        const radius = 50 + (index / chainfaces.length) * 800; // Larger radius
+                        
+                        console.log(`SERVER: Calculated angle: ${angle}, radius: ${radius}`);
+                        
+                        // Teleport to new position
+                        face.position.x = centerX + Math.cos(angle) * radius;
+                        face.position.y = centerY + Math.sin(angle) * radius;
+                        
+                        console.log(`SERVER: New position: (${face.position.x}, ${face.position.y})`);
+                        
+                        // Update spawn point to allow movement around new position
+                        if (face.spawn) {
+                            console.log(`SERVER: Updating spawn point from (${face.spawn.x}, ${face.spawn.y})`);
+                            face.spawn.x = face.position.x;
+                            face.spawn.y = face.position.y;
+                            console.log(`SERVER: New spawn point: (${face.spawn.x}, ${face.spawn.y})`);
+                        } else {
+                            console.log(`SERVER: No spawn point to update`);
+                        }
+                        
+                        // Increase speed for more dramatic effect
+                        if (face.speed) {
+                            console.log(`SERVER: Doubling speed from ${face.speed}`);
+                            face.speed *= 2;
+                            console.log(`SERVER: New speed: ${face.speed}`);
+                        }
+                    });
+                    
+                    // Broadcast immediately for instant feedback
+                    namespace.emit('world:state', getWorldState(namespace));
+                    
+                    // Reset after 8 seconds
+                    setTimeout(() => {
+                        chainfaces.forEach((face: Actor) => {
+                            if (face.speed) face.speed /= 2;
+                        });
+                        movementConfig['chainface'].speedMultiplier = 0.2;
+                        
+                        // Broadcast updated state
+                        namespace.emit('world:state', getWorldState(namespace));
+                    }, 8000);
+                    break;
+                    
+                case 'tesseract-putter':
+                    // 4D movement effect - create complex orbital patterns
+                    
+                    // Modify the movement config to create more interesting patterns
+                    const originalSpeedRange = { ...movementConfig['chainface'].speedRange };
+                    movementConfig['chainface'].speedRange = { min: 2.0, max: 4.0 };
+                    
+                    chainfaces.forEach((face: Actor, index: number) => {
+                        // Reverse directions
+                        face.position.direction = face.position.direction === 'left' ? 'right' : 'left';
+                        face.yDirection = face.yDirection === 'up' ? 'down' : 'up';
+                        
+                        // Dramatically increase speed
+                        if (face.speed) face.speed *= 3;
+                        
+                        // Apply a "folding" effect by moving chainfaces closer together
+                        const centerX = 3250 + 1000;
+                        const centerY = 2100 + 550;
+                        const distX = face.position.x - centerX;
+                        const distY = face.position.y - centerY;
+                        
+                        face.position.x = centerX + distX * 0.7;
+                        face.position.y = centerY + distY * 0.7;
+                    });
+                    
+                    // Broadcast immediately for instant feedback
+                    namespace.emit('world:state', getWorldState(namespace));
+                    
+                    // Reset after 5 seconds
+                    setTimeout(() => {
+                        movementConfig['chainface'].speedRange = originalSpeedRange;
+                        chainfaces.forEach((face: Actor) => {
+                            if (face.speed) face.speed /= 3;
+                        });
+                        
+                        // Broadcast updated state
+                        namespace.emit('world:state', getWorldState(namespace));
+                    }, 5000);
+                    break;
+                    
+                case 'fold-reality':
+                    // Create a spherical formation with dramatic movement
+                    const foldCenterX = 3250 + 1000;
+                    const foldCenterY = 2100 + 550;
+                    
+                    // Store original positions to restore later
+                    const originalPositions = chainfaces.map((face: Actor) => ({
+                        id: face.id,
+                        x: face.position.x,
+                        y: face.position.y,
+                        spawnX: face.spawn?.x,
+                        spawnY: face.spawn?.y
+                    }));
+                    
+                    chainfaces.forEach((face: Actor, index: number) => {
+                        // Create a spherical distribution using spherical coordinates
+                        const phi = Math.acos(-1 + (2 * index) / chainfaces.length);
+                        const theta = Math.sqrt(chainfaces.length * Math.PI) * phi;
+                        
+                        const radius = 400; // Larger radius
+                        face.position.x = foldCenterX + radius * Math.sin(phi) * Math.cos(theta);
+                        face.position.y = foldCenterY + radius * Math.sin(phi) * Math.sin(theta);
+                        
+                        // Update spawn point to allow movement around new position
+                        if (face.spawn) {
+                            face.spawn.x = face.position.x;
+                            face.spawn.y = face.position.y;
+                        }
+                        
+                        // Set directions toward the center for a collapsing effect
+                        face.position.direction = face.position.x > foldCenterX ? 'left' : 'right';
+                        face.yDirection = face.position.y > foldCenterY ? 'up' : 'down';
+                        
+                        // Increase speed for more dramatic movement
+                        if (face.speed) face.speed *= 2;
+                    });
+                    
+                    // Broadcast immediately for instant feedback
+                    namespace.emit('world:state', getWorldState(namespace));
+                    
+                    // Reset after 8 seconds
+                    setTimeout(() => {
+                        chainfaces.forEach((face: Actor) => {
+                            const original = originalPositions.find((o: any) => o.id === face.id);
+                            if (original && face.spawn) {
+                                // Restore original spawn point
+                                face.spawn.x = original.spawnX || face.spawn.x;
+                                face.spawn.y = original.spawnY || face.spawn.y;
+                                
+                                // Reduce speed
+                                if (face.speed) face.speed /= 2;
+                            }
+                        });
+                        
+                        // Broadcast updated state
+                        namespace.emit('world:state', getWorldState(namespace));
+                    }, 8000);
+                    break;
+                    
+                case 'dimensional-shift':
+                    // Create chaotic movement patterns with dramatic speed changes
+                    
+                    // Store original movement config
+                    const originalConfig = { ...movementConfig['chainface'] };
+                    
+                    // Modify movement config dramatically
+                    movementConfig['chainface'] = {
+                        speedRange: { min: 3.0, max: 6.0 },
+                        movementRange: 1500,
+                        speedMultiplier: 0.5
+                    };
+                    
+                    chainfaces.forEach((face: Actor) => {
+                        // Randomize speeds dramatically
+                        if (face.speed) face.speed = 2 + Math.random() * 8;
+                        
+                        // Randomize directions
+                        face.position.direction = Math.random() > 0.5 ? 'left' : 'right';
+                        face.yDirection = Math.random() > 0.5 ? 'up' : 'down';
+                        
+                        // Add large random movement
+                        face.position.x += (Math.random() * 500 - 250);
+                        face.position.y += (Math.random() * 500 - 250);
+                    });
+                    
+                    // Broadcast immediately for instant feedback
+                    namespace.emit('world:state', getWorldState(namespace));
+                    
+                    // Reset after 10 seconds
+                    setTimeout(() => {
+                        movementConfig['chainface'] = originalConfig;
+                        chainfaces.forEach((face: Actor) => {
+                            if (face.speed) face.speed = originalConfig.speedRange.min +
+                                Math.random() * (originalConfig.speedRange.max - originalConfig.speedRange.min);
+                        });
+                        
+                        // Broadcast updated state
+                        namespace.emit('world:state', getWorldState(namespace));
+                    }, 10000);
+                    break;
+                    
+                case 'time-hazard':
+                    // Create time loop effect with more dramatic visuals
+                    
+                    // Record current positions for all chainfaces
+                    const timePositions = chainfaces.map((face: Actor) => ({
+                        id: face.id,
+                        x: face.position.x,
+                        y: face.position.y,
+                        direction: face.position.direction,
+                        yDirection: face.yDirection,
+                        speed: face.speed
+                    }));
+                    
+                    // Apply different effects to different chainfaces
+                    chainfaces.forEach((face: Actor, index: number) => {
+                        if (index % 3 === 0) { // Freeze every third face
+                            face.speed = 0;
+                            
+                            // Add visual glitch - slight position shift
+                            face.position.x += (Math.random() * 20 - 10);
+                            face.position.y += (Math.random() * 20 - 10);
+                        } else if (index % 3 === 1) { // Speed up every third+1 face
+                            if (face.speed) face.speed *= 4;
+                            
+                            // Reverse direction for more chaos
+                            face.position.direction = face.position.direction === 'left' ? 'right' : 'left';
+                            face.yDirection = face.yDirection === 'up' ? 'down' : 'up';
+                        } else { // Teleport the rest randomly
+                            // Random teleport within range
+                            face.position.x += (Math.random() * 300 - 150);
+                            face.position.y += (Math.random() * 300 - 150);
+                        }
+                    });
+                    
+                    // Broadcast immediately for instant feedback
+                    namespace.emit('world:state', getWorldState(namespace));
+                    
+                    // Create time loop effect - return faces to original positions periodically
+                    let loopCount = 0;
+                    const timeLoopInterval = setInterval(() => {
+                        loopCount++;
+                        
+                        chainfaces.forEach((face: Actor, index: number) => {
+                            // Different effects based on face index and loop count
+                            if (index % 3 === 1 && loopCount % 2 === 0) {
+                                // Return to original position every other loop
+                                const original = timePositions.find((o: any) => o.id === face.id);
+                                if (original) {
+                                    face.position.x = original.x;
+                                    face.position.y = original.y;
+                                    face.position.direction = original.direction;
+                                    face.yDirection = original.yDirection;
+                                }
+                            } else if (index % 3 === 2) {
+                                // Random teleportation for the rest
+                                face.position.x += (Math.random() * 300 - 150);
+                                face.position.y += (Math.random() * 300 - 150);
+                            }
+                        });
+                        
+                        // Broadcast updated state
+                        namespace.emit('world:state', getWorldState(namespace));
+                        
+                        // Stop after 5 loops
+                        if (loopCount >= 5) {
+                            clearInterval(timeLoopInterval);
+                            
+                            // Restore original speeds and positions
+                            chainfaces.forEach((face: Actor) => {
+                                const original = timePositions.find((o: any) => o.id === face.id);
+                                if (original) {
+                                    face.speed = original.speed;
+                                    
+                                    // Gradually return to original position
+                                    setTimeout(() => {
+                                        if (face) {
+                                            face.position.x = original.x;
+                                            face.position.y = original.y;
+                                        }
+                                        
+                                        // Broadcast final state
+                                        namespace.emit('world:state', getWorldState(namespace));
+                                    }, 1000);
+                                }
+                            });
+                        }
+                    }, 1000); // Loop every second
+                    break;
             }
         });
 
