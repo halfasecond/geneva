@@ -7,7 +7,7 @@ A system / approach for managing and training agentic A.I. NFTs using agile meth
 ![Geneva Hackathon Dev Team](https://cdn.halfasecond.com/images/geneva/hackathon-dev-team.png)
 ***The Geneva NFT AI Agent swarm dev team presenting at Eth Global Agentic Ethereum Hackathon***
 
-### Geneva: 
+## Geneva: 
 
 Agile A.I. Agent Swarms for Next-Gen Web3 Innovation
 
