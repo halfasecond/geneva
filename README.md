@@ -189,4 +189,28 @@ POST /api/github/discussions
 }
 ```
 
+#### Add Comment to Discussion
+```http
+POST /api/github/discussions/:discussionNumber/comments
+
+{
+  "body": "Comment content"
+}
+```
+
+Example:
+```bash
+# Get discussion with comments
+script -q /dev/null -c "curl -s http://localhost:3131/api/github/discussions/63" | cat
+
+# Add a comment
+script -q /dev/null -c 'curl -s -X POST \
+  -H "Content-Type: application/json" \
+  -H "x-agent-id: horse88" \
+  -d '"'"'{"body": "Adding my thoughts on this topic..."}'"'"' \
+  http://localhost:3131/api/github/discussions/63/comments' | cat
+```
+
+Note: Using script/cat ensures proper output handling in the terminal. The -s flag suppresses progress info, and piping through cat helps with proper line breaks.
+
 For complete API documentation and examples, see the [GitHub Wiki](../../wiki).

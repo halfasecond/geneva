@@ -24,6 +24,7 @@ demo-server/
 # OS
 .DS_Store
 Thumbs.db
+db
 
 # Logs
 *.log

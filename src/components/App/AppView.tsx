@@ -1,36 +1,56 @@
+import { useState, useEffect } from 'react'
 import * as Styled from '../../style'
-import { useEffect, useState } from 'react'
-import { BrowserRouter as Router, useLocation } from 'react-router-dom'
-import Metamask from '../Metamask'
+import Metamask from 'components/Metamask'
 import { AuthProps } from '../../types/auth'
-import { Paddock } from 'components/Paddock'
-import IntroModal from 'components/IntroModal'
+import IntroModal from 'components/Game/components/IntroModal'
+import Game from 'components/Game'
 
-const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn: walletAddress, BASE_URL }) => {
-    const [showIntro, setShowIntro] = useState(true);
+const AppView: React.FC<AuthProps> = ({ 
+    handleSignIn,
+    handleSignOut,
+    loggedIn: walletAddress,
+    token,
+    tokenId,
+    BASE_URL
+}) => {
+    const [nfts, setNFTs] = useState<any[]>([]);
+    const [selectedHorse, setSelectedHorse] = useState<number | undefined>(undefined);
 
-    const handleStart = () => {
-        setShowIntro(false);
-    };
-    return (
-        <Router basename={BASE_URL}>
-            <ScrollToTop />
-            <Metamask {...{ handleSignIn, handleSignOut, BASE_URL }} loggedIn={walletAddress} />
-            {showIntro && <IntroModal onStart={handleStart} />}
-            <Styled.Main>
-                <h1>The Paddock</h1>
-                <Paddock horseId="21" modalOpen={showIntro} />
-            </Styled.Main>
-        </Router>
-    )
-}
-
-const ScrollToTop: React.FC = () => {
-    const { pathname } = useLocation()
+    // Load and analyze NFT data
     useEffect(() => {
-        window.scrollTo({ top: 0, behavior: 'smooth' })
-    }, [pathname])
-    return null
+        const loadNFTs = async () => {
+            try {
+                const response = await fetch('/chained-horse/nfts');
+                const nfts = await response.json();
+                setNFTs(nfts)
+            } catch (error) {
+                console.error('Error loading NFTs:', error);
+                setNFTs([]);
+            }
+        };
+        loadNFTs();
+    }, [])
+
+    return (
+        <>
+            {(!selectedHorse || selectedHorse < 0 || !walletAddress) &&  (
+                <IntroModal
+                    onSelectHorse={id => setSelectedHorse(id)}
+                    {...{ handleSignIn, handleSignOut, BASE_URL, loggedIn: walletAddress, nfts }}
+                    currentHorse={tokenId}
+                />
+            )}
+            <Metamask {...{ handleSignIn, handleSignOut, token, tokenId, BASE_URL }} loggedIn={walletAddress} />
+            <Styled.Main>
+                {nfts.length && (
+                    <Game 
+                        tokenId={selectedHorse === - 1 ? undefined : selectedHorse}
+                        {...{ nfts, token }}
+                    />
+                )}
+            </Styled.Main>
+        </>
+    )
 }
 
 export default AppView

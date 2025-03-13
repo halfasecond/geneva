@@ -45,3 +45,16 @@ export const grey = {
 	900: '#2a2825',
 	1000: '#000000'
 }
+
+export const bgColors = {
+    grape: '#ffdfff',
+    fog: '#dadee9',
+    seafoam: '#aaffcf',
+    starlight: '#dfefff',
+    ice: '#bbe4ea',
+    'ghost green': '#efefcf',
+    chestnut: '#ddadaf',
+    sand: '#ffefcf',
+    banana: '#ffefbf',
+    curd: '#fff9d0'
+}
