@@ -2,12 +2,16 @@
 node_modules/
 .yarn/
 .pnp.*
+mongo
 
 # Build
 dist/
 build/
 dump/
 demo-server/
+/purr
+/paddock
+/geneva
 
 # Environment
 .env

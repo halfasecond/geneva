@@ -5,6 +5,7 @@ export interface AuthProps {
     token: string | undefined;
     tokenId: number | undefined;
     BASE_URL: string;
+    app?: string;
 }
 
 export interface WalletDetails {

@@ -1,11 +1,7 @@
-import { useCallback, useState, useEffect, lazy, Suspense } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import Web3 from 'web3';
 import axios from 'axios';
 import Cookies from 'js-cookie';
-
-// Import app-specific views
-import PurrAppView from './PurrAppView';
-import PaddockAppView from './PaddockAppView';
 
 interface AuthResponse {
     token: string;
@@ -18,26 +14,26 @@ interface CheckTokenResponse {
     tokenId?: number;
 }
 
-const { VITE_APP_ENDPOINT, VITE_APP_CHAIN_ID, VITE_APP_TOKEN_NAME } = import.meta.env;
-const BASE_URL = import.meta.env.BASE_URL ? import.meta.env.BASE_URL : '/'
+interface UseAuthOptions {
+    appName: string;
+}
 
-// Get the app name from either window.__APP_NAME__ (set in entry point) or VITE_APP env var
-const app = window.__APP_NAME__ || import.meta.env.VITE_APP || 'purr';
-console.log('Running app:', app);
+export function useAuth({ appName }: UseAuthOptions) {
+    const { VITE_APP_ENDPOINT, VITE_APP_CHAIN_ID, VITE_APP_TOKEN_NAME } = import.meta.env;
+    const BASE_URL = import.meta.env.BASE_URL ? import.meta.env.BASE_URL : '/';
 
-function App({ children }: { children: React.ReactNode }) {
     const [loggedIn, setLoggedIn] = useState<string | undefined>(undefined);
     const [token, setToken] = useState<string | undefined>(Cookies.get(VITE_APP_TOKEN_NAME) || undefined);
-    const [tokenId, setTokenId] = useState<number | undefined>(undefined)
+    const [tokenId, setTokenId] = useState<number | undefined>(undefined);
     const [loading, setLoading] = useState(true);
 
     const handleLogout = useCallback(() => {
         Cookies.remove(VITE_APP_TOKEN_NAME);
         setLoggedIn(undefined);
         setToken(undefined);
-        setTokenId(undefined)
+        setTokenId(undefined);
         setLoading(false);
-    }, []);
+    }, [VITE_APP_TOKEN_NAME]);
 
     useEffect(() => {
         const handleAccountsChanged = (accounts: string[]) => {
@@ -66,7 +62,7 @@ function App({ children }: { children: React.ReactNode }) {
         }
     }, [token, loggedIn, handleLogout]);
 
-    const handleSignIn = async () => {
+    const handleSignIn = useCallback(async () => {
         if (window.ethereum) {
             try {
                 const chainId = await (window.ethereum as any).request({ method: 'eth_chainId' });
@@ -76,10 +72,14 @@ function App({ children }: { children: React.ReactNode }) {
                     const message = 'Sign this message to authenticate';
                     const accounts = await web3.eth.getAccounts();
                     const signature = await web3.eth.personal.sign(message, accounts[0], '');
-                    const { data } = await axios.post<AuthResponse>(`${VITE_APP_ENDPOINT + app}/auth`, { address: accounts[0], signature, message });
+                    const { data } = await axios.post<AuthResponse>(`${VITE_APP_ENDPOINT}${appName}/auth`, { 
+                        address: accounts[0], 
+                        signature, 
+                        message 
+                    });
                     Cookies.set(VITE_APP_TOKEN_NAME, data.token);
-                    setLoggedIn(accounts[0])
-                    setToken(data.token)
+                    setLoggedIn(accounts[0]);
+                    setToken(data.token);
                 } else {
                     alert('You are on the wrong chain!');
                 }
@@ -87,28 +87,31 @@ function App({ children }: { children: React.ReactNode }) {
                 console.error('Error during sign in:', error);
             }
         }
-    }
+    }, [VITE_APP_CHAIN_ID, VITE_APP_ENDPOINT, VITE_APP_TOKEN_NAME, appName]);
 
-    const handleSignOut = async () => {
+    const handleSignOut = useCallback(async () => {
         if (token) {
             try {
-                await axios.post(`${VITE_APP_ENDPOINT + app}/auth/logout`, { token });
+                await axios.post(`${VITE_APP_ENDPOINT}${appName}/auth/logout`, { token });
             } catch (error) {
                 console.error('Logout error:', error);
             } finally {
                 handleLogout();
             }
         }
-    };
+    }, [VITE_APP_ENDPOINT, appName, handleLogout, token]);
 
     const checkToken = useCallback(async () => {
         try {
             const chainId = await (window.ethereum as any).request({ method: 'eth_chainId' });
             if (chainId === VITE_APP_CHAIN_ID) {
-                const { data } = await axios.post<CheckTokenResponse>(`${VITE_APP_ENDPOINT + app}/auth/check-token`, { token });
+                const { data } = await axios.post<CheckTokenResponse>(
+                    `${VITE_APP_ENDPOINT}${appName}/auth/check-token`, 
+                    { token }
+                );
                 if (data.valid) {
                     setLoggedIn(data.address.toLowerCase());
-                    setTokenId(data.tokenId)
+                    setTokenId(data.tokenId);
                 } else {
                     handleLogout();
                 }
@@ -118,7 +121,7 @@ function App({ children }: { children: React.ReactNode }) {
         } finally {
             setLoading(false);
         }
-    }, [token, handleLogout]);
+    }, [VITE_APP_CHAIN_ID, VITE_APP_ENDPOINT, appName, handleLogout, token]);
 
     useEffect(() => {
         if (token && window.ethereum) {
@@ -128,24 +131,13 @@ function App({ children }: { children: React.ReactNode }) {
         }
     }, [token, checkToken]);
 
-    if (loading) {
-        return null
-    }
-
-    // Render the appropriate app view based on the app name
-    const renderAppView = () => {
-        switch (app) {
-            case 'purr':
-                return <PurrAppView handleSignIn={handleSignIn} handleSignOut={handleSignOut} loggedIn={loggedIn} token={token} tokenId={tokenId} BASE_URL={BASE_URL} />;
-            case 'chained-horse':
-                return <PaddockAppView handleSignIn={handleSignIn} handleSignOut={handleSignOut} loggedIn={loggedIn} token={token} tokenId={tokenId} BASE_URL={BASE_URL} />;
-            default:
-                return <div>Unknown app: {app}</div>;
-        }
+    return {
+        loggedIn,
+        token,
+        tokenId,
+        loading,
+        handleSignIn,
+        handleSignOut,
+        BASE_URL
     };
-
-    return renderAppView();
 }
-
-export default App;
-

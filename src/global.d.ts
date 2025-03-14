@@ -1,10 +1,7 @@
+// Global type declarations
+
+// Extend the Window interface to include our custom properties
 interface Window {
-    ethereum?: {
-        on: (event: string, handler: (...args: any[]) => void) => void;
-        off: (event: string, handler: (...args: any[]) => void) => void;
-        request: (request: { method: string }) => Promise<any>;
-        enable: () => Promise<any>;
-        isMetaMask: boolean;
-        isDapper: boolean;
-    };
+  __APP_NAME__?: string;
+  ethereum?: any;
 }

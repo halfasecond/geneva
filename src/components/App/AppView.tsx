@@ -1,56 +1,36 @@
-import { useState, useEffect } from 'react'
-import * as Styled from '../../style'
-import Metamask from 'components/Metamask'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import { AuthProps } from '../../types/auth'
-import IntroModal from 'components/Game/components/IntroModal'
-import Game from 'components/Game'
 
-const AppView: React.FC<AuthProps> = ({ 
+// Use lazy loading with specific chunk names to better control code splitting
+const PurrComponent = lazy(() => import(/* webpackChunkName: "purr" */ './Purr'));
+const ThePaddockComponent = lazy(() => import(/* webpackChunkName: "paddock" */ './ThePaddock'));
+
+const AppView: React.FC<AuthProps> = ({
     handleSignIn,
     handleSignOut,
-    loggedIn: walletAddress,
+    loggedIn,
     token,
     tokenId,
-    BASE_URL
+    BASE_URL,
+    app
 }) => {
-    const [nfts, setNFTs] = useState<any[]>([]);
-    const [selectedHorse, setSelectedHorse] = useState<number | undefined>(undefined);
-
-    // Load and analyze NFT data
-    useEffect(() => {
-        const loadNFTs = async () => {
-            try {
-                const response = await fetch('/chained-horse/nfts');
-                const nfts = await response.json();
-                setNFTs(nfts)
-            } catch (error) {
-                console.error('Error loading NFTs:', error);
-                setNFTs([]);
-            }
-        };
-        loadNFTs();
-    }, [])
+    // Render the appropriate component based on the app name
+    const renderApp = () => {
+        switch (app) {
+            case 'purr':
+                return <PurrComponent {...{ handleSignIn, handleSignOut, loggedIn, token, tokenId, BASE_URL }} />;
+            case 'chained-horse':
+                return <ThePaddockComponent {...{ handleSignIn, handleSignOut, loggedIn, token, tokenId, BASE_URL }} />;
+            default:
+                return <div>Unknown app: {app}</div>;
+        }
+    };
 
     return (
-        <>
-            {(!selectedHorse || selectedHorse < 0 || !walletAddress) &&  (
-                <IntroModal
-                    onSelectHorse={id => setSelectedHorse(id)}
-                    {...{ handleSignIn, handleSignOut, BASE_URL, loggedIn: walletAddress, nfts }}
-                    currentHorse={tokenId}
-                />
-            )}
-            <Metamask {...{ handleSignIn, handleSignOut, token, tokenId, BASE_URL }} loggedIn={walletAddress} />
-            <Styled.Main>
-                {nfts.length && (
-                    <Game 
-                        tokenId={selectedHorse === - 1 ? undefined : selectedHorse}
-                        {...{ nfts, token }}
-                    />
-                )}
-            </Styled.Main>
-        </>
-    )
+        <Suspense fallback={<div>Loading...</div>}>
+            {renderApp()}
+        </Suspense>
+    );
 }
 
 export default AppView

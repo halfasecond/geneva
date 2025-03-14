@@ -32,6 +32,11 @@ export const fontSize = {
     xxl: '48px'
 }
 
+export const headingSize = {
+    lg: '72px',
+	xl: '108px',
+}
+
 export const grey = {
 	0: '#ffffff',
 	50: '#fcfbfa',
