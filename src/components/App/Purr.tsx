@@ -1,13 +1,13 @@
 import * as Styled from '../Purr/style'
 import { useEffect, useState } from 'react'
 import { BrowserRouter as Router, Link, useLocation } from 'react-router-dom'
-import { Contract } from 'web3-eth-contract'
-import CryptoKitties from '../../contracts/CryptoKitties'
-import Contracts from '../../contracts/Purr'
+// import { Contract } from 'web3-eth-contract'
+// import CryptoKitties from '../../contracts/CryptoKitties'
+// import Contracts from '../../contracts/Purr'
 import Logo from '../Purr/Logo'
 import { AuthProps } from '../../types/auth'
-import { getContract } from '../../utils'
-import { AbiFragment } from 'web3'
+// import { getContract } from '../../utils'
+// import { AbiFragment } from 'web3'
 import { getAssetPath } from '../../utils/assetPath'
 
 // CryptoKitties contracts:

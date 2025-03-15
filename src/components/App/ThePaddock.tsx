@@ -5,6 +5,8 @@ import { AuthProps } from '../../types/auth'
 import IntroModal from 'components/Game/components/IntroModal'
 import Game from 'components/Game'
 
+const { VITE_APP_ENDPOINT } = import.meta.env;
+
 const AppView: React.FC<AuthProps> = ({ 
     handleSignIn,
     handleSignOut,
@@ -20,7 +22,7 @@ const AppView: React.FC<AuthProps> = ({
     useEffect(() => {
         const loadNFTs = async () => {
             try {
-                const response = await fetch('/chained-horse/nfts');
+                const response = await fetch(`${VITE_APP_ENDPOINT}chained-horse/nfts`);
                 const nfts = await response.json();
                 setNFTs(nfts)
             } catch (error) {

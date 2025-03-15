@@ -19,21 +19,22 @@ interface UseAuthOptions {
 }
 
 export function useAuth({ appName }: UseAuthOptions) {
-    const { VITE_APP_ENDPOINT, VITE_APP_CHAIN_ID, VITE_APP_TOKEN_NAME } = import.meta.env;
+    const { VITE_APP_ENDPOINT, VITE_APP_CHAIN_ID } = import.meta.env;
+    const storedToken = `${appName}-token`
     const BASE_URL = import.meta.env.BASE_URL ? import.meta.env.BASE_URL : '/';
 
     const [loggedIn, setLoggedIn] = useState<string | undefined>(undefined);
-    const [token, setToken] = useState<string | undefined>(Cookies.get(VITE_APP_TOKEN_NAME) || undefined);
+    const [token, setToken] = useState<string | undefined>(Cookies.get(storedToken) || undefined);
     const [tokenId, setTokenId] = useState<number | undefined>(undefined);
     const [loading, setLoading] = useState(true);
 
     const handleLogout = useCallback(() => {
-        Cookies.remove(VITE_APP_TOKEN_NAME);
+        Cookies.remove(storedToken);
         setLoggedIn(undefined);
         setToken(undefined);
         setTokenId(undefined);
         setLoading(false);
-    }, [VITE_APP_TOKEN_NAME]);
+    }, [storedToken]);
 
     useEffect(() => {
         const handleAccountsChanged = (accounts: string[]) => {
@@ -77,7 +78,7 @@ export function useAuth({ appName }: UseAuthOptions) {
                         signature, 
                         message 
                     });
-                    Cookies.set(VITE_APP_TOKEN_NAME, data.token);
+                    Cookies.set(storedToken, data.token);
                     setLoggedIn(accounts[0]);
                     setToken(data.token);
                 } else {
@@ -87,7 +88,7 @@ export function useAuth({ appName }: UseAuthOptions) {
                 console.error('Error during sign in:', error);
             }
         }
-    }, [VITE_APP_CHAIN_ID, VITE_APP_ENDPOINT, VITE_APP_TOKEN_NAME, appName]);
+    }, [VITE_APP_CHAIN_ID, VITE_APP_ENDPOINT, storedToken, appName]);
 
     const handleSignOut = useCallback(async () => {
         if (token) {

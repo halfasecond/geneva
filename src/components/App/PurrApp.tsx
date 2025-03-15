@@ -2,10 +2,9 @@ import { lazy, Suspense } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 
 // Only import the Purr component
-const PurrComponent = lazy(() => import('../App/Purr'));
+const PurrComponent = lazy(() => import('./Purr'));
 
 function PurrApp() {
-    console.log('heelo')
     const {
         loggedIn,
         token,
@@ -28,7 +27,7 @@ function PurrApp() {
                 loggedIn={loggedIn}
                 token={token}
                 tokenId={tokenId}
-                BASE_URL={BASE_URL}
+                BASE_URL={BASE_URL.startsWith('./') ? '/' : BASE_URL}
             />
         </Suspense>
     );

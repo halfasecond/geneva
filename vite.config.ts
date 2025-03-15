@@ -10,7 +10,7 @@ const appConfigs = {
     outDir: 'dist/purr',
     appName: 'purr'
   },
-  'paddock': {
+  'chained-horse': {
     input: resolve(__dirname, 'index.html'),
     outDir: 'dist/paddock',
     appName: 'chained-horse'
