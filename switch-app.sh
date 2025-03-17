@@ -80,13 +80,13 @@ fi
 
 # Determine source file and output directory
 if [ "$APP_NAME" == "purr" ]; then
-  SOURCE_FILE="src/purr.tsx"
+  SOURCE_FILE="src/lib/entry/purr.tsx"
   OUTPUT_DIR="dist/purr"
 elif [ "$APP_NAME" == "chained-horse" ]; then
-  SOURCE_FILE="src/paddock.tsx"
+  SOURCE_FILE="src/lib/entry/paddock.tsx"
   OUTPUT_DIR="dist/paddock"
 else
-  SOURCE_FILE="src/geneva.tsx"
+  SOURCE_FILE="src/lib/entry/geneva.tsx"
   OUTPUT_DIR="dist/geneva"
 fi
 

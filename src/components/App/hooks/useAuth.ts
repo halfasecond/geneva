@@ -19,8 +19,8 @@ interface UseAuthOptions {
 }
 
 export function useAuth({ appName }: UseAuthOptions) {
-    const { VITE_APP_ENDPOINT, VITE_APP_CHAIN_ID } = import.meta.env;
-    const storedToken = `${appName}-token`
+    const { VITE_APP_NODE_ENV, VITE_APP_ENDPOINT, VITE_APP_CHAIN_ID } = import.meta.env;
+    const storedToken = VITE_APP_NODE_ENV === 'development' ? `${appName}-token` : `${appName}-token-dev`
     const BASE_URL = import.meta.env.BASE_URL ? import.meta.env.BASE_URL : '/';
 
     const [loggedIn, setLoggedIn] = useState<string | undefined>(undefined);

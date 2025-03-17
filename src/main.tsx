@@ -1,11 +1,24 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import App from './components/App/App'
-import PaddockApp from './components/App/ThePaddock'
 import './style/index.css'
 
+function Geneva() {
+  return (
+    <div style={{ 
+      display: 'flex', 
+      justifyContent: 'center', 
+      alignItems: 'center', 
+      height: '100vh',
+      fontSize: '2rem',
+      fontWeight: 'bold'
+    }}>
+      <p>Hello!</p>
+    </div>
+  )
+}
+
 createRoot(document.getElementById('root')!).render(
-    <StrictMode>
-        <App ViewComponent={PaddockApp} />
-    </StrictMode>,
+  <StrictMode>
+    <Geneva />
+  </StrictMode>,
 )
