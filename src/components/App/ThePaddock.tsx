@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react'
 import * as Styled from '../../style'
 import Metamask from 'components/Metamask'
 import { AuthProps } from '../../types/auth'
-import IntroModal from 'components/Game/components/IntroModal'
-import Game from 'components/Game'
+import IntroModal from 'components/Paddock/components/IntroModal'
+import Game from 'components/Paddock'
 
 const { VITE_APP, VITE_APP_ENDPOINT } = import.meta.env;
 
