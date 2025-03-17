@@ -1,6 +1,5 @@
 import styled from 'styled-components';
-import { Z_LAYERS } from 'src/config/zIndex';
-import ghost from '/svg/horse/Ghost.svg';
+import { Z_LAYERS } from 'src/config/zIndex'
 import { bgColors } from 'style/config';
 
 interface DoorProps {
@@ -92,7 +91,7 @@ export const Door = styled.div<DoorProps>`
 
     > div {
         background-image: ${({ ismatch }) => 
-            ismatch ? `url(${ghost})` : 'none'
+            ismatch ? `url('https://cdn.halfasecond.com/images/chained-horse/svg/horse/Ghost.svg')` : 'none'
         };
         animation: ${({ ismatch }) => 
             ismatch ? 'flashImage .25s infinite' : 'none'
@@ -108,7 +107,7 @@ export const Door = styled.div<DoorProps>`
 
     @keyframes flashImage {
         0%, 100% {
-            background-image: url(${ghost});
+            background-image: url('https://cdn.halfasecond.com/images/chained-horse/svg/horse/Ghost.svg');
         }
         50% {
             background-image: none;
@@ -147,7 +146,7 @@ export const Results = styled.div`
 `;
 
 export const Ghost = styled.div`
-    background-image: url(${ghost});
+    background-image: url('https://cdn.halfasecond.com/images/chained-horse/svg/horse/Ghost.svg');
     background-size: 350% auto;
     background-position: 105% 210%;
     width: 40px;

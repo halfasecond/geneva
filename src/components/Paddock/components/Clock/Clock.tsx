@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import * as Styled from './Clock.style'
 import { CLOCK_DIMENSIONS } from './constants'
+import { getAssetPath } from 'src/utils/assetPath';
 
 interface ClockProps {
     block?: {
@@ -58,7 +59,7 @@ const Clock: React.FC<ClockProps> = ({
                 className={showVitalik ? 'flash' : ''}
             >
                 <img 
-                    src="/vitalik.png" 
+                    src={getAssetPath("/vitalik.png")}
                     alt="Vitalik Buterin"
                 />
             </Styled.VitalikFlash>

@@ -1,12 +1,11 @@
 import React from 'react';
 import styled from 'styled-components';
 import { Rect, CoordinateTransformer } from 'utils/coordinates';
-import ghost from '/svg/horse/Ghost.svg'
 import { getSVG } from 'utils/getImage';
 
 const StyledElement = styled.div`
     position: absolute;
-    box-sizing: border-box;  /* Include border in size calculations */
+    box-sizing: border-box;
     background-repeat: no-repeat;
     background-size: contain;
 `;
@@ -146,7 +145,7 @@ const StyledBuilding = styled.div<BuildingProps>`
         width: 6px;
         height: 6px;
         background-color: ${props => props.isFound === 'true' ? '#FFF' : 'transparent'};
-        background-image:  ${props => props.isFound === 'true' ? `url(${ghost})` : 'none'};
+        background-image:  ${props => props.isFound === 'true' ? `url('https://cdn.halfasecond.com/images/chained-horse/svg/horse/Ghost.svg')` : 'none'};
         animation:  ${props => props.isFound === 'true' ? 'flashImage .25s infinite' : 'none'};
         animation-iteration-count: 4;
         background-size: 350% auto;
@@ -156,7 +155,7 @@ const StyledBuilding = styled.div<BuildingProps>`
 
     @keyframes flashImage {
         0%, 100% {
-          background-image: url(${ghost});
+          background-image: url('https://cdn.halfasecond.com/images/chained-horse/svg/horse/Ghost.svg');
         }
         50% {
           background-image: none;

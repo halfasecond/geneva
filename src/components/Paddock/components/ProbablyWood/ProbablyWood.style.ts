@@ -1,6 +1,4 @@
 import styled from 'styled-components'
-import farouk from '/svg/31db13b10188de1afd6cff09cf65a0ae.svg'
-import forest from '/svg/forest.svg'
 
 
 export const Forest = styled.div`
@@ -9,7 +7,7 @@ export const Forest = styled.div`
     z-index: 1;
     position: absolute;
     opacity: 0.8;
-    background-image: url(${forest});
+    background-image: url('https://cdn.halfasecond.com/images/chained-horse/svg/forest.svg');
     background-size: contain;
 `
 
@@ -48,7 +46,7 @@ export const Bear = styled.div`
     height: 400px;
     z-index: 0;
     position: absolute;
-    background-image: url(${farouk});
+    background-image: url('https://cdn.halfasecond.com/images/chained-horse/svg/31db13b10188de1afd6cff09cf65a0ae.svg');
     background-size: contain;
    
 `
