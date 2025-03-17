@@ -12,6 +12,8 @@ demo-server/
 /purr
 /paddock
 /geneva
+src/main.tsx
+src/main.tsx.orig
 
 # Environment
 .env
