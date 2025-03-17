@@ -29,7 +29,7 @@ export const IssueCard = styled.div`
   }
 `;
 
-export const IssueTitle = styled.h3`
+export const IssueTitle = styled.h2`
   color: #2C1810;
   font-size: 16px;
   margin: 0 0 8px 0;

@@ -10,17 +10,14 @@ import {
     LoadingSpinner,
     LoadingText
 } from './IssuesField.style';
-import StaticIssuesField from './StaticIssuesField';
 import KanbanBoard from './KanbanBoard';
 
 // Project configuration
 const PROJECT_NUMBER = parseInt(import.meta.env.VITE_APP_GITHUB_PROJECT_NUMBER || '1', 10);
+const { VITE_APP_ENDPOINT } = import.meta.env
 
 // Agent configuration
 const AGENT_ID = 'horse21'; // Using Horse #21 as the lead developer
-
-// Environment configuration - handle various falsy values
-const IS_SERVERLESS = import.meta.env.VITE_SERVERLESS?.toLowerCase() === 'true';
 
 interface CardLabel {
     id: string;
@@ -51,7 +48,7 @@ interface KanbanBoard {
     columns: KanbanColumn[];
 }
 
-const DynamicIssuesField: React.FC = () => {
+const IssuesField: React.FC = () => {
     const [board, setBoard] = useState<KanbanBoard | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -89,7 +86,7 @@ const DynamicIssuesField: React.FC = () => {
         try {
             setLoading(true);
             
-            const response = await fetch(`/github/projects/${PROJECT_NUMBER}/board`, {
+            const response = await fetch(`${VITE_APP_ENDPOINT}github/projects/${PROJECT_NUMBER}/board`, {
                 headers: {
                     'x-agent-id': AGENT_ID,
                     'Content-Type': 'application/json'
@@ -205,11 +202,6 @@ const DynamicIssuesField: React.FC = () => {
             />
         </FieldContainer>
     );
-};
-
-// Main component that conditionally renders serverless or dynamic version
-const IssuesField: React.FC = () => {
-    return IS_SERVERLESS ? <StaticIssuesField /> : <DynamicIssuesField />;
 };
 
 export default IssuesField;

@@ -43,7 +43,7 @@ const Column = styled.div`
         content: attr(data-title);
         display: block;
         color: #F5DEB3;
-        font-size: 20px;
+        font-size: 14px;
         font-weight: bold;
         margin: 0 0 16px 0;
         text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
