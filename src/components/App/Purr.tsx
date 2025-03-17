@@ -1,5 +1,5 @@
 import * as Styled from '../Purr/style'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { BrowserRouter as Router, Link, useLocation } from 'react-router-dom'
 // import { Contract } from 'web3-eth-contract'
 // import CryptoKitties from '../../contracts/CryptoKitties'
@@ -46,7 +46,7 @@ const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn: w
     }
 
     return (
-        <Router basename={BASE_URL}>
+        <Router basename={BASE_URL.startsWith('./') ? '/' : BASE_URL}>
             <ScrollToTop />
             <Styled.Background />
             <Styled.Furlin />

@@ -43,7 +43,19 @@ export default defineConfig(({ command, mode }) => {
     plugins: [
       react(),
       // Only include game server in development
-      command === 'serve' ? gameServer() : null
+      command === 'serve' ? gameServer() : null,
+      {
+        name: 'html-transform',
+        transformIndexHtml(html) {
+            return html.replace('__APP_TITLE__', 
+              process.env.VITE_APP === 'paddock'
+                ? 'Unchained Paddock - a home for your ChainedHorse NFTs'
+                : process.env.VITE_APP === 'purr'
+                  ? '$PURR - a new ERC20 by kitty.international'
+                  : 'Geneva Agentic A.I.'
+            );
+        }
+    }
     ].filter(Boolean),
     server: {
       host: true,
