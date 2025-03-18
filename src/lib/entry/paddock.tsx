@@ -1,8 +1,8 @@
-import { StrictMode, lazy, Suspense } from 'react'
+import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import App from './components/App'
+import App from 'components/App'
 import './style/index.css'
-import Paddock from './components/App/ThePaddock'
+import Paddock from 'components/App/ThePaddock'
 
 createRoot(document.getElementById('root')!).render(
     <StrictMode>
