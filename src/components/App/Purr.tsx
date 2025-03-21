@@ -1,37 +1,45 @@
 import * as Styled from '../Purr/style'
-import { useEffect } from 'react'
+import axios from 'axios'
+import { useEffect, useState } from 'react'
 import { BrowserRouter as Router, Link, useLocation } from 'react-router-dom'
-// import { Contract } from 'web3-eth-contract'
-// import CryptoKitties from '../../contracts/CryptoKitties'
-// import Contracts from '../../contracts/Purr'
+import { Contract } from 'web3-eth-contract'
+import Claim from 'components/Purr/Claim'
+import CryptoKitties from '../../contracts/CryptoKitties'
+import Contracts from '../../contracts/Purr'
 import Logo from '../Purr/Logo'
+import Metamask from 'components/Metamask'
 import { AuthProps } from '../../types/auth'
-// import { getContract } from '../../utils'
-// import { AbiFragment } from 'web3'
+import { getContract } from '../../utils'
+import { AbiFragment } from 'web3'
 import { getAssetPath } from '../../utils/assetPath'
+import { fromWei } from 'web3-utils'
 
 // CryptoKitties contracts:
-// const cryptokitties: Contract<AbiFragment[]> = getContract(CryptoKitties.Core.abi, CryptoKitties.Core.addr)
-//const purr: Contract<AbiFragment[]> = getContract(Contracts.Purr.abi, Contracts.Purr.addr)
-// const purrClaim: Contract<AbiFragment[]> = getContract(Contracts.PurrClaim.abi, Contracts.PurrClaim.addr)
+const cryptokitties: Contract<AbiFragment[]> = getContract(CryptoKitties.Core.abi, CryptoKitties.Core.addr)
+const purr: Contract<AbiFragment[]> = getContract(Contracts.Purr.abi, Contracts.Purr.addr)
+const purrClaim: Contract<AbiFragment[]> = getContract(Contracts.PurrClaim.abi, Contracts.PurrClaim.addr)
+const { VITE_APP_ENDPOINT } = import.meta.env
 
-const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn: walletAddress, BASE_URL }) => {
-    // const [purrClaimBalance, setPurrClaimBalance] = useState<string | undefined>(undefined)
-    // const [purrBalance, setPurrBalance] = useState<string | undefined>(undefined)
+const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn, token, BASE_URL }) => {
+    const [purrClaimBalance, setPurrClaimBalance] = useState<string | undefined>(undefined)
+    const [purrBalance, setPurrBalance] = useState<string | undefined>(undefined)
 
-    // useEffect(() => {
-    //     const getContractBalance = async () => {
-    //         const balanceOfPurrClaimContract = await purr.methods.balanceOf(Contracts.PurrClaim.addr).call()
-    //         const balanceOf = await purr.methods.balanceOf(walletAddress).call()
-    //         if (balanceOf && balanceOfPurrClaimContract) {
-    //             setPurrClaimBalance(balanceOfPurrClaimContract.toString())
-    //             setPurrBalance(balanceOf.toString())
-    //         }
-    //     }
-    //     if (walletAddress) {
-    //         getContractBalance()
-    //     }
-    // }, [walletAddress])
+    useEffect(() => {
+        const getPurrClaimBalance = async () => {
+            const { data: { balance } } = await axios.get(`${VITE_APP_ENDPOINT}purr/balances/${Contracts.PurrClaim.addr}`)
+            setPurrClaimBalance(balance.toString())
+        }
+        const getUserBalance = async () => {
+            const balanceOf = await purr.methods.balanceOf(loggedIn).call()
+            if (balanceOf) {
+                setPurrBalance(balanceOf.toString())
+            }
+        }
+        if (loggedIn) {
+            getUserBalance()
+        }
+        getPurrClaimBalance()
+    }, [loggedIn])
 
     const getLink = (linkText: string) => {
         const links = {
@@ -129,7 +137,10 @@ const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn: w
                 </Styled.ImageGrid2>
             </Styled.Main>
             <Styled.Main>
-                <h2>Coming soon</h2>
+                {loggedIn && <Claim {...{ cryptokitties, purrClaim, purrBalance }} walletAddress={loggedIn} />}
+                <p>Left to claim:</p>
+                <h2>{purrClaimBalance && `$PURR ${fromWei(purrClaimBalance, 'ether')}`}</h2>
+                <Metamask {...{ handleSignIn, handleSignOut, loggedIn, token, BASE_URL }} />
             </Styled.Main>
         </Router>
     )
