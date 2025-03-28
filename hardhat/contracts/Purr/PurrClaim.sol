@@ -40,15 +40,15 @@ contract PurrClaim is Ownable {
 
     function calculatePurr(uint256 kittyBalance) internal pure returns (uint256) {
         if (kittyBalance >=  1000) {
-            return 10_000 * 10 ** 18;
-        } else if (kittyBalance >= 420) {
-            return 6_900 * 10 ** 18;
-        } else if (kittyBalance >= 100) {
             return 1_000 * 10 ** 18;
-        } else if (kittyBalance >= 69) {
-            return 420 * 10 ** 18;
-        } else if (kittyBalance >= 10) {
+        } else if (kittyBalance >= 420) {
+            return 690 * 10 ** 18;
+        } else if (kittyBalance >= 100) {
             return 100 * 10 ** 18;
+        } else if (kittyBalance >= 69) {
+            return 42 * 10 ** 18;
+        } else if (kittyBalance >= 10) {
+            return 10 * 10 ** 18;
         } else {
             return 0;
         }

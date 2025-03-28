@@ -1,4 +1,6 @@
 import styled from 'styled-components';
+import { gutters } from 'style/config';
+import { Z_LAYERS } from 'src/config/zIndex';
 
 export const Overlay = styled.div`
     position: fixed;
@@ -36,6 +38,13 @@ export const ModalContent = styled.div`
         }
     }
 `;
+
+export const Metamask = styled.div`
+    position: fixed;
+    bottom: ${gutters['xlg']};
+    left: ${gutters['xlg']};
+    z-index: ${Z_LAYERS['UI']};
+`
 
 export const Avatar = styled.div`
     width: 135px;

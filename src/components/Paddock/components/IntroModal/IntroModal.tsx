@@ -89,7 +89,10 @@ const IntroModal: React.FC<IntroModalProps> = ({
                         </a>
                     </Styled.MintCTA>
                 )}
-                <Metamask {...{ handleSignIn, handleSignOut, BASE_URL }} loggedIn={loggedIn} />
+                <Styled.Metamask>
+                    <Metamask {...{ handleSignIn, handleSignOut, BASE_URL }} loggedIn={loggedIn} />
+                </Styled.Metamask>
+                
             </Styled.ModalContent>
         </Styled.Overlay>
     );

@@ -3,16 +3,15 @@ import axios from 'axios'
 import { useEffect, useState } from 'react'
 import { BrowserRouter as Router, Link, useLocation } from 'react-router-dom'
 import { Contract } from 'web3-eth-contract'
+import Metamask from 'components/Metamask'
 import Claim from 'components/Purr/Claim'
 import CryptoKitties from '../../contracts/CryptoKitties'
 import Contracts from '../../contracts/Purr'
 import Logo from '../Purr/Logo'
-import Metamask from 'components/Metamask'
 import { AuthProps } from '../../types/auth'
 import { getContract } from '../../utils'
 import { AbiFragment } from 'web3'
 import { getAssetPath } from '../../utils/assetPath'
-import { fromWei } from 'web3-utils'
 
 // CryptoKitties contracts:
 const cryptokitties: Contract<AbiFragment[]> = getContract(CryptoKitties.Core.abi, CryptoKitties.Core.addr)
@@ -137,11 +136,11 @@ const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn, t
                 </Styled.ImageGrid2>
             </Styled.Main>
             <Styled.Main>
-                {loggedIn && <Claim {...{ cryptokitties, purrClaim, purrBalance }} walletAddress={loggedIn} />}
-                <p>Left to claim:</p>
-                <h2>{purrClaimBalance && `$PURR ${fromWei(purrClaimBalance, 'ether')}`}</h2>
-                <Metamask {...{ handleSignIn, handleSignOut, loggedIn, token, BASE_URL }} />
+                <Claim walletAddress={loggedIn} {...{ cryptokitties, purrClaim, purrBalance, purrClaimBalance, handleSignIn }} />
             </Styled.Main>
+            <Styled.MetamaskContainer>
+                <Metamask {...{ loggedIn, handleSignIn, handleSignOut, token, BASE_URL }} tokenId={undefined} />
+            </Styled.MetamaskContainer>
         </Router>
     )
 }

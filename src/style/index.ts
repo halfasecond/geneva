@@ -1,5 +1,6 @@
 import styled from 'styled-components'
 import { Z_LAYERS } from 'src/config/zIndex'
+import { gutters } from './config'
 
 export const Main = styled.main`
     position: relative;
@@ -20,4 +21,11 @@ export const Main = styled.main`
         color: #000000;
         text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
     }
+`
+
+export const MetamaskContainer = styled.div`
+    position: fixed;
+    bottom: ${gutters['xlg']};
+    left: ${gutters['xlg']};
+    z-index: ${Z_LAYERS['UI']};
 `

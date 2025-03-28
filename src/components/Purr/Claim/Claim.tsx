@@ -2,49 +2,24 @@ import { useEffect, useState } from 'react'
 import { isAddress } from 'web3-validator'
 import { Contract } from 'web3-eth-contract'
 import { AbiFragment } from 'web3'
-import { grey } from 'style/config'
+import { fromWei } from 'web3-utils'
 import { claimTiers } from './config'
 import * as Styled from './Claim.style'
+import { getAssetPath } from 'utils/assetPath'
 
 const Claim: React.FC<{
-    walletAddress: string,
+    walletAddress: string | undefined,
     cryptokitties: Contract<AbiFragment[]>,
     purrClaim: Contract<AbiFragment[]>,
-    purrBalance: string
-}> = ({ walletAddress, cryptokitties, purrClaim, purrBalance }) => {
-
-    const [formDetails, setFormDetails] = useState<{
-        walletInput: string,
-        submit: boolean,
-        loading: boolean
-    }>({
-        walletInput: walletAddress ? walletAddress : '',
-        submit: false,
-        loading: false
-    })
+    purrBalance: string,
+    purrClaimBalance: string,
+    handleSignIn: () => void,
+}> = ({ walletAddress, cryptokitties, purrClaim, purrBalance, handleSignIn }) => {
 
     const [claiming, setClaiming] = useState<boolean>(false)
     const [claimed, setClaimed] = useState<boolean>(false)
-
     const [balance, setBalance] = useState<number | undefined>(undefined)
-
-    const handleChange = (
-        e: React.ChangeEvent<HTMLInputElement> | React.ChangeEvent<HTMLTextAreaElement>,
-        changeParam: 'walletInput'
-    ) => {
-        const { value } = e.target
-        const newState = { ...formDetails }
-        if (changeParam === 'walletInput') {
-            newState['walletInput'] = value
-        }
-        setFormDetails(newState)
-    }
-
-    useEffect(() => {
-        if (walletAddress) {
-            setFormDetails(prevState => ({ ...prevState, walletInput: walletAddress }))
-        }
-    }, [walletAddress])
+    const [claimSuccess, setClaimSuccess] = useState<boolean>(false)
 
     useEffect(() => {
         const getClaimStatus = async () => {
@@ -60,16 +35,21 @@ const Claim: React.FC<{
                 const _balance = await cryptokitties.methods.balanceOf(walletAddress).call()
                 if (_balance) {
                     setBalance(parseInt(_balance.toString()))
-                    setFormDetails(prevState => ({ ...prevState, submit: false }))
                 }
             } catch (error) {
                 console.error(error)
             }
         }
-        if (formDetails.submit) {
+        if (walletAddress && isAddress(walletAddress)) {
             getClaimStatus()
+        } else {
+            if (claimed || balance) {
+                setClaimed(false)
+                setBalance(undefined)
+            }
+
         }
-    }, [formDetails.submit])
+    }, [walletAddress])
 
     const getAvailableClaim = (balance: number): number | undefined => {
         const tier = claimTiers.find(({ threshold }) => balance >= threshold)
@@ -80,78 +60,96 @@ const Claim: React.FC<{
         setClaiming(true)
         try {
             await purrClaim.methods.claim().send({ from: walletAddress })
-            // setClaimSuccess(true)
+            console.log('purr claimed')
+            setClaimSuccess(true)
         } catch (error) {
-            // setClaimError(true)
             console.error(error)
         } finally {
             setClaiming(false)
         }
     }
 
-    if (claimed) {
+    if (claimSuccess) {
         return (
-            <Styled.Div>
-                <p>Your are not eligible to claim <b>$PURR</b> at this time</p>
-                <p>You currently hold $PURR ${purrBalance}</p>
-            </Styled.Div>
+            <Styled.Form onSubmit={e => {
+                e.preventDefault()
+            }}>
+                <Styled.Div>
+                    <p>{`Congratulations - your $PURR-ing...`}</p>
+                    <p>{'You currently hold '}<b>{'$PURR '}{purrBalance ? fromWei(purrBalance, 'ether') : '0'}</b></p>
+                </Styled.Div>
+            </Styled.Form>
         )
     }
 
-    if (balance !== undefined) {
+    if (claimed) {
         return (
-            <>
+            <Styled.Form onSubmit={e => {
+                e.preventDefault()
+            }}>
                 <Styled.Div>
-                    {[...claimTiers].reverse().map(({ threshold, reward }) => (
-                        <div 
-                            key={threshold}
-                            style={{ backgroundColor: getAvailableClaim(balance) === reward ? grey[300] : 'transparent' }}
-                        >{`>= ${threshold} CryptoKitties =`}<b>{`${reward} $PURR`}</b></div>
-                    ))}
+                    <p>{`😿 You are not eligible to claim `}<b>$PURR</b>{` 😿`}</p>
+                    <p>{'You currently hold '}<b>{'$PURR '}{purrBalance ? fromWei(purrBalance, 'ether') : '0'}</b></p>
                 </Styled.Div>
-                
-                {balance > 9 ? (
-                    <Styled.Form onSubmit={e => {
-                        e.preventDefault()
-                        claim()
-                    }}>
-                        <code>🐾 You are eligible for <b>{getAvailableClaim(balance)} $PURR</b> 🐾</code>
-                        <input 
-                            type={'submit'}
-                            value={`Claim ${getAvailableClaim(balance)} $PURR`}
-                            disabled={claiming}
-                        />
-                    </Styled.Form>
-                ) : (
-                    <code>{`🐾 You are not eligible to claim $PURR at this time. 🐾`}</code>
-                )}
-            </>
+            </Styled.Form>
+
+        )
+    }
+
+    if (claiming) {
+        return (
+            <Styled.Form onSubmit={e => {
+                e.preventDefault()
+            }}>
+                <Styled.Div>
+                    <img src={getAssetPath('loading.png')} alt={''} />
+                </Styled.Div>
+            </Styled.Form>
         )
     }
 
     return (
-        <Styled.Form onSubmit={e => {
-            e.preventDefault()
-            setFormDetails(prevState => ({ ...prevState, submit: true }))
-        }}>
-            <label htmlFor={'walletAddress'}>
-                Enter your wallet address:
-                <input
-                    id={'walletAddress'}
-                    type='text'
-                    value={formDetails.walletInput}
-                    onChange={(e) => handleChange(e, 'walletInput')}
-                    disabled={formDetails.loading}
-                />
-                <input 
-                    type={'submit'}
-                    value={'Check your $PURR eligibility'}
-                    disabled={formDetails.loading || !isAddress(formDetails.walletInput)}
-                />
-            </label>
-        </Styled.Form>
+        <>
+            <Styled.Form onSubmit={e => {
+                e.preventDefault()
+                claim()
+            }}>
+                <p className={'claim'}>$PURR Claim Criteria:</p>
+                {walletAddress ? (
+                    <>
+                        <Styled.Div>
+                            {(balance === undefined || balance < 10) ? (
+                                <p>{`😿 You are currently not eligible to claim `}<b>$PURR</b>{` 😿`}</p>
+                            ) : (
+                                <p>{`🙀 You are eligible for ${getAvailableClaim(balance)} $PURR 🙀`}</p>
+                            )}
+                        </Styled.Div>
+                        {!(balance === undefined || balance < 10) && (
+                             <input
+                                type={'submit'}
+                                value={`Claim ${getAvailableClaim(balance)} $PURR`}
+                                disabled={claiming}
+                            />
+                        )}
+                    </>
+                ) : (
+                    <>
+                        <Styled.Div>
+                            {[...claimTiers].reverse().map(({ threshold, reward }, i) => (
+                                <p key={i}>
+                                    {`>= ${threshold} CryptoKitties: `}<b>{`$PURR ${reward} `}</b>
+                                </p>
+                            ))}
+                        </Styled.Div>
+                        <br /><br />
+                        <p>
+                            <span role={'button'} onClick={handleSignIn}>Sign in with Metamask</span> to check your eligibility.
+                        </p>
+                    </>
+                )}
+            </Styled.Form>
+        </>
     )
-
 }
 
 export default Claim

@@ -1,6 +1,13 @@
 import styled from 'styled-components'
 import { breaks, fontSize, gutters, headingSize } from 'style/config'
 
+export const MetamaskContainer = styled.div`
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    z-index: 1000;
+`
+
 export const Main = styled.main`
     width: 100%;
     z-index: 1;
@@ -100,15 +107,16 @@ export const Main = styled.main`
     }
 
     &:nth-of-type(6) {
-        justify-content: flex-end;
-        
         margin-top: 675vh;
         @media (min-width: ${breaks['md']}) {
             margin-top: 525vh;
         }
-        > h2 {
-            color: #FFF;
-            margin-bottom: ${gutters['xxl']};
+        min-height: 100vh;
+        background-image: url('https://cdn.halfasecond.com/images/purr/bg.svg');
+        background-attachment: fixed;
+        background-size: 100% auto;
+        > * {
+            z-index: 2; 
         }
     }
 
