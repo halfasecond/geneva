@@ -17,6 +17,7 @@ interface Actor {
 }
 import { paths, rivers, raceElements, issuesColumns } from './set';
 import { initializeScareCityState } from './state/scarecity';
+import { initializeGreaterTractorState } from './state/greaterTractor';
 
 const WORLD_WIDTH = 8000;
 const WORLD_HEIGHT = 5000;
@@ -115,6 +116,9 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
 
     // Initialize ScareCityGame state with utilities and initial block
     const scareCityState = initializeScareCityState(namespace, nfts, attributeTypes, latestEthBlock.blocknumber, Models);
+    
+    // Initialize GreaterTractor game state
+    const greaterTractorState = initializeGreaterTractorState(namespace, latestEthBlock.blocknumber, Models);
 
     // Static Actors - e.g. flowers of goodwill
     const flowers = nfts.filter((horse: Horse) => horse.utility === 'flower of goodwill');
@@ -311,8 +315,9 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
         latestEthBlock.timestamp = Number(timestamp)
         namespace.emit('newEthBlock', latestEthBlock)
 
-        // Update ScareCityGame state
+        // Update game states
         scareCityState.handleBlockUpdate(latestEthBlock.blocknumber);
+        greaterTractorState.handleBlockUpdate(latestEthBlock.blocknumber);
     })
 
     namespace.on('connection', (socket: any) => {
@@ -424,6 +429,18 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
                     player.walletAddress,
                     scanType,
                     scanResult,
+                    latestEthBlock.blocknumber
+                );
+            }
+        });
+
+        socket.on('greaterTractor:vote', ({ direction }: { direction: 'left' | 'right' }) => {
+            const player = getPlayerBySocket(namespace, socket.id);
+            if (player && player.walletAddress) {
+                greaterTractorState.handleVote(
+                    player.walletAddress,
+                    player.id,
+                    direction,
                     latestEthBlock.blocknumber
                 );
             }

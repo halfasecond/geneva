@@ -14,6 +14,7 @@ import IssuesField from "./components/IssuesField";
 import LostAndFound from "./components/LostAndFound";
 import Notifications from "./components/Notifications";
 import ProbablyWood from "./components/ProbablyWood";
+import GreaterTractor from "./components/GreaterTractor";
 import Race from "./components/Race";
 import { PerformancePanel } from "./components/PerformancePanel";
 import { Pond, RainbowPuke, Farm } from "./components/GameElements";
@@ -54,6 +55,8 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
     const [buildingDimensions, setBuildingDimensions] = useState<Record<string, BuildingDimensions>>({});
     const [probablyWoodDimensions, setProbablyWoodDimensions] = useState<Record<string, BuildingDimensions>>({});
     const [lostAndFoundDimensions, setLostAndFoundDimensions] = useState<Record<string, BuildingDimensions>>({});
+    const [greaterTractorDimensions, setGreaterTractorDimensions] = useState<Record<string, BuildingDimensions>>({});
+    // Greater Tractor state will be managed server-side and received via socket events
     const containerRef = useRef<HTMLDivElement>(null);
     const [dimensionsReady, setDimensionsReady] = useState(false);
     const [viewportDimensions, setViewportDimensions] = useState({
@@ -76,12 +79,14 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
         metrics,
         block,
         scareCityState,
+        greaterTractorState,
         scanTrait,
         notifications,
         messages,
         addMessage,
         removeNotification,
         upgradeStable,
+        voteForTractor,
     } = useGameServer({
         tokenId, token, onStaticActors: (actors: Actor[]) => setStaticActors(actors)
     });
@@ -129,6 +134,8 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
             horse && updatePlayerIntroStatus(finishResults)
         }
     }, [raceState])
+
+    // Greater Tractor state will be managed server-side
 
     useEffect(() => {
        if (introActive && raceState === 'finished' && !visibleMessages[introMessages.length - 1]) {
@@ -439,13 +446,28 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
                         </>
                     )}
                     {/* Probably Wood */}
-                    <ProbablyWood 
-                        left={5500} 
-                        top={1440} 
+                    <ProbablyWood
+                        left={5500}
+                        top={1440}
                         onElementDimensions={(dimensions: Record<string, BuildingDimensions>) => {
                             setProbablyWoodDimensions(dimensions);
                         }}
                     />
+                    
+                    {/* Greater Tractor */}
+                    {connected && player && (
+                        <GreaterTractor
+                            left={4300}
+                            top={1850}
+                            player={player}
+                            gameData={greaterTractorState}
+                            block={block}
+                            onElementDimensions={(dimensions: Record<string, BuildingDimensions>) => {
+                                setGreaterTractorDimensions(dimensions);
+                            }}
+                            onVote={voteForTractor}
+                        />
+                    )}
                     {/* Lost and Found */}
                     <LostAndFound
                         left={7840}
@@ -469,6 +491,7 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
                         scareCityState={scareCityState}
                         probablyWoodDimensions={probablyWoodDimensions}
                         lostAndFoundDimensions={lostAndFoundDimensions}
+                        greaterTractorDimensions={greaterTractorDimensions}
                     />
                 )}
                 {connected && player && (
