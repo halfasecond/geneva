@@ -60,10 +60,10 @@ db.once("open", () => {
     // Initialize modules
     runModules(app, io, web3, db)
     // Serve static files from dist directory
-    app.use(express.static(path.join(process.cwd(), 'dist/geneva')))
+    app.use(express.static(path.join(process.cwd(), 'dist/')))
     // Serve index.html for all routes (SPA fallback)
     app.get('*', (req, res, next) => { // note this should always be set after running the modules.
-        res.sendFile(path.join(process.cwd(), 'dist/geneva', 'index.html'))
+        res.sendFile(path.join(process.cwd(), 'dist/paddock', 'index.html'))
     })
   
     // Start server
