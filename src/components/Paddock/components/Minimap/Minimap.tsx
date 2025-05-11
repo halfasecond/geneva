@@ -63,6 +63,12 @@ interface MinimapProps {
         left: number;
         top: number;
     }>;
+    greaterTractorDimensions?: Record<string, {
+        width: number;
+        height: number;
+        left: number;
+        top: number;
+    }>;
 }
 
 export const Minimap: React.FC<MinimapProps> = ({
@@ -74,7 +80,8 @@ export const Minimap: React.FC<MinimapProps> = ({
     block,
     scareCityDimensions,
     scareCityState,
-    probablyWoodDimensions
+    probablyWoodDimensions,
+    greaterTractorDimensions
 }) => {
     const [isPulsing, setIsPulsing] = useState(false);
 
@@ -228,6 +235,21 @@ export const Minimap: React.FC<MinimapProps> = ({
                             height: dimensions.height
                         }}
                         backgroundImage={type.includes('forest') ? getAssetPath('svg/forest.svg') : getAssetPath('svg/31db13b10188de1afd6cff09cf65a0ae.svg')} // Green for forests, brown for bear
+                        opacity={0.7}
+                    />
+                ))}
+
+                {/* Greater Tractor */}
+                {greaterTractorDimensions && Object.entries(greaterTractorDimensions).map(([type, dimensions]) => (
+                    <MinimapElement
+                        key={`greaterTractor-${type}`}
+                        worldRect={{
+                            left: dimensions.left,
+                            top: dimensions.top,
+                            width: dimensions.width,
+                            height: dimensions.height
+                        }}
+                        backgroundColor={type === 'container' ? '#f5f5dc' : '#8b4513'}
                         opacity={0.7}
                     />
                 ))}

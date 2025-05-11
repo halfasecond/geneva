@@ -12,7 +12,6 @@ export const Header = styled.div`
     h2 {
         color: #ffffff;
         font-size: 16px;
-        font-weight: 600;
         margin: 0;
         > span {
             display: inline-block;

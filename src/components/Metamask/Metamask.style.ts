@@ -2,9 +2,6 @@ import styled from 'styled-components'
 import { gutters } from 'style/config'
 
 export const Button = styled.button`
-    position: fixed;
-    bottom: ${gutters['xlg']};
-    left: ${gutters['xlg']};
     background-color: #EEE;
     border: 0;
     padding: ${gutters['sm']} ${gutters['md']};
@@ -19,5 +16,4 @@ export const Button = styled.button`
     > img {
         border-radius: 4px;
     }
-    z-index: 1;
 `

@@ -1,13 +1,15 @@
 import { ModuleFunction } from '../types/shared';
-import EventEmitter from 'events'
+import EventEmitter from 'events';
+import Web3, { BlockHeaderOutput } from 'web3';
 import createWeb3Connection from '../config/web3';
 // Create an event bus for broadcasting various events
 import defaultModule from './geneva';
 import chainedHorseModule from './chained-horse';
 import chainfacesModule from './chainfaces'
 import twobitbearsModule from './twobitbears'
+import purrModule from './purr'
 
-const { PORT, WEB3_SOCKET_URL_CHAINFACES, WEB3_SOCKET_URL_TWOBITBEARS } = process.env
+const { WEB3_SOCKET_URL_CHAINFACES, WEB3_SOCKET_URL_TWOBITBEARS, WEB3_SOCKET_URL_PURR } = process.env
 
 const modules: ModuleFunction = (app, io, web3, db) => {
     class Emitter extends EventEmitter {}
@@ -40,20 +42,34 @@ const modules: ModuleFunction = (app, io, web3, db) => {
     chainfacesModule({ app, io, web3: chainfaceWeb3Connection, db, name: 'chainfaces', prefix: 'cf', deployed: 9314784, increment: 2500, eventsToWatch: ['Transfer'], emitter })
     const twobitbearWeb3Connection = createWeb3Connection(WEB3_SOCKET_URL_TWOBITBEARS || '')
     twobitbearsModule({ app, io, web3: twobitbearWeb3Connection, db, name: 'twobitbears', prefix: 'tbb', deployed: 13385399, increment: 1000, eventsToWatch: ['Transfer'], emitter })
+    const purrWeb3Connection = createWeb3Connection(WEB3_SOCKET_URL_PURR || '')
+    // Initialize Purr module
+    purrModule({
+        app,
+        io,
+        web3: purrWeb3Connection,
+        db,
+        name: 'purr',
+        prefix: 'purr',
+        deployed: 0,
+        increment: 1,
+        eventsToWatch: ['Transfer'],
+        emitter
+    });
 
     runEventsBus(web3, emitter)
 };
 
-const runEventsBus = (web3, emitter) => {
+const runEventsBus = (web3: Web3, emitter: EventEmitter) => {
     // Subscribe to new Ethereum block headers
     const subscribeToNewBlocks = async () => {
         try {
             const subscription = await web3.eth.subscribe('newHeads')
-            subscription.on('data', (blockHeader) => {
+            subscription.on('data', (blockHeader: BlockHeaderOutput) => {
                 emitter.emit('newEthBlock', blockHeader)
             })
-            subscription.on('error', (error) => console.error('Error in block header subscription:', error))
-        } catch (error) {
+            subscription.on('error', (error: Error) => console.error('Error in block header subscription:', error))
+        } catch (error: unknown) {
             console.error('Failed to subscribe to new blocks:', error);
         }
     }

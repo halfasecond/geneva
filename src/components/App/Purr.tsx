@@ -1,37 +1,44 @@
 import * as Styled from '../Purr/style'
-import { useEffect } from 'react'
+import axios from 'axios'
+import { useEffect, useState } from 'react'
 import { BrowserRouter as Router, Link, useLocation } from 'react-router-dom'
-// import { Contract } from 'web3-eth-contract'
-// import CryptoKitties from '../../contracts/CryptoKitties'
-// import Contracts from '../../contracts/Purr'
+import { Contract } from 'web3-eth-contract'
+import Metamask from 'components/Metamask'
+import Claim from 'components/Purr/Claim'
+import CryptoKitties from '../../contracts/CryptoKitties'
+import Contracts from '../../contracts/Purr'
 import Logo from '../Purr/Logo'
 import { AuthProps } from '../../types/auth'
-// import { getContract } from '../../utils'
-// import { AbiFragment } from 'web3'
+import { getContract } from '../../utils'
+import { AbiFragment } from 'web3'
 import { getAssetPath } from '../../utils/assetPath'
 
 // CryptoKitties contracts:
-// const cryptokitties: Contract<AbiFragment[]> = getContract(CryptoKitties.Core.abi, CryptoKitties.Core.addr)
-//const purr: Contract<AbiFragment[]> = getContract(Contracts.Purr.abi, Contracts.Purr.addr)
-// const purrClaim: Contract<AbiFragment[]> = getContract(Contracts.PurrClaim.abi, Contracts.PurrClaim.addr)
+const cryptokitties: Contract<AbiFragment[]> = getContract(CryptoKitties.Core.abi, CryptoKitties.Core.addr)
+const purr: Contract<AbiFragment[]> = getContract(Contracts.Purr.abi, Contracts.Purr.addr)
+const purrClaim: Contract<AbiFragment[]> = getContract(Contracts.PurrClaim.abi, Contracts.PurrClaim.addr)
+const { VITE_APP_ENDPOINT } = import.meta.env
 
-const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn: walletAddress, BASE_URL }) => {
-    // const [purrClaimBalance, setPurrClaimBalance] = useState<string | undefined>(undefined)
-    // const [purrBalance, setPurrBalance] = useState<string | undefined>(undefined)
+const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn, token, BASE_URL }) => {
+    const [purrClaimBalance, setPurrClaimBalance] = useState<string | undefined>(undefined)
+    const [purrBalance, setPurrBalance] = useState<string | undefined>(undefined)
 
-    // useEffect(() => {
-    //     const getContractBalance = async () => {
-    //         const balanceOfPurrClaimContract = await purr.methods.balanceOf(Contracts.PurrClaim.addr).call()
-    //         const balanceOf = await purr.methods.balanceOf(walletAddress).call()
-    //         if (balanceOf && balanceOfPurrClaimContract) {
-    //             setPurrClaimBalance(balanceOfPurrClaimContract.toString())
-    //             setPurrBalance(balanceOf.toString())
-    //         }
-    //     }
-    //     if (walletAddress) {
-    //         getContractBalance()
-    //     }
-    // }, [walletAddress])
+    useEffect(() => {
+        const getPurrClaimBalance = async () => {
+            const { data: { balance } } = await axios.get(`${VITE_APP_ENDPOINT}purr/balances/${Contracts.PurrClaim.addr}`)
+            setPurrClaimBalance(balance.toString())
+        }
+        const getUserBalance = async () => {
+            const balanceOf = await purr.methods.balanceOf(loggedIn).call()
+            if (balanceOf) {
+                setPurrBalance(balanceOf.toString())
+            }
+        }
+        if (loggedIn) {
+            getUserBalance()
+        }
+        getPurrClaimBalance()
+    }, [loggedIn])
 
     const getLink = (linkText: string) => {
         const links = {
@@ -129,8 +136,11 @@ const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn: w
                 </Styled.ImageGrid2>
             </Styled.Main>
             <Styled.Main>
-                <h2>Coming soon</h2>
+                <Claim walletAddress={loggedIn} {...{ cryptokitties, purrClaim, purrBalance, purrClaimBalance, handleSignIn }} />
             </Styled.Main>
+            <Styled.MetamaskContainer>
+                <Metamask {...{ loggedIn, handleSignIn, handleSignOut, token, BASE_URL }} tokenId={undefined} />
+            </Styled.MetamaskContainer>
         </Router>
     )
 }

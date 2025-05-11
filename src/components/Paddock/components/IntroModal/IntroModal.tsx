@@ -89,7 +89,13 @@ const IntroModal: React.FC<IntroModalProps> = ({
                         </a>
                     </Styled.MintCTA>
                 )}
-                <Metamask {...{ handleSignIn, handleSignOut, BASE_URL }} loggedIn={loggedIn} />
+                <br /><br />
+                <Styled.Title>Live from the Paddock</Styled.Title>
+                <blockquote className="twitter-tweet"><p lang="en" dir="ltr">Live from the Paddock... 🐎<a href="https://t.co/nugFXEuVmU">https://t.co/nugFXEuVmU</a></p>&mdash; Kitty.International (@KittyIntl) <a href="https://twitter.com/KittyIntl/status/1921542994861105500?ref_src=twsrc%5Etfw">May 11, 2025</a></blockquote>
+                <Styled.Metamask>
+                    <Metamask {...{ handleSignIn, handleSignOut, BASE_URL }} loggedIn={loggedIn} />
+                </Styled.Metamask>
+                
             </Styled.ModalContent>
         </Styled.Overlay>
     );

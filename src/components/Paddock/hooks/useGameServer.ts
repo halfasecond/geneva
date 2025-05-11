@@ -45,6 +45,7 @@ interface GameServerState {
     removeNotification: (id: string) => void;
     addMessage: (message: string) => void;
     upgradeStable?: (stable: number) => void;
+    voteForTractor?: (direction: 'left' | 'right') => void;
 }
 
 // Default state for view mode
@@ -68,7 +69,8 @@ const defaultState: GameServerState = {
     scanTrait: () => {},
     removeNotification: () => {},
     addMessage: () => {},
-    upgradeStable: () => {}
+    upgradeStable: () => {},
+    voteForTractor: () => {}
 };
 
 interface GameSettings {
@@ -90,6 +92,7 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
     });
     const [block, setBlock] = useState(undefined);
     const [scareCityState, setScareCityState] = useState<any>(null);
+    const [greaterTractorState, setGreaterTractorState] = useState<any>(null);
     const [messages, setMessages] = useState<Message[]>([]);
     const [notifications, setNotifications] = useState<any[]>([
         // { 
@@ -193,6 +196,14 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
             };
 
             const handleScareCityReset = (data: any) => {};
+
+            const handleGreaterTractorState = (state: any) => {
+                setGreaterTractorState(state);
+            };
+
+            const handleGreaterTractorResults = (data: any) => {
+                handleNotification(data);
+            };
             const handleTraitFound = (data: any) => {
                 ghostFound();
                 console.log(data)
@@ -239,6 +250,8 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
             socket.on('scarecity:reset', handleScareCityReset);
             socket.on('scarecity:traitFound', handleTraitFound);
             socket.on('scarecity:becameGhost', handleBecameGhost);
+            socket.on('greaterTractor:state', handleGreaterTractorState);
+            socket.on('greaterTractor:results', handleGreaterTractorResults);
             socket.on('notification', (data: any) => handleNotification(data));
             socket.on('messages', handleMessages);
 
@@ -258,6 +271,8 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
                 socket.off('scarecity:reset', handleScareCityReset);
                 socket.off('scarecity:traitFound', handleTraitFound);
                 socket.off('scarecity:becameGhost', handleBecameGhost);
+                socket.off('greaterTractor:state', handleGreaterTractorState);
+                socket.off('greaterTractor:results', handleGreaterTractorResults);
                 socket.removeAllListeners();
                 socket.disconnect();
                 socketRef.current = null;
@@ -308,6 +323,13 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
         }
     }, [connected]);
 
+    const voteForTractor = useCallback((direction: 'left' | 'right') => {
+        if (socketRef.current?.connected && connected) {
+            socketRef.current.emit('greaterTractor:vote', { direction });
+            console.log(`Voted for ${direction} tractor`);
+        }
+    }, [connected]);
+
     if (!tokenId) {
         return {
             ...defaultState,
@@ -315,9 +337,11 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
             connected,
             metrics,
             scareCityState,
+            greaterTractorState,
             messages,
             block: null,
-            scanTrait
+            scanTrait,
+            voteForTractor
         };
     }
 
@@ -339,11 +363,13 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
         metrics,
         block,
         scareCityState,
+        greaterTractorState,
         scanTrait,
         notifications,
         removeNotification,
         messages,
         addMessage,
-        upgradeStable
+        upgradeStable,
+        voteForTractor
     };
 }

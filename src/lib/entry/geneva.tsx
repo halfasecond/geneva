@@ -1,24 +1,11 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import App from 'components/App'
 import './style/index.css'
-
-function Geneva() {
-  return (
-    <div style={{ 
-      display: 'flex', 
-      justifyContent: 'center', 
-      alignItems: 'center', 
-      height: '100vh',
-      fontSize: '2rem',
-      fontWeight: 'bold'
-    }}>
-      <p>Hello!</p>
-    </div>
-  )
-}
+import Geneva from 'components/App/Geneva'
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <Geneva />
-  </StrictMode>,
+    <StrictMode>
+        <App ViewComponent={Geneva} />
+    </StrictMode>,
 )

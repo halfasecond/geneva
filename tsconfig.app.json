@@ -23,8 +23,9 @@
       "src/*": ["./src/*"],
       "contracts/*": ["./src/contracts/*"],
       "components/*": ["./src/components/*"],
-      "pages/*": ["./src/pages/*"],
+      "style": ["./src/style"],
       "style/*": ["./src/style/*"],
+      "types/*": ["./src/types/*"],
       "utils/*": ["./src/utils/*"],
     }
   },

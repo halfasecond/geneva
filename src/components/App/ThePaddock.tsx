@@ -42,7 +42,9 @@ const AppView: React.FC<AuthProps> = ({
                     currentHorse={tokenId}
                 />
             )}
-            <Metamask {...{ handleSignIn, handleSignOut, token, tokenId, BASE_URL }} loggedIn={walletAddress} />
+            <Styled.MetamaskContainer>
+                <Metamask {...{ handleSignIn, handleSignOut, token, tokenId, BASE_URL }} loggedIn={walletAddress} />
+            </Styled.MetamaskContainer>
             <Styled.Main>
                 {nfts.length && (
                     <Game 

@@ -28,5 +28,8 @@ RUN npx playwright install
 # Expose the port that the app will run on (optional)
 EXPOSE 3131
 
+# Hardhat dev chain
+EXPOSE 8545
+
 # Default command to keep the container running
 CMD ["tail", "-f", "/dev/null"]
