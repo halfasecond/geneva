@@ -3,8 +3,7 @@ import axios from 'axios'
 import { useEffect, useState } from 'react'
 import { BrowserRouter as Router, Link, useLocation } from 'react-router-dom'
 import { Contract } from 'web3-eth-contract'
-import Metamask from 'components/Metamask'
-import Claim from 'components/Purr/Claim'
+// import Metamask from 'components/Metamask'
 import CryptoKitties from '../../contracts/CryptoKitties'
 import Contracts from '../../contracts/Purr'
 import Logo from '../Purr/Logo'
@@ -136,11 +135,11 @@ const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn, t
                 </Styled.ImageGrid2>
             </Styled.Main>
             <Styled.Main>
-                <Claim walletAddress={loggedIn} {...{ cryptokitties, purrClaim, purrBalance, purrClaimBalance, handleSignIn }} />
+                <h2>Coming soon</h2>
             </Styled.Main>
-            <Styled.MetamaskContainer>
+            {/* <Styled.MetamaskContainer>
                 <Metamask {...{ loggedIn, handleSignIn, handleSignOut, token, BASE_URL }} tokenId={undefined} />
-            </Styled.MetamaskContainer>
+            </Styled.MetamaskContainer> */}
         </Router>
     )
 }

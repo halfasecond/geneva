@@ -23,6 +23,7 @@ export const ModalContent = styled.div`
     width: 90%;
     text-align: center;
     position: relative;
+    overflow: auto;
 
     p {
         margin-bottom: 15px;
