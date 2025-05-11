@@ -1,10 +1,20 @@
 import * as Styled from './style'
 import { AuthProps } from 'types/auth'
 import { BrowserRouter as Router, Link } from 'react-router-dom'
+import { useSocket } from './hooks/useSocket'
+import { useEffect } from 'react';
 
 const { VITE_APP_CDN_URL } = import.meta.env;
 
-const Geneva: React.FC<AuthProps> = ({ BASE_URL }) => {
+const Geneva: React.FC<AuthProps> = ({ token, BASE_URL }) => {
+    const { 
+        block,
+    } = useSocket({ token });
+
+    useEffect(() => {
+        console.log(block)
+    }, [block])
+
     return (
         <Router basename={BASE_URL.startsWith('./') ? '/' : BASE_URL}>
             <Styled.Main>

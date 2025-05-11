@@ -37,6 +37,10 @@ export const ModalContent = styled.div`
             }
         }
     }
+
+    .twitter-tweet {
+        margin: 0 auto;
+    }
 `;
 
 export const Metamask = styled.div`
