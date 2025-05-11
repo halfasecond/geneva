@@ -18,7 +18,7 @@
     "preview:purr": "VITE_APP=purr yarn vite preview --outDir dist/purr",
     "preview:paddock": "VITE_APP=chained-horse yarn vite preview --outDir dist/paddock",
     "serve:purr": "serve -s dist/purr -l 7001",
-    "serve:paddock": "serve -s dist/paddock -l 7002",
+    "serve:paddock": "serve -s dist/paddock -l 3131",
     "lint": "yarn eslint .",
     "test:browser": "yarn vitest --workspace=vitest.workspace.ts",
     "test:node": "yarn vitest --workspace=vitest.workspace.node.ts",
