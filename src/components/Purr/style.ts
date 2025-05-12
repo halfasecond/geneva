@@ -112,7 +112,6 @@ export const Main = styled.main`
             margin-top: 525vh;
         }
         min-height: 100vh;
-        background-image: url('https://cdn.halfasecond.com/images/purr/bg.svg');
         background-size: 100% auto;
         justify-content: flex-end;
         > h2 {
