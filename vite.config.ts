@@ -48,7 +48,7 @@ export default defineConfig(({ command, mode }) => {
         name: 'html-transform',
         transformIndexHtml(html) {
             return html.replace('__APP_TITLE__', 
-              process.env.VITE_APP === 'paddock'
+              process.env.VITE_APP === 'chained-horse'
                 ? 'Unchained Paddock - a home for your ChainedHorse NFTs'
                 : process.env.VITE_APP === 'purr'
                   ? '$PURR - a new ERC20 by kitty.international'
