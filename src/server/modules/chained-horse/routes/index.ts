@@ -1,6 +1,7 @@
 import { Express } from 'express';
 import { Model } from 'mongoose';
 import auth from './auth';
+import game from './game'
 import nfts from './nfts';
 import owners from './owners';
 
@@ -18,6 +19,7 @@ const routes = (app: Express, urlPrepend: string | undefined, Models: Models) =>
     app.use(`${url}auth`, auth(Models));
     app.use(`${url}nfts`, nfts(Models));
     app.use(`${url}owners`, owners(Models));
+    app.use(`${url}game`, game(Models));
 };
 
 export default routes;
