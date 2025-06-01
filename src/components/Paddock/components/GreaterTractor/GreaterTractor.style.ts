@@ -36,18 +36,20 @@ export const TractorsContainer = styled.div`
   margin: 20px 0;
 `;
 
-export const TractorWrapper = styled.div<{ selected?: boolean }>`
+export const TractorWrapper = styled.div<{ selected?: boolean; disabled?: boolean }>`
   display: flex;
   flex-direction: column;
   align-items: center;
-  cursor: pointer;
+  position: relative;
+  cursor: ${props => props.disabled ? 'default' : 'pointer'};
   padding: 10px;
   border-radius: 10px;
   background-color: ${props => props.selected ? 'rgba(139, 69, 19, 0.2)' : 'transparent'};
   border: ${props => props.selected ? '2px solid #8b4513' : '2px solid transparent'};
+  opacity: ${props => props.disabled && !props.selected ? 0.5 : 1};
   
   &:hover {
-    background-color: rgba(139, 69, 19, 0.1);
+    background-color: ${props => props.disabled ? 'transparent' : 'rgba(139, 69, 19, 0.1)'};
   }
   
   p {

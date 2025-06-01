@@ -6,6 +6,7 @@ import createAccountModel from './accounts';
 import createMessageModel from './messages';
 import createGameStateModel from './gameState';
 import createRaceModel from './races';
+import createGreaterTractorGameModel from './greaterTractorGames';
 import createScareCityGameModel from './scareCityGames';
 import createHayModel from './hay'
 
@@ -17,6 +18,7 @@ interface Models {
     Message: Model<any>;
     GameState: Model<any>;
     Race: Model<any>;
+    GreaterTractorGame: Model<any>;
     ScareCityGame: Model<any>;
     Hay: Model<any>;
     [key: string]: Model<any>;
@@ -30,6 +32,7 @@ export default (prefix: string, db: Connection): Models => ({
     Message: createMessageModel(prefix, db),
     GameState: createGameStateModel(prefix, db),
     Race: createRaceModel(prefix, db),
+    GreaterTractorGame: createGreaterTractorGameModel(prefix, db),
     ScareCityGame: createScareCityGameModel(prefix, db),
     Hay: createHayModel(prefix, db),
 });

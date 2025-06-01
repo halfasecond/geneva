@@ -173,7 +173,7 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
     if (turtles.length > 0) {
         console.log(`🐢 Creating Turtle of Speed`);
         const { y } = getRandomPosition(RESTRICTED_AREAS, WORLD_WIDTH, WORLD_HEIGHT);
-        addTurtle(namespace, -100, y, turtles[0].tokenId);
+        // addTurtle(namespace, -100, y, turtles[0].tokenId);
     }
 
     // Define movement behavior configuration for different actor types
@@ -352,27 +352,55 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
                 const position = (existingPlayer?.position && existingPlayer?.race)
                     ? existingPlayer?.position
                     : { x: 100, y: 150, direction: 'right' as const } // Default spawn position for new players and players or haven't finished the race
-                const game = (existingPlayer?.game)
-                    ? existingPlayer.game
-                    : { level: 0, greaterTractor: null, stable: 0 }
+                // Create a completely new game object
+                let game = {
+                    level: existingPlayer?.game?.level || 0,
+                    stable: existingPlayer?.game?.stable || 0,
+                    greaterTractor: JSON.stringify({ vote: null }) // Stringify for database with explicit null
+                };
+                
+                // Check if player has already voted in the current game
+                const existingVote = greaterTractorState.getState().playerVotes[walletAddress.toLowerCase()];
+                
+                if (existingVote) {
+                    // Update the player's game object with their vote (as a string)
+                    game.greaterTractor = JSON.stringify({ vote: existingVote.direction });
+                }
 
+                // Create a simple game object with just the data we need
                 const player = addPlayer(namespace, socket.id, position, tokenId, walletAddress, existingPlayer?.race, 0, game);
+                
                 setPlayerConnected(namespace, player.id);
                 socket.emit('newEthBlock', latestEthBlock)
+                
                 // Save to GameState collection
-                await Models.GameState.findOneAndUpdate(
-                    { walletAddress: walletAddress.toLowerCase() },
-                    {
-                        $set: {
-                            tokenId,
-                            position,
-                            connected: true,
-                            lastSeen: new Date(),
-                            race: undefined
+                try {
+                    // Create a simple object with just the data we need
+                    const update = {
+                        tokenId,
+                        position: {
+                            x: position.x,
+                            y: position.y,
+                            direction: position.direction
+                        },
+                        connected: true,
+                        lastSeen: new Date(),
+                        race: undefined,
+                        game: {
+                            level: game.level,
+                            stable: game.stable,
+                            greaterTractor: game.greaterTractor
                         }
-                    },
-                    { upsert: true, new: true }
-                );
+                    };
+                    
+                    await Models.GameState.findOneAndUpdate(
+                        { walletAddress: walletAddress.toLowerCase() },
+                        { $set: update },
+                        { upsert: true, new: true }
+                    );
+                } catch (error) {
+                    console.error(`Error saving player to database:`, error);
+                }
             } catch (error) {
                 console.error('Join error:', error);
                 socket.emit('error', { message: 'Failed to join game' });
@@ -380,6 +408,7 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
             
             // Send join confirmation, game settings, static actors, and initial state
             socket.emit('player:joined');
+            namespace.emit('player:joined', { id: socket.id }); // Emit to all modules that a player has joined, but only pass the socket ID
             socket.emit('game:settings', gameSettings);  // Send game settings
             socket.emit('static:actors', getStaticActors(namespace));  // Send static actors once
             namespace.emit('world:state', getWorldState(namespace));  // Broadcast dynamic actors
@@ -434,15 +463,60 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
             }
         });
 
-        socket.on('greaterTractor:vote', ({ direction }: { direction: 'left' | 'right' }) => {
+        socket.on('greaterTractor:vote', async ({ direction }: { direction: 'left' | 'right' }) => {
             const player = getPlayerBySocket(namespace, socket.id);
-            if (player && player.walletAddress) {
-                greaterTractorState.handleVote(
-                    player.walletAddress,
-                    player.id,
-                    direction,
-                    latestEthBlock.blocknumber
+            if (!player || !player.walletAddress) {
+                return;
+            }
+            
+            // Check if player has already voted in the current game
+            const existingVote = greaterTractorState.getState().playerVotes[player.walletAddress.toLowerCase()];
+            
+            if (existingVote) {
+                return;
+            }
+            
+            // Create a completely new game object with the vote (as a string)
+            // Make sure to create a new object and not modify the existing one
+            const newGame = {
+                level: player.game?.level || 0,
+                stable: player.game?.stable || 0,
+                greaterTractor: JSON.stringify({
+                    vote: direction
+                })
+            };
+            
+            // Assign the new game object to the player
+            player.game = newGame;
+            
+            // Handle the vote in the game state
+            await greaterTractorState.handleVote(
+                player.walletAddress,
+                player.id,
+                direction,
+                latestEthBlock.blocknumber
+            );
+            
+            // Save the player's game state to the database
+            try {
+                // Create a simple object with just the data we need
+                const gameUpdate = {
+                    level: player.game.level,
+                    stable: player.game.stable,
+                    greaterTractor: player.game.greaterTractor
+                };
+                
+                await Models.GameState.findOneAndUpdate(
+                    { tokenId: player.id, walletAddress: player.walletAddress.toLowerCase() },
+                    {
+                        $set: {
+                            game: gameUpdate
+                        }
+                    },
+                    { upsert: true, new: true }
                 );
+            } catch (err) {
+                console.error('Error saving player game state:', err);
             }
         });
 

@@ -67,7 +67,6 @@ const runEventsBus = (web3: Web3, emitter: EventEmitter) => {
         try {
             const subscription = await web3.eth.subscribe('newHeads')
             subscription.on('data', (blockHeader: BlockHeaderOutput) => {
-                console.log('emitting block', blockHeader)
                 emitter.emit('newEthBlock', blockHeader)
             })
             subscription.on('error', (error: Error) => console.error('Error in block header subscription:', error))

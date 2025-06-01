@@ -39,6 +39,8 @@ interface GameServerState {
     metrics: any;
     block: any;
     scareCityState: any;
+    greaterTractorState: any;
+    greaterTractorPlayerState: any;
     scanTrait: ScanTraitFn;
     messages: Message[];
     notifications?: any[];
@@ -62,6 +64,8 @@ const defaultState: GameServerState = {
         smoothing: 0.1
     },
     scareCityState: null,
+    greaterTractorState: null,
+    greaterTractorPlayerState: { hasVoted: false, vote: undefined },
     messages: [],
     notifications: [],
     metrics: {},
@@ -93,9 +97,14 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
     const [block, setBlock] = useState(undefined);
     const [scareCityState, setScareCityState] = useState<any>(null);
     const [greaterTractorState, setGreaterTractorState] = useState<any>(null);
+    const [greaterTractorPlayerState, setGreaterTractorPlayerState] = useState<any>({
+        hasVoted: false,
+        vote: undefined,
+        loading: false
+    });
     const [messages, setMessages] = useState<Message[]>([]);
     const [notifications, setNotifications] = useState<any[]>([
-        // { 
+        // {
         //     id: "1741501270328-0uu5kh8",
         //     time: 14251,
         //     tokenId: 21,
@@ -108,6 +117,17 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
     const lastStateUpdate = useRef<number>(performance.now());
     const reconnectAttempts = useRef(0);
     const maxReconnectAttempts = 5;
+    
+    // Handle notification function (moved outside useEffect for reuse)
+    const handleNotification = useCallback((data: any) => {
+        const _data = {
+            ...data,
+            id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
+        };
+        setNotifications((prev) => {
+            return [...prev, _data]
+        })
+    }, []);
 
     // Initialize socket connection
     useEffect(() => {
@@ -201,6 +221,34 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
                 setGreaterTractorState(state);
             };
 
+            const handleGreaterTractorPlayerState = (state: any) => {
+                // Update state and clear loading
+                setGreaterTractorPlayerState({
+                    hasVoted: state.hasVoted,
+                    vote: state.vote,
+                    loading: false
+                });
+                
+                // If the player has voted, show a notification
+                if (state.hasVoted && state.vote) {
+                    handleNotification({
+                        type: 'greater_tractor_vote',
+                        direction: state.vote,
+                        message: `Your vote for the ${state.vote} tractor has been recorded!`
+                    });
+                }
+            };
+
+            const handleGreaterTractorReset = (data: any) => {
+                console.log('Greater Tractor game reset');
+                // Reset player's vote state
+                setGreaterTractorPlayerState({
+                    hasVoted: false,
+                    vote: undefined,
+                    loading: false
+                });
+            };
+
             const handleGreaterTractorResults = (data: any) => {
                 handleNotification(data);
             };
@@ -218,15 +266,7 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
                 setMessages(data)
             }
 
-            const handleNotification = (data: any) => {
-                const _data = {
-                    ...data,
-                    id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
-                };
-                setNotifications((prev) => {
-                    return [...prev, _data]
-                })
-            }
+            // Use the handleNotification function defined outside
 
             const handleError = (error: { message: string }) => {
                 console.error('Game server error:', error.message);
@@ -251,6 +291,8 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
             socket.on('scarecity:traitFound', handleTraitFound);
             socket.on('scarecity:becameGhost', handleBecameGhost);
             socket.on('greaterTractor:state', handleGreaterTractorState);
+            socket.on('greaterTractor:playerState', handleGreaterTractorPlayerState);
+            socket.on('greaterTractor:reset', handleGreaterTractorReset);
             socket.on('greaterTractor:results', handleGreaterTractorResults);
             socket.on('notification', (data: any) => handleNotification(data));
             socket.on('messages', handleMessages);
@@ -272,6 +314,8 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
                 socket.off('scarecity:traitFound', handleTraitFound);
                 socket.off('scarecity:becameGhost', handleBecameGhost);
                 socket.off('greaterTractor:state', handleGreaterTractorState);
+                socket.off('greaterTractor:playerState', handleGreaterTractorPlayerState);
+                socket.off('greaterTractor:reset', handleGreaterTractorReset);
                 socket.off('greaterTractor:results', handleGreaterTractorResults);
                 socket.removeAllListeners();
                 socket.disconnect();
@@ -325,8 +369,32 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
 
     const voteForTractor = useCallback((direction: 'left' | 'right') => {
         if (socketRef.current?.connected && connected) {
+            // Check if player has already voted or if a vote is in progress
+            if (greaterTractorPlayerState.hasVoted || greaterTractorPlayerState.loading) {
+                console.log(`Already voted for ${greaterTractorPlayerState.vote} tractor or vote in progress`);
+                // Add notification to remind the user of their vote
+                if (greaterTractorPlayerState.hasVoted) {
+                    handleNotification({
+                        type: 'greater_tractor_vote',
+                        direction: greaterTractorPlayerState.vote,
+                        message: `You voted for the ${greaterTractorPlayerState.vote} tractor`
+                    });
+                }
+                return;
+            }
+            
+            // Set loading state
+            setGreaterTractorPlayerState((prev: any) => ({
+                ...prev,
+                loading: true
+            }));
+            
+            // Send vote to server
             socketRef.current.emit('greaterTractor:vote', { direction });
-            console.log(`Voted for ${direction} tractor`);
+            console.log(`Voting for ${direction} tractor...`);
+            
+            // The server will send back the updated player state via the greaterTractor:playerState event
+            // We don't update the local state here, we wait for the server to confirm
         }
     }, [connected]);
 
@@ -338,6 +406,7 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
             metrics,
             scareCityState,
             greaterTractorState,
+            greaterTractorPlayerState,
             messages,
             block: null,
             scanTrait,
@@ -364,6 +433,7 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
         block,
         scareCityState,
         greaterTractorState,
+        greaterTractorPlayerState,
         scanTrait,
         notifications,
         removeNotification,

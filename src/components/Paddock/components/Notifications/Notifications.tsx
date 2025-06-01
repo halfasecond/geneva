@@ -11,10 +11,10 @@ interface NotificationData {
 interface Notification {
     id: string;
     type: string;
-    title: string;
-    message: string;
-    icon: string;
-    timestamp: string;
+    title?: string;
+    message?: string;
+    icon?: string;
+    timestamp?: string;
     data?: NotificationData;
     time? : number;
     record?: boolean;
@@ -22,6 +22,9 @@ interface Notification {
     scanType?: string; // e.g. "background color"
     scanResult?: string; // e.g. "martini with alchohol"
     stable?: number; // e.g. stable_upgrade level 2
+    winner?: string; // For greater_tractor_win notifications
+    reward?: string; // For greater_tractor_win notifications
+    direction?: string; // For greater_tractor_vote notifications
 }
 
 interface NotificationsProps {
@@ -78,6 +81,10 @@ const Notifications: React.FC<NotificationsProps> = ({
                 return <div className={'ghost'} style={{ backgroundImage: `url(${nfts.find(nft => nft.tokenId === 60).svg}`}} />;
             case 'newbIslandRace':
                 return <div className={'horse'} style={{ backgroundImage: `url(${nfts.find(nft => nft.tokenId === tokenId).svg}`}} />;
+            case 'greater_tractor_win':
+                return '🚜'; // Tractor emoji
+            case 'greater_tractor_vote':
+                return '🗳️'; // Ballot box emoji
             // Add cases for other notification types as needed
             default:
                 return '🔔';
@@ -116,6 +123,18 @@ const Notifications: React.FC<NotificationsProps> = ({
                             <p><b>Horse #{notification.tokenId}</b> won the <b>{formatNotificationType(notification.type)}</b> with a time of <b>{notification.time / 1000}s</b></p>
                         </Styled.Content>
                     )
+                ) : null;
+            case 'greater_tractor_win':
+                return notification.winner && notification.reward ? (
+                    <Styled.Content>
+                        <p>You voted for the <b>{notification.winner}</b> tractor and won <span dangerouslySetInnerHTML={{ __html: notification.reward }} />!</p>
+                    </Styled.Content>
+                ) : null;
+            case 'greater_tractor_vote':
+                return notification.direction ? (
+                    <Styled.Content>
+                        <p>{notification.message || `Your vote for the <b>${notification.direction}</b> tractor has been recorded!`}</p>
+                    </Styled.Content>
                 ) : null;
             // Add cases for other notification types as needed
             default:

@@ -14,6 +14,7 @@ interface GreaterTractorProps {
   player?: any;
   gameData?: any;
   block?: any;
+  playerState?: any; // Add playerState prop
   onElementDimensions?: (dimensions: Record<string, GreaterTractorDimensions>) => void;
   onVote?: (direction: 'left' | 'right') => void;
 }
@@ -24,6 +25,7 @@ const GreaterTractor: React.FC<GreaterTractorProps> = ({
   player,
   gameData,
   block,
+  playerState,
   onElementDimensions,
   onVote
 }): JSX.Element => {
@@ -70,14 +72,17 @@ const GreaterTractor: React.FC<GreaterTractorProps> = ({
     }
   }, [left, top, onElementDimensions]);
 
-  // Get player's current vote
-  const playerVote = player?.game?.greaterTractor?.vote;
+  // Get player's current vote and loading state from playerState
+  const playerVote = playerState?.vote;
+  const hasVoted = playerState?.hasVoted || false;
+  const isLoading = playerState?.loading || false;
   
   // Calculate time until next reset
   const blocksUntilReset = gameData?.nextReset ? gameData.nextReset - (block?.blocknumber || 0) : 0;
 
   const handleVote = (direction: 'left' | 'right') => {
-    if (onVote) {
+    // Only allow voting if the player hasn't voted yet and no vote is in progress
+    if (onVote && !hasVoted && !isLoading) {
       onVote(direction);
     }
   };
@@ -86,33 +91,45 @@ const GreaterTractor: React.FC<GreaterTractorProps> = ({
     <Styled.Container ref={containerRef} style={{ left, top }}>
       <Styled.Header>
         <h2>The Greater Tractor</h2>
-        <p>Vote for the greater tractor! Winners get 5 <b>$HAY</b>.</p>
+        <p>What is the greater tractor? Winners get 5 <b>$HAY</b>.</p>
         {blocksUntilReset > 0 && (
           <p>Next reset in {blocksUntilReset} blocks</p>
         )}
       </Styled.Header>
       
       <Styled.TractorsContainer>
-        <Styled.TractorWrapper 
+        <Styled.TractorWrapper
           ref={leftTractorRef}
           onClick={() => handleVote('left')}
           selected={playerVote === 'left'}
+          disabled={hasVoted || isLoading}
         >
           <Styled.Tractor direction="right">🚜</Styled.Tractor>
-          <p>Vote Left</p>
+          <p>The tractor on the left</p>
+          {playerVote === 'left' && <span style={{ position: 'absolute', top: '10px', right: '10px', fontSize: '24px' }}>✓</span>}
+          {isLoading && !playerVote && <span style={{ position: 'absolute', top: '10px', right: '10px', fontSize: '24px' }}>⏳</span>}
         </Styled.TractorWrapper>
         
-        <Styled.TractorWrapper 
+        <Styled.TractorWrapper
           ref={rightTractorRef}
           onClick={() => handleVote('right')}
           selected={playerVote === 'right'}
+          disabled={hasVoted || isLoading}
         >
           <Styled.Tractor direction="left">🚜</Styled.Tractor>
-          <p>Vote Right</p>
+          <p>The tractor on the right</p>
+          {playerVote === 'right' && <span style={{ position: 'absolute', top: '10px', right: '10px', fontSize: '24px' }}>✓</span>}
+          {isLoading && !playerVote && <span style={{ position: 'absolute', top: '10px', right: '10px', fontSize: '24px' }}>⏳</span>}
         </Styled.TractorWrapper>
       </Styled.TractorsContainer>
       
-      {playerVote && (
+      {isLoading && !hasVoted && (
+        <Styled.VoteStatus>
+          Submitting your vote...
+        </Styled.VoteStatus>
+      )}
+      
+      {hasVoted && playerVote && (
         <Styled.VoteStatus>
           You voted for the {playerVote} tractor
         </Styled.VoteStatus>

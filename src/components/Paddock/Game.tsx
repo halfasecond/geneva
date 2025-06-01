@@ -80,6 +80,7 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
         block,
         scareCityState,
         greaterTractorState,
+        greaterTractorPlayerState,
         scanTrait,
         notifications,
         messages,
@@ -461,6 +462,7 @@ const Game: React.FC<Props> = ({ tokenId, token, nfts }) => {
                             top={1850}
                             player={player}
                             gameData={greaterTractorState}
+                            playerState={greaterTractorPlayerState}
                             block={block}
                             onElementDimensions={(dimensions: Record<string, BuildingDimensions>) => {
                                 setGreaterTractorDimensions(dimensions);
