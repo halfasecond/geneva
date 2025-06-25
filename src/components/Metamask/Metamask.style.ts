@@ -1,5 +1,5 @@
 import styled from 'styled-components'
-import { gutters } from 'style/config'
+import { grey, gutters } from 'style/config'
 
 export const Button = styled.button`
     background-color: #EEE;
@@ -16,4 +16,6 @@ export const Button = styled.button`
     > img {
         border-radius: 4px;
     }
+    box-shadow: 0 0 24px ${grey[400]};
+    border: 1px solid ${grey[400]};
 `

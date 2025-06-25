@@ -1,5 +1,5 @@
 import styled from 'styled-components'
-import { breaks, fontSize, gutters, headingSize } from 'style/config'
+import { breaks, fontSize, grey, gutters, headingSize } from 'style/config'
 
 export const MetamaskContainer = styled.div`
     position: fixed;
@@ -20,12 +20,45 @@ export const Main = styled.main`
     min-height: 100%;
     position: absolute;
     height: 100vh;
+    
     > h3 {
         margin-top: ${gutters['xxl']};
         font-size: 36px;
         font-family: funkydori, sans-serif;
         text-shadow: 2px 2px 3px rgba(255,255,255,0.5);
         color: #333;
+    }
+    &:nth-of-type(1) {
+        > * {
+            &:first-of-type {
+                padding: ${gutters['lg']} ${gutters['xl']};
+                border-radius: ${gutters['xs']};
+                background-color: rgba(0,0,0,0.7);
+                margin-top: 380px; 
+                position: fixed;
+                text-align: center;
+                box-shadow: 0 0 24px ${grey[900]};
+                > * {
+                    margin-bottom: ${gutters['md']};
+                    &:last-child {
+                        margin-bottom: 0;
+                    }
+                    > a {
+                        &:first-of-type {
+                            display: none;
+                            @media (min-width: ${breaks['md']}) {
+                                display: inline-block;
+                            }
+                        }
+                        &.mobile {
+                            @media (min-width: ${breaks['md']}) {
+                               display: none;
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
     &:nth-of-type(2) {
         background-color: #FFF;
@@ -52,6 +85,9 @@ export const Main = styled.main`
             max-width: 800px;
             margin: 0 5% ${gutters['md']};
             text-align: center;
+            > b {
+                font-weight: bold; 
+            }
         }
     }
     &:nth-of-type(4) {
@@ -82,6 +118,9 @@ export const Main = styled.main`
             }
             > p {
                 margin-bottom: ${gutters['lg']};
+                > b {
+                    font-weight: bold; 
+                }
             }
         }
     }
@@ -113,7 +152,7 @@ export const Main = styled.main`
         }
         min-height: 100vh;
         background-size: 100% auto;
-        justify-content: flex-end;
+        justify-content: center;
         > h2 {
             color: #FFF;
             margin-bottom: ${gutters['xxl']};

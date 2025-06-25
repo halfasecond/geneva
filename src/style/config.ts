@@ -33,7 +33,7 @@ export const fontSize = {
 }
 
 export const headingSize = {
-    lg: '72px',
+    lg: '92px',
 	xl: '108px',
 }
 

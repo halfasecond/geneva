@@ -43,20 +43,20 @@ const modules: ModuleFunction = (app, io, web3, db) => {
     chainfacesModule({ app, io, web3: chainfaceWeb3Connection, db, name: 'chainfaces', prefix: 'cf', deployed: 9314784, increment: 2500, eventsToWatch: ['Transfer'], emitter })
     const twobitbearWeb3Connection = createWeb3Connection(WEB3_SOCKET_URL_TWOBITBEARS || '')
     twobitbearsModule({ app, io, web3: twobitbearWeb3Connection, db, name: 'twobitbears', prefix: 'tbb', deployed: 13385399, increment: 1000, eventsToWatch: ['Transfer'], emitter })
-    //const purrWeb3Connection = createWeb3Connection(WEB3_SOCKET_URL_PURR || '')
+    const purrWeb3Connection = createWeb3Connection(WEB3_SOCKET_URL_PURR || '')
     // Initialize Purr module
-    // purrModule({
-    //     app,
-    //     io,
-    //     web3: purrWeb3Connection,
-    //     db,
-    //     name: 'purr',
-    //     prefix: 'purr',
-    //     deployed: 0,
-    //     increment: 1,
-    //     eventsToWatch: ['Transfer'],
-    //     emitter
-    // });
+    purrModule({
+        app,
+        io,
+        web3: purrWeb3Connection,
+        db,
+        name: 'purr',
+        prefix: 'purr',
+        deployed: 22755367,
+        increment: 1000,
+        eventsToWatch: ['Transfer'],
+        emitter
+    });
 
     runEventsBus(web3, emitter)
 };
@@ -67,7 +67,6 @@ const runEventsBus = (web3: Web3, emitter: EventEmitter) => {
         try {
             const subscription = await web3.eth.subscribe('newHeads')
             subscription.on('data', (blockHeader: BlockHeaderOutput) => {
-                console.log('emitting block', blockHeader)
                 emitter.emit('newEthBlock', blockHeader)
             })
             subscription.on('error', (error: Error) => console.error('Error in block header subscription:', error))

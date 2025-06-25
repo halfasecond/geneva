@@ -16,6 +16,10 @@ interface Module {
             abi: any[];
             addr: string;
         };
+        PurrClaim: {
+            abi: any[];
+            addr: string;
+        };
     };
     Models: Models;
     deployed: number;
@@ -26,31 +30,32 @@ interface Module {
 export const getContractHistory = async (name: string, Module: Module, eventIncludes: string[], web3: any) => {
     const { Contracts, Models, deployed, increment, logEvent } = Module;
     if (VITE_ENABLE_INDEXER === 'true') {
-        console.log('Starting contract history scan:', {
-            name,
-            contract: Contracts.Core.addr,
-            deployed,
-            increment,
-            events: eventIncludes
-        });
-        
         await Promise.all(Object.keys(Contracts).map(async (contractName) => {
-            if (contractName === 'Core') { // Only listen to "Core" events
-                const events = await getPastContractEvents(
-                    `${name}`,
-                    Contracts[contractName].abi,
-                    Contracts[contractName].addr,
-                    deployed,
-                    increment,
-                    Models,
-                    logEvent,
-                    eventIncludes,
-                    web3
-                );
-                console.log(`${name} events indexed - switching to contract subscription`)
-                subscribeToContractEvents(name, Contracts.Core.abi, Contracts.Core.addr, logEvent, eventIncludes, web3);
-            }
+            console.log('Starting contract history scan:', {
+                name,
+                contract: Contracts[contractName].addr,
+                deployed,
+                increment,
+                events: contractName === 'Core' ? eventIncludes : ['Claim']
+            });
+            const _eventIncludes = contractName === 'Core' ? eventIncludes : ['Claim']
+            const events = await getPastContractEvents(
+                `${name}`,
+                Contracts[contractName].abi,
+                Contracts[contractName].addr,
+                deployed,
+                increment,
+                Models,
+                logEvent,
+                _eventIncludes,
+                web3
+            );
+            console.log(`${name} events indexed - switching to contract subscription`)
         }));
+        Object.keys(Contracts).map(async (contractName) => {
+            const _eventIncludes = contractName === 'Core' ? eventIncludes : ['Claim']
+            subscribeToContractEvents(name, Contracts[contractName].abi, Contracts[contractName].addr, logEvent, _eventIncludes, web3);
+        })
     } else {
         console.log(`${name} events not indexed - switching to contract subscription`)
         subscribeToContractEvents(name, Contracts.Core.abi, Contracts.Core.addr, logEvent, eventIncludes, web3);

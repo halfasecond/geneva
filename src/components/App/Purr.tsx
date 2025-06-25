@@ -3,7 +3,9 @@ import axios from 'axios'
 import { useEffect, useState } from 'react'
 import { BrowserRouter as Router, Link, useLocation } from 'react-router-dom'
 import { Contract } from 'web3-eth-contract'
-// import Metamask from 'components/Metamask'
+import Metamask from 'components/Metamask'
+import Balance from '../Purr/Balance'
+import Claim from '../Purr/Claim'
 import CryptoKitties from '../../contracts/CryptoKitties'
 import Contracts from '../../contracts/Purr'
 import Logo from '../Purr/Logo'
@@ -16,23 +18,37 @@ import { getAssetPath } from '../../utils/assetPath'
 const cryptokitties: Contract<AbiFragment[]> = getContract(CryptoKitties.Core.abi, CryptoKitties.Core.addr)
 const purr: Contract<AbiFragment[]> = getContract(Contracts.Purr.abi, Contracts.Purr.addr)
 const purrClaim: Contract<AbiFragment[]> = getContract(Contracts.PurrClaim.abi, Contracts.PurrClaim.addr)
-const { VITE_APP_ENDPOINT } = import.meta.env
+const { VITE_APP_ENDPOINT, VITE_APP_CONTRACT_PURR, VITE_APP_CONTRACT_PURR_CLAIM } = import.meta.env
 
 const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn, token, BASE_URL }) => {
     const [purrClaimBalance, setPurrClaimBalance] = useState<string | undefined>(undefined)
-    const [purrBalance, setPurrBalance] = useState<string | undefined>(undefined)
+    const [balance, setBalance] = useState<string | undefined>(undefined)
+
+    const getPurrClaimBalance = async () => {
+        try {
+            if (loggedIn) {
+                const balanceOf = await purr.methods.balanceOf(VITE_APP_CONTRACT_PURR_CLAIM).call()
+                setPurrClaimBalance(balanceOf.toString())
+            } else {
+                const { data: { balance } } = await axios.get(`${VITE_APP_ENDPOINT}purr/balances/${Contracts.PurrClaim.addr}`)
+                return setPurrClaimBalance(balance.toString())
+            }
+        } catch (e) {
+            console.log(e)
+            return setPurrClaimBalance('0')
+        }
+    }
+
+    const getUserBalance = async () => {
+        try {
+            const balanceOf = await purr.methods.balanceOf(loggedIn).call()
+            balanceOf && setBalance(balanceOf.toString())
+        } catch (e) {
+            console.log(e)
+        }
+    }
 
     useEffect(() => {
-        const getPurrClaimBalance = async () => {
-            const { data: { balance } } = await axios.get(`${VITE_APP_ENDPOINT}purr/balances/${Contracts.PurrClaim.addr}`)
-            setPurrClaimBalance(balance.toString())
-        }
-        const getUserBalance = async () => {
-            const balanceOf = await purr.methods.balanceOf(loggedIn).call()
-            if (balanceOf) {
-                setPurrBalance(balanceOf.toString())
-            }
-        }
         if (loggedIn) {
             getUserBalance()
         }
@@ -51,13 +67,33 @@ const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn, t
         )
     }
 
+    const updateBalances = () => {
+        setPurrClaimBalance(undefined)
+        setBalance(undefined)
+        console.log('i happened')
+        if (loggedIn) {
+            getUserBalance()
+        }
+        getPurrClaimBalance()
+    }
+
     return (
         <Router basename={BASE_URL.startsWith('./') ? '/' : BASE_URL}>
             <ScrollToTop />
             <Styled.Background />
             <Styled.Furlin />
             <Logo color={'#FFF'} zIndex={1} />
-            <Styled.Main />
+            <Styled.Main>
+                <div>
+                    <h4>$PURR contract:</h4>
+                    <p>
+                        <Link to={`https://etherscan.io/address/${VITE_APP_CONTRACT_PURR}`} target={'_blank'}>{VITE_APP_CONTRACT_PURR}</Link>
+                        <Link to={`https://etherscan.io/address/${VITE_APP_CONTRACT_PURR}`} target={'_blank'} className={'mobile'}>
+                            {VITE_APP_CONTRACT_PURR.slice(0, 12)}...{VITE_APP_CONTRACT_PURR.slice(-12)}
+                        </Link>
+                    </p>
+                </div>
+            </Styled.Main>
             <Styled.Main>
                 <Styled.VideoBackground
                     autoPlay
@@ -135,11 +171,14 @@ const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn, t
                 </Styled.ImageGrid2>
             </Styled.Main>
             <Styled.Main>
-                <h2>Coming soon</h2>
+                <Claim walletAddress={loggedIn}  {...{ cryptokitties, purrClaim, balance, purrClaimBalance, handleSignIn, updateBalances }} />
             </Styled.Main>
-            {/* <Styled.MetamaskContainer>
+            <Styled.MetamaskContainer>
                 <Metamask {...{ loggedIn, handleSignIn, handleSignOut, token, BASE_URL }} tokenId={undefined} />
-            </Styled.MetamaskContainer> */}
+            </Styled.MetamaskContainer>
+            {loggedIn && (
+                <Balance {...{ balance }} />
+            )}
         </Router>
     )
 }

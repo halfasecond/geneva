@@ -6,7 +6,7 @@ async function main() {
     const [deployer] = await ethers.getSigners();
 
     // Get the current network's chain ID
-    const chainId = network.config.chainId;
+    const chainId = 31337 //network.config.chainId;
     
     // Construct the path to the deployment file for the current network
     const deploymentPath = path.join(__dirname, `../ignition/deployments/chain-${chainId}/deployed_addresses.json`);
@@ -29,8 +29,8 @@ async function main() {
     // Connect to the deployed PurrToken contract
     const PurrToken = await ethers.getContractAt("Purr", purrTokenAddress);
 
-    // Amount to fund the PurrClaim contract (e.g., 1.275 million PURR)
-    const fundAmount = "1275000000000000000000000";
+    // Amount to fund the PurrClaim contract (e.g., 250k PURR)
+    const fundAmount = "50000000000000000000000";
 
     // Transfer tokens from deployer to the PurrClaim contract
     console.log(`Funding PurrClaim contract with ${fundAmount.toString()} $PURR...`);

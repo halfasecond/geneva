@@ -38,6 +38,8 @@
     "js-base64": "^3.7.7",
     "js-cookie": "^3.0.5",
     "jsonwebtoken": "^9.0.2",
+    "keccak256": "^1.0.6",
+    "merkletreejs": "^0.5.2",
     "mongoose": "^8.10.0",
     "ollama": "^0.5.12",
     "react": "^18.3.1",

@@ -33,7 +33,7 @@ export default (prefix: string, db: Connection) => {
     const Balance = db.model(
         `${prefix}_balance`,
         new Schema({
-            address: { type: String, index: true },
+            address: { type: String, unique: true, index: true },
             balance: String,
             lastUpdated: { type: Date, default: Date.now }
         })
@@ -42,8 +42,8 @@ export default (prefix: string, db: Connection) => {
     const Claim = db.model(
         `${prefix}_claim`,
         new Schema({
-            address: { type: String, index: true, unique: true },
-            claimed: { type: Boolean, default: false },
+            tokenId: { type: Number, index: true, unique: true },
+            address: { type: String, index: true },
             amount: String,
             timestamp: { type: Date, default: Date.now }
         })

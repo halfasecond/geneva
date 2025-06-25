@@ -1,13 +1,27 @@
 import * as Styled from './style'
 import { AuthProps } from 'types/auth'
+import axios from 'axios'
+import { Contract } from 'web3-eth-contract'
 import { BrowserRouter as Router, Link } from 'react-router-dom'
 import { useSocket } from './hooks/useSocket'
-import { useEffect } from 'react';
+import parts from './flowbots'
+import { useEffect, useState } from 'react'
+import { getContract } from '../../utils'
+import { AbiFragment } from 'web3'
+import Egg from '../../contracts/Egg'
+import nfts from 'src/server/modules/chained-horse/models/nfts'
 
 const { VITE_APP_CDN_URL } = import.meta.env;
 
+// CryptoKitties contracts:
+const { Egg: { abi, addr } } = Egg
+const egg: Contract<AbiFragment[]> = getContract(abi, addr)
+
 const Geneva: React.FC<AuthProps> = ({ token, BASE_URL }) => {
-    const { 
+    const [incorrectOwners1, setIncorrectOwners1] = useState([])
+    const [nfts1, setNFTs1] = useState(0)
+    const [index1, setIndex1] = useState(0)
+    const {
         block,
     } = useSocket({ token });
 
@@ -15,37 +29,36 @@ const Geneva: React.FC<AuthProps> = ({ token, BASE_URL }) => {
         console.log(block)
     }, [block])
 
+    useEffect(() => {
+        const getOwners = async () => {
+            const { data: eggs } = await axios.get(`https://nft-game-server.production.cryptokitties.dapperlabs.com/egg/nfts`)
+            // const { data: eggs } = await axios.get(`http://localhost:8000/egg/nfts`)
+            setNFTs1(eggs.length)
+
+            let allIncorrectOwners = [];
+
+            for (let i = 0; i < eggs.length; i++) {
+                const getOwner = await egg.methods.ownerOf(eggs[i].tokenId).call()
+                if (getOwner.toLowerCase() !== eggs[i].owner.toLowerCase()) {
+                    allIncorrectOwners.push({ tokenId: eggs[i].tokenId, owner: getOwner, listedOwner: eggs[i].owner })
+                }
+                setIndex1(i)
+            }
+            setIncorrectOwners1(allIncorrectOwners)
+        }
+        getOwners()
+    }, [])
+
     return (
         <Router basename={BASE_URL.startsWith('./') ? '/' : BASE_URL}>
             <Styled.Main>
-                <Styled.ImageGrid2 className='grid'>
-                    <div>
-                        <div style={{ backgroundImage: `url('${VITE_APP_CDN_URL}geneva/hackathon-dev-team.png')` }} />
-                        <p>The Geneva team present at the EthGlobal Agentic A.I. hack in Feb 2025</p>
-                    </div>
-                    <div>
-                        <div style={{ backgroundImage: `url('${VITE_APP_CDN_URL}geneva/engagement-farm.jpg')` }} />
-                        <p>Welcome to the meadowverse... The Paddock is an MMO build with agile methodology and agentic A.I.</p>
-                    </div>
-                    <div>
-                        <div style={{ backgroundImage: `url('${VITE_APP_CDN_URL}purr/kitty-news.jpg')` }} />
-                        <p>The O.G. CryptoKitties block explorer kitty.news celebrates its 7th birthday!</p>
-                    </div>
-                </Styled.ImageGrid2>
-                <h1>Cryptosystems</h1>
-                <Styled.ImageGrid2 className='grid'>
-                    <div>
-                        <div style={{ backgroundImage: `url('${VITE_APP_CDN_URL}clients/kitties-tv/MrEth.png')` }} />
-                        <p>The O.G. CryptoKitties block explorer kitty.news celebrates its 7th birthday!</p>
-                    </div>
-                    <div>
-                        <div style={{ backgroundImage: `url('${VITE_APP_CDN_URL}geneva/horse21-and-horse88-daily-graze.png')` }} />
-                        <p>Unreal Engine & A.I. are enabling small teams to ship faster and unlock web3's true potential</p>
-                    </div>
-                </Styled.ImageGrid2>
-                <Styled.Grid>
-                    
-                </Styled.Grid>
+                <h1>NFT Game Server audit (prod)</h1>
+                <p>Assets: <b>{nfts1}</b> - audit: {(100 / nfts1) * (index1 + 1)}%</p>
+                <ul>
+                    {incorrectOwners1.map(({ tokenId, owner, listedOwner }, i) =>
+                        <li key={i}>{tokenId} - actual owner: {owner} - listed owner: {listedOwner}</li>
+                    )}
+                </ul>
             </Styled.Main>
         </Router>
     )

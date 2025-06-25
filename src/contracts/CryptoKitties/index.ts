@@ -1,4 +1,4 @@
-import coreAbi from './core.json'
+import coreAbi from './core.mock.json'
 import saleAbi from './sale.json'
 import sireAbi from './sire.json'
 
