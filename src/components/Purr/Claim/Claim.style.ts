@@ -1,5 +1,5 @@
 import styled from 'styled-components'
-import { breaks, headingSize, fontSize, grey, gutters } from 'style/config'
+import { breaks, headingSize, fontSize, grey, gutters } from '../../../style/config'
 
 export const Div = styled.div`
     line-height: 48px;

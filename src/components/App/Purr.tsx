@@ -27,8 +27,10 @@ const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn, t
     const getPurrClaimBalance = async () => {
         try {
             if (loggedIn) {
-                const balanceOf = await purr.methods.balanceOf(VITE_APP_CONTRACT_PURR_CLAIM).call()
-                setPurrClaimBalance(balanceOf.toString())
+                const balanceOf = await purr.methods.balanceOf(VITE_APP_CONTRACT_PURR_CLAIM).call();
+                if (balanceOf !== undefined && balanceOf !== null) {
+                    setPurrClaimBalance(balanceOf.toString())
+                }
             } else {
                 const { data: { balance } } = await axios.get(`${VITE_APP_ENDPOINT}purr/balances/${Contracts.PurrClaim.addr}`)
                 return setPurrClaimBalance(balance.toString())
@@ -56,7 +58,7 @@ const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn, t
     }, [loggedIn])
 
     const getLink = (linkText: string) => {
-        const links = {
+        const links: Record<string, string> = {
             'Doodles': 'https://www.doodles.app/',
             'CryptoKitties website': 'https://cryptokitties.co',
             'Kitty.International': 'https://x.com/kittyintl',
@@ -177,7 +179,7 @@ const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn, t
                 <Metamask {...{ loggedIn, handleSignIn, handleSignOut, token, BASE_URL }} tokenId={undefined} />
             </Styled.MetamaskContainer>
             {loggedIn && (
-                <Balance {...{ balance }} />
+                <Balance {...{ balance, purr, walletAddress: loggedIn, updateBalance: getUserBalance }} />
             )}
         </Router>
     )

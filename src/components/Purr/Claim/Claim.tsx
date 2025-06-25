@@ -4,7 +4,7 @@ import { Contract } from 'web3-eth-contract'
 import { AbiFragment } from 'web3'
 import { fromWei } from 'web3-utils'
 import * as Styled from './Claim.style'
-import { getAssetPath } from 'utils/assetPath'
+import { getAssetPath } from '../../../utils/assetPath'
 import { useClaimLogic } from './useClaimLogic'
 import { diamonds } from './diamonds'
 import exclusives from './exclusives'
@@ -65,7 +65,7 @@ const Claim: React.FC<{
             }}>
                 <div className='logo' />
                 <h4>{'Day1 / Diamond Claim'}</h4>
-                <p>Available: <b>{'$PURR '}{purrClaimBalance ? fromWei(purrClaimBalance, 'ether') : <img src={getAssetPath('loading.png')} alt={''} />}</b></p>
+                <p>Available: <b>{'$PURR '}{!(purrClaimBalance === undefined) ? fromWei(purrClaimBalance, 'ether') : <img src={getAssetPath('loading.png')} alt={''} />}</b></p>
                 <h4>{`You `}<Link to={`https://etherscan.io/tx/${state.claimTX.transactionHash}`}>claimed</Link>{` for CryptoKitty #${state.kittyId}`}</h4>
                 <p>{'You currently hold '}<b>{'$PURR '}{balance ? fromWei(balance, 'ether') : <img src={getAssetPath('loading.png')} alt={''}  />}</b></p>
                 <button onClick={actions.reset}>Make another claim</button>
@@ -98,7 +98,7 @@ const Claim: React.FC<{
             }}>
                 <div className='logo' style={{ backgroundImage: `url(${getAssetPath('ether-diamond.gif')})` }} />
                 <h4>{'Day1 / Diamond Claim'}</h4>
-                <p>{'Available: '}<b>{'$PURR '}{purrClaimBalance ? fromWei(purrClaimBalance, 'ether') : <img src={getAssetPath('loading.png')} alt={''} />}</b></p>
+                <p>Available: <b>{'$PURR '}{!(purrClaimBalance === undefined) ? fromWei(purrClaimBalance, 'ether') : <img src={getAssetPath('loading.png')} alt={''} />}</b></p>
                 <h4>{`Claim Criteria`}</h4>
                 {walletAddress ? (
                     <>
