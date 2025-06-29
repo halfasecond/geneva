@@ -30,7 +30,11 @@ export const Main = styled.main`
     }
     &:nth-of-type(1) {
         > div.claim {
-            padding: ${gutters['xlg']} ${gutters['xxl']};
+            padding: ${gutters['xlg']} ${gutters['md']};
+            @media (min-width: ${breaks['md']}) {
+                padding: ${gutters['xlg']} ${gutters['xxl']};
+            }
+
             border-radius: ${gutters['sm']};
             background-color: rgba(0,0,0,0.7);
             text-align: center;
