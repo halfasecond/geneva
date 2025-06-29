@@ -96,11 +96,6 @@ const isKittyEligible = (kittyId: number): boolean => {
 const getMerkleProofForKitty = (kittyId: number): string[] => {
     const kittyIdStr = kittyId.toString()
     
-    // Day1 kitties don't need merkle proofs (verified by ID on contract)
-    if (kittyId <= 3365) {
-        return []
-    }
-    
     // Check diamond proofs
     if (kittyIdStr in proofs) {
         return (proofs as any)[kittyIdStr]
@@ -113,10 +108,10 @@ const getMerkleProofForKitty = (kittyId: number): string[] => {
     
     // No proof available
     return []
-    }
+}
 
-    // Custom hook
-    export const useClaimLogic = (
+// Custom hook
+export const useClaimLogic = (
         walletAddress: string | undefined,
         purrClaim: Contract<AbiFragment[]>,
         cryptokitties: Contract<AbiFragment[]>
