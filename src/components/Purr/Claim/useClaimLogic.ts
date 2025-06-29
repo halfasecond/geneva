@@ -212,6 +212,7 @@ export const useClaimLogic = (
 
     try {
       // Call the claim function with kitty ID and merkle proof
+      console.log(state.merkleProof)
       const claimResult = await purrClaim.methods.claim(state.kittyId, state.merkleProof).send({ from: walletAddress })
       dispatch({ type: 'SET_CLAIM_TX', payload: claimResult })
     } catch (error) {
