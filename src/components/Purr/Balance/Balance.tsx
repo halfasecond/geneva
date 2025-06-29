@@ -1,6 +1,6 @@
 import * as Styled from './Balance.style'
 import { fromWei, toWei } from 'web3-utils'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Contract } from 'web3-eth-contract'
 import { AbiFragment } from 'web3'
 
@@ -17,6 +17,76 @@ const Balance: React.FC<{
     const [transferStatus, setTransferStatus] = useState<string | null>(null)
     const [error, setError] = useState<string | null>(null)
 
+    async function playPurr() {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+        const hz = await randomFrequency();
+
+        // Create the main oscillator for the purring tone
+        const oscillator1 = audioContext.createOscillator();
+        oscillator1.type = "sine"; // Sine wave for smoothness
+        oscillator1.frequency.setValueAtTime(hz, audioContext.currentTime);
+
+        // Create a second oscillator, slightly detuned from the first for richness
+        const oscillator2 = audioContext.createOscillator();
+        oscillator2.type = "sine"; // Sine wave for a natural smooth tone
+        oscillator2.frequency.setValueAtTime(hz * 1.02, audioContext.currentTime); // Slight detuning for harmonic richness
+
+        // Create a low-frequency oscillator (LFO) to modulate the volume for rumble effect
+        const lfo = audioContext.createOscillator();
+        lfo.type = "sine"; // Low-frequency oscillation for modulation
+        lfo.frequency.setValueAtTime(20, audioContext.currentTime); // Fast modulation for rumbling
+        const lfoGain = audioContext.createGain();
+        lfoGain.gain.setValueAtTime(0.2, audioContext.currentTime); // Modulation depth
+
+        // Create a gain node to control the volume
+        const gainNode = audioContext.createGain();
+        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime); // Reduced starting volume (lower than before)
+
+        // Connect oscillators to the gain node
+        oscillator1.connect(gainNode);
+        oscillator2.connect(gainNode);
+
+        // Apply the LFO to modulate the volume
+        lfo.connect(lfoGain);
+        lfoGain.connect(gainNode.gain);
+
+        // Connect everything to the destination (audio output)
+        gainNode.connect(audioContext.destination);
+        lfo.start();
+
+        // Start oscillators
+        oscillator1.start();
+        oscillator2.start();
+
+        // Fade in the volume over 1 second for a smooth start
+        gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 1); // Fade-in to 0.3 volume (instead of 0.4)
+
+        // Increase the rumbling effect (more modulation depth over time)
+        lfoGain.gain.linearRampToValueAtTime(1, audioContext.currentTime + 2); // More rumble after 2 seconds
+
+        // Fade out the volume over 3 seconds to simulate natural purring fade
+        gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 5); // Fade out over 5 seconds instead of 3 seconds
+
+        // Stop the oscillators and LFO after 10 seconds
+        oscillator1.stop(audioContext.currentTime + 10);
+        oscillator2.stop(audioContext.currentTime + 10);
+        lfo.stop(audioContext.currentTime + 10);
+    }
+
+    // Example usage: Get a random frequency between 20 and 150 Hz
+    const randomFrequency = async () => {
+        const hz = await purr.methods.purrs().call();
+        return Number(hz);
+    }
+
+    // useEffect(() => {
+    //     if (open) {
+    //         playPurr();
+    //     }
+    // }, [open]);
+
+    
     // Validate Ethereum address
     const isValidAddress = (addr: string): boolean => {
         return /^0x[a-fA-F0-9]{40}$/.test(addr)
@@ -143,12 +213,7 @@ const Balance: React.FC<{
                             type="submit"
                             disabled={isTransferring || !address || !amount}
                             style={{
-                                width: '100%',
-                                padding: '8px',
-                                backgroundColor: isTransferring ? '#ccc' : '#007bff',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '4px',
+                                opacity: isTransferring ? 0.8 : 1,
                                 cursor: isTransferring ? 'not-allowed' : 'pointer'
                             }}
                         >

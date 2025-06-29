@@ -25,6 +25,7 @@ export const gutters = {
 export const fontSize = {
     xs: '11px',
     sm: '12px',
+    xsm: '14px',
     md: '16px',
     xmd: '20px',
     lg: '24px',

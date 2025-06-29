@@ -1,11 +1,12 @@
 import * as Styled from '../Purr/style'
 import axios from 'axios'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { BrowserRouter as Router, Link, useLocation } from 'react-router-dom'
 import { Contract } from 'web3-eth-contract'
 import Metamask from 'components/Metamask'
 import Balance from '../Purr/Balance'
 import Claim from '../Purr/Claim'
+import Diamond from '../Purr/Diamond'
 import CryptoKitties from '../../contracts/CryptoKitties'
 import Contracts from '../../contracts/Purr'
 import Logo from '../Purr/Logo'
@@ -21,8 +22,11 @@ const purrClaim: Contract<AbiFragment[]> = getContract(Contracts.PurrClaim.abi, 
 const { VITE_APP_ENDPOINT, VITE_APP_CONTRACT_PURR, VITE_APP_CONTRACT_PURR_CLAIM } = import.meta.env
 
 const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn, token, BASE_URL }) => {
+    const claimRef = useRef(null);
+
     const [purrClaimBalance, setPurrClaimBalance] = useState<string | undefined>(undefined)
     const [balance, setBalance] = useState<string | undefined>(undefined)
+    const [muted, setMuted] = useState(true)
 
     const getPurrClaimBalance = async () => {
         try {
@@ -69,6 +73,12 @@ const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn, t
         )
     }
 
+    const scrollToTarget = (targetRef) => {
+        if (targetRef.current) {
+            targetRef.current.scrollIntoView({ behavior: 'smooth' })
+        }
+    }
+
     const updateBalances = () => {
         setPurrClaimBalance(undefined)
         setBalance(undefined)
@@ -84,16 +94,21 @@ const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn, t
             <ScrollToTop />
             <Styled.Background />
             <Styled.Furlin />
-            <Logo color={'#FFF'} zIndex={1} />
             <Styled.Main>
-                <div>
-                    <h4>$PURR contract:</h4>
+                <Logo color={'#FFF'} zIndex={1} />
+                <div className='claim'>
+                    {/* <h2>$PURR contract:</h2>
                     <p>
                         <Link to={`https://etherscan.io/address/${VITE_APP_CONTRACT_PURR}`} target={'_blank'}>{VITE_APP_CONTRACT_PURR}</Link>
                         <Link to={`https://etherscan.io/address/${VITE_APP_CONTRACT_PURR}`} target={'_blank'} className={'mobile'}>
                             {VITE_APP_CONTRACT_PURR.slice(0, 12)}...{VITE_APP_CONTRACT_PURR.slice(-12)}
                         </Link>
-                    </p>
+                    </p> */}
+                    <h2><Diamond />{'DAY1 / DIAMOND CLAIM'}<Diamond /></h2>
+                    <Link to={'/'} onClick={e => {
+                        e.preventDefault()
+                        scrollToTarget(claimRef)
+                    }}>claim now</Link>
                 </div>
             </Styled.Main>
             <Styled.Main>
@@ -141,19 +156,46 @@ const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn, t
                 <Styled.VideoBackground2
                     autoPlay
                     loop
-                    muted
+                    muted={muted}
                     playsInline
-                    src={getAssetPath('purr-hackathon.mp4')}
+                    src={getAssetPath('purrLaunch.mp4')}
                 />
+                <Styled.MuteButton onClick={() => setMuted(!muted)}>
+                    {muted ? '🔇 Unmute' : '🔊 Mute'}
+                </Styled.MuteButton>
                 <div>
-                    <h2>Meet the Swarm</h2>
-                    <p>Our team recently competed at the EthGlobal Agentic A.I. hackathon and (our entry) the Geneva system has been crucial in the developement of <b>$PURR</b>.</p>
-                    <p><b>$PURR</b> holders are able to interact directly with our A.I. agents and are invited, at all levels, to actively help us shape the future of the <b>$PURR</b> ecosystem. Can A.I empower smaller teams to ship to the feature hungry web3 landscape in a more cost / time effective manner? We think so and we hope you will stick around to find out...</p>
+                    <h2>Live from Kitty City</h2>
+                    <p>The first <b>$PURR</b> claim - <Link to={'/'} onClick={e => {
+                        e.preventDefault()
+                        scrollToTarget(claimRef)
+                    }}>Day1 / Diamonds</Link> - is now live with <b>$PURR 250,000</b> allocated for eligible claims. <b>$PURR</b> claimants will be given exclusive access to a multiplayer Unreal Engine experience "Kitty City" launching soon.</p>
+                    <p>Whether hanging out with other collectors, taking part in competitions, visiting the 8th Anniversary CryptoKitties Exhibition or - wait - is that kitty race track?</p>
                 </div>
 
             </Styled.Main>
             <Styled.Main>
-                <h2>Story so far</h2>
+                <h2>WHITE PA-$PURR</h2>
+                <p>The <Link to={'https://etherscan.io/address/0x74E9C7f23f11B72b8A7340E11Fe72D93D91fAe8e'} target={'_blank'}><b>$PURR</b> contract</Link> was released on 21st June 2025 with an initial supply equivalent to the <Link to={'https://etherscan.io/token/0x06012c8cf97bead5deae237070f9587f8e7a266d#readContract#F8'} target={'_blank'}>totalSupply()</Link> of CryptoKitties - 2,025,654 - at time / block of launch. 
+                The contract includes a <Link to={'https://etherscan.io/address/0x74E9C7f23f11B72b8A7340E11Fe72D93D91fAe8e#writeContract#F2'} target={'_blank'}>{'purr()'}</Link> method that can be called by anyone and adds to the <b>$PURR</b> supply on a 1:1 basis with any new CryptoKitties that have been born since the last time this method was called. 
+                This supply can be halted though: either temporarily if the contract owner calls the <Link to={'https://etherscan.io/address/0x74E9C7f23f11B72b8A7340E11Fe72D93D91fAe8e#writeContract#F5'} target={'_blank'}>{'togglePaws()'}</Link> method and forever if the owner calls the <Link to={'https://etherscan.io/address/0x74E9C7f23f11B72b8A7340E11Fe72D93D91fAe8e#writeContract#F4'} target={'_blank'}>{'stopPurringForever()'}</Link> method.
+                However if these methods aren't called (and all CryptoKitties are born one day...) then the maximum potential supply of <b>$PURR</b> would therefore be equal to the maximum potential supply of CryptoKitties: 4,294,967,295.</p>
+                <p>In addition to the standard range of ERC20 functionality the contract also includes a <Link to={'https://etherscan.io/address/0x74E9C7f23f11B72b8A7340E11Fe72D93D91fAe8e#readContract#F9'} target={'_blank'}>purrs method</Link> that returns a hz "purring" frequency - so the blockchain actually purrs now! - and is pseudo random so can potentially be used as a game play seed - or maybe just to power a purring machine you might be making... we'll let you decide.</p>
+                <p>All <b>$PURR</b> will be distributed via a series of claim contracts and will work in a variety of ways - e.g. the first claim - <Link to={'/'} onClick={e => {
+                        e.preventDefault()
+                        scrollToTarget(claimRef)
+                    }}>Day1 / Diamond</Link> - rewards kitty owners who own either <Link to={'https://www.cryptokitties.co/search?include=sale,sire,other&search=id:1-3365&orderDirection=desc&orderBy=age'} target={'_blank'}>Day1 kitties</Link> (CryptoKitties born on the UTC date the contract launched: 23rd November 2017) or <Link to={'https://www.cryptokitties.co/search?include=sale,sire,other&search=mewtation:diamond&orderDirection=desc&orderBy=age'} target='_blank'>Diamond kitties</Link> - as awarded by <Link to={'https://www.dapperlabs.com/'} target={'_blank'}>Dapper Labs</Link> - that were the first to discover a new (visible) cattribute. Each claim is on a once per kitty / per claim contract basis (regardless of owner) and includes various multipliers e.g. <Link to={'https://www.cryptokitties.co/search?include=sale,sire,other&search=id:1-100&orderDirection=desc&orderBy=age'} target={'_blank'}>Founders</Link> (the first 100 kitties) and <Link to={'https://www.cryptokitties.co/search?include=sale,sire,other&search=type:exclusive&orderDirection=desc&orderBy=age'} target={'_blank'}>Exclusives</Link> qualify for x10 (cumulative) multipliers.</p>
+                <p>Puzzles will play a big part in <b>$PURR</b> claims and the <Link to={'https://etherscan.io/address/0x0822465a4Ab614bcC53Efc4AA426729bF5D4C65f'} target={'_blank'}>first claim contract</Link> includes a puzzle (and significant prize) that needs a mystery kitty (or, to be precise, the mystery kitty's owner) to <Link to={'https://etherscan.io/address/0x0822465a4Ab614bcC53Efc4AA426729bF5D4C65f#writeContract#F2'} target={'_blank'}>open a portal</Link> that will allow the owners of Exclusive kitties not born on Day1 to also be included in the <Link to={'/'} onClick={e => {
+                        e.preventDefault()
+                        scrollToTarget(claimRef)
+                    }}>Day1 / Diamond</Link> claim round. 
+                For those interested in a further technical dig - such as how the claim contract uses merkle trees to identify e.g. Diamond kitties - the <Link to={'https://github.com/halfasecond/geneva'} target={'_blank'}>code for the contracts (and this website)</Link> is open source and built - with love - by...</p>
+                <img src={getAssetPath('kittyIntSig.png')} alt={'Kitty International'} />
+            </Styled.Main>
+            <Styled.Main ref={claimRef}>
+                <Claim walletAddress={loggedIn}  {...{ cryptokitties, purrClaim, balance, purrClaimBalance, handleSignIn, updateBalances }} />
+            </Styled.Main>
+            <Styled.Main>
+                <h2>MORE TO EXPLORE</h2>
                 <Styled.ImageGrid2>
                     <div>
                         <img src={getAssetPath('kitty-news.jpg')} alt={'kitty.news'} />
@@ -173,7 +215,8 @@ const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn, t
                 </Styled.ImageGrid2>
             </Styled.Main>
             <Styled.Main>
-                <Claim walletAddress={loggedIn}  {...{ cryptokitties, purrClaim, balance, purrClaimBalance, handleSignIn, updateBalances }} />
+                <Logo color={'#FFF'} zIndex={1} />
+                <h4>New Claim Rounds Dropping Soon</h4>
             </Styled.Main>
             <Styled.MetamaskContainer>
                 <Metamask {...{ loggedIn, handleSignIn, handleSignOut, token, BASE_URL }} tokenId={undefined} />

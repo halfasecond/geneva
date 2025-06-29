@@ -2,14 +2,12 @@ import { breaks, gutters, headingSize, fontSize } from 'style/config'
 import styled from 'styled-components'
 
 export const Div = styled.div`
-    position: fixed;
     width: 100%;
-    height: 100vh;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    z-index: 1;
+    margin-bottom: ${gutters['xxl']};
     > h1 {
         font-size: ${headingSize['lg']};
         @media (min-width: ${breaks['md']}) {
