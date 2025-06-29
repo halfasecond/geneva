@@ -38,6 +38,13 @@ export const Main = styled.main`
             box-shadow: 0 0 24px ${grey[900]};
             position: absolute;
             margin-top: 400px;
+            > h2 {
+                font-size: ${fontSize['sm']};
+                @media (min-width: ${breaks['md']}) {
+                    font-size: ${fontSize['md']};
+                }
+            }
+
             > * {
                 margin-bottom: ${gutters['md']};
                 &:last-child {
@@ -137,7 +144,8 @@ export const Main = styled.main`
             width: 90%;
             background-color:rgba(255,255,255,0.06);
             box-sizing: border-box;
-            padding: ${gutters['xl']} ${gutters['md']};
+            overflow: auto;
+            padding: ${gutters['xl']} ${gutters['md']} 0;
             @media (min-width: ${breaks['md']}) {
                 padding: ${gutters['xl']};
                 width: 54%;
@@ -167,8 +175,10 @@ export const Main = styled.main`
         background-repeat: no-repeat;
         background-position: center top;
         color: #000;
+        justify-content: flex-start;
         > h2 {
             font-size: ${fontSize['xl']};
+            margin-top: ${gutters['xl']};
             margin-bottom: ${gutters['xl']};
             @media (min-width: ${breaks['md']}) {
                 font-size: ${headingSize['lg']};
@@ -176,27 +186,34 @@ export const Main = styled.main`
         }
 
         > p {
-            margin: 0 ${gutters['xxl']} ${gutters['lg']};
+            margin: 0 ${gutters['md']} ${gutters['lg']};
+            @media (min-width: ${breaks['md']}) {
+                margin: 0 ${gutters['xxl']} ${gutters['lg']};
+            }
             > a {
                 > b {
                     font-weight: bold; 
                 } 
             }
         }
-        height: 200vh;
+        height: 350vh;
         @media (min-width: ${breaks['md']}) {
             height: 100vh;
+            overflow: auto;
         }
 
         > img {
             width: 300px;
             align-self: end;
-            margin: ${gutters['xxl']} 200px 0 0;
+            margin: ${gutters['xxl']} auto 0;
+            @media (min-width: ${breaks['md']}) {
+                margin: ${gutters['xxl']} 200px 0 0;
+            }
         }
     }
 
     &:nth-of-type(6) {
-        margin-top: 675vh;
+        margin-top: 775vh;
         @media (min-width: ${breaks['md']}) {
             margin-top: 525vh;
         }
@@ -215,7 +232,7 @@ export const Main = styled.main`
 
     &:nth-of-type(7) {
         z-index: 5;
-        margin-top: 725vh;
+        margin-top: 875vh;
         @media (min-width: ${breaks['md']}) {
             margin-top: 625vh;
         }
@@ -237,7 +254,7 @@ export const Main = styled.main`
     }
 
     &:nth-of-type(8) {
-        margin-top: 975vh;
+        margin-top: 1125vh;
         @media (min-width: ${breaks['md']}) {
             margin-top: 725vh;
         }
@@ -245,7 +262,12 @@ export const Main = styled.main`
         > h4 {
             position: absolute;
             bottom: ${gutters['xl']};
+            text-align: center;
             text-shadow: 2px 2px 3px rgba(255,255,255,0.5);
+            font-size: ${fontSize['sm']};
+            @media (min-width: ${breaks['md']}) {
+                font-size: ${fontSize['md']};
+            }
         }
     }
 
