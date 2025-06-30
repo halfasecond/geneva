@@ -98,8 +98,11 @@ const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn, t
 
     // Trigger recalculation when content changes
     useEffect(() => {
-        recalculate()
-    }, [purrClaimBalance, balance, loggedIn, recalculate])
+        const timer = setTimeout(() => {
+            recalculate()
+        }, 100)
+        return () => clearTimeout(timer)
+    }, [purrClaimBalance, balance, loggedIn])
 
     return (
         <Router basename={BASE_URL.startsWith('./') ? '/' : BASE_URL}>

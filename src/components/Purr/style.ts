@@ -8,7 +8,9 @@ export const MetamaskContainer = styled.div`
     z-index: 1000;
 `
 
-export const Section = styled.main<{
+export const Section = styled.main.withConfig({
+    shouldForwardProp: (prop) => !['offset', 'backgroundColor', 'zIndex', 'minHeight', 'justifyContent', 'alignItems'].includes(prop),
+})<{
     offset: number;
     backgroundColor?: string;
     zIndex?: number;
@@ -145,25 +147,28 @@ export const ContentSection = styled(Section)`
 
 // Video with Text Section
 export const VideoTextSection = styled(Section)`
+    flex-direction: column;
     justify-content: flex-start;
-    align-items: flex-end;
+    align-items: center;
+    padding: 0;
+    gap: 0;
     
-    > div {
+    > div:last-child {
         display: flex;
         flex-direction: column;
-        flex-grow: 1;
         align-items: flex-start;
         justify-content: flex-start;
         width: 90%;
         background-color: rgba(255,255,255,0.06);
         box-sizing: border-box;
-        overflow: auto;
-        padding: ${gutters['xl']} ${gutters['md']} 0;
+        padding: ${gutters['xl']} ${gutters['md']};
+        margin-top: 0;
         @media (min-width: ${breaks['md']}) {
             padding: ${gutters['xl']};
             width: 54%;
+            margin-left: auto;
+            margin-right: 5%;
         }
-        margin-right: 5%;
         
         > h2 {
             font-size: ${fontSize['xl']};
@@ -272,7 +277,7 @@ export const FinalSection = styled(Section)`
 export const VideoContainer = styled.div`
     position: relative;
     width: 100%;
-    display: inline-block;
+    aspect-ratio: 16/9;
 `
 
 export const Background = styled.div`
@@ -312,7 +317,7 @@ export const VideoBackground = styled.video`
 export const VideoBackground2 = styled.video`
     width: 100%;
     height: auto;
-    object-fit: contain;
+    max-width: 100%;
     display: block;
 `
 

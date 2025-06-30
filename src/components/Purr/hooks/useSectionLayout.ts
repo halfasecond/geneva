@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 export const useSectionLayout = () => {
   const sectionRefs = useRef<(HTMLElement | null)[]>([]);
@@ -8,7 +8,7 @@ export const useSectionLayout = () => {
     sectionRefs.current[index] = ref;
   };
 
-  const calculateOffsets = () => {
+  const calculateOffsets = useCallback(() => {
     let cumulativeHeight = 0;
     const offsets: number[] = [];
     
@@ -27,29 +27,7 @@ export const useSectionLayout = () => {
     });
     
     setSectionOffsets(offsets);
-  };
-
-  useEffect(() => {
-    // Initial calculation
-    const timer = setTimeout(calculateOffsets, 100); // Small delay to ensure DOM is ready
-    
-    // Recalculate on window resize
-    const handleResize = () => {
-      calculateOffsets();
-    };
-    
-    window.addEventListener('resize', handleResize);
-    
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener('resize', handleResize);
-    };
   }, []);
-
-  // Trigger recalculation when refs change
-  useEffect(() => {
-    calculateOffsets();
-  }, [sectionRefs.current.length]);
 
   return {
     setSectionRef,
