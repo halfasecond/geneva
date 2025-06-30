@@ -8,273 +8,27 @@ export const MetamaskContainer = styled.div`
     z-index: 1000;
 `
 
-export const Main = styled.main`
+export const Section = styled.main<{
+    offset: number;
+    backgroundColor?: string;
+    zIndex?: number;
+    minHeight?: string;
+    justifyContent?: string;
+    alignItems?: string;
+    color?: string;
+}>`
+    position: absolute;
+    top: ${props => props.offset}px;
     width: 100%;
-    z-index: 1;
-    margin: 0 auto;
+    min-height: ${props => props.minHeight || '100vh'};
+    background-color: ${props => props.backgroundColor || 'transparent'};
+    z-index: ${props => props.zIndex || 1};
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    color: #FFF;
-    min-height: 100%;
-    position: absolute;
-    height: 100vh;
-    
-    > h3 {
-        margin-top: ${gutters['xxl']};
-        font-size: 36px;
-        font-family: funkydori, sans-serif;
-        text-shadow: 2px 2px 3px rgba(255,255,255,0.5);
-        color: #333;
-    }
-    &:nth-of-type(1) {
-        > div.claim {
-            padding: ${gutters['xlg']} ${gutters['md']};
-            @media (min-width: ${breaks['md']}) {
-                padding: ${gutters['xlg']} ${gutters['xxl']};
-            }
-
-            border-radius: ${gutters['sm']};
-            background-color: rgba(0,0,0,0.7);
-            text-align: center;
-            border: 4px solid #000;
-            box-shadow: 0 0 24px ${grey[900]};
-            position: absolute;
-            margin-top: 400px;
-            > h2 {
-                font-size: ${fontSize['sm']};
-                @media (min-width: ${breaks['md']}) {
-                    font-size: ${fontSize['md']};
-                }
-            }
-
-            > * {
-                margin-bottom: ${gutters['md']};
-                &:last-child {
-                    margin-bottom: 0;
-                }
-                > a {
-                    &:first-of-type {
-                        display: none;
-                        @media (min-width: ${breaks['md']}) {
-                            display: inline-block;
-                        }
-                    }
-                    &.mobile {
-                        @media (min-width: ${breaks['md']}) {
-                            display: none;
-                        }
-                    }
-                }
-            }
-
-            > p {
-                margin-bottom: ${gutters['xlg']};
-            }
-
-            h2 {
-                font-size: ${fontSize['xmd']};
-            }
-
-            > h2 {
-                
-                margin-bottom: ${gutters['lg']};
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                > div {
-                    width: 28px;
-                    height: 28px;
-                    &:first-of-type {
-                        margin-right: ${gutters['md']};
-                    }
-                    &:last-of-type {
-                        margin-left: ${gutters['md']};
-                    }
-                }
-            }
-
-            a {
-                border-bottom: 2px dotted #CCC;
-            }
-        }
-    }
-    &:nth-of-type(2) {
-        background-color: #FFF;
-        z-index: 2;
-        margin-top: 100vh;
-    }
-    &:nth-of-type(3) {
-        z-index: 5;
-        margin-top: 200vh;
-        height: 125vh;
-        background-color: rgba(0,0,0,0.9);
-        background-repeat: no-repeat;
-        background-size: 100% auto;
-        background-position: center top;
-        h2 {
-            font-size: 32px;
-            margin-bottom: ${gutters['lg']};
-            @media (min-width: ${breaks['md']}) {
-                margin-bottom: ${gutters['xl']};
-            }
-            text-shadow: 2px 2px 3px rgba(255,255,255,0.4);
-        }
-        > p {
-            max-width: 800px;
-            margin: 0 5% ${gutters['md']};
-            text-align: center;
-            > b {
-                font-weight: bold; 
-            }
-        }
-    }
-    &:nth-of-type(4) {
-        z-index: 5;
-        margin-top: 325vh;
-        background-color: #000;
-        background-size: auto 100%;
-        background-repeat: no-repeat;
-        background-position: center top;
-        justify-content: flex-start;
-        align-items: flex-end;
-        > div {
-            display: flex;
-            flex-direction: column;
-            flex-grow: 1;
-            align-items: flex-start;
-            justify-content: flex-start;
-            width: 90%;
-            background-color:rgba(255,255,255,0.06);
-            box-sizing: border-box;
-            overflow: auto;
-            padding: ${gutters['xl']} ${gutters['md']} 0;
-            @media (min-width: ${breaks['md']}) {
-                padding: ${gutters['xl']};
-                width: 54%;
-            }
-            margin-right: 5%;
-            > h2 {
-                font-size: ${fontSize['xl']};
-                margin-bottom: ${gutters['lg']};
-            }
-            > p {
-                margin-bottom: ${gutters['lg']};
-                > b {
-                    font-weight: bold; 
-                }
-                a {
-                    border-bottom: 2px dotted #CCC;
-                }
-            }
-        }
-    }
-
-    &:nth-of-type(5) {
-        z-index: 5;
-        margin-top: 425vh;
-        background-color: #F6F6F6;
-        background-size: auto 100%;
-        background-repeat: no-repeat;
-        background-position: center top;
-        color: #000;
-        justify-content: flex-start;
-        > h2 {
-            font-size: ${fontSize['xl']};
-            margin-top: ${gutters['xl']};
-            margin-bottom: ${gutters['xl']};
-            @media (min-width: ${breaks['md']}) {
-                font-size: ${headingSize['lg']};
-            }
-        }
-
-        > p {
-            margin: 0 ${gutters['md']} ${gutters['lg']};
-            @media (min-width: ${breaks['md']}) {
-                margin: 0 ${gutters['xxl']} ${gutters['lg']};
-            }
-            > a {
-                > b {
-                    font-weight: bold; 
-                } 
-            }
-        }
-        height: 350vh;
-        @media (min-width: ${breaks['md']}) {
-            height: 100vh;
-            overflow: auto;
-        }
-
-        > img {
-            width: 300px;
-            align-self: end;
-            margin: ${gutters['xxl']} auto 0;
-            @media (min-width: ${breaks['md']}) {
-                margin: ${gutters['xxl']} 200px 0 0;
-            }
-        }
-    }
-
-    &:nth-of-type(6) {
-        margin-top: 775vh;
-        @media (min-width: ${breaks['md']}) {
-            margin-top: 525vh;
-        }
-        min-height: 100vh;
-        background-size: 100% auto;
-        justify-content: center;
-        > h2 {
-            color: #FFF;
-            margin-bottom: ${gutters['xxl']};
-        }
-
-        > * {
-            z-index: 2; 
-        }
-    }
-
-    &:nth-of-type(7) {
-        z-index: 5;
-        margin-top: 875vh;
-        @media (min-width: ${breaks['md']}) {
-            margin-top: 625vh;
-        }
-        background-color: #F6F6F6;
-        background-size: auto 100%;
-        background-repeat: no-repeat;
-        background-position: center top;
-        > h2 {
-            color: #000;
-            font-size: ${fontSize['xl']};
-            @media (min-width: ${breaks['md']}) {
-                font-size: ${headingSize['lg']};
-            }
-        }
-        height: 250vh;
-        @media (min-width: ${breaks['md']}) {
-            height: 100vh;
-        }
-    }
-
-    &:nth-of-type(8) {
-        margin-top: 1125vh;
-        @media (min-width: ${breaks['md']}) {
-            margin-top: 725vh;
-        }
-        height: 100vh;
-        > h4 {
-            position: absolute;
-            bottom: ${gutters['xl']};
-            text-align: center;
-            text-shadow: 2px 2px 3px rgba(255,255,255,0.5);
-            font-size: ${fontSize['sm']};
-            @media (min-width: ${breaks['md']}) {
-                font-size: ${fontSize['md']};
-            }
-        }
-    }
-
+    justify-content: ${props => props.justifyContent || 'center'};
+    align-items: ${props => props.alignItems || 'center'};
+    color: ${props => props.color || '#FFF'};
+    margin: 0 auto;
 
     p {
         line-height: 32px;
@@ -286,7 +40,239 @@ export const Main = styled.main`
             border-bottom: 2px dotted #CCC;
         }
     }
+`
+
+// Hero Section Styles
+export const HeroSection = styled(Section)`
+    > div.claim {
+        padding: ${gutters['xlg']} ${gutters['md']};
+        @media (min-width: ${breaks['md']}) {
+            padding: ${gutters['xlg']} ${gutters['xxl']};
+        }
+
+        border-radius: ${gutters['sm']};
+        background-color: rgba(0,0,0,0.7);
+        text-align: center;
+        border: 4px solid #000;
+        box-shadow: 0 0 24px ${grey[900]};
+        position: absolute;
+        margin-top: 400px;
         
+        > h2 {
+            font-size: ${fontSize['sm']};
+            @media (min-width: ${breaks['md']}) {
+                font-size: ${fontSize['md']};
+            }
+            margin-bottom: ${gutters['lg']};
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            
+            > div {
+                width: 28px;
+                height: 28px;
+                &:first-of-type {
+                    margin-right: ${gutters['md']};
+                }
+                &:last-of-type {
+                    margin-left: ${gutters['md']};
+                }
+            }
+        }
+
+        > * {
+            margin-bottom: ${gutters['md']};
+            &:last-child {
+                margin-bottom: 0;
+            }
+            > a {
+                &:first-of-type {
+                    display: none;
+                    @media (min-width: ${breaks['md']}) {
+                        display: inline-block;
+                    }
+                }
+                &.mobile {
+                    @media (min-width: ${breaks['md']}) {
+                        display: none;
+                    }
+                }
+            }
+        }
+
+        > p {
+            margin-bottom: ${gutters['xlg']};
+        }
+
+        a {
+            border-bottom: 2px dotted #CCC;
+        }
+    }
+`
+
+// Video Section Styles
+export const VideoSection = styled(Section)`
+    > h3 {
+        margin-top: ${gutters['xxl']};
+        font-size: 36px;
+        font-family: funkydori, sans-serif;
+        text-shadow: 2px 2px 3px rgba(255,255,255,0.5);
+        color: #333;
+    }
+`
+
+// Content Section Styles
+export const ContentSection = styled(Section)`
+    padding: ${gutters['xl']} 0;
+    h2 {
+        font-size: 32px;
+        margin-bottom: ${gutters['lg']};
+        @media (min-width: ${breaks['md']}) {
+            margin-bottom: ${gutters['xl']};
+        }
+        text-shadow: 2px 2px 3px rgba(255,255,255,0.4);
+    }
+    
+    > p {
+        max-width: 800px;
+        margin: 0 5% ${gutters['md']};
+        text-align: center;
+        > b {
+            font-weight: bold;
+        }
+    }
+`
+
+// Video with Text Section
+export const VideoTextSection = styled(Section)`
+    justify-content: flex-start;
+    align-items: flex-end;
+    
+    > div {
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+        align-items: flex-start;
+        justify-content: flex-start;
+        width: 90%;
+        background-color: rgba(255,255,255,0.06);
+        box-sizing: border-box;
+        overflow: auto;
+        padding: ${gutters['xl']} ${gutters['md']} 0;
+        @media (min-width: ${breaks['md']}) {
+            padding: ${gutters['xl']};
+            width: 54%;
+        }
+        margin-right: 5%;
+        
+        > h2 {
+            font-size: ${fontSize['xl']};
+            margin-bottom: ${gutters['lg']};
+        }
+        
+        > p {
+            margin-bottom: ${gutters['lg']};
+            > b {
+                font-weight: bold;
+            }
+            a {
+                border-bottom: 2px dotted #CCC;
+            }
+        }
+    }
+`
+
+// White Paper Section
+export const WhitePaperSection = styled(Section)`
+    justify-content: center;
+    padding: ${gutters['xl']} 0;
+    > h2 {
+        font-size: ${fontSize['xl']};
+        margin-top: ${gutters['xl']};
+        margin-bottom: ${gutters['xl']};
+        @media (min-width: ${breaks['md']}) {
+            font-size: ${headingSize['lg']};
+        }
+    }
+
+    > p {
+        margin: 0 ${gutters['md']} ${gutters['lg']};
+        @media (min-width: ${breaks['md']}) {
+            margin: 0 ${gutters['xxl']} ${gutters['lg']};
+        }
+        > a {
+            > b {
+                font-weight: bold;
+            }
+        }
+    }
+    
+    min-height: auto;
+    @media (min-width: ${breaks['md']}) {
+        min-height: 100vh;
+        overflow: auto;
+    }
+
+    > img {
+        width: 300px;
+        align-self: end;
+        margin: ${gutters['xxl']} auto 0;
+        @media (min-width: ${breaks['md']}) {
+            margin: ${gutters['xxl']} 200px 0 0;
+        }
+    }
+`
+
+// Claim Section
+export const ClaimSection = styled(Section)`
+    justify-content: center;
+    padding: ${gutters['xl']} 0;
+    > h2 {
+        color: #FFF;
+        margin-bottom: ${gutters['xxl']};
+    }
+
+    > * {
+        z-index: 2;
+    }
+`
+
+// Explore Section
+export const ExploreSection = styled(Section)`
+    padding: ${gutters['xl']} 0;
+    > h2 {
+        color: #000;
+        font-size: ${fontSize['xl']};
+        @media (min-width: ${breaks['md']}) {
+            font-size: ${headingSize['lg']};
+        }
+    }
+    
+    min-height: auto;
+    @media (min-width: ${breaks['md']}) {
+        min-height: 100vh;
+    }
+`
+
+// Final Section
+export const FinalSection = styled(Section)`
+    > h4 {
+        position: absolute;
+        bottom: ${gutters['xl']};
+        text-align: center;
+        text-shadow: 2px 2px 3px rgba(255,255,255,0.5);
+        font-size: ${fontSize['sm']};
+        @media (min-width: ${breaks['md']}) {
+            font-size: ${fontSize['md']};
+        }
+    }
+`
+
+// Video Container for mute button
+export const VideoContainer = styled.div`
+    position: relative;
+    width: 100%;
+    display: inline-block;
 `
 
 export const Background = styled.div`
@@ -327,7 +313,7 @@ export const VideoBackground2 = styled.video`
     width: 100%;
     height: auto;
     object-fit: contain;
-    position: relative;
+    display: block;
 `
 
 export const Grid = styled.div`
