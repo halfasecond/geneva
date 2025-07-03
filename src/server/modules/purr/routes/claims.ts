@@ -13,6 +13,18 @@ interface Models {
 
 const routes = (Models: Models): Router => {
     const router = express.Router();
+
+    router.get('/', async (req, res) => {
+        try {
+            const claims = await Models.Claim.find({}, { _id: 0, __v: 0 })
+            if (claims) {
+                return res.json(claims);
+            }
+        } catch (e) {
+            const error = err as Error;
+            res.status(500).json({ error: error.message });
+        }
+    })
     router.get('/:tokenId', async (req, res) => {
         try {
             const tokenId = parseInt(req.params.tokenId);
@@ -42,7 +54,6 @@ const routes = (Models: Models): Router => {
 
             // Check if exclusive kitty
             if (exclusives.includes(tokenId)) {
-                console.log('in here')
                 const proof = exclusiveProofs[tokenId.toString()];
                 return res.json({
                     tokenId,

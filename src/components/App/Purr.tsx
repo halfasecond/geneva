@@ -2,7 +2,7 @@ import * as Styled from '../Purr/style'
 import axios from 'axios'
 import { useEffect, useRef, useState } from 'react'
 import { BrowserRouter as Router, Link, useLocation } from 'react-router-dom'
-import { Contract } from 'web3-eth-contract'
+import { Contract, getCreateAccessListParams } from 'web3-eth-contract'
 import Metamask from 'components/Metamask'
 import Balance from '../Purr/Balance'
 import Claim from '../Purr/Claim'
@@ -34,6 +34,7 @@ const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn, t
     const [purrClaimBalance, setPurrClaimBalance] = useState<string | undefined>(undefined)
     const [balance, setBalance] = useState<string | undefined>(undefined)
     const [muted, setMuted] = useState(true)
+    const [claims, setClaims] = useState<any[] | undefined>(undefined)
 
     const getPurrClaimBalance = async () => {
         try {
@@ -61,9 +62,19 @@ const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn, t
         }
     }
 
+    const getClaims = async () => {
+        try {
+            const { data } = await axios.get(`${VITE_APP_ENDPOINT}purr/claims`)
+            setClaims(data)
+        } catch (e) {
+            console.log(e)
+        }
+    }
+
     useEffect(() => {
         if (loggedIn) {
             getUserBalance()
+            getClaims()
         }
         getPurrClaimBalance()
     }, [loggedIn])
@@ -193,7 +204,7 @@ const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn, t
                         loop
                         muted={muted}
                         playsInline
-                        src={getAssetPath('purrLaunch.mp4')}
+                        src={getAssetPath('purrLaunch1080.mp4')}
                     />
                     <Styled.MuteButton onClick={() => setMuted(!muted)}>
                         {muted ? '🔇 Unmute' : '🔊 Mute'}
@@ -244,6 +255,8 @@ const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn, t
                 <Claim walletAddress={loggedIn}  {...{ cryptokitties, purrClaim, balance, purrClaimBalance, handleSignIn, updateBalances }} />
             </Styled.ClaimSection>
 
+            {/* Recent Claims section */}
+            {console.log(claims)}
             {/* Explore Section */}
             <Styled.ExploreSection
                 ref={setSectionRef(6)}
@@ -252,7 +265,7 @@ const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn, t
                 color="#000"
                 zIndex={5}
             >
-                <h2>MORE TO EXPLORE</h2>
+                <h2>MORE TO EXPLORE WITH YOUR PAW</h2>
                 <Styled.ImageGrid2>
                     <div>
                         <img src={getAssetPath('kitty-news.jpg')} alt={'kitty.news'} />

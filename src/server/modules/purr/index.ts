@@ -81,11 +81,12 @@ const logEvent = async (event: any, Models: Models, web3: any) => {
         
 
         // If it's a claim event, update claim status
-        if (event.event === 'Claimed') {
+        if (event.event === 'Claim') {
             const claim = new Models.Claim({
                 tokenId: parseInt(event.tokenId),
                 address: event.to.toLowerCase(),
                 amount: event.amount.toString(),
+                transactionHash: event.transactionHash,
                 timestamp: new Date()
             });
             await claim.save();

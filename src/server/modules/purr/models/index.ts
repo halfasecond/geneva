@@ -45,6 +45,7 @@ export default (prefix: string, db: Connection) => {
             tokenId: { type: Number, index: true, unique: true },
             address: { type: String, index: true },
             amount: String,
+            transactionHash: String,
             timestamp: { type: Date, default: Date.now }
         })
     );

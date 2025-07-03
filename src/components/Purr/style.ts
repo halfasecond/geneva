@@ -192,11 +192,14 @@ export const WhitePaperSection = styled(Section)`
     justify-content: center;
     padding: ${gutters['xl']} 0;
     > h2 {
+        margin: ${gutters['xl']} ${gutters['lg']};
+        color: #000;
         font-size: ${fontSize['xl']};
-        margin-top: ${gutters['xl']};
-        margin-bottom: ${gutters['xl']};
-        @media (min-width: ${breaks['md']}) {
-            font-size: ${headingSize['lg']};
+        @media (min-width: ${breaks['lg']}) {
+            font-size: ${fontSize['xxl']};
+        }
+        @media (min-width: ${breaks['xxl']}) {
+            font-size: ${headingSize['sm']};
         }
     }
 
@@ -247,9 +250,16 @@ export const ExploreSection = styled(Section)`
     padding: ${gutters['xl']} 0;
     > h2 {
         color: #000;
-        font-size: ${fontSize['xl']};
+        margin: 0 ${gutters['lg']};
+        font-size: ${fontSize['md']};
         @media (min-width: ${breaks['md']}) {
-            font-size: ${headingSize['lg']};
+            font-size: ${fontSize['xl']};
+        }
+        @media (min-width: ${breaks['lg']}) {
+            font-size: ${fontSize['xxl']};
+        }
+        @media (min-width: ${breaks['xxl']}) {
+            font-size: ${headingSize['sm']};
         }
     }
     
