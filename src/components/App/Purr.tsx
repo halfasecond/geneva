@@ -100,7 +100,6 @@ const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn, t
     const updateBalances = () => {
         setPurrClaimBalance(undefined)
         setBalance(undefined)
-        console.log('i happened')
         if (loggedIn) {
             getUserBalance()
         }

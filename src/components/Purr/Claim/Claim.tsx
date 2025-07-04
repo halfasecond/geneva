@@ -51,7 +51,7 @@ const Claim: React.FC<{
             }
         }
         if (isDiamondKitty(kittyIdNum)) {
-            claim = claim === 0 ? 100 : claim
+            claim = claim === 0 ? 100 : 1000
             claim *= 10
         }
         return claim
