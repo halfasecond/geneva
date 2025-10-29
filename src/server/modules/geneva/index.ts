@@ -1,6 +1,7 @@
 import { ModuleConfig } from '../../types/shared';
 import _Models from './models';
 import Routes from './routes';
+import axios from 'axios'
 // import Socket from './socket';
 
 const runModule = (config: ModuleConfig) => {

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Mouth_3_gold" data-name="Mouth 3 gold" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 841.89 1190.55">
+  <defs>
+    <radialGradient id="radial-gradient" cx="420.95" cy="440.74" fx="420.95" fy="440.74" r="107.08" gradientTransform="translate(0 8.9) scale(1 .98)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#00adee"/>
+      <stop offset=".42" stop-color="#000"/>
+    </radialGradient>
+  </defs>
+  <g>
+    <path d="M487.3,487.85c0,5.08-4.19,9.19-9.35,9.19h-114.01c-5.17,0-9.35-4.11-9.35-9.19v-92.02c0-5.07,4.19-9.19,9.35-9.19h114.01c5.16,0,9.35,4.11,9.35,9.19v92.02Z" style="fill: none; stroke: #000; stroke-linecap: round; stroke-linejoin: round; stroke-width: 10px;"/>
+    <path d="M487.3,487.85c0,5.08-4.19,9.19-9.35,9.19h-114.01c-5.17,0-9.35-4.11-9.35-9.19v-92.02c0-5.07,4.19-9.19,9.35-9.19h114.01c5.16,0,9.35,4.11,9.35,9.19v92.02Z" style="fill: none; stroke: #fff; stroke-linecap: round; stroke-linejoin: round; stroke-width: 5px;"/>
+  </g>
+  <g>
+    <path d="M487.3,487.85c0,5.08-4.19,9.19-9.35,9.19h-114.01c-5.17,0-9.35-4.11-9.35-9.19v-92.02c0-5.07,4.19-9.19,9.35-9.19h114.01c5.16,0,9.35,4.11,9.35,9.19v92.02Z" style="fill: url(#radial-gradient);"/>
+    <path d="M487.3,487.85c0,5.08-4.19,9.19-9.35,9.19h-114.01c-5.17,0-9.35-4.11-9.35-9.19v-92.02c0-5.07,4.19-9.19,9.35-9.19h114.01c5.16,0,9.35,4.11,9.35,9.19v92.02Z" style="fill: none; stroke: #000; stroke-linecap: round; stroke-linejoin: round; stroke-width: 20px;"/>
+    <path d="M487.3,487.85c0,5.08-4.19,9.19-9.35,9.19h-114.01c-5.17,0-9.35-4.11-9.35-9.19v-92.02c0-5.07,4.19-9.19,9.35-9.19h114.01c5.16,0,9.35,4.11,9.35,9.19v92.02Z" style="fill: none; stroke: #fff; stroke-linecap: round; stroke-linejoin: round; stroke-width: 5px;"/>
+  </g>
+  <g>
+    <line x1="474.33" y1="399.95" x2="367.23" y2="399.95" style="fill: none; stroke: #f6921e; stroke-linecap: round; stroke-linejoin: round; stroke-width: 5px;"/>
+    <line x1="474.33" y1="411.72" x2="367.23" y2="411.72" style="fill: none; stroke: #f6921e; stroke-linecap: round; stroke-linejoin: round; stroke-width: 5px;"/>
+    <line x1="474.33" y1="423.49" x2="367.23" y2="423.49" style="fill: none; stroke: #f6921e; stroke-linecap: round; stroke-linejoin: round; stroke-width: 5px;"/>
+    <line x1="474.33" y1="435.26" x2="367.23" y2="435.26" style="fill: none; stroke: #f6921e; stroke-linecap: round; stroke-linejoin: round; stroke-width: 5px;"/>
+    <line x1="474.33" y1="447.03" x2="367.23" y2="447.03" style="fill: none; stroke: #f6921e; stroke-linecap: round; stroke-linejoin: round; stroke-width: 5px;"/>
+    <line x1="474.33" y1="458.81" x2="367.23" y2="458.81" style="fill: none; stroke: #f6921e; stroke-linecap: round; stroke-linejoin: round; stroke-width: 5px;"/>
+    <line x1="474.33" y1="470.58" x2="367.23" y2="470.58" style="fill: none; stroke: #f6921e; stroke-linecap: round; stroke-linejoin: round; stroke-width: 5px;"/>
+    <line x1="474.33" y1="482.35" x2="367.23" y2="482.35" style="fill: none; stroke: #f6921e; stroke-linecap: round; stroke-linejoin: round; stroke-width: 5px;"/>
+  </g>
+</svg>

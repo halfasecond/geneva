@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Mouth_21_Silver" data-name="Mouth 21 Silver" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 841.89 1190.55">
+  <defs>
+    <radialGradient id="radial-gradient" cx="420.94" cy="442.28" fx="420.94" fy="442.28" r="95.02" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ec1c24"/>
+      <stop offset=".42" stop-color="#000"/>
+    </radialGradient>
+  </defs>
+  <g>
+    <circle cx="420.94" cy="442.28" r="54.56" style="fill: url(#radial-gradient);"/>
+    <circle cx="420.94" cy="442.28" r="54.56" style="fill: none; stroke: #000; stroke-linecap: round; stroke-linejoin: round; stroke-width: 20px;"/>
+    <circle cx="420.94" cy="442.28" r="54.56" style="fill: none; stroke: #fff; stroke-linecap: round; stroke-linejoin: round; stroke-width: 4px;"/>
+  </g>
+  <polyline points="381.01 442.28 401.67 442.28 408.83 467.28 420.94 418.28 431.83 455.28 435.67 442.28 460.88 442.28" style="fill: none; stroke: #00adee; stroke-width: 3px;"/>
+  <circle cx="420.94" cy="442.28" r="45.66" style="fill: none; stroke: #fff100; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2px;"/>
+</svg>
