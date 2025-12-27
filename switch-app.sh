@@ -11,7 +11,11 @@ select_app() {
   echo "1) Geneva (default)"
   echo "2) Purr"
   echo "3) Paddock (chained-horse)"
-  read -p "Enter your choice [1-3]: " choice
+  echo "4) Kitty.International"
+  echo "5) Barcode"
+  echo "6) Aquarium"
+  echo "7) Flowbots"
+  read -p "Enter your choice [1-7]: " choice
   
   case $choice in
     1)
@@ -23,6 +27,18 @@ select_app() {
     3)
       echo "chained-horse"
       ;;
+    4)
+      echo "kitty.international"
+      ;;
+    5)
+      echo "barcode"
+      ;;
+    6)
+      echo "aquarium"
+      ;;
+    7)
+      echo "flowbots"
+      ;;
     *)
       echo "geneva"
       ;;
@@ -32,8 +48,8 @@ select_app() {
 # Function to validate app name
 validate_app() {
   local app=$1
-  if [ "$app" != "purr" ] && [ "$app" != "chained-horse" ] && [ "$app" != "geneva" ]; then
-    echo "Error: Invalid app name. Must be 'purr', 'chained-horse', or 'geneva'"
+  if [ "$app" != "purr" ] && [ "$app" != "chained-horse" ] && [ "$app" != "geneva" ] && [ "$app" != "kittyInternational" ] && [ "$app" != "barcode" ] && [ "$app" != "aquarium" ] && [ "$app" != "flowbots" ]; then
+    echo "Error: Invalid app name. Must be a valid module"
     exit 1
   fi
 }
@@ -85,6 +101,18 @@ if [ "$APP_NAME" == "purr" ]; then
 elif [ "$APP_NAME" == "chained-horse" ]; then
   SOURCE_FILE="src/lib/entry/paddock.tsx"
   OUTPUT_DIR="dist/paddock"
+elif [ "$APP_NAME" == "kittyInternational" ]; then
+  SOURCE_FILE="src/lib/entry/kittyInternational.tsx"
+  OUTPUT_DIR="dist/kittyInternational"
+elif [ "$APP_NAME" == "barcode" ]; then
+  SOURCE_FILE="src/lib/entry/barcode.tsx"
+  OUTPUT_DIR="dist/barcode"
+elif [ "$APP_NAME" == "aquarium" ]; then
+  SOURCE_FILE="src/lib/entry/aquarium.tsx"
+  OUTPUT_DIR="dist/aquarium"
+elif [ "$APP_NAME" == "flowbots" ]; then
+  SOURCE_FILE="src/lib/entry/flowbots.tsx"
+  OUTPUT_DIR="dist/flowbots"
 else
   SOURCE_FILE="src/lib/entry/geneva.tsx"
   OUTPUT_DIR="dist/geneva"

@@ -15,6 +15,26 @@ const appConfigs = {
     outDir: 'dist/paddock',
     appName: 'chained-horse'
   },
+  'kittyInternational': {
+    input: resolve(__dirname, 'index.html'),
+    outDir: 'dist/kittyInternational',
+    appName: 'kittyInternational'
+  },
+  'barcode': {
+    input: resolve(__dirname, 'index.html'),
+    outDir: 'dist/barcode',
+    appName: 'barcode'
+  },
+  'aquarium': {
+    input: resolve(__dirname, 'index.html'),
+    outDir: 'dist/aquarium',
+    appName: 'aquarium'
+  },
+  'flowbots': {
+    input: resolve(__dirname, 'index.html'),
+    outDir: 'dist/flowbots',
+    appName: 'flowbots'
+  },
   'default': {
     input: resolve(__dirname, 'index.html'),
     outDir: 'dist/geneva',
@@ -52,7 +72,15 @@ export default defineConfig(({ command, mode }) => {
                 ? 'Unchained Paddock - a home for your ChainedHorse NFTs'
                 : process.env.VITE_APP === 'purr'
                   ? '$PURR - a new ERC20 by kitty.international'
-                  : 'Geneva Agentic A.I.'
+                  : process.env.VITE_APP === 'kittyInternational'
+                    ? 'Kitty.International - Rare Cryptokitties &amp; Siring Emporium'
+                    : process.env.VITE_APP === 'barcode'
+                      ? 'Barcode - Mandelbrot Decoded in Natural Maths'
+                        : process.env.VITE_APP === 'aquarium'
+                            ? 'tank.life - digital fish evolved'
+                            : process.env.VITE_APP === 'flowbots'
+                                ? 'Galactic Flowbots from the futures...'
+                                : 'Geneva Agentic A.I.'
             );
         }
     }

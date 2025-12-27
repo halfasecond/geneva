@@ -3,22 +3,35 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
+
     "dev": "node select-app.js",
     "dev:geneva": "./switch-app.sh geneva dev",
     "dev:purr": "./switch-app.sh purr dev",
     "dev:paddock": "./switch-app.sh chained-horse dev",
+    "dev:kittyInternational": "./switch-app.sh kittyInternational dev",
+    "dev:aquarium": "./switch-app.sh aquarium dev",
+    "dev:barcode": "./switch-app.sh barcode dev",
+
     "build": "./switch-app.sh geneva build",
     "build:geneva": "./switch-app.sh geneva build",
     "build:purr": "./switch-app.sh purr build",
     "build:paddock": "./switch-app.sh chained-horse build",
+    "build:kittyInternational": "./switch-app.sh kittyInternational build",
+    "build:barcode": "./switch-app.sh barcode build",
     "build:all": "yarn build:geneva && yarn build:purr && yarn build:paddock",
+
     "start": "yarn build:all && (yarn serve:purr &) && (yarn serve:paddock &) && NODE_NO_WARNINGS=1 babel-node -r @babel/register --extensions '.ts' src/server/index.ts",
+    
     "preview": "yarn vite preview",
     "preview:geneva": "VITE_APP=geneva yarn vite preview --outDir dist/geneva",
     "preview:purr": "VITE_APP=purr yarn vite preview --outDir dist/purr",
     "preview:paddock": "VITE_APP=chained-horse yarn vite preview --outDir dist/paddock",
+
     "serve:purr": "serve -s dist/purr -l 7001",
     "serve:paddock": "serve -s dist/paddock -l 7002",
+    "serve:kittyInternational": "serve -s dist/kittyInternational -l 7003",
+    "serve:barcode": "serve -s dist/barcode -l 7004",
+
     "lint": "yarn eslint .",
     "test:browser": "yarn vitest --workspace=vitest.workspace.ts",
     "test:node": "yarn vitest --workspace=vitest.workspace.node.ts",

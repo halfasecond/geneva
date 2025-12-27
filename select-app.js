@@ -11,9 +11,13 @@ const rl = readline.createInterface({
 console.log('Select an app to run in development mode:');
 console.log('1) Geneva (default)');
 console.log('2) Purr');
-console.log('3) Paddock (chained-horse)');
+console.log('3) The Paddock 🐎');
+console.log('4) kitty.international');
+console.log('5) Barcode')
+console.log('6) Aquarium')
+console.log('7) Flowbots') 
 
-rl.question('Enter your choice [1-3]: ', (choice) => {
+rl.question('Enter your choice [1-7]: ', (choice) => {
   let app;
   
   switch (choice) {
@@ -25,6 +29,18 @@ rl.question('Enter your choice [1-3]: ', (choice) => {
       break;
     case '3':
       app = 'chained-horse';
+      break;
+    case '4':
+      app = 'kittyInternational';
+      break;
+    case '5':
+      app = 'barcode';
+      break;
+    case '6':
+      app = 'aquarium';
+      break;
+    case '7':
+      app = 'flowbots';
       break;
     default:
       app = 'geneva';
