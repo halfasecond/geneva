@@ -16,6 +16,8 @@ EXPOSE 3131
 EXPOSE 7001
 # Paddock client
 EXPOSE 7002
+# Aquarium client
+EXPOSE 7003
 
 # Default command to keep the container running
 CMD ["sh", "-c", "yarn start"]

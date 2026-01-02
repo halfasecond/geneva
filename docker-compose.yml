@@ -9,6 +9,9 @@ services:
       - /app/node_modules
     ports:
       - ${PORT}:${PORT}
+      - 7001:7001
+      - 7002:7002
+      - 7003:7003
     stdin_open: true
     tty: true
     networks:
