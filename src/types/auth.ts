@@ -3,7 +3,7 @@ export interface AuthProps {
     handleSignIn: () => void;
     handleSignOut: () => void;
     token: string | undefined;
-    tokenId: number | undefined;
+    tokenId?: number | undefined;
     BASE_URL: string;
     app?: string;
 }

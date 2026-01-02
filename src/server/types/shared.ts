@@ -12,6 +12,7 @@ export interface ModuleConfig {
     deployed?: number;
     increment?: number;
     eventsToWatch?: string[];
+    emitter: any;
 }
 
 export interface Models {

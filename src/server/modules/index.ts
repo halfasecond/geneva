@@ -8,6 +8,7 @@ import chainedHorseModule from './chained-horse';
 import chainfacesModule from './chainfaces'
 import twobitbearsModule from './twobitbears'
 import purrModule from './purr'
+import aquariumModule from './aquarium'
 
 const { WEB3_SOCKET_URL_CHAINFACES, WEB3_SOCKET_URL_TWOBITBEARS, WEB3_SOCKET_URL_PURR } = process.env
 
@@ -45,18 +46,9 @@ const modules: ModuleFunction = (app, io, web3, db) => {
     twobitbearsModule({ app, io, web3: twobitbearWeb3Connection, db, name: 'twobitbears', prefix: 'tbb', deployed: 13385399, increment: 1000, eventsToWatch: ['Transfer'], emitter })
     const purrWeb3Connection = createWeb3Connection(WEB3_SOCKET_URL_PURR || '')
     // Initialize Purr module
-    purrModule({
-        app,
-        io,
-        web3: purrWeb3Connection,
-        db,
-        name: 'purr',
-        prefix: 'purr',
-        deployed: 22755367,
-        increment: 1000,
-        eventsToWatch: ['Transfer'],
-        emitter
-    });
+    purrModule({ app, io, web3: purrWeb3Connection, db, name: 'purr', prefix: 'purr', deployed: 22755367, increment: 1000, eventsToWatch: ['Transfer'], emitter });
+    // Initialize Aquarium module
+    aquariumModule({ app, io, web3, db, name: 'aquarium', prefix: 'aq', deployed: 0, increment: 10000, eventsToWatch: [], emitter })
 
     runEventsBus(web3, emitter)
 };
