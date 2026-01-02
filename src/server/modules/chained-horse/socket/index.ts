@@ -72,7 +72,7 @@ const attributeTypes = [
 const gameSettings = {
     tickRate: 100,  // 100 = 10 updates per second
     movementSpeed: 16,  // pixels per frame
-    broadcastFrames: 2,  // Client broadcasts every 5th frame
+    broadcastFrames: 5,  // Client broadcasts every 5th frame
     smoothing: 0.1,  // Animation smoothing factor
     saveStateInterval: 1000 * 60 // Save state every 1 minute
 };
@@ -118,7 +118,8 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
     const scareCityState = initializeScareCityState(namespace, nfts, attributeTypes, latestEthBlock.blocknumber, Models);
     
     // Initialize GreaterTractor game state
-    const greaterTractorState = initializeGreaterTractorState(namespace, latestEthBlock.blocknumber, Models);
+    const gameLength = 7200 // 1 day = ~7200 (eth blocks)
+    const greaterTractorState = initializeGreaterTractorState(namespace, latestEthBlock.blocknumber, Models, gameLength);
 
     // Static Actors - e.g. flowers of goodwill
     const flowers = nfts.filter((horse: Horse) => horse.utility === 'flower of goodwill');

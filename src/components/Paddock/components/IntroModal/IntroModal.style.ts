@@ -19,7 +19,7 @@ export const ModalContent = styled.div`
     background-color: rgb(170, 255, 207);
     padding: 40px;
     border-radius: 8px;
-    max-width: 700px;
+    max-width: 780px;
     width: 90%;
     text-align: center;
     position: relative;
@@ -55,10 +55,11 @@ export const Avatar = styled.div`
     width: 135px;
     height: 135px;
     border-radius: 50%;
-    margin: 0 auto 28px;
+    margin: 0 auto 48px;
     overflow: hidden;
     border: 4px solid #754c29;
     background: white;
+    box-sizing: border-box;
 
     img {
         width: 100%;
@@ -95,13 +96,11 @@ export const Button = styled.button`
 `;
 
 export const HorseGrid = styled.div`
-    display: grid;
-    grid-template-columns: repeat(3, 1fr); /* Exactly 3 columns */
-    gap: 20px;
-    margin: 20px 0;
-    max-height: 300px;
-    overflow-y: auto;
-    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    box-sizing: border-box;
+    flex-wrap: wrap;
+    margin-top: 48px;
 `;
 
 export const HorseCard = styled.div`
@@ -110,12 +109,14 @@ export const HorseCard = styled.div`
     padding: 10px;
     text-align: center;
     cursor: pointer;
+    width: 28%;
     transition: transform 0.2s, background 0.2s;
     border: 2px solid transparent;
     aspect-ratio: 1; /* Keep card square */
     display: flex;
     flex-direction: column;
     align-items: center;
+    margin-bottom: 32px;
 
     img {
         width: 95%;

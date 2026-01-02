@@ -1,7 +1,10 @@
 // In src/components/Game/components/Notifications/Notifications.tsx
 import { useState, useEffect } from 'react';
 import { getAorAn, stables } from 'src/server/modules/chained-horse/config/stables';
+import { getAssetPath } from 'utils/assetPath';
 import * as Styled from './Notifications.style';
+
+const NOTIFICATION_DISPLAY_TIMEOUT = 10000
 
 interface NotificationData {
     // Generic interface for different notification types
@@ -22,6 +25,8 @@ interface Notification {
     scanType?: string; // e.g. "background color"
     scanResult?: string; // e.g. "martini with alchohol"
     stable?: number; // e.g. stable_upgrade level 2
+    reward?: string;
+    direction?: string;
 }
 
 interface NotificationsProps {
@@ -70,7 +75,7 @@ const Notifications: React.FC<NotificationsProps> = ({
     const getIcon = (type: string, tokenId?: number) => {
         switch (type) {
             case 'stable_upgrade':
-                return <div className={'stable'} style={{ backgroundImage: `url('/svg/stable.svg')` }} />;
+                return <div className={'stable'} style={{ backgroundImage: `url('${getAssetPath('svg/stable.svg')}')` }} />;
                 // return <div className={'horse'} style={{ backgroundImage: `url(${nfts.find(nft => nft.tokenId === tokenId).svg}`}} />
             case 'wasnt_scared':
                 return <div className={'ghost'} style={{ backgroundImage: `url(${nfts.find(nft => nft.tokenId === 60).svg}`}} />;
@@ -78,6 +83,12 @@ const Notifications: React.FC<NotificationsProps> = ({
                 return <div className={'ghost'} style={{ backgroundImage: `url(${nfts.find(nft => nft.tokenId === 60).svg}`}} />;
             case 'newbIslandRace':
                 return <div className={'horse'} style={{ backgroundImage: `url(${nfts.find(nft => nft.tokenId === tokenId).svg}`}} />;
+            case 'greater_tractor_vote':
+                return <div className={'horse'} style={{ backgroundImage: `url(${nfts.find(nft => nft.tokenId === tokenId).svg}`}} />;
+            case 'greater_tractor_vote_change':
+                return <div className={'horse'} style={{ backgroundImage: `url(${nfts.find(nft => nft.tokenId === tokenId).svg}`}} />;
+            case 'greater_tractor_win':
+                return <div className={'tractor'}>🚜</div>;
             // Add cases for other notification types as needed
             default:
                 return '🔔';
@@ -117,6 +128,24 @@ const Notifications: React.FC<NotificationsProps> = ({
                         </Styled.Content>
                     )
                 ) : null;
+            case 'greater_tractor_vote_change':
+                return (
+                    <Styled.Content>
+                        <p><b>Horse #{notification.tokenId}</b> changed their vote for the Greater Tractor.</p>
+                    </Styled.Content>
+                )
+            case 'greater_tractor_vote':
+                return (
+                    <Styled.Content>
+                        <p><b>Horse #{notification.tokenId}</b> voted for the Greater Tractor.</p>
+                    </Styled.Content>
+                )
+            case 'greater_tractor_win':
+                return notification.reward && (
+                    <Styled.Content>
+                        <p><b>{notification.reward}</b> has been distributed to those who voted for the Greater Tractor</p>
+                    </Styled.Content>
+                )
             // Add cases for other notification types as needed
             default:
                 return null;
@@ -130,7 +159,7 @@ const Notifications: React.FC<NotificationsProps> = ({
     useEffect(() => {
         const timers = visibleNotifications.map(notification => {
             if (!notification.exiting) {
-                return setTimeout(() => handleClose(notification.id), 10000);
+                return setTimeout(() => handleClose(notification.id), NOTIFICATION_DISPLAY_TIMEOUT);
             }
             return undefined;
         });

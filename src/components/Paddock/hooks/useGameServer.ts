@@ -4,7 +4,6 @@ import { Position } from '../../../server/types';
 import { Actor, WorldState } from '../../../server/types/actor';
 import { usePerformanceMetrics } from './usePerformanceMetrics';
 import { ghostFound } from 'src/audio';
-import { Namespace } from 'socket.io';
 
 interface Message {
     message: string;
@@ -39,6 +38,7 @@ interface GameServerState {
     metrics: any;
     block: any;
     scareCityState: any;
+    greaterTractorState: any;
     scanTrait: ScanTraitFn;
     messages: Message[];
     notifications?: any[];
@@ -201,16 +201,18 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
                 setGreaterTractorState(state);
             };
 
+            const handleGreaterTractorVote = (data: any) => {
+                handleNotification(data)
+            }
+
             const handleGreaterTractorResults = (data: any) => {
                 handleNotification(data);
             };
             const handleTraitFound = (data: any) => {
                 ghostFound();
-                console.log(data)
                 handleNotification(data);
             };
             const handleBecameGhost = (data: any) => {
-                console.log(data)
                 handleNotification(data)
             };
 
@@ -251,6 +253,7 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
             socket.on('scarecity:traitFound', handleTraitFound);
             socket.on('scarecity:becameGhost', handleBecameGhost);
             socket.on('greaterTractor:state', handleGreaterTractorState);
+            socket.on('greaterTractor:vote', handleGreaterTractorVote);
             socket.on('greaterTractor:results', handleGreaterTractorResults);
             socket.on('notification', (data: any) => handleNotification(data));
             socket.on('messages', handleMessages);
@@ -326,7 +329,6 @@ export function useGameServer({ tokenId, token, onStaticActors }: UseGameServerP
     const voteForTractor = useCallback((direction: 'left' | 'right') => {
         if (socketRef.current?.connected && connected) {
             socketRef.current.emit('greaterTractor:vote', { direction });
-            console.log(`Voted for ${direction} tractor`);
         }
     }, [connected]);
 

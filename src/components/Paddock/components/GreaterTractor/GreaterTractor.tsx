@@ -86,7 +86,7 @@ const GreaterTractor: React.FC<GreaterTractorProps> = ({
     <Styled.Container ref={containerRef} style={{ left, top }}>
       <Styled.Header>
         <h2>The Greater Tractor</h2>
-        <p>Vote for the greater tractor! Winners get 5 <b>$HAY</b>.</p>
+        <p>Vote for the greater tractor! Winners get <b>5 $HAY</b>.</p>
         {blocksUntilReset > 0 && (
           <p>Next reset in {blocksUntilReset} blocks</p>
         )}

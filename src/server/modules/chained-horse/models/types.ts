@@ -41,3 +41,17 @@ export interface ScareCityGameDocument extends Document {
     tail: ScareCityAnswers;
     utility: ScareCityAnswers;
 }
+
+export interface GreaterTractorVotes {
+    left: number;
+    right: number;
+}
+
+export interface GreaterTractorGameDocument extends Document {
+    gameStart: number;
+    gameLength: number;
+    votes:  GreaterTractorVotes;
+    winner: string;
+    winners: string[];
+    totalPayout: number;
+}

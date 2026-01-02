@@ -49,7 +49,7 @@ export const addPlayer = (namespace: Namespace, socketId: string, position: Posi
         hay,
         game
     } as PlayerActor;
-    
+
     namespace.worldState.actors.push(player);
     return player;
 };
@@ -89,7 +89,7 @@ export const incrementBalance = async (
     } catch (e) {
         console.log(e)
     }
-    
+
 }
 
 export const setPlayerConnected = (namespace: Namespace, id: number): void => {
@@ -120,7 +120,7 @@ export const completePlayerTutorial = (namespace: Namespace, id: number, race: a
         const time = race.find((r: any) => r.tokenId === id).time
         if (player.race === undefined || player.race > time) {
             player.race = time // either sets a time (ending the tutorial sequence) or updates to their best time
-        } 
+        }
     }
 };
 
@@ -177,21 +177,56 @@ interface RestrictedArea {
 export const isInRestrictedArea = (x: number, y: number, size: number, areas: RestrictedArea[]) => {
     return areas.some(area => {
         return !(x + size < area.left ||
-                x > area.left + area.width ||
-                y + size < area.top ||
-                y > area.top + area.height
-            );
+            x > area.left + area.width ||
+            y + size < area.top ||
+            y > area.top + area.height
+        );
     });
 };
 
-// Get random position avoiding areas
-export const getRandomPosition = (areas: RestrictedArea[], worldWidth: number, worldHeight: number): { x: number, y: number } => {
-    let x, y;
+export const getRandomPosition = (
+    areas: RestrictedArea[],
+    worldWidth: number,
+    worldHeight: number,
+    nearbyHorse?: { x: number; y: number }
+): { x: number; y: number } => {
+    let x: number, y: number;
+
+    for (let attempt = 0; attempt < 80; attempt++) {
+        // Start from dead center — this is our "κ attractor"
+        x = worldWidth / 2;
+        y = worldHeight * 0.55;
+
+        // Add soft κ-like breathing noise — this is the magic
+        const angle = Math.random() * Math.PI * 2;
+        const distance = Math.random() * Math.random() * worldWidth * 0.42; // ← triangular dist = natural falloff
+        x += Math.cos(angle) * distance;
+        y += Math.sin(angle) * distance;
+
+        // Gentle avoidance of horses
+        if (nearbyHorse && Math.hypot(nearbyHorse.x - x, nearbyHorse.y - y) < 50) {
+            continue;
+        }
+
+        if (!isInRestrictedArea(x, y, 100, areas)) {
+            return { x, y };
+        }
+    }
+
+    // Safe fallback
+    let fx, fy;
     do {
-        x = Math.random() * (worldWidth - 200);  // Leave space for size
-        y = Math.random() * (worldHeight - 1000); // Keep away from beach
-    } while (isInRestrictedArea(x, y, 100, areas));
-    return { x, y };
+        fx = Math.random() * (worldWidth - 200);
+        fy = Math.random() * (worldHeight - 1000);
+    } while (isInRestrictedArea(fx, fy, 100, areas));
+    return { x: fx, y: fy };
+};
+
+const gaussianRandom = () => {
+    // Box-Muller lite – gives nice natural clumping
+    const u = 1 - Math.random();
+    const v = Math.random();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
 };
 
 // World state helpers

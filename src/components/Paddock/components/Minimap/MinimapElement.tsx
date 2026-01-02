@@ -17,7 +17,8 @@ export const MinimapElement: React.FC<{
     borderRadius?: string;
     backgroundImage?: string;
     className?: string;
-}> = ({ worldRect, backgroundColor, backgroundImage, opacity, borderRadius, className }) => {
+    children?: any;
+}> = ({ worldRect, backgroundColor, backgroundImage, opacity, borderRadius, className, children }) => {
     const minimapRect = CoordinateTransformer.worldRectToMinimap(worldRect);
 
     return (
@@ -33,7 +34,7 @@ export const MinimapElement: React.FC<{
                 opacity: opacity || 1,
                 borderRadius: borderRadius || '0'
             }}
-        />
+        >{children}</StyledElement>
     );
 };
 

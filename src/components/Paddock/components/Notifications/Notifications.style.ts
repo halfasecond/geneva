@@ -74,6 +74,11 @@ export const Title = styled.h3`
             border-radius: 100%;
             box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
         }
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        font-size: 56px;
+        line-height: 0;
     }
 `;
 

@@ -240,18 +240,22 @@ export const Minimap: React.FC<MinimapProps> = ({
                 ))}
 
                 {/* Greater Tractor */}
-                {greaterTractorDimensions && Object.entries(greaterTractorDimensions).map(([type, dimensions]) => (
+                {greaterTractorDimensions && Object.entries(greaterTractorDimensions).map(([type, dimensions], i) => (
                     <MinimapElement
-                        key={`greaterTractor-${type}`}
+                        key={i}
                         worldRect={{
                             left: dimensions.left,
                             top: dimensions.top,
                             width: dimensions.width,
                             height: dimensions.height
                         }}
-                        backgroundColor={type === 'container' ? '#f5f5dc' : '#8b4513'}
+                        backgroundColor={type === 'container' ? '#f5f5dc' : 'transparent'}
                         opacity={0.7}
-                    />
+                    >
+                        {!(type === 'container') && (
+                            <div style={{ fontSize: 8, transform: i === 2 ? 'scale(-1, 1)' : 'scale(1,1)' }}>🚜</div>
+                        )}
+                    </MinimapElement>
                 ))}
 
                 {/* Only show player in play mode */}
