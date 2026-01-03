@@ -38,7 +38,7 @@ const Profile: React.FC<{
                     {shareLink && (
                         <Styled.Div>
                             <div>share:</div>
-                            <div><Link to={`/aquarium/${shareLink}`}>{`tank.life/aquarium/${shareLink}`}</Link></div>
+                            <div><Link to={`/tank/${shareLink}`}>{`tank.life/tank/${shareLink}`}</Link></div>
                         </Styled.Div>
                     )}
                     {/* <Styled.Div>
