@@ -11,10 +11,10 @@ const AppView: React.FC<AuthProps> = ({
     BASE_URL
 }) => {
     return (
-        <Router basename={BASE_URL}>
+        <Router basename={BASE_URL.startsWith('./') ? '/' : BASE_URL}>
             <Routes>
                 <Route path={'/'} element={<Aquarium {...{ token, handleSignIn, handleSignOut, BASE_URL }} loggedIn={walletAddress} />} />
-                <Route path={'/aquarium/:id'} element={<Share {...{ token, handleSignIn, handleSignOut, BASE_URL }} loggedIn={walletAddress} />} />
+                <Route path={'/aquarium/:id'} element={<Share />} />
             </Routes>
             
         </Router>
