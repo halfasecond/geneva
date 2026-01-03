@@ -4,7 +4,7 @@ import { Express } from 'express'
 
 const configureExpress = (app: Express): void => {
     const corsOptions: cors.CorsOptions = {
-        origin: ['https://paddock.chainedhorse.com/'],
+        origin: ['https://paddock.chainedhorse.com/', 'https://paddock.chainedhorse.com', 'https://tank.life/', 'https://tank.life', 'https://purr.international/', 'https://purr.international'],
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
         allowedHeaders: [
             'Content-Type',
@@ -15,7 +15,7 @@ const configureExpress = (app: Express): void => {
             'Authorization',
             'x-agent-id'
         ],
-        credentials: true
+        credentials: false
     }
 
     app.use((req, _res, next) => {
