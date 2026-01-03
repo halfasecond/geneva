@@ -59,7 +59,7 @@ export default defineConfig(({ command, mode }) => {
   console.log(`Output directory: ${appConfig.outDir}`);
   
   return {
-    base: command === 'serve' ? '/' : './',
+    base: '/',
     plugins: [
       react(),
       // Only include game server in development
