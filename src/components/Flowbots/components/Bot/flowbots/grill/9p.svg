@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Mouth_9_gold" data-name="Mouth 9 gold" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841.89 1190.55">
+  <g>
+    <polygon points="484.45 456.06 357.44 456.06 342.44 404.06 499.45 404.06 484.45 456.06"/>
+    <polygon points="484.45 456.06 357.44 456.06 342.44 404.06 499.45 404.06 484.45 456.06" style="fill: none; stroke: #000; stroke-linecap: round; stroke-linejoin: round; stroke-width: 25px;"/>
+    <polygon points="484.45 456.06 357.44 456.06 342.44 404.06 499.45 404.06 484.45 456.06" style="fill: none; stroke: #fff; stroke-linecap: round; stroke-linejoin: round; stroke-width: 8px;"/>
+    <g>
+      <polyline points="484.46 456.01 484.45 456.06 484.4 456.06" style="fill: none; stroke: #231f20; stroke-linecap: round; stroke-linejoin: round; stroke-width: 5px;"/>
+      <line x1="474.72" y1="456.06" x2="362.33" y2="456.06" style="fill: none; stroke: #231f20; stroke-dasharray: .1 9.67; stroke-linecap: round; stroke-linejoin: round; stroke-width: 5px;"/>
+      <polyline points="357.49 456.06 357.44 456.06 357.43 456.01" style="fill: none; stroke: #231f20; stroke-linecap: round; stroke-linejoin: round; stroke-width: 5px;"/>
+      <line x1="354.46" y1="445.71" x2="343.94" y2="409.26" style="fill: none; stroke: #231f20; stroke-dasharray: .11 10.72; stroke-linecap: round; stroke-linejoin: round; stroke-width: 5px;"/>
+      <polyline points="342.46 404.11 342.44 404.06 342.49 404.06" style="fill: none; stroke: #231f20; stroke-linecap: round; stroke-linejoin: round; stroke-width: 5px;"/>
+      <line x1="352.21" y1="404.06" x2="494.54" y2="404.06" style="fill: none; stroke: #231f20; stroke-dasharray: .1 9.72; stroke-linecap: round; stroke-linejoin: round; stroke-width: 5px;"/>
+      <polyline points="499.4 404.06 499.45 404.06 499.43 404.11" style="fill: none; stroke: #231f20; stroke-linecap: round; stroke-linejoin: round; stroke-width: 5px;"/>
+      <line x1="496.46" y1="414.41" x2="485.94" y2="450.86" style="fill: none; stroke: #231f20; stroke-dasharray: .11 10.72; stroke-linecap: round; stroke-linejoin: round; stroke-width: 5px;"/>
+    </g>
+  </g>
+  <g>
+    <line x1="372.73" y1="422.34" x2="372.73" y2="437.34" style="fill: none; stroke: #00adee; stroke-linecap: round; stroke-linejoin: round; stroke-width: 4px;"/>
+    <line x1="388.8" y1="422.34" x2="388.8" y2="437.34" style="fill: none; stroke: #00adee; stroke-linecap: round; stroke-linejoin: round; stroke-width: 4px;"/>
+    <line x1="404.87" y1="422.34" x2="404.87" y2="437.34" style="fill: none; stroke: #00adee; stroke-linecap: round; stroke-linejoin: round; stroke-width: 4px;"/>
+    <line x1="420.94" y1="422.34" x2="420.94" y2="437.34" style="fill: none; stroke: #00adee; stroke-linecap: round; stroke-linejoin: round; stroke-width: 4px;"/>
+    <line x1="437.02" y1="422.34" x2="437.02" y2="437.34" style="fill: none; stroke: #00adee; stroke-linecap: round; stroke-linejoin: round; stroke-width: 4px;"/>
+    <line x1="453.09" y1="422.34" x2="453.09" y2="437.34" style="fill: none; stroke: #00adee; stroke-linecap: round; stroke-linejoin: round; stroke-width: 4px;"/>
+    <line x1="469.16" y1="422.34" x2="469.16" y2="437.34" style="fill: none; stroke: #00adee; stroke-linecap: round; stroke-linejoin: round; stroke-width: 4px;"/>
+  </g>
+</svg>

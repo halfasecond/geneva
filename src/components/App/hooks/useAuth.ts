@@ -67,7 +67,7 @@ export function useAuth({ appName }: UseAuthOptions) {
         if (window.ethereum) {
             try {
                 const chainId = await (window.ethereum as any).request({ method: 'eth_chainId' });
-                if (chainId === VITE_APP_CHAIN_ID || VITE_APP_NODE_ENV === 'development') {
+                if (VITE_APP_CHAIN_ID.includes(chainId)) {
                     await (window.ethereum as any).request({ method: 'eth_requestAccounts' });
                     const web3 = new Web3((window.ethereum as any));
                     const message = 'Sign this message to authenticate';
@@ -82,7 +82,7 @@ export function useAuth({ appName }: UseAuthOptions) {
                     setLoggedIn(accounts[0]);
                     setToken(data.token);
                 } else {
-                    alert('You are on the wrong chain!');
+                   alert('You are on the wrong chain!');
                 }
             } catch (error) {
                 console.error('Error during sign in:', error);
@@ -105,7 +105,7 @@ export function useAuth({ appName }: UseAuthOptions) {
     const checkToken = useCallback(async () => {
         try {
             const chainId = await (window.ethereum as any).request({ method: 'eth_chainId' });
-            if (chainId === VITE_APP_CHAIN_ID) {
+            if (VITE_APP_CHAIN_ID.includes(chainId)) {
                 const { data } = await axios.post<CheckTokenResponse>(
                     `${VITE_APP_ENDPOINT}${appName}/auth/check-token`, 
                     { token }

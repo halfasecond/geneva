@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Mouth_19_Silver" data-name="Mouth 19 Silver" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 841.89 1190.55">
+  <defs>
+    <radialGradient id="radial-gradient" cx="420.94" cy="442.28" fx="420.94" fy="442.28" r="95.02" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f05a28"/>
+      <stop offset=".42" stop-color="#000"/>
+    </radialGradient>
+  </defs>
+  <g>
+    <circle cx="420.94" cy="442.28" r="54.56" style="fill: url(#radial-gradient);"/>
+    <circle cx="420.94" cy="442.28" r="54.56" style="fill: none; stroke: #000; stroke-linecap: round; stroke-linejoin: round; stroke-width: 20px;"/>
+    <circle cx="420.94" cy="442.28" r="54.56" style="fill: none; stroke: #fff; stroke-linecap: round; stroke-linejoin: round; stroke-width: 5px;"/>
+  </g>
+  <g>
+    <g>
+      <line x1="377.01" y1="442.28" x2="464.88" y2="442.28" style="fill: none; stroke: #ec1c24; stroke-linecap: round; stroke-linejoin: round; stroke-width: 3px;"/>
+      <line x1="381.26" y1="456.26" x2="460.63" y2="456.26" style="fill: none; stroke: #ec1c24; stroke-linecap: round; stroke-linejoin: round; stroke-width: 3px;"/>
+      <line x1="389.76" y1="470.24" x2="452.13" y2="470.24" style="fill: none; stroke: #ec1c24; stroke-linecap: round; stroke-linejoin: round; stroke-width: 3px;"/>
+      <line x1="409.61" y1="484.22" x2="432.28" y2="484.22" style="fill: none; stroke: #ec1c24; stroke-linecap: round; stroke-linejoin: round; stroke-width: 3px;"/>
+    </g>
+    <g>
+      <line x1="460.63" y1="428.32" x2="381.26" y2="428.32" style="fill: none; stroke: #ec1c24; stroke-linecap: round; stroke-linejoin: round; stroke-width: 3px;"/>
+      <line x1="452.13" y1="414.34" x2="389.76" y2="414.34" style="fill: none; stroke: #ec1c24; stroke-linecap: round; stroke-linejoin: round; stroke-width: 3px;"/>
+      <line x1="432.28" y1="400.36" x2="409.61" y2="400.36" style="fill: none; stroke: #ec1c24; stroke-linecap: round; stroke-linejoin: round; stroke-width: 3px;"/>
+    </g>
+  </g>
+</svg>
