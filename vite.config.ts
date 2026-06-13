@@ -35,6 +35,11 @@ const appConfigs = {
     outDir: 'dist/flowbots',
     appName: 'flowbots'
   },
+  'elite': {
+    input: resolve(__dirname, 'index.html'),
+    outDir: 'dist/elite',
+    appName: 'elite'
+  },
   'default': {
     input: resolve(__dirname, 'index.html'),
     outDir: 'dist/geneva',
@@ -80,7 +85,9 @@ export default defineConfig(({ command, mode }) => {
                             ? 'tank.life - digital fish evolved'
                             : process.env.VITE_APP === 'flowbots'
                                 ? 'Galactic Flowbots from the futures...'
-                                : 'Geneva Agentic A.I.'
+                                : process.env.VITE_APP === 'elite'
+                                  ? 'ELITE — web3 three.js space combat & trade'
+                                  : 'Geneva Agentic A.I.'
             );
         }
     }

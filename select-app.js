@@ -15,9 +15,10 @@ console.log('3) The Paddock 🐎');
 console.log('4) kitty.international');
 console.log('5) Barcode')
 console.log('6) Aquarium')
-console.log('7) Flowbots') 
+console.log('7) Flowbots')
+console.log('8) Elite (three.js web3)')
 
-rl.question('Enter your choice [1-7]: ', (choice) => {
+rl.question('Enter your choice [1-8]: ', (choice) => {
   let app;
   
   switch (choice) {
@@ -41,6 +42,9 @@ rl.question('Enter your choice [1-7]: ', (choice) => {
       break;
     case '7':
       app = 'flowbots';
+      break;
+    case '8':
+      app = 'elite';
       break;
     default:
       app = 'geneva';
