@@ -48,7 +48,7 @@ import { projectContacts } from '../../elite/sim/contacts'
 import { useFlightInput } from '../../elite/useFlightInput'
 import { useHoloDrag } from '../../elite/useHoloDrag'
 import * as CockpitRender from '../../elite/render/cockpit'
-import { HoloPanel } from '../../elite/ui'
+import { HoloPanel, VechPreview } from '../../elite/ui'
 
 // Basic AuthProps shape we receive (wallet + controls)
 type EliteProps = AuthProps & {
@@ -88,26 +88,7 @@ const Elite: React.FC<EliteProps> = ({
   const fuelBarsRef = useRef<THREE.Object3D[]>([])
   const reticleRef = useRef<THREE.Group | null>(null)
 
-  // VECH preview uses <model-viewer> for the GLB (high quality), with 2D canvas overlay for the holo ring.
-  const vechRingCanvasRef = useRef<HTMLCanvasElement | null>(null)
-  const vechModelViewerRef = useRef(null)
 
-  const setVechCamera = () => {
-    const mv = vechModelViewerRef.current
-    if (mv) {
-      // Force using % per docs. Smaller % = closer = larger model in the (fixed size) preview box.
-      // Edit this value + the attribute below to tune the ship size to fill the holo nicely.
-      mv.cameraOrbit = '0deg 70deg 15%'
-      mv.cameraTarget = '0 -0.15 0'  /* negative y shifts look-at up the model, moving the ship up in the image for bottom clearance while keeping ring and ship scale fixed */
-      if (mv.jumpCameraToGoal) mv.jumpCameraToGoal()
-    }
-  }
-
-  // Extra safety for React + model-viewer timing (attributes can be finicky on custom elements)
-  useEffect(() => {
-    const t = setTimeout(setVechCamera, 50)
-    return () => clearTimeout(t)
-  }, [])
 
   const [hud, setHud] = useState({
     speed: 0,
@@ -653,36 +634,7 @@ const Elite: React.FC<EliteProps> = ({
     }
   }, [])  // No longer depends on keyboard handlers (now in dedicated hooks)
 
-  // Draw the static blue holo ring overlay for the VECH preview (on top of <model-viewer>)
-  useEffect(() => {
-    const canvas = vechRingCanvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
-
-    const cx = canvas.width / 2
-    const cy = canvas.height / 2
-    const rx = canvas.width * 0.24
-    const ry = canvas.height * 0.21
-
-    // Outer ring (thicker for the bigger icon)
-    ctx.strokeStyle = '#66aaff'
-    ctx.lineWidth = 2.5
-    ctx.shadowColor = '#66aaff'
-    ctx.shadowBlur = 7
-    ctx.beginPath()
-    ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2)
-    ctx.stroke()
-
-    // Inner ring for holo depth
-    ctx.lineWidth = 1.2
-    ctx.shadowBlur = 3
-    ctx.beginPath()
-    ctx.ellipse(cx, cy, rx * 0.68, ry * 0.68, 0, 0, Math.PI * 2)
-    ctx.stroke()
-  }, [])
 
   // Cartography map overlay (2D canvas for clarity + live orbits, click to select destination)
   // This is the "overlay UI such as Cartography" the user requested.
@@ -1437,102 +1389,8 @@ const Elite: React.FC<EliteProps> = ({
             <div style={{position: 'absolute', bottom: SCANNER_2D.labelBottom, width: '100%', textAlign: 'center', fontSize: '8px', letterSpacing: '0.5px', color: SCANNER_2D.nearbyLabelColor}}>NEARBY</div>
           </div>
 
-          {/* VECH ship holo icon — separate panel to the right of the NEARBY radar (real loaded GLB model via model-viewer).
-              No rotation (autoRotate=false), larger size (440x290 panel), our holo ring overlay (behind via stacking + half size), inner height calc(100%-120px) + cameraTarget for bottom clearance. Looks great! */}
-          <div style={{
-            position: 'absolute',
-            left: 'calc(50% + 174px)',
-            bottom: 60,
-            width: 440,
-            height: 290,
-            background: 'rgba(0, 6, 14, 0.1)',
-            borderRadius: '2px',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '4px',
-            overflow: 'hidden',
-          }}>
-            {/* High quality GLB render using @google/model-viewer (the same tech behind OpenSea's nice viewer for this exact VECH model).
-                No external iframe, no unwanted UI. We overlay our own holo ring (drawn on canvas behind the model-viewer so ship is on top).
-                Ring radii halved for smaller frame; ship scale unchanged. cameraTarget y-offset shifts ship up in viewport for bottom clearance. */}
-            <div style={{ position: 'relative', width: '100%', height: 'calc(100% - 124px)' }}>
-              {/* Ring canvas first (lower in stacking) so the 3D ship from model-viewer renders on top of the holo ring lines */}
-              <canvas
-                ref={vechRingCanvasRef}
-                width="430"
-                height="266"
-                style={{ position: 'absolute', top: 0, left: 5, pointerEvents: 'none', zIndex: 1 }}
-              />
-              <model-viewer
-                ref={vechModelViewerRef}
-                src={VECH.glbUrl}
-                alt="VECH hovercraft"
-                cameraControls={false}
-                autoRotate={false}
-                disableZoom={false}
-                disablePan={true}
-                interactionPrompt="none"
-                shadowIntensity={0.6}
-                exposure={1.2}
-                cameraOrbit="0deg 70deg 15%"
-                cameraTarget="0 -0.15 0"  /* negative y shifts look-at up the model, moving the ship up in the image for bottom clearance while keeping ring and ship scale fixed */
-                onLoad={setVechCamera}
-                style={{ width: '100%', height: '100%', background: 'transparent', position: 'relative', zIndex: 2 }}
-              />
-            </div>
-            <div style={{
-              fontSize: '9px',
-              color: '#66aaff',
-              letterSpacing: '0.7px',
-              textShadow: '0 0 2px #000',
-              pointerEvents: 'none',
-              lineHeight: 1,
-            }}>VECH</div>
-          </div>
-
-        {/* Right status bars - far right of screen */}
-        <div style={{
-          position: 'absolute',
-          right: 0,
-          bottom: 0,
-          width: '200px',
-          height: '210px',
-          padding: '4px 8px',
-          display: 'flex',
-          gap: '12px',
-          background: 'rgba(0,0,0,0.3)',
-        }}>
-          {/* Fuel */}
-          <div>
-            <div>FUEL</div>
-            <div style={{height: '38px', width: '14px', background: 'rgba(255,170,0,0.1)', position: 'relative', marginTop: '2px', boxShadow: 'inset 0 0 4px rgba(255,170,0,0.4)'}}>
-              <div style={{
-                position: 'absolute',
-                bottom: 0,
-                width: '100%',
-                height: `${Math.min(100, ((hud.fuel || 0) / 120) * 100)}%`,
-                background: '#ffaa00',
-              }} />
-            </div>
-            <div style={{fontSize: '8px'}}>1.10/h</div>
-          </div>
-
-          {/* Other bars */}
-          <div style={{fontSize: '9px'}}>
-            <div>SYS 100%</div>
-            <div>ENG 100%</div>
-            <div>RST 100%</div>
-            <div>WEP 100%</div>
-          </div>
-
-          <div style={{fontSize: '9px', marginLeft: 'auto'}}>
-            <div>MASS LOCKED</div>
-            <div>CARGO SCOOP</div>
-            <div style={{marginTop: '4px', color: isHyperspacing ? '#ff6644' : '#ffaa00'}}>{isHyperspacing ? 'JUMPING' : 'READY'}</div>
-          </div>
-        </div>
+        {/* Fused VECH preview + status gauges as one component */}
+        <VechPreview hud={hud} />
       </div>
     </div>
   )
