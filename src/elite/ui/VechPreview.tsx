@@ -113,7 +113,7 @@ const VechPreview: React.FC<VechPreviewProps> = ({ hud }) => {
         lineHeight: 1,
         marginBottom: '12px'
       }}>
-        VECH
+        VECH #5759
       </div>
 
       {/* Status UI - 3 rows vertical, width matching biggest ring (a bit less), centered */}
@@ -124,24 +124,24 @@ const VechPreview: React.FC<VechPreviewProps> = ({ hud }) => {
         flexDirection: 'column',
         gap: '6px',
         color: vechBlue,
-        fontSize: '8px',
+        fontSize: '12px',  /* 50% larger */
         paddingBottom: '4px'
       }}>
         {/* Row 1: Speed top */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <div>SPD</div>
           <SpeedGauge speed={hud.speed} barWidth={150} />
-          <div style={{ fontSize: '7px' }}>{hud.speed}</div>
+          <div style={{ fontSize: '10px' }}>{hud.speed}</div>
         </div>
 
         {/* Row 2: Fuel middle */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
           <div>FUEL</div>
           <FuelGauge fuel={hud.fuel} barWidth={150} />
-          <div style={{ fontSize: '7px' }}>1.10/h</div>
+          <div style={{ fontSize: '10px' }}>1.10/h</div>
         </div>
 
-        {/* Row 3: System stuff (SYS ENG RST WEP) */}
+        {/* Row 3: System stuff (SYS ENG RST WEP) as 2 rows of 2 (refactored for larger size) */}
         <SystemStatus />
       </div>
     </div>
