@@ -2,10 +2,37 @@ import React, { useEffect, useRef, useState, useCallback } from 'react'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 
-// @google/model-viewer registers the <model-viewer> web component globally.
-// This gives high-quality GLB rendering (same as the Seadn/OpenSea viewer for this model)
-// with no external iframe or unwanted UI.
+// @google/model-viewer registers the <model-viewer> web component globally (side-effect import required).
+// React/TSX integration notes (addressing the SO link you posted and typical gotchas):
+// - camelCase props in JSX (React converts to attributes on the custom element).
+// - The declare global below provides TSX types so no "unknown element" errors.
+// - Camera/size changes often don't respond to attributes alone because the viewer's camera controller is async — we use ref + onLoad + imperative API (set cameraOrbit + jumpCameraToGoal) as recommended in those threads.
+// - This makes the % orbit value actually take effect for model size.
+// - Removed min/max pinning (was causing breakage/TS issues in some renders) and rely on controls=false + forced orbit.
 import '@google/model-viewer'
+
+// TypeScript support for the custom element in TSX (common pattern for model-viewer + React)
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      'model-viewer': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
+        src?: string
+        alt?: string
+        cameraControls?: boolean | string
+        autoRotate?: boolean | string
+        disableZoom?: boolean | string
+        disablePan?: boolean | string
+        interactionPrompt?: string
+        shadowIntensity?: number | string
+        exposure?: number | string
+        cameraOrbit?: string
+        onLoad?: () => void
+        style?: React.CSSProperties
+        ref?: React.Ref<HTMLElement>
+      }
+    }
+  }
+}
 import type { AuthProps } from '../../types/auth'
 import { EliteSim } from '../../elite/sim/EliteSim'
 import type { NpcAgent } from '../../elite/sim/core/types'
@@ -57,11 +84,18 @@ const Elite: React.FC<EliteProps> = ({
   const setVechCamera = () => {
     const mv = vechModelViewerRef.current
     if (mv) {
-      // Force using % per docs. Edit the % value here to control model size in the preview (smaller = larger ship).
-      mv.cameraOrbit = '0deg 70deg 25%'
+      // Force using % per docs. Smaller % = closer = larger model in the (fixed size) preview box.
+      // Edit this value + the attribute below to tune the ship size to fill the holo nicely.
+      mv.cameraOrbit = '0deg 70deg 15%'
       if (mv.jumpCameraToGoal) mv.jumpCameraToGoal()
     }
   }
+
+  // Extra safety for React + model-viewer timing (attributes can be finicky on custom elements)
+  useEffect(() => {
+    const t = setTimeout(setVechCamera, 50)
+    return () => clearTimeout(t)
+  }, [])
 
   const [hud, setHud] = useState({
     speed: 0,
@@ -1999,7 +2033,7 @@ const Elite: React.FC<EliteProps> = ({
           }}>
             {/* High quality GLB render using @google/model-viewer (the same tech behind OpenSea's nice viewer for this exact VECH model).
                 No external iframe, no unwanted UI. We overlay our own holo ring.
-                Static (autoRotate={false}), larger panel size. Using % for cameraOrbit (per docs) + forced via onLoad. 25% for large model fill (tune the % in setVechCamera / attribute for size). */}
+                Static (autoRotate={false}), larger panel size. Using % for cameraOrbit (per docs) + forced via onLoad for reliability. 15% for larger model fill (tune % value to fit the ship nicely in the ring). */}
             <div style={{ position: 'relative', width: '100%', height: 'calc(100% - 24px)' }}>
               <model-viewer
                 ref={vechModelViewerRef}
@@ -2012,7 +2046,7 @@ const Elite: React.FC<EliteProps> = ({
                 interactionPrompt="none"
                 shadowIntensity={0.6}
                 exposure={1.2}
-                cameraOrbit="0deg 70deg 20%"
+                cameraOrbit="0deg 70deg 15%"
                 onLoad={setVechCamera}
                 style={{ width: '100%', height: '100%', background: 'transparent' }}
               />
@@ -2020,7 +2054,7 @@ const Elite: React.FC<EliteProps> = ({
               <canvas
                 ref={vechRingCanvasRef}
                 width="430"
-                height="270"
+                height="266"
                 style={{ position: 'absolute', top: 0, left: 5, pointerEvents: 'none' }}
               />
             </div>
