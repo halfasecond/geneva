@@ -87,6 +87,7 @@ const Elite: React.FC<EliteProps> = ({
       // Force using % per docs. Smaller % = closer = larger model in the (fixed size) preview box.
       // Edit this value + the attribute below to tune the ship size to fill the holo nicely.
       mv.cameraOrbit = '0deg 70deg 15%'
+      mv.cameraTarget = '0 -0.15 0'  /* negative y shifts look-at up the model, moving the ship up in the image for bottom clearance while keeping ring and ship scale fixed */
       if (mv.jumpCameraToGoal) mv.jumpCameraToGoal()
     }
   }
@@ -1005,8 +1006,8 @@ const Elite: React.FC<EliteProps> = ({
 
     const cx = canvas.width / 2
     const cy = canvas.height / 2
-    const rx = canvas.width * 0.48
-    const ry = canvas.height * 0.42
+    const rx = canvas.width * 0.24
+    const ry = canvas.height * 0.21
 
     // Outer ring (thicker for the bigger icon)
     ctx.strokeStyle = '#66aaff'
@@ -2017,8 +2018,8 @@ const Elite: React.FC<EliteProps> = ({
             <div style={{position: 'absolute', bottom: '1px', width: '100%', textAlign: 'center', fontSize: '8px', letterSpacing: '0.5px'}}>NEARBY</div>
           </div>
 
-          {/* VECH ship holo icon — separate panel to the right of the NEARBY radar (real loaded GLB model).
-              Static pose (no auto-spin). No outer border shadow. Uniform high emissive (10) + strong lights so the *whole* ship glows evenly. */}
+          {/* VECH ship holo icon — separate panel to the right of the NEARBY radar (real loaded GLB model via model-viewer).
+              No rotation (autoRotate=false), larger size (440x290 panel), our holo ring overlay (behind via stacking + half size), inner height calc(100%-120px) + cameraTarget for bottom clearance. Looks great! */}
           <div style={{
             width: 440,
             height: 290,
@@ -2032,30 +2033,31 @@ const Elite: React.FC<EliteProps> = ({
             overflow: 'hidden',
           }}>
             {/* High quality GLB render using @google/model-viewer (the same tech behind OpenSea's nice viewer for this exact VECH model).
-                No external iframe, no unwanted UI. We overlay our own holo ring.
-                Static (autoRotate={false}), larger panel size. Using % for cameraOrbit (per docs) + forced via onLoad for reliability. 15% for larger model fill (tune % value to fit the ship nicely in the ring). */}
-            <div style={{ position: 'relative', width: '100%', height: 'calc(100% - 24px)' }}>
+                No external iframe, no unwanted UI. We overlay our own holo ring (drawn on canvas behind the model-viewer so ship is on top).
+                Ring radii halved for smaller frame; ship scale unchanged. cameraTarget y-offset shifts ship up in viewport for bottom clearance. */}
+            <div style={{ position: 'relative', width: '100%', height: 'calc(100% - 124px)' }}>
+              {/* Ring canvas first (lower in stacking) so the 3D ship from model-viewer renders on top of the holo ring lines */}
+              <canvas
+                ref={vechRingCanvasRef}
+                width="430"
+                height="266"
+                style={{ position: 'absolute', top: 0, left: 5, pointerEvents: 'none', zIndex: 1 }}
+              />
               <model-viewer
                 ref={vechModelViewerRef}
                 src="https://raw2.seadn.io/ethereum/0x02e770a2f79ba4d3740a7273eca7e290d93ecc8a/f499a621b66cab834f06546f71875d06.glb"
                 alt="VECH hovercraft"
                 cameraControls={false}
                 autoRotate={false}
-                disableZoom={true}
+                disableZoom={false}
                 disablePan={true}
                 interactionPrompt="none"
                 shadowIntensity={0.6}
                 exposure={1.2}
                 cameraOrbit="0deg 70deg 15%"
+                cameraTarget="0 -0.15 0"  /* negative y shifts look-at up the model, moving the ship up in the image for bottom clearance while keeping ring and ship scale fixed */
                 onLoad={setVechCamera}
-                style={{ width: '100%', height: '100%', background: 'transparent' }}
-              />
-              {/* Our blue holo ring overlay (same style as the old 3D one) */}
-              <canvas
-                ref={vechRingCanvasRef}
-                width="430"
-                height="266"
-                style={{ position: 'absolute', top: 0, left: 5, pointerEvents: 'none' }}
+                style={{ width: '100%', height: '100%', background: 'transparent', position: 'relative', zIndex: 2 }}
               />
             </div>
             <div style={{
