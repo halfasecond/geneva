@@ -1,5 +1,5 @@
 import type { NpcAgent, PlayerState, SimConfig, Vec3 } from './core/types'
-import { add, clampMagnitude, length, normalize, scale, subtract, zero } from './core/vector'
+import { add, clampMagnitude, cross, length, normalize, scale, subtract, zero } from './core/vector'
 import { calculateFlocking } from './core/forces'
 import { addProgress, applyRoleFeedback } from './core/progress'
 
@@ -28,6 +28,7 @@ export class EliteSim {
       pos: { x: 0, y: 120, z: 40 },
       vel: { x: 0, y: 0, z: -6 },
       heading: { x: 0, y: 0, z: -1 },
+      up: { x: 0, y: 1, z: 0 },
       roll: 0,
       speed: 6,
       fuel: 120,
@@ -84,28 +85,46 @@ export class EliteSim {
     const pitch = playerInput.pitch * 1.6
     const roll = playerInput.roll * 2.4
 
-    // Simple heading update (torque style)
-    const right = this.getRightVector(p.heading, p.roll)
-    const up = this.getUpVector(p.heading, p.roll)
+    // Full 6DOF using incremental body-rate rotations on fwd + up (proper integration, no world-level reconstruction per frame).
+    // This fixes pitch conflicts where "level" basis was causing background to appear to move in conflicting directions.
+    let fwd = p.heading
+    let upv = p.up   // local up
 
-    let newHeading = p.heading
-    // yaw around up
+    // derive current right to match previous convention: cross(fwd, up) == right for our level case
+    let right = normalize(cross(fwd, upv))
+
+    // Yaw: rotate fwd and right around up (positive yaw turns right in our convention)
     if (Math.abs(yaw) > 0.001) {
       const rot = yaw * deltaSeconds
-      newHeading = this.rotateAroundAxis(newHeading, up, rot)
+      fwd = this.rotateAroundAxis(fwd, upv, rot)
+      right = this.rotateAroundAxis(right, upv, rot)
     }
-    // pitch around right
+
+    // Pitch: rotate fwd and up around right. Positive pitch lifts nose (consistent with E=up input).
     if (Math.abs(pitch) > 0.001) {
       const rot = pitch * deltaSeconds
-      newHeading = this.rotateAroundAxis(newHeading, right, rot)
+      fwd = this.rotateAroundAxis(fwd, right, rot)
+      upv = this.rotateAroundAxis(upv, right, rot)
     }
 
-    newHeading = normalize(newHeading)
-    p.heading = newHeading
-    p.roll = (p.roll + roll * deltaSeconds) % (Math.PI * 2)
+    // Roll: rotate right and up around fwd
+    if (Math.abs(roll) > 0.001) {
+      const rot = roll * deltaSeconds
+      right = this.rotateAroundAxis(right, fwd, rot)
+      upv = this.rotateAroundAxis(upv, fwd, rot)
+    }
+
+    // normalize and re-derive right to keep orthonormal + consistent handedness
+    fwd = normalize(fwd)
+    upv = normalize(upv)
+    right = normalize(cross(fwd, upv))
+
+    p.heading = fwd
+    p.up = upv
+    p.roll = (p.roll + roll * deltaSeconds) % (Math.PI * 2)  // keep scalar for radar banking etc.
 
     // thrust along heading
-    const accel = scale(newHeading, thrust * 38 * deltaSeconds)
+    const accel = scale(fwd, thrust * 38 * deltaSeconds)
     p.vel = add(p.vel, accel)
     p.vel = scale(p.vel, 0.986) // drag
     p.vel = clampMagnitude(p.vel, 52)
@@ -175,21 +194,7 @@ export class EliteSim {
     return n > 0 ? sum / n : 0
   }
 
-  private getRightVector(heading: Vec3, roll: number): Vec3 {
-    // Approximate right from heading + roll (simplified)
-    const right = { x: -heading.z, y: 0, z: heading.x } // rough
-    return normalize(right)
-  }
-
-  private getUpVector(heading: Vec3, roll: number): Vec3 {
-    const right = this.getRightVector(heading, roll)
-    // cross product heading x right for "up"
-    return normalize({
-      x: heading.y * right.z - heading.z * right.y,
-      y: heading.z * right.x - heading.x * right.z,
-      z: heading.x * right.y - heading.y * right.x,
-    })
-  }
+  // Local axes are now provided by the shared getLocalAxes() in vector.ts (handles roll + full pitch correctly)
 
   private rotateAroundAxis(v: Vec3, axis: Vec3, angle: number): Vec3 {
     // Rodrigues' rotation formula (minimal)
@@ -210,7 +215,7 @@ export class EliteSim {
 
   getSnapshot(): { player: PlayerState; npcs: NpcAgent[]; time: number } {
     return {
-      player: { ...this.player, vel: { ...this.player.vel }, heading: { ...this.player.heading }, pos: { ...this.player.pos } },
+      player: { ...this.player, vel: { ...this.player.vel }, heading: { ...this.player.heading }, up: { ...this.player.up }, pos: { ...this.player.pos } },
       npcs: this.npcs.map(n => ({ ...n, pos: { ...n.pos }, vel: { ...n.vel } })),
       time: this.time,
     }
@@ -224,6 +229,7 @@ export class EliteSim {
     this.player.fuel = Math.max(0, this.player.fuel - fuelCost)
     // Face roughly "forward" after arrival
     this.player.heading = { x: 0, y: 0, z: -1 }
+    this.player.up = { x: 0, y: 1, z: 0 }
     this.player.roll = 0
     this.player.speed = 0
     return true

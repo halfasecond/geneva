@@ -3,7 +3,7 @@ import * as THREE from 'three'
 import type { AuthProps } from '../../types/auth'
 import { EliteSim } from '../../elite/sim/EliteSim'
 import type { NpcAgent } from '../../elite/sim/core/types'
-import { length } from '../../elite/sim/core/vector'
+import { length, cross, normalize } from '../../elite/sim/core/vector'
 import { getCartographyBodies, getJumpFuelCost, CARTOGRAPHY_BODIES, DEFAULT_ROUTE, getBodyById } from '../../elite/sim/cartography'
 
 // Basic AuthProps shape we receive (wallet + controls)
@@ -37,6 +37,13 @@ const Elite: React.FC<EliteProps> = ({
   const snapRef = useRef<any>(null) // latest sim snapshot for map overlay + hyperspace
   const isHyperspacingRef = useRef(false)
 
+  // New cockpit 3D elements
+  const radarRef = useRef<THREE.Group | null>(null)
+  const radarBlipsRef = useRef<THREE.Object3D[]>([])
+  const radar2DCanvasRef = useRef<HTMLCanvasElement | null>(null)
+  const fuelBarsRef = useRef<THREE.Object3D[]>([])
+  const reticleRef = useRef<THREE.Group | null>(null)
+
   const [hud, setHud] = useState({
     speed: 0,
     npcs: 2,
@@ -48,7 +55,7 @@ const Elite: React.FC<EliteProps> = ({
   const [connected, setConnected] = useState(!!loggedIn)
 
   // Cartography + hyperspace overlay state
-  const [mapOpen, setMapOpen] = useState(true)
+  const [mapOpen, setMapOpen] = useState(false)
   const [route, setRoute] = useState(DEFAULT_ROUTE)
   const [isHyperspacing, setIsHyperspacing] = useState(false)
   const hyperspaceStartRef = useRef(0)
@@ -103,13 +110,13 @@ const Elite: React.FC<EliteProps> = ({
     if (k['w'] || k['arrowup']) thrust += 1
     if (k['s'] || k['arrowdown']) thrust -= 0.7
 
-    // Yaw (A/D or left/right)
+    // Yaw (A/D or left/right arrows) - left as-is
     if (k['a'] || k['arrowleft']) yaw -= 1
     if (k['d'] || k['arrowright']) yaw += 1
 
-    // Pitch (shift/ctrl or page up/down as extra)
-    if (k['q']) pitch -= 1
-    if (k['e']) pitch += 1
+    // Pitch: Q = down cursor, E = up cursor. (other cursors left as-is)
+    if (k['q']) pitch = -1
+    if (k['e']) pitch = 1
 
     // Roll (z/x)
     if (k['z']) roll -= 1
@@ -283,6 +290,190 @@ const Elite: React.FC<EliteProps> = ({
     camera.add(cockpit)   // child of camera → moves and orients with the viewpoint automatically
     playerMeshRef.current = cockpit   // keep ref for future tweaks if needed (we don't world-update it)
 
+    // Extra canopy "glass" frame (large faint ring to suggest the window / canopy)
+    const canopyPts = Array.from({ length: 36 }, (_, i) => {
+      const a = (i / 36) * Math.PI * 2
+      return new THREE.Vector3(Math.cos(a) * 3.8, Math.sin(a) * 3.1 - 0.8, -2.2)
+    })
+    const canopy = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints(canopyPts),
+      new THREE.LineBasicMaterial({ color: 0x88aacc, transparent: true, opacity: 0.12 })
+    )
+    cockpit.add(canopy)
+
+    // Add cockpit interior structure to make it feel like inside a spaceship (lite 3D, heavy UI)
+    const cockpitInterior = new THREE.Group();
+    camera.add(cockpitInterior);
+
+    // Lower dashboard console
+    const consoleBase = new THREE.Mesh(
+      new THREE.BoxGeometry(5, 0.4, 1),
+      new THREE.MeshBasicMaterial({ color: 0x111111, wireframe: true })
+    );
+    consoleBase.position.set(0, -1.8, -3);
+    cockpitInterior.add(consoleBase);
+
+    // Left console / wall
+    const leftConsole = new THREE.Mesh(
+      new THREE.BoxGeometry(1.5, 2, 0.3),
+      new THREE.MeshBasicMaterial({ color: 0x1a1a1a, wireframe: true })
+    );
+    leftConsole.position.set(-2.5, -0.5, -2.8);
+    cockpitInterior.add(leftConsole);
+
+    // Right console / wall
+    const rightConsole = leftConsole.clone();
+    rightConsole.position.x = 2.5;
+    cockpitInterior.add(rightConsole);
+
+    // Top canopy strut / frame
+    const topStrut = new THREE.Mesh(
+      new THREE.BoxGeometry(4.5, 0.2, 0.3),
+      new THREE.MeshBasicMaterial({ color: 0x222222, wireframe: true })
+    );
+    topStrut.position.set(0, 1.8, -2.5);
+    cockpitInterior.add(topStrut);
+
+    // Left and right vertical struts for the "window" frame
+    const leftStrut = new THREE.Mesh(
+      new THREE.BoxGeometry(0.15, 3.5, 0.15),
+      new THREE.MeshBasicMaterial({ color: 0x333333, wireframe: true })
+    );
+    leftStrut.position.set(-2.3, 0, -2.5);
+    cockpitInterior.add(leftStrut);
+
+    const rightStrut = leftStrut.clone();
+    rightStrut.position.x = 2.3;
+    cockpitInterior.add(rightStrut);
+
+    // Add semi-transparent side walls to darken the edges of the 3D view, making it feel like looking out the front window of the spaceship (lite 3D, the "inside" frame)
+    const wallMat = new THREE.MeshBasicMaterial({ color: 0x0a0a1a, transparent: true, opacity: 0.7, side: THREE.DoubleSide });
+    const leftWall = new THREE.Mesh(new THREE.PlaneGeometry(2.5, 5), wallMat);
+    leftWall.position.set(-3.2, 0, -2.2);
+    leftWall.rotation.y = Math.PI / 2;
+    cockpitInterior.add(leftWall);
+
+    const rightWall = leftWall.clone();
+    rightWall.position.x = 3.2;
+    cockpitInterior.add(rightWall);
+
+    // Top wall / canopy interior
+    const topWall = new THREE.Mesh(new THREE.PlaneGeometry(5, 2), wallMat);
+    topWall.position.set(0, 2.5, -2.2);
+    topWall.rotation.x = Math.PI / 2;
+    cockpitInterior.add(topWall);
+
+    // === FIRST PASS COCKPIT ENHANCEMENT (inspired by classic Elite + ED reference) ===
+    // Add a central holographic radar/scanner + reticle + basic status elements attached to camera.
+    // These live "inside" the cockpit view while the React holo panels handle the complex right-side MFDs.
+
+    // Central reticle / targeting computer (always visible in middle of view)
+    const reticleGroup = new THREE.Group()
+    camera.add(reticleGroup)
+    reticleGroup.position.set(0, 0, -4.5)
+    const reticleMat = new THREE.LineBasicMaterial({ color: 0xffaa00, transparent: true, opacity: 0.75 })
+    // Horizontal line
+    reticleGroup.add(new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-1.2, 0, 0), new THREE.Vector3(1.2, 0, 0)]),
+      reticleMat
+    ))
+    // Vertical line
+    reticleGroup.add(new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, -0.9, 0), new THREE.Vector3(0, 0.9, 0)]),
+      reticleMat
+    ))
+    // Small targeting circle
+    const circlePts = Array.from({ length: 24 }, (_, i) => {
+      const a = (i / 24) * Math.PI * 2
+      return new THREE.Vector3(Math.cos(a) * 0.55, Math.sin(a) * 0.55, 0)
+    })
+    reticleGroup.add(new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints(circlePts),
+      reticleMat
+    ))
+    reticleRef.current = reticleGroup
+
+    // Holographic radar / scanner (lower center, classic Elite style circular display)
+    const radarGroup = new THREE.Group()
+    camera.add(radarGroup)
+    radarGroup.position.set(0, -1.8, -4.2)   // lower in the view
+
+    const radarMat = new THREE.LineBasicMaterial({ color: 0xffaa00, transparent: true, opacity: 0.65 })
+    // Outer ring (slightly elliptical for perspective feel)
+    const outerPts = Array.from({ length: 48 }, (_, i) => {
+      const a = (i / 48) * Math.PI * 2
+      return new THREE.Vector3(Math.cos(a) * 2.4, Math.sin(a) * 1.6, 0)
+    })
+    radarGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(outerPts), radarMat))
+
+    // Inner rings
+    for (const r of [0.8, 1.6]) {
+      const pts = Array.from({ length: 32 }, (_, i) => {
+        const a = (i / 32) * Math.PI * 2
+        return new THREE.Vector3(Math.cos(a) * 2.4 * r, Math.sin(a) * 1.6 * r, 0)
+      })
+      radarGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: 0xffaa00, transparent: true, opacity: 0.35 })))
+    }
+
+    // Spokes
+    for (let i = 0; i < 4; i++) {
+      const a = (i / 4) * Math.PI * 2
+      radarGroup.add(new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(0, 0, 0),
+          new THREE.Vector3(Math.cos(a) * 2.4, Math.sin(a) * 1.6, 0)
+        ]),
+        new THREE.LineBasicMaterial({ color: 0xffaa00, transparent: true, opacity: 0.3 })
+      ))
+    }
+
+    // Pre-create blip objects for contacts (NPCs + a few system bodies)
+    const blips: THREE.Object3D[] = []
+    const blipGeo = new THREE.SphereGeometry(0.09, 6, 6)
+    for (let i = 0; i < 10; i++) {
+      const blip = new THREE.Mesh(blipGeo, new THREE.MeshBasicMaterial({ color: 0xffff66 }))
+      blip.visible = false
+      radarGroup.add(blip)
+      blips.push(blip)
+    }
+    radarRef.current = radarGroup
+    radarBlipsRef.current = blips
+
+    // Small ship icon in holo circle on the right of the radar (matching the reference image's ship silhouette in blue circle)
+    const shipIcon = new THREE.Group()
+    camera.add(shipIcon)
+    shipIcon.position.set(2.8, -1.8, -4.2)
+    const iconRing = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints(Array.from({ length: 24 }, (_, i) => {
+        const a = (i / 24) * Math.PI * 2
+        return new THREE.Vector3(Math.cos(a) * 0.9, Math.sin(a) * 0.6, 0)
+      })),
+      new THREE.LineBasicMaterial({ color: 0x66aaff, transparent: true, opacity: 0.7 })
+    )
+    shipIcon.add(iconRing)
+    const smallShip = new THREE.Mesh(
+      new THREE.ConeGeometry(0.3, 0.8, 3),
+      new THREE.MeshBasicMaterial({ color: 0x66aaff, wireframe: true })
+    )
+    smallShip.rotation.x = Math.PI / 2
+    shipIcon.add(smallShip)
+
+    // Simple left-side fuel / status holo bar (inspired by side panels in the reference)
+    const fuelGroup = new THREE.Group()
+    camera.add(fuelGroup)
+    fuelGroup.position.set(3.8, -1.2, -4.5) // right side to match the reference image's fuel panel location
+    const fuelBars: THREE.Object3D[] = []
+    for (let i = 0; i < 10; i++) {
+      const bar = new THREE.Mesh(
+        new THREE.BoxGeometry(0.12, 0.18, 0.04),
+        new THREE.MeshBasicMaterial({ color: 0xffaa00, transparent: true, opacity: 0.55 })
+      )
+      bar.position.y = i * 0.28
+      fuelGroup.add(bar)
+      fuelBars.push(bar)
+    }
+    fuelBarsRef.current = fuelBars
+
     // NPC container
     const npcGroup = new THREE.Group()
     scene.add(npcGroup)
@@ -333,25 +524,36 @@ const Elite: React.FC<EliteProps> = ({
       if (cam) {
         const p = snap.player
         const fwd = p.heading
+        // Use the integrated ship up (from incremental rotations in sim) for the main cockpit view.
+        // This ensures pitch properly orients the view without "level reconstruction" conflicts.
+        // (Radars continue to use getLocalAxes(heading, roll) for their classic projection.)
+        const up = p.up || { x: 0, y: 1, z: 0 }
 
-        // Sit a little behind the "nose" inside the cockpit
+        // Position the camera inside the cockpit, offset backward along -heading and "up" along ship's up.
+        // This makes the viewpoint follow full 6DOF attitude (pitch/yaw/roll all visible).
         const cockpitBack = 5.5
+        const eyeHeight = 1.8
         cam.position.set(
-          p.pos.x - fwd.x * cockpitBack,
-          p.pos.y - fwd.y * cockpitBack + 1.8,  // slight eye height
-          p.pos.z - fwd.z * cockpitBack
+          p.pos.x - fwd.x * cockpitBack + up.x * eyeHeight,
+          p.pos.y - fwd.y * cockpitBack + up.y * eyeHeight,
+          p.pos.z - fwd.z * cockpitBack + up.z * eyeHeight
         )
 
-        // Look forward along heading
+        // Set the camera's up to the ship's local up. This makes roll bank the view and
+        // pitch "up" in the image match the ship's orientation.
+        cam.up.set(up.x, up.y, up.z)
+
+        // Look exactly forward along the ship's heading (from the eye point).
+        // Pure fwd direction avoids conflicting biases that could make background appear to
+        // move in "both directions" during pitch. The eyeHeight offset + cockpit model already
+        // give the "looking out the window" framing.
+        const far = 300
         const lookTarget = new THREE.Vector3(
-          p.pos.x + fwd.x * 25,
-          p.pos.y + fwd.y * 25 + 3,
-          p.pos.z + fwd.z * 25
+          cam.position.x + fwd.x * far,
+          cam.position.y + fwd.y * far,
+          cam.position.z + fwd.z * far
         )
         cam.lookAt(lookTarget)
-
-        // Apply ship roll (classic Elite roll feel)
-        cam.rotateZ(p.roll * 0.65)
       }
 
       // Live orbiting bodies in the main cockpit view (using cartography math)
@@ -367,6 +569,142 @@ const Elite: React.FC<EliteProps> = ({
             // gentle scale pulse for stations
             if (b.type === 'station') m.scale.setScalar(1 + Math.sin(snap.time * 3 + mi) * 0.08)
           }
+        })
+      }
+
+      // === Update cockpit 3D HUD elements (first pass radar + reticle + fuel bars) ===
+      // Classic Elite "nearby things" visualiser style radar:
+      // - 2D-like projection relative to player's heading (forward is "up" or center on radar).
+      // - X = left/right (azimuth), Y = up/down or forward depth mix for classic feel.
+      // - Size indicates distance (closer = larger).
+      // - Different "glyphs"/colors for ships vs planets/stations.
+      // - Only "nearby" within range; color by threat (pirates red, etc.).
+      if (radarRef.current && radarBlipsRef.current && radarBlipsRef.current.length > 0) {
+        const p = snap.player
+        const blips = radarBlipsRef.current
+        let bidx = 0
+
+        // Use true body axes from integrated up (consistent with camera/main view for pitch).
+        // (getLocalAxes with roll is still used elsewhere for legacy scanner banking if needed.)
+        const fwd = p.heading
+        const upv = p.up || { x: 0, y: 1, z: 0 }
+        const right = normalize(cross(fwd, upv))
+
+        const contacts: any[] = []
+
+        // Add NPCs as "ships"
+        snap.npcs.forEach((npc) => {
+          const dx = npc.pos.x - p.pos.x
+          const dy = npc.pos.y - p.pos.y
+          const dz = npc.pos.z - p.pos.z
+          const dist = Math.sqrt(dx*dx + dy*dy + dz*dz) || 1
+          if (dist > 300) return // nearby range limit like classic
+          // Local coords relative to heading (classic 2D scanner projection)
+          const localX = dx * right.x + dz * right.z  // left/right
+          const localZ = dx * fwd.x + dz * fwd.z     // forward depth (positive forward)
+          const localY = dy                           // elevation
+          contacts.push({
+            x: localX,
+            y: localY,
+            z: localZ,
+            dist,
+            type: 'ship',
+            role: npc.role,
+            name: npc.role.toUpperCase()
+          })
+        })
+
+        // Add cartography bodies as "planets/stations" (bigger glyphs)
+        const carto = getCartographyBodies(snap.time * 0.55)
+        carto.forEach((body) => {
+          if (body.type === 'star') return
+          const dx = body.pos3d.x - p.pos.x
+          const dy = body.pos3d.y - p.pos.y
+          const dz = body.pos3d.z - p.pos.z
+          const dist = Math.sqrt(dx*dx + dy*dy + dz*dz) || 1
+          if (dist > 500) return // slightly larger range for big objects
+          const localX = dx * right.x + dz * right.z
+          const localZ = dx * fwd.x + dz * fwd.z
+          const localY = dy
+          contacts.push({
+            x: localX,
+            y: localY,
+            z: localZ,
+            dist,
+            type: body.type,
+            role: 'neutral',
+            name: body.name
+          })
+        })
+
+        // Sort by distance for "nearby" priority (classic feel)
+        contacts.sort((a, b) => a.dist - b.dist)
+
+        // Plot on radar (classic style: horizontal azimuth, vertical mix of elevation/depth)
+        contacts.forEach((c, idx) => {
+          if (bidx >= blips.length) return
+          const blip = blips[bidx++]
+          const maxR = 200
+          const scale = Math.min(1.8, (c.dist / 200) * 1.5) // inverse for classic: closer bigger?
+          // For classic Elite, closer objects were often more prominent; use size inverse to dist for "near"
+          const size = Math.max(0.05, 0.15 * (1 - c.dist / 300))
+          const radarX = c.x * 0.012   // scale to radar radius
+          const radarY = (c.z * 0.008 + c.y * 0.005) // forward depth + elev for classic 2D-ish
+          blip.position.set(radarX, radarY, 0)
+          blip.visible = true
+          blip.scale.setScalar(size)
+
+          const mat = blip.material as THREE.MeshBasicMaterial
+          if (c.type === 'ship') {
+            if (c.role === 'pirate') mat.color.set(0xff4444)
+            else if (c.role === 'police' || c.role === 'escort') mat.color.set(0x44ff88)
+            else mat.color.set(0xffee44)
+            // Ships as slightly elongated for classic "square" feel (scale Y less)
+            blip.scale.y = size * 0.6
+          } else {
+            // Planets/stations bigger, neutral blue-ish
+            mat.color.set(c.type === 'station' ? 0x88ddff : 0xaaccff)
+            blip.scale.setScalar(size * 1.3)
+          }
+        })
+
+        // Hide unused
+        for (let i = bidx; i < blips.length; i++) {
+          blips[i].visible = false
+        }
+      }
+
+      // Fuel bars on the left (simple 3D holo representation)
+      if (fuelBarsRef.current && fuelBarsRef.current.length > 0) {
+        const fuel = snap.player.fuel ?? 120
+        const maxFuel = 120
+        const level = Math.max(0, Math.min(1, fuel / maxFuel))
+        const bars = fuelBarsRef.current
+        const onCount = Math.floor(level * bars.length)
+        bars.forEach((bar, i) => {
+          const m = bar as THREE.Mesh
+          const mat = m.material as THREE.MeshBasicMaterial
+          if (i < onCount) {
+            mat.opacity = 0.85
+            mat.color.set( i < onCount - 2 ? 0xffaa00 : 0xff4444 ) // warning color when low
+          } else {
+            mat.opacity = 0.2
+            mat.color.set(0xffaa00)
+          }
+        })
+      }
+
+      // During hyperspace, make the central reticle "charge" / pulse (nod to the reference image "CHARGING" circle)
+      if (reticleRef.current && isHyperspacingRef.current) {
+        const t = (snap.time * 8) % (Math.PI * 2)
+        reticleRef.current.scale.setScalar(1 + Math.sin(t) * 0.15)
+        reticleRef.current.children.forEach((c: any) => {
+          if (c.material && c.material.color) c.material.color.set(0xff6644)
+        })
+      } else if (reticleRef.current) {
+        reticleRef.current.scale.setScalar(1)
+        reticleRef.current.children.forEach((c: any) => {
+          if (c.material && c.material.color) c.material.color.set(0xffaa00)
         })
       }
 
@@ -673,6 +1011,201 @@ const Elite: React.FC<EliteProps> = ({
     }
   }, [mapOpen, route])
 
+  // 2D side-on ~20deg angled "nearby things" scanner in the bottom dashboard (always visible, center bottom).
+  // Larger rectangular holo panel. Contacts projected so lateral spreads horizontally, elevation is direct vertical offset
+  // from the receding angled depth plane (20deg pitch), range recedes up-screen. Yellow height sticks for vertical clarity.
+  // Real NPCs + carto bodies + persistent demo contacts (for immediate visual of vertical/range/lateral).
+  useEffect(() => {
+    const canvas = radar2DCanvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    let raf: number
+    const drawRadar = () => {
+      // Side-on ~20deg angled "nearby things" scanner (not top-down circular).
+      // Larger for the always-visible center-bottom dashboard radar.
+      // Horizontal = lateral (left/right of heading) + slight depth perspective.
+      // Vertical = elevation (above/below plane) with clear sticks.
+      // Depth/range recedes upward on screen via 20deg pitch projection so you can "see" the 3D volume.
+      // Matches classic Elite scanner spirit but with explicit vertical awareness from a shallow angle.
+
+      const W = canvas.width
+      const H = canvas.height
+      const cx = W * 0.5
+      const baseY = H * 0.76
+      const pitchRad = 20 * Math.PI / 180
+      const depthFactor = 0.42
+      const elevFactor = 1.05
+      const latFactor = 0.78
+
+      // Background
+      ctx.fillStyle = 'rgba(0,0,0,0.78)'
+      ctx.fillRect(0, 0, W, H)
+
+      // Receding range grid lines (angled 20deg plane)
+      ctx.strokeStyle = 'rgba(255,170,0,0.32)'
+      ctx.lineWidth = 1
+      const numLines = 5
+      for (let i = 0; i <= numLines; i++) {
+        const t = i / numLines
+        const z = t * 155
+        const y = baseY - z * Math.sin(pitchRad) * depthFactor
+        const halfW = 68 * (1 - t * 0.52)
+        ctx.beginPath()
+        ctx.moveTo(cx - halfW, y)
+        ctx.lineTo(cx + halfW, y)
+        ctx.stroke()
+      }
+
+      // Side walls of the scan volume (tapered)
+      ctx.beginPath()
+      ctx.moveTo(cx - 70, baseY)
+      ctx.lineTo(cx - 30, baseY - 155 * Math.sin(pitchRad) * depthFactor)
+      ctx.moveTo(cx + 70, baseY)
+      ctx.lineTo(cx + 30, baseY - 155 * Math.sin(pitchRad) * depthFactor)
+      ctx.stroke()
+
+      // Bright local/base plane line
+      ctx.strokeStyle = '#ffaa00'
+      ctx.lineWidth = 1.6
+      ctx.beginPath()
+      ctx.moveTo(cx - 74, baseY)
+      ctx.lineTo(cx + 74, baseY)
+      ctx.stroke()
+
+      // Player own-ship marker (chevron pointing forward on the local line)
+      ctx.fillStyle = '#ffdd88'
+      ctx.lineWidth = 1
+      ctx.beginPath()
+      ctx.moveTo(cx, baseY - 5)
+      ctx.lineTo(cx - 4, baseY + 3)
+      ctx.lineTo(cx + 4, baseY + 3)
+      ctx.closePath()
+      ctx.fill()
+      ctx.strokeStyle = '#ffdd88'
+      ctx.beginPath()
+      ctx.moveTo(cx - 3, baseY + 2)
+      ctx.lineTo(cx, baseY - 2)
+      ctx.lineTo(cx + 3, baseY + 2)
+      ctx.stroke()
+
+      // Get contacts - MUST be inside drawRadar (real + demo for visibility)
+      const p = snapRef.current?.player
+      if (!p) {
+        raf = requestAnimationFrame(drawRadar)
+        return
+      }
+
+      // Use true body right from integrated up (consistent with main 3D view pitch fix).
+      const fwd = p.heading
+      const upv = p.up || { x: 0, y: 1, z: 0 }
+      const right = normalize(cross(fwd, upv))
+
+      const contacts: any[] = []
+
+      // NPCs as ships
+      ;(snapRef.current?.npcs || []).forEach((npc: any) => {
+        const dx = npc.pos.x - p.pos.x
+        const dy = npc.pos.y - p.pos.y
+        const dz = npc.pos.z - p.pos.z
+        const dist = Math.sqrt(dx*dx + dy*dy + dz*dz) || 1
+        if (dist > 300) return
+        const localX = dx * right.x + dz * right.z
+        const localZ = dx * fwd.x + dz * fwd.z
+        const localY = dy
+        contacts.push({ x: localX, y: localY, z: localZ, dist, type: 'ship', role: npc.role })
+      })
+
+      // Carto bodies as planets/stations
+      const carto = getCartographyBodies((snapRef.current?.time || 0) * 0.55)
+      carto.forEach((body: any) => {
+        if (body.type === 'star') return
+        const dx = body.pos3d.x - p.pos.x
+        const dy = body.pos3d.y - p.pos.y
+        const dz = body.pos3d.z - p.pos.z
+        const dist = Math.sqrt(dx*dx + dy*dy + dz*dz) || 1
+        if (dist > 500) return
+        const localX = dx * right.x + dz * right.z
+        const localZ = dx * fwd.x + dz * fwd.z
+        const localY = dy
+        contacts.push({ x: localX, y: localY, z: localZ, dist, type: body.type, role: 'neutral' })
+      })
+
+      contacts.sort((a, b) => a.dist - b.dist)
+
+      // Demo contacts (spread in x/y/z so vertical + range + lateral are obvious at 20deg)
+      contacts.push({ x: 28, y: 22, z: 48, dist: 58, type: 'ship', role: 'pirate' })
+      contacts.push({ x: 52, y: -14, z: 88, dist: 105, type: 'ship', role: 'neutral' })
+      contacts.push({ x: -18, y: 11, z: 69, dist: 74, type: 'planet', role: 'neutral' })
+      contacts.push({ x: 9, y: -26, z: 132, dist: 138, type: 'station', role: 'neutral' })
+
+      contacts.sort((a, b) => a.dist - b.dist)
+
+      contacts.forEach((c) => {
+        const z = Math.max(0, c.z)
+        const sx = cx + c.x * latFactor
+        const planeY = baseY - z * Math.sin(pitchRad) * depthFactor
+        const sy = planeY - c.y * elevFactor
+
+        const size = Math.max(2.2, 5.8 * (1 - Math.min(1, c.dist / 165)))
+
+        // Yellow elevation stick (from the angled plane up/down to the contact)
+        if (Math.abs(c.y) > 2.5) {
+          ctx.strokeStyle = '#ffdd00'
+          ctx.lineWidth = 0.9
+          ctx.beginPath()
+          ctx.moveTo(sx, planeY)
+          ctx.lineTo(sx, sy)
+          ctx.stroke()
+        }
+
+        if (c.type === 'ship') {
+          ctx.fillStyle = c.role === 'pirate' ? '#ff4444' : (c.role === 'police' || c.role === 'escort' ? '#44ff88' : '#ffee44')
+          ctx.save()
+          ctx.translate(sx, sy)
+          ctx.beginPath()
+          ctx.moveTo(0, -size)
+          ctx.lineTo(-size * 0.48, size * 0.38)
+          ctx.lineTo(0, size * 0.12)
+          ctx.lineTo(size * 0.48, size * 0.38)
+          ctx.closePath()
+          ctx.fill()
+          ctx.restore()
+        } else {
+          ctx.fillStyle = c.type === 'station' ? '#88ddff' : '#aaccff'
+          ctx.beginPath()
+          ctx.arc(sx, sy, size * (c.type === 'station' ? 1.08 : 0.82), 0, Math.PI * 2)
+          ctx.fill()
+          if (c.type === 'station') {
+            ctx.strokeStyle = '#ffffff'
+            ctx.lineWidth = 0.7
+            ctx.beginPath()
+            ctx.moveTo(sx - size * 0.38, sy)
+            ctx.lineTo(sx + size * 0.38, sy)
+            ctx.moveTo(sx, sy - size * 0.38)
+            ctx.lineTo(sx, sy + size * 0.38)
+            ctx.stroke()
+            ctx.lineWidth = 1
+          }
+        }
+
+        // Distance label for closer contacts
+        if (c.dist < 125) {
+          ctx.fillStyle = '#ffaa00'
+          ctx.font = '7px monospace'
+          ctx.fillText(Math.round(c.dist), sx + size + 3, sy + 1.5)
+        }
+      })
+
+      raf = requestAnimationFrame(drawRadar)
+    }
+
+    drawRadar()
+
+    return () => { if (raf) cancelAnimationFrame(raf) }
+  }, [mapOpen])  // re-draws on map toggle too, but always runs for ship UI
+
   // Click to pick destination on the map canvas
   const handleMapClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = mapCanvasRef.current
@@ -840,6 +1373,72 @@ const Elite: React.FC<EliteProps> = ({
         ref={canvasRef}
         style={{ display: 'block', width: '100%', height: '100%' }}
       />
+
+      {/* Cockpit frame bezels - to make it feel like inside the spaceship (holo style, framing the central "window" for the 3D space) */}
+      {/* Left bezel - flight controls / ship status */}
+      <div style={{
+        position: 'absolute',
+        left: 0,
+        top: 0,
+        bottom: 0,
+        width: '85px',
+        background: 'rgba(0, 4, 10, 0.75)',
+        borderRight: '1px solid #ffaa00',
+        boxShadow: '0 0 10px rgba(255, 170, 0, 0.2)',
+        zIndex: 8,
+        pointerEvents: 'none',
+        fontSize: '9px',
+        padding: '8px 4px',
+        color: '#ffaa00',
+        overflow: 'hidden',
+      }}>
+        <div style={{ fontSize: '8px', marginBottom: '4px', borderBottom: '1px solid #ffaa00', paddingBottom: '2px' }}>CONTROLS</div>
+        <div>W / ↑ thrust fwd</div>
+        <div>S / ↓ brake</div>
+        <div>A / ← yaw L</div>
+        <div>D / → yaw R</div>
+        <div>Q down pitch</div>
+        <div>E up pitch</div>
+        <div>Z / X roll</div>
+        <div style={{ marginTop: '6px', fontSize: '8px' }}>R respawn [H] help</div>
+      </div>
+
+      {/* Right bezel - minimal frame (carto holo overlays when map open) */}
+      <div style={{
+        position: 'absolute',
+        right: 0,
+        top: 0,
+        bottom: 0,
+        width: '85px',
+        background: 'rgba(0, 4, 10, 0.6)',
+        borderLeft: '1px solid #ffaa00',
+        boxShadow: '0 0 10px rgba(255, 170, 0, 0.15)',
+        zIndex: 8,
+        pointerEvents: 'none',
+      }} />
+
+      {/* Top bezel - canopy frame */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: '85px',
+        right: '85px',
+        height: '45px',
+        background: 'rgba(0, 4, 10, 0.65)',
+        borderBottom: '1px solid #ffaa00',
+        boxShadow: '0 0 8px rgba(255, 170, 0, 0.15)',
+        zIndex: 8,
+        pointerEvents: 'none',
+        display: 'flex',
+        alignItems: 'center',
+        padding: '0 10px',
+        fontSize: '9px',
+        color: '#ffaa00',
+      }}>
+        <div style={{ flex: 1 }}>INNER ORION SPUR</div>
+        <div style={{ textAlign: 'center' }}>GENEVA ELITE</div>
+        <div style={{ flex: 1, textAlign: 'right' }}>t+{hud.time}s</div>
+      </div>
 
       {/* HUD Overlay */}
       <div style={{
@@ -1174,7 +1773,7 @@ const Elite: React.FC<EliteProps> = ({
             <div style={{ padding: 8, fontSize: 10, lineHeight: 1.3 }}>
               <div>W / ↑ — thrust forward &nbsp;&nbsp; S / ↓ — brake</div>
               <div>A / D or ← → — yaw</div>
-              <div>Q / E — pitch &nbsp;&nbsp; Z / X — roll</div>
+              <div>Q / E — pitch (Q=down, E=up) &nbsp;&nbsp; Z / X — roll</div>
               <div style={{ margin: '4px 0', opacity: 0.7 }}>R — respawn NPC fleet &nbsp; H — toggle this</div>
               <div style={{ fontSize: 9, opacity: 0.75 }}>
                 NPCs use the κ-framework flocking + BellToy state logic from Flockers.<br />
@@ -1189,8 +1788,155 @@ const Elite: React.FC<EliteProps> = ({
               DRAG HEADER • SAME HOLO STYLE • UNDER CONTROLS
             </div>
           </div>
+
+          {/* Central targeting computer / jump status (inspired by the central circle with name, distance, and CHARGING in the reference) */}
+          {mapOpen && (
+            <div style={{
+              position: 'absolute',
+              top: '36%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              background: 'rgba(0, 0, 0, 0.35)',
+              border: '1px solid #ffaa00',
+              padding: '3px 10px',
+              fontSize: 11,
+              color: '#ffaa00',
+              textAlign: 'center',
+              pointerEvents: 'none',
+              fontFamily: 'ui-monospace, monospace',
+              letterSpacing: '1px',
+              minWidth: '120px',
+            }}>
+              {getBodyById(route.destinationId, 0)?.name || 'NO TARGET'}<br />
+              {getBodyById(route.destinationId, 0) ? 
+                getJumpFuelCost(
+                  getBodyById(route.originId, 0)?.pos2d || {x:0,y:0}, 
+                  getBodyById(route.destinationId, 0)?.pos2d || {x:0,y:0}
+                ) + ' FUEL' 
+                : ''}
+              {isHyperspacing && <div style={{ color: '#ff6644', marginTop: '2px' }}>CHARGING</div>}
+            </div>
+          )}
+
+          {/* Ship UI (bottom dashboard) is default view when map closed. Linked to map button (M toggles carto map on/off) */}
         </>
       )}
+
+      {/* Bottom Dashboard - Ship UI (default view, always visible as the "ship dashboard"; carto map overlays when M pressed) */}
+      <div style={{
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: '105px',
+        background: 'rgba(0, 4, 10, 0.65)',
+        borderTop: '2px solid #ffaa00',
+        boxShadow: '0 0 15px rgba(255, 170, 0, 0.3)',
+        display: 'flex',
+        alignItems: 'stretch',
+        color: '#ffaa00',
+        fontFamily: 'ui-monospace, monospace',
+        fontSize: '10px',
+        zIndex: 10,
+        pointerEvents: 'none',
+      }}>
+        {/* Left section: system/target info */}
+        <div style={{
+          width: '170px',
+          borderRight: '1px solid #ffaa00',
+          padding: '4px 8px',
+          background: 'rgba(0,0,0,0.3)',
+        }}>
+          <div style={{fontWeight: 'bold'}}>{getBodyById(route.destinationId, 0)?.name || 'NO TARGET'}</div>
+          <div>6.23Ly</div>
+          <div style={{color: '#ff6666'}}>ANARCHY</div>
+          <div>CLEAN</div>
+          <div style={{fontSize: '8px', marginTop: '4px'}}>COL 285 SECTOR SK-P A35-1</div>
+        </div>
+
+        {/* Center: scanners and ship view */}
+        <div style={{
+          flex: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '16px',
+          borderRight: '1px solid #ffaa00',
+        }}>
+          {/* Left scanner: classic Elite "nearby things" 2D visualiser (always-visible center bottom, side-on ~20deg angled view for clear vertical/elevation) */}
+          <div style={{
+            width: '178px',
+            height: '104px',
+            border: '2px solid #ffaa00',
+            borderRadius: '5px',
+            position: 'relative',
+            background: 'rgba(0,0,0,0.4)',
+            boxShadow: 'inset 0 0 14px rgba(255,170,0,0.25), 0 0 8px rgba(255,170,0,0.15)',
+            overflow: 'hidden',
+          }}>
+            <canvas ref={radar2DCanvasRef} width="174" height="100" style={{ position: 'absolute', top: '2px', left: '2px' }} />
+            <div style={{position: 'absolute', bottom: '1px', width: '100%', textAlign: 'center', fontSize: '7px', letterSpacing: '0.5px'}}>NEARBY</div>
+          </div>
+
+          {/* Ship view / silhouette */}
+          <div style={{
+            width: '50px',
+            height: '50px',
+            border: '2px solid #66aaff',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(0,0,0,0.4)',
+            position: 'relative',
+            boxShadow: '0 0 8px rgba(102,170,255,0.4)',
+          }}>
+            <svg width="30" height="16" viewBox="0 0 42 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M21 2 L38 20 L4 20 Z" fill="#66aaff" stroke="#aaddff" strokeWidth="1" />
+              <circle cx="21" cy="12" r="3" fill="#aaddff" />
+            </svg>
+            <div style={{position: 'absolute', bottom: '-10px', fontSize: '7px', color: '#66aaff'}}>SHIP</div>
+          </div>
+        </div>
+
+        {/* Right: status bars and labels */}
+        <div style={{
+          width: '200px',
+          padding: '4px 8px',
+          display: 'flex',
+          gap: '12px',
+          background: 'rgba(0,0,0,0.3)',
+        }}>
+          {/* Fuel */}
+          <div>
+            <div>FUEL</div>
+            <div style={{height: '38px', width: '14px', border: '1px solid #ffaa00', position: 'relative', marginTop: '2px'}}>
+              <div style={{
+                position: 'absolute',
+                bottom: 0,
+                width: '100%',
+                height: `${Math.min(100, ((hud.fuel || 0) / 120) * 100)}%`,
+                background: '#ffaa00',
+              }} />
+            </div>
+            <div style={{fontSize: '8px'}}>1.10/h</div>
+          </div>
+
+          {/* Other bars */}
+          <div style={{fontSize: '9px'}}>
+            <div>SYS 100%</div>
+            <div>ENG 100%</div>
+            <div>RST 100%</div>
+            <div>WEP 100%</div>
+          </div>
+
+          <div style={{fontSize: '9px', marginLeft: 'auto'}}>
+            <div>MASS LOCKED</div>
+            <div>CARGO SCOOP</div>
+            <div style={{marginTop: '4px', color: isHyperspacing ? '#ff6644' : '#ffaa00'}}>{isHyperspacing ? 'JUMPING' : 'READY'}</div>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

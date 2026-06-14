@@ -40,7 +40,8 @@ export interface PlayerState {
   pos: Vec3
   vel: Vec3
   heading: Vec3 // forward direction
-  roll: number
+  up: Vec3      // local up (for full 6DOF without world-level reconstruction)
+  roll: number  // accumulated roll input (for radar banking etc, kept for compatibility)
   speed: number
   fuel: number
 }
