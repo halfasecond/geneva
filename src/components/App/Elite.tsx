@@ -862,8 +862,8 @@ const Elite: React.FC<EliteProps> = ({
       ctx.fillStyle = 'rgba(0,0,0,0.78)'
       ctx.fillRect(0, 0, W, H)
 
-      // Receding range grid lines (angled 20deg plane)
-      ctx.strokeStyle = 'rgba(255,170,0,0.32)'
+      // Receding range grid lines (angled 20deg plane) - vech blue
+      ctx.strokeStyle = SCANNER_2D.gridColor
       ctx.lineWidth = 1
       const numLines = SCANNER_2D.numRangeLines
       for (let i = 0; i <= numLines; i++) {
@@ -887,7 +887,7 @@ const Elite: React.FC<EliteProps> = ({
       ctx.stroke()
 
       // Bright local/base plane line
-      ctx.strokeStyle = '#ffaa00'
+      ctx.strokeStyle = SCANNER_2D.brightColor
       ctx.lineWidth = 1.6
       ctx.beginPath()
       ctx.moveTo(cx - SCANNER_2D.brightPlaneHalfW, baseY)
@@ -895,7 +895,7 @@ const Elite: React.FC<EliteProps> = ({
       ctx.stroke()
 
       // Player own-ship marker (chevron pointing forward on the local line)
-      ctx.fillStyle = '#ffdd88'
+      ctx.fillStyle = SCANNER_2D.playerColor
       ctx.lineWidth = 1
       ctx.beginPath()
       ctx.moveTo(cx, baseY - SCANNER_2D.chevron.back)
@@ -903,7 +903,7 @@ const Elite: React.FC<EliteProps> = ({
       ctx.lineTo(cx + SCANNER_2D.chevron.side, baseY + SCANNER_2D.chevron.fwd)
       ctx.closePath()
       ctx.fill()
-      ctx.strokeStyle = '#ffdd88'
+      ctx.strokeStyle = SCANNER_2D.playerColor
       ctx.beginPath()
       ctx.moveTo(cx - 6, baseY + 4)
       ctx.lineTo(cx, baseY - 4)
@@ -936,9 +936,9 @@ const Elite: React.FC<EliteProps> = ({
 
         const size = Math.max(SCANNER_2D.sizeFar, SCANNER_2D.sizeNear * (1 - Math.min(1, c.dist / SCANNER_2D.sizeDistDiv)))
 
-        // Yellow elevation stick (from the angled plane up/down to the contact)
+        // Elevation stick (from the angled plane up/down to the contact) - now vech blue
         if (Math.abs(c.y) > 5) {
-          ctx.strokeStyle = '#ffdd00'
+          ctx.strokeStyle = SCANNER_2D.elevationStickColor
           ctx.lineWidth = 1.2
           ctx.beginPath()
           ctx.moveTo(sx, planeY)
@@ -976,9 +976,9 @@ const Elite: React.FC<EliteProps> = ({
           }
         }
 
-        // Distance label for closer contacts
+        // Distance label for closer contacts - now vech blue
         if (c.dist < SCANNER_2D.labelDist) {
-          ctx.fillStyle = '#ffaa00'
+          ctx.fillStyle = SCANNER_2D.labelColor
           ctx.font = '8px monospace'
           ctx.fillText(Math.round(c.dist), sx + size + 6, sy + 3)
         }
@@ -1434,7 +1434,7 @@ const Elite: React.FC<EliteProps> = ({
             overflow: 'hidden',
           }}>
             <canvas ref={radar2DCanvasRef} width={SCANNER_2D.canvasWidth} height={SCANNER_2D.canvasHeight} style={{ position: 'absolute', top: SCANNER_2D.canvasTop, left: '2px' }} />
-            <div style={{position: 'absolute', bottom: SCANNER_2D.labelBottom, width: '100%', textAlign: 'center', fontSize: '8px', letterSpacing: '0.5px'}}>NEARBY</div>
+            <div style={{position: 'absolute', bottom: SCANNER_2D.labelBottom, width: '100%', textAlign: 'center', fontSize: '8px', letterSpacing: '0.5px', color: SCANNER_2D.nearbyLabelColor}}>NEARBY</div>
           </div>
 
           {/* VECH ship holo icon — separate panel to the right of the NEARBY radar (real loaded GLB model via model-viewer).

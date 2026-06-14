@@ -187,7 +187,7 @@ export function createHoloRadarAndReticle(camera: THREE.PerspectiveCamera) {
   radarGroup.position.set(RADAR_3D.position.x, RADAR_3D.position.y, RADAR_3D.position.z)
 
   const radarMat = new THREE.LineBasicMaterial({
-    color: COLORS.holoPrimary,
+    color: COLORS.vechRing,  // changed to deep ocean blue "vech" color to match user's theme update for radar ui elements
     transparent: true,
     opacity: 0.65,
   })
@@ -216,7 +216,7 @@ export function createHoloRadarAndReticle(camera: THREE.PerspectiveCamera) {
     radarGroup.add(
       new THREE.Line(
         new THREE.BufferGeometry().setFromPoints(pts),
-        new THREE.LineBasicMaterial({ color: COLORS.holoPrimary, transparent: true, opacity: 0.35 })
+        new THREE.LineBasicMaterial({ color: COLORS.vechRing, transparent: true, opacity: 0.35 })
       )
     )
   }
@@ -230,7 +230,7 @@ export function createHoloRadarAndReticle(camera: THREE.PerspectiveCamera) {
           new THREE.Vector3(0, 0, 0),
           new THREE.Vector3(Math.cos(a) * RADAR_3D.outer.rx, Math.sin(a) * RADAR_3D.outer.ry, 0),
         ]),
-        new THREE.LineBasicMaterial({ color: COLORS.holoPrimary, transparent: true, opacity: 0.3 })
+        new THREE.LineBasicMaterial({ color: COLORS.vechRing, transparent: true, opacity: 0.3 })
       )
     )
   }

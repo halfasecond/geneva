@@ -120,10 +120,10 @@ export const RADAR_3D = {
 // =============================================================================
 export const SCANNER_2D = {
   // Canvas is sized by the JSX; these are the draw tunables
-  pitchDeg: 20,
+  pitchDeg: 24,
   baseYFactor: 0.76,
-  depthFactor: 0.42,
-  elevFactor: 2.1,
+  depthFactor: 0.52,
+  elevFactor: 1.1,
   latFactor: 3.12,
 
   // Grid / volume
@@ -160,6 +160,15 @@ export const SCANNER_2D = {
   canvasTop: '2px',
   labelBottom: '1px',
   containerBoxShadow: 'inset 0 0 14px rgba(102, 170, 255, .15), 0 0 8px rgba(102, 170, 255, .15)',
+
+  // Radar UI element colors - updated to deep ocean blue "vech" color (#66aaff / rgba(102,170,255,...))
+  // replacing the previous amber/gold (#ffaa00) for grid lines, labels, chevrons etc. in the "nearby" radar.
+  gridColor: 'rgba(102,170,255,0.4)',
+  brightColor: '#66aaff',
+  labelColor: '#66aaff',
+  playerColor: '#aaddff',
+  elevationStickColor: '#88aaff',
+  nearbyLabelColor: '#66aaff',
 }
 
 // =============================================================================
