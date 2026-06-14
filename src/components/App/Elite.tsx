@@ -1,5 +1,11 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react'
 import * as THREE from 'three'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+
+// @google/model-viewer registers the <model-viewer> web component globally.
+// This gives high-quality GLB rendering (same as the Seadn/OpenSea viewer for this model)
+// with no external iframe or unwanted UI.
+import '@google/model-viewer'
 import type { AuthProps } from '../../types/auth'
 import { EliteSim } from '../../elite/sim/EliteSim'
 import type { NpcAgent } from '../../elite/sim/core/types'
@@ -43,6 +49,19 @@ const Elite: React.FC<EliteProps> = ({
   const radar2DCanvasRef = useRef<HTMLCanvasElement | null>(null)
   const fuelBarsRef = useRef<THREE.Object3D[]>([])
   const reticleRef = useRef<THREE.Group | null>(null)
+
+  // VECH preview uses <model-viewer> for the GLB (high quality), with 2D canvas overlay for the holo ring.
+  const vechRingCanvasRef = useRef<HTMLCanvasElement | null>(null)
+  const vechModelViewerRef = useRef(null)
+
+  const setVechCamera = () => {
+    const mv = vechModelViewerRef.current
+    if (mv) {
+      // Force using % per docs. Edit the % value here to control model size in the preview (smaller = larger ship).
+      mv.cameraOrbit = '0deg 70deg 25%'
+      if (mv.jumpCameraToGoal) mv.jumpCameraToGoal()
+    }
+  }
 
   const [hud, setHud] = useState({
     speed: 0,
@@ -349,12 +368,12 @@ const Elite: React.FC<EliteProps> = ({
     // Add semi-transparent side walls to darken the edges of the 3D view, making it feel like looking out the front window of the spaceship (lite 3D, the "inside" frame)
     const wallMat = new THREE.MeshBasicMaterial({ color: 0x0a0a1a, transparent: true, opacity: 0.7, side: THREE.DoubleSide });
     const leftWall = new THREE.Mesh(new THREE.PlaneGeometry(2.5, 5), wallMat);
-    leftWall.position.set(-3.2, 0, -2.2);
+    leftWall.position.set(-3.6, 0, -2.2);
     leftWall.rotation.y = Math.PI / 2;
     cockpitInterior.add(leftWall);
 
     const rightWall = leftWall.clone();
-    rightWall.position.x = 3.2;
+    rightWall.position.x = 3.6;
     cockpitInterior.add(rightWall);
 
     // Top wall / canopy interior
@@ -439,24 +458,95 @@ const Elite: React.FC<EliteProps> = ({
     radarRef.current = radarGroup
     radarBlipsRef.current = blips
 
-    // Small ship icon in holo circle on the right of the radar (matching the reference image's ship silhouette in blue circle)
+    // VECH ship holo icon (3D GLB model inside ring). The 2D bottom badge/placeholder was removed per request.
+    // This is the always-visible ship representation in the cockpit holo (right of the lower 3D radar area).
+    // Using VECH collection hovercraft NFT as the ship visual (web3 ship ownership)
+    // Collection: VECH - procedurally generated hovercrafts
+    // Example item provided: https://opensea.io/item/ethereum/0x02e770a2f79ba4d3740a7273eca7e290d93ecc8a/323
     const shipIcon = new THREE.Group()
     camera.add(shipIcon)
-    shipIcon.position.set(2.8, -1.8, -4.2)
+    // Pulled closer (smaller |z|) + higher y + righter x so it sits in the visible lower-right of the 3D view above the bottom bar.
+    shipIcon.position.set(2.6, -0.9, -2.55)
     const iconRing = new THREE.Line(
       new THREE.BufferGeometry().setFromPoints(Array.from({ length: 24 }, (_, i) => {
         const a = (i / 24) * Math.PI * 2
-        return new THREE.Vector3(Math.cos(a) * 0.9, Math.sin(a) * 0.6, 0)
+        return new THREE.Vector3(Math.cos(a) * 1.55, Math.sin(a) * 1.0, 0)
       })),
-      new THREE.LineBasicMaterial({ color: 0x66aaff, transparent: true, opacity: 0.7 })
+      new THREE.LineBasicMaterial({ color: 0x66aaff, transparent: true, opacity: 0.85 })
     )
     shipIcon.add(iconRing)
-    const smallShip = new THREE.Mesh(
-      new THREE.ConeGeometry(0.3, 0.8, 3),
-      new THREE.MeshBasicMaterial({ color: 0x66aaff, wireframe: true })
+
+    // Add a local point light so the GLB model (which likely uses PBR materials) is visible
+    // even if the main scene has no lights or uses basic materials.
+    const shipLight = new THREE.PointLight(0x88aaff, 4, 10)
+    shipLight.position.set(0, 0, 1.6)
+    shipIcon.add(shipLight)
+
+    // Load the actual VECH NFT 3D model (GLB) as the ship visual in the holo icon.
+    // This is the user's specific item from the VECH collection.
+    // Model: https://raw2.seadn.io/ethereum/0x02e770a2f79ba4d3740a7273eca7e290d93ecc8a/f499a621b66cab834f06546f71875d06.glb
+    // (via the frameable model viewer link provided)
+    const gltfLoader = new GLTFLoader()
+    gltfLoader.load(
+      'https://raw2.seadn.io/ethereum/0x02e770a2f79ba4d3740a7273eca7e290d93ecc8a/f499a621b66cab834f06546f71875d06.glb',
+      (gltf) => {
+        console.log('VECH ship GLB model loaded successfully for holo icon')
+        const model = gltf.scene
+
+        // Center the model (GLBs often have offset origins)
+        const box = new THREE.Box3().setFromObject(model)
+        const center = box.getCenter(new THREE.Vector3())
+        model.position.sub(center)
+
+        // Auto-scale to fit the holo ring nicely (no more hardcoded tiny scale)
+        const sizeBox = new THREE.Box3().setFromObject(model)
+        const size = sizeBox.getSize(new THREE.Vector3())
+        const maxDim = Math.max(size.x, size.y, size.z) || 1
+        const targetSize = 1.15   // a bit larger now that the ring+pos are tuned for visibility
+        const autoScale = targetSize / maxDim
+        model.scale.set(autoScale, autoScale, autoScale)
+        console.log('VECH model native size:', size, 'applied scale:', autoScale.toFixed(4))
+
+        // Orient the hovercraft for a nice 3D pop in the holo icon (angled slightly for depth)
+        // Tweak as needed; current gives a bit of "banked top/front" readable silhouette
+        model.rotation.set(-1.35, 0.15, 0.05)
+
+        // Offset to sit nicely in front of the ring plane
+        model.position.z = 0.28
+
+        // Make it holo-like: emissive blue tint to match the ring, transparent, double sided
+        model.traverse((child) => {
+          if (child.isMesh && child.material) {
+            const mat = child.material.clone()
+            if (mat.emissive !== undefined) {
+              mat.emissive = new THREE.Color(0x4488ff)
+              mat.emissiveIntensity = 0.85
+            }
+            mat.transparent = true
+            mat.opacity = 0.92
+            mat.side = THREE.DoubleSide // ensure visible from both sides
+            mat.depthWrite = false
+            child.material = mat
+            child.frustumCulled = false
+          }
+        })
+
+        shipIcon.add(model)
+
+        // Ensure it renders on top in the holo
+        model.renderOrder = 10
+        shipIcon.renderOrder = 10
+        model.visible = true
+        shipIcon.visible = true
+
+        // Bottom preview now uses <model-viewer> (see the panel JSX). No custom Three preview code needed.
+      },
+      undefined,
+      (error) => {
+        console.error('Failed to load VECH ship GLB model (no fallback placeholder added):', error)
+        // No fallback geometry (ring only). The 2D placeholder image/badge was removed; we don't want any stand-in image/cone either.
+      }
     )
-    smallShip.rotation.x = Math.PI / 2
-    shipIcon.add(smallShip)
 
     // Simple left-side fuel / status holo bar (inspired by side panels in the reference)
     const fuelGroup = new THREE.Group()
@@ -599,10 +689,10 @@ const Elite: React.FC<EliteProps> = ({
           const dz = npc.pos.z - p.pos.z
           const dist = Math.sqrt(dx*dx + dy*dy + dz*dz) || 1
           if (dist > 300) return // nearby range limit like classic
-          // Local coords relative to heading (classic 2D scanner projection)
-          const localX = dx * right.x + dz * right.z  // left/right
-          const localZ = dx * fwd.x + dz * fwd.z     // forward depth (positive forward)
-          const localY = dy                           // elevation
+          // Full 3D body-relative coords (correct during pitch/roll/yaw)
+          const localX = dx * right.x + dy * right.y + dz * right.z
+          const localZ = dx * fwd.x + dy * fwd.y + dz * fwd.z
+          const localY = dx * upv.x + dy * upv.y + dz * upv.z
           contacts.push({
             x: localX,
             y: localY,
@@ -623,9 +713,9 @@ const Elite: React.FC<EliteProps> = ({
           const dz = body.pos3d.z - p.pos.z
           const dist = Math.sqrt(dx*dx + dy*dy + dz*dz) || 1
           if (dist > 500) return // slightly larger range for big objects
-          const localX = dx * right.x + dz * right.z
-          const localZ = dx * fwd.x + dz * fwd.z
-          const localY = dy
+          const localX = dx * right.x + dy * right.y + dz * right.z
+          const localZ = dx * fwd.x + dy * fwd.y + dz * fwd.z
+          const localY = dx * upv.x + dy * upv.y + dz * upv.z
           contacts.push({
             x: localX,
             y: localY,
@@ -870,6 +960,37 @@ const Elite: React.FC<EliteProps> = ({
     }
   }, [onKeyDown, onKeyUp])
 
+  // Draw the static blue holo ring overlay for the VECH preview (on top of <model-viewer>)
+  useEffect(() => {
+    const canvas = vechRingCanvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+    const cx = canvas.width / 2
+    const cy = canvas.height / 2
+    const rx = canvas.width * 0.48
+    const ry = canvas.height * 0.42
+
+    // Outer ring (thicker for the bigger icon)
+    ctx.strokeStyle = '#66aaff'
+    ctx.lineWidth = 2.5
+    ctx.shadowColor = '#66aaff'
+    ctx.shadowBlur = 7
+    ctx.beginPath()
+    ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2)
+    ctx.stroke()
+
+    // Inner ring for holo depth
+    ctx.lineWidth = 1.2
+    ctx.shadowBlur = 3
+    ctx.beginPath()
+    ctx.ellipse(cx, cy, rx * 0.68, ry * 0.68, 0, 0, Math.PI * 2)
+    ctx.stroke()
+  }, [])
+
   // Cartography map overlay (2D canvas for clarity + live orbits, click to select destination)
   // This is the "overlay UI such as Cartography" the user requested.
   useEffect(() => {
@@ -1036,8 +1157,8 @@ const Elite: React.FC<EliteProps> = ({
       const baseY = H * 0.76
       const pitchRad = 20 * Math.PI / 180
       const depthFactor = 0.42
-      const elevFactor = 1.05
-      const latFactor = 0.78
+      const elevFactor = 2.1
+      const latFactor = 3.12
 
       // Background
       ctx.fillStyle = 'rgba(0,0,0,0.78)'
@@ -1051,7 +1172,7 @@ const Elite: React.FC<EliteProps> = ({
         const t = i / numLines
         const z = t * 155
         const y = baseY - z * Math.sin(pitchRad) * depthFactor
-        const halfW = 68 * (1 - t * 0.52)
+        const halfW = 272 * (1 - t * 0.52)
         ctx.beginPath()
         ctx.moveTo(cx - halfW, y)
         ctx.lineTo(cx + halfW, y)
@@ -1060,34 +1181,34 @@ const Elite: React.FC<EliteProps> = ({
 
       // Side walls of the scan volume (tapered)
       ctx.beginPath()
-      ctx.moveTo(cx - 70, baseY)
-      ctx.lineTo(cx - 30, baseY - 155 * Math.sin(pitchRad) * depthFactor)
-      ctx.moveTo(cx + 70, baseY)
-      ctx.lineTo(cx + 30, baseY - 155 * Math.sin(pitchRad) * depthFactor)
+      ctx.moveTo(cx - 280, baseY)
+      ctx.lineTo(cx - 120, baseY - 310 * Math.sin(pitchRad) * depthFactor)
+      ctx.moveTo(cx + 280, baseY)
+      ctx.lineTo(cx + 120, baseY - 310 * Math.sin(pitchRad) * depthFactor)
       ctx.stroke()
 
       // Bright local/base plane line
       ctx.strokeStyle = '#ffaa00'
       ctx.lineWidth = 1.6
       ctx.beginPath()
-      ctx.moveTo(cx - 74, baseY)
-      ctx.lineTo(cx + 74, baseY)
+      ctx.moveTo(cx - 296, baseY)
+      ctx.lineTo(cx + 296, baseY)
       ctx.stroke()
 
       // Player own-ship marker (chevron pointing forward on the local line)
       ctx.fillStyle = '#ffdd88'
       ctx.lineWidth = 1
       ctx.beginPath()
-      ctx.moveTo(cx, baseY - 5)
-      ctx.lineTo(cx - 4, baseY + 3)
-      ctx.lineTo(cx + 4, baseY + 3)
+      ctx.moveTo(cx, baseY - 10)
+      ctx.lineTo(cx - 8, baseY + 6)
+      ctx.lineTo(cx + 8, baseY + 6)
       ctx.closePath()
       ctx.fill()
       ctx.strokeStyle = '#ffdd88'
       ctx.beginPath()
-      ctx.moveTo(cx - 3, baseY + 2)
-      ctx.lineTo(cx, baseY - 2)
-      ctx.lineTo(cx + 3, baseY + 2)
+      ctx.moveTo(cx - 6, baseY + 4)
+      ctx.lineTo(cx, baseY - 4)
+      ctx.lineTo(cx + 6, baseY + 4)
       ctx.stroke()
 
       // Get contacts - MUST be inside drawRadar (real + demo for visibility)
@@ -1097,7 +1218,7 @@ const Elite: React.FC<EliteProps> = ({
         return
       }
 
-      // Use true body right from integrated up (consistent with main 3D view pitch fix).
+      // Use true body axes from integrated up (full 3D dot for correct relative during pitch/roll/yaw).
       const fwd = p.heading
       const upv = p.up || { x: 0, y: 1, z: 0 }
       const right = normalize(cross(fwd, upv))
@@ -1111,9 +1232,9 @@ const Elite: React.FC<EliteProps> = ({
         const dz = npc.pos.z - p.pos.z
         const dist = Math.sqrt(dx*dx + dy*dy + dz*dz) || 1
         if (dist > 300) return
-        const localX = dx * right.x + dz * right.z
-        const localZ = dx * fwd.x + dz * fwd.z
-        const localY = dy
+        const localX = dx * right.x + dy * right.y + dz * right.z
+        const localZ = dx * fwd.x + dy * fwd.y + dz * fwd.z
+        const localY = dx * upv.x + dy * upv.y + dz * upv.z
         contacts.push({ x: localX, y: localY, z: localZ, dist, type: 'ship', role: npc.role })
       })
 
@@ -1126,19 +1247,11 @@ const Elite: React.FC<EliteProps> = ({
         const dz = body.pos3d.z - p.pos.z
         const dist = Math.sqrt(dx*dx + dy*dy + dz*dz) || 1
         if (dist > 500) return
-        const localX = dx * right.x + dz * right.z
-        const localZ = dx * fwd.x + dz * fwd.z
-        const localY = dy
+        const localX = dx * right.x + dy * right.y + dz * right.z
+        const localZ = dx * fwd.x + dy * fwd.y + dz * fwd.z
+        const localY = dx * upv.x + dy * upv.y + dz * upv.z
         contacts.push({ x: localX, y: localY, z: localZ, dist, type: body.type, role: 'neutral' })
       })
-
-      contacts.sort((a, b) => a.dist - b.dist)
-
-      // Demo contacts (spread in x/y/z so vertical + range + lateral are obvious at 20deg)
-      contacts.push({ x: 28, y: 22, z: 48, dist: 58, type: 'ship', role: 'pirate' })
-      contacts.push({ x: 52, y: -14, z: 88, dist: 105, type: 'ship', role: 'neutral' })
-      contacts.push({ x: -18, y: 11, z: 69, dist: 74, type: 'planet', role: 'neutral' })
-      contacts.push({ x: 9, y: -26, z: 132, dist: 138, type: 'station', role: 'neutral' })
 
       contacts.sort((a, b) => a.dist - b.dist)
 
@@ -1148,12 +1261,12 @@ const Elite: React.FC<EliteProps> = ({
         const planeY = baseY - z * Math.sin(pitchRad) * depthFactor
         const sy = planeY - c.y * elevFactor
 
-        const size = Math.max(2.2, 5.8 * (1 - Math.min(1, c.dist / 165)))
+        const size = Math.max(8.8, 23.2 * (1 - Math.min(1, c.dist / 165)))
 
         // Yellow elevation stick (from the angled plane up/down to the contact)
-        if (Math.abs(c.y) > 2.5) {
+        if (Math.abs(c.y) > 5) {
           ctx.strokeStyle = '#ffdd00'
-          ctx.lineWidth = 0.9
+          ctx.lineWidth = 1.2
           ctx.beginPath()
           ctx.moveTo(sx, planeY)
           ctx.lineTo(sx, sy)
@@ -1193,8 +1306,8 @@ const Elite: React.FC<EliteProps> = ({
         // Distance label for closer contacts
         if (c.dist < 125) {
           ctx.fillStyle = '#ffaa00'
-          ctx.font = '7px monospace'
-          ctx.fillText(Math.round(c.dist), sx + size + 3, sy + 1.5)
+          ctx.font = '8px monospace'
+          ctx.fillText(Math.round(c.dist), sx + size + 6, sy + 3)
         }
       })
 
@@ -1383,8 +1496,7 @@ const Elite: React.FC<EliteProps> = ({
         bottom: 0,
         width: '85px',
         background: 'rgba(0, 4, 10, 0.75)',
-        borderRight: '1px solid #ffaa00',
-        boxShadow: '0 0 10px rgba(255, 170, 0, 0.2)',
+        boxShadow: '0 0 12px rgba(255, 170, 0, 0.25)',
         zIndex: 8,
         pointerEvents: 'none',
         fontSize: '9px',
@@ -1392,7 +1504,7 @@ const Elite: React.FC<EliteProps> = ({
         color: '#ffaa00',
         overflow: 'hidden',
       }}>
-        <div style={{ fontSize: '8px', marginBottom: '4px', borderBottom: '1px solid #ffaa00', paddingBottom: '2px' }}>CONTROLS</div>
+        <div style={{ fontSize: '8px', marginBottom: '4px', opacity: 0.7, paddingBottom: '2px' }}>CONTROLS</div>
         <div>W / ↑ thrust fwd</div>
         <div>S / ↓ brake</div>
         <div>A / ← yaw L</div>
@@ -1411,8 +1523,7 @@ const Elite: React.FC<EliteProps> = ({
         bottom: 0,
         width: '85px',
         background: 'rgba(0, 4, 10, 0.6)',
-        borderLeft: '1px solid #ffaa00',
-        boxShadow: '0 0 10px rgba(255, 170, 0, 0.15)',
+        boxShadow: '0 0 12px rgba(255, 170, 0, 0.2)',
         zIndex: 8,
         pointerEvents: 'none',
       }} />
@@ -1425,7 +1536,6 @@ const Elite: React.FC<EliteProps> = ({
         right: '85px',
         height: '45px',
         background: 'rgba(0, 4, 10, 0.65)',
-        borderBottom: '1px solid #ffaa00',
         boxShadow: '0 0 8px rgba(255, 170, 0, 0.15)',
         zIndex: 8,
         pointerEvents: 'none',
@@ -1780,7 +1890,7 @@ const Elite: React.FC<EliteProps> = ({
                 Pirates &amp; escorts are attracted to you. Traders mostly mind their routes.
               </div>
               <div style={{ marginTop: 4, fontSize: 9, opacity: 0.5 }}>
-                Next: 3D cartography map, station docking, live markets (Flocker port), ship NFT ownership.
+                Next: 3D cartography map, station docking, live markets (Flocker port), ship NFT ownership (VECH hovercrafts collection).
               </div>
             </div>
 
@@ -1797,7 +1907,7 @@ const Elite: React.FC<EliteProps> = ({
               left: '50%',
               transform: 'translate(-50%, -50%)',
               background: 'rgba(0, 0, 0, 0.35)',
-              border: '1px solid #ffaa00',
+              boxShadow: '0 0 8px rgba(255,170,0,0.25)',
               padding: '3px 10px',
               fontSize: 11,
               color: '#ffaa00',
@@ -1828,10 +1938,9 @@ const Elite: React.FC<EliteProps> = ({
         bottom: 0,
         left: 0,
         right: 0,
-        height: '105px',
+        height: '210px',
         background: 'rgba(0, 4, 10, 0.65)',
-        borderTop: '2px solid #ffaa00',
-        boxShadow: '0 0 15px rgba(255, 170, 0, 0.3)',
+        boxShadow: '0 -4px 20px rgba(255, 170, 0, 0.25)',
         display: 'flex',
         alignItems: 'stretch',
         color: '#ffaa00',
@@ -1843,7 +1952,6 @@ const Elite: React.FC<EliteProps> = ({
         {/* Left section: system/target info */}
         <div style={{
           width: '170px',
-          borderRight: '1px solid #ffaa00',
           padding: '4px 8px',
           background: 'rgba(0,0,0,0.3)',
         }}>
@@ -1854,49 +1962,78 @@ const Elite: React.FC<EliteProps> = ({
           <div style={{fontSize: '8px', marginTop: '4px'}}>COL 285 SECTOR SK-P A35-1</div>
         </div>
 
-        {/* Center: scanners and ship view */}
+        {/* Center: scanners */}
         <div style={{
           flex: 1,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '16px',
-          borderRight: '1px solid #ffaa00',
+          gap: '12px',
         }}>
-          {/* Left scanner: classic Elite "nearby things" 2D visualiser (always-visible center bottom, side-on ~20deg angled view for clear vertical/elevation) */}
+          {/* Classic Elite "nearby things" 2D visualiser (always-visible center bottom, side-on ~20deg angled view) */}
           <div style={{
-            width: '178px',
-            height: '104px',
-            border: '2px solid #ffaa00',
-            borderRadius: '5px',
+            width: '712px',
+            height: '200px',
             position: 'relative',
             background: 'rgba(0,0,0,0.4)',
             boxShadow: 'inset 0 0 14px rgba(255,170,0,0.25), 0 0 8px rgba(255,170,0,0.15)',
             overflow: 'hidden',
           }}>
-            <canvas ref={radar2DCanvasRef} width="174" height="100" style={{ position: 'absolute', top: '2px', left: '2px' }} />
-            <div style={{position: 'absolute', bottom: '1px', width: '100%', textAlign: 'center', fontSize: '7px', letterSpacing: '0.5px'}}>NEARBY</div>
+            <canvas ref={radar2DCanvasRef} width="704" height="190" style={{ position: 'absolute', top: '2px', left: '2px' }} />
+            <div style={{position: 'absolute', bottom: '1px', width: '100%', textAlign: 'center', fontSize: '8px', letterSpacing: '0.5px'}}>NEARBY</div>
           </div>
 
-          {/* Ship view / silhouette */}
+          {/* VECH ship holo icon — separate panel to the right of the NEARBY radar (real loaded GLB model).
+              Static pose (no auto-spin). No outer border shadow. Uniform high emissive (10) + strong lights so the *whole* ship glows evenly. */}
           <div style={{
-            width: '50px',
-            height: '50px',
-            border: '2px solid #66aaff',
-            borderRadius: '50%',
+            width: 440,
+            height: 290,
+            background: 'rgba(0, 6, 14, 0.75)',
+            borderRadius: '2px',
             display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            background: 'rgba(0,0,0,0.4)',
-            position: 'relative',
-            boxShadow: '0 0 8px rgba(102,170,255,0.4)',
+            gap: '4px',
+            overflow: 'hidden',
           }}>
-            <svg width="30" height="16" viewBox="0 0 42 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M21 2 L38 20 L4 20 Z" fill="#66aaff" stroke="#aaddff" strokeWidth="1" />
-              <circle cx="21" cy="12" r="3" fill="#aaddff" />
-            </svg>
-            <div style={{position: 'absolute', bottom: '-10px', fontSize: '7px', color: '#66aaff'}}>SHIP</div>
+            {/* High quality GLB render using @google/model-viewer (the same tech behind OpenSea's nice viewer for this exact VECH model).
+                No external iframe, no unwanted UI. We overlay our own holo ring.
+                Static (autoRotate={false}), larger panel size. Using % for cameraOrbit (per docs) + forced via onLoad. 25% for large model fill (tune the % in setVechCamera / attribute for size). */}
+            <div style={{ position: 'relative', width: '100%', height: 'calc(100% - 24px)' }}>
+              <model-viewer
+                ref={vechModelViewerRef}
+                src="https://raw2.seadn.io/ethereum/0x02e770a2f79ba4d3740a7273eca7e290d93ecc8a/f499a621b66cab834f06546f71875d06.glb"
+                alt="VECH hovercraft"
+                cameraControls={false}
+                autoRotate={false}
+                disableZoom={true}
+                disablePan={true}
+                interactionPrompt="none"
+                shadowIntensity={0.6}
+                exposure={1.2}
+                cameraOrbit="0deg 70deg 20%"
+                onLoad={setVechCamera}
+                style={{ width: '100%', height: '100%', background: 'transparent' }}
+              />
+              {/* Our blue holo ring overlay (same style as the old 3D one) */}
+              <canvas
+                ref={vechRingCanvasRef}
+                width="430"
+                height="270"
+                style={{ position: 'absolute', top: 0, left: 5, pointerEvents: 'none' }}
+              />
+            </div>
+            <div style={{
+              fontSize: '9px',
+              color: '#66aaff',
+              letterSpacing: '0.7px',
+              textShadow: '0 0 2px #000',
+              pointerEvents: 'none',
+              lineHeight: 1,
+            }}>VECH</div>
           </div>
+
         </div>
 
         {/* Right: status bars and labels */}
@@ -1910,7 +2047,7 @@ const Elite: React.FC<EliteProps> = ({
           {/* Fuel */}
           <div>
             <div>FUEL</div>
-            <div style={{height: '38px', width: '14px', border: '1px solid #ffaa00', position: 'relative', marginTop: '2px'}}>
+            <div style={{height: '38px', width: '14px', background: 'rgba(255,170,0,0.1)', position: 'relative', marginTop: '2px', boxShadow: 'inset 0 0 4px rgba(255,170,0,0.4)'}}>
               <div style={{
                 position: 'absolute',
                 bottom: 0,
