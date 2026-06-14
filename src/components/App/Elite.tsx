@@ -1976,17 +1976,19 @@ const Elite: React.FC<EliteProps> = ({
         height: '210px',
         background: 'rgba(0, 4, 10, 0.65)',
         boxShadow: '0 -4px 20px rgba(255, 170, 0, 0.25)',
-        display: 'flex',
-        alignItems: 'stretch',
         color: '#ffaa00',
         fontFamily: 'ui-monospace, monospace',
         fontSize: '10px',
         zIndex: 10,
         pointerEvents: 'none',
       }}>
-        {/* Left section: system/target info */}
+        {/* Left system info - far left of screen */}
         <div style={{
+          position: 'absolute',
+          left: 0,
+          bottom: 0,
           width: '170px',
+          height: '210px',
           padding: '4px 8px',
           background: 'rgba(0,0,0,0.3)',
         }}>
@@ -1997,16 +1999,14 @@ const Elite: React.FC<EliteProps> = ({
           <div style={{fontSize: '8px', marginTop: '4px'}}>COL 285 SECTOR SK-P A35-1</div>
         </div>
 
-        {/* Center: scanners */}
-        <div style={{
-          flex: 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '12px',
-        }}>
+
           {/* Classic Elite "nearby things" 2D visualiser (always-visible center bottom, side-on ~20deg angled view) */}
           <div style={{
+            position: 'absolute',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            bottom: 0,
+            marginTop: '-50px',
             width: '712px',
             height: '200px',
             position: 'relative',
@@ -2021,6 +2021,10 @@ const Elite: React.FC<EliteProps> = ({
           {/* VECH ship holo icon — separate panel to the right of the NEARBY radar (real loaded GLB model via model-viewer).
               No rotation (autoRotate=false), larger size (440x290 panel), our holo ring overlay (behind via stacking + half size), inner height calc(100%-120px) + cameraTarget for bottom clearance. Looks great! */}
           <div style={{
+            position: 'absolute',
+            left: 'calc(50% + 356px + 12px)',
+            bottom: 0,
+            marginTop: '-100px',
             width: 440,
             height: 290,
             background: 'rgba(0, 6, 14, 0.75)',
@@ -2070,11 +2074,13 @@ const Elite: React.FC<EliteProps> = ({
             }}>VECH</div>
           </div>
 
-        </div>
-
-        {/* Right: status bars and labels */}
+        {/* Right status bars - far right of screen */}
         <div style={{
+          position: 'absolute',
+          right: 0,
+          bottom: 0,
           width: '200px',
+          height: '210px',
           padding: '4px 8px',
           display: 'flex',
           gap: '12px',
