@@ -1071,7 +1071,7 @@ const Elite: React.FC<EliteProps> = ({
         bottom: 0,
         width: '85px',
         background: 'rgba(0, 4, 10, 0.75)',
-        boxShadow: '0 0 12px rgba(255, 170, 0, 0.25)',
+        boxShadow: '0 0 12px rgba(0, 170, 255, 0.15)',
         zIndex: 8,
         pointerEvents: 'none',
         fontSize: '9px',
@@ -1098,7 +1098,7 @@ const Elite: React.FC<EliteProps> = ({
         bottom: 0,
         width: '85px',
         background: 'rgba(0, 4, 10, 0.6)',
-        boxShadow: '0 0 12px rgba(255, 170, 0, 0.2)',
+        boxShadow: '0 0 12px rgba(0, 170, 255, 0.15)',
         zIndex: 8,
         pointerEvents: 'none',
       }} />
@@ -1111,7 +1111,7 @@ const Elite: React.FC<EliteProps> = ({
         right: '85px',
         height: '45px',
         background: 'rgba(0, 4, 10, 0.65)',
-        boxShadow: '0 0 8px rgba(255, 170, 0, 0.15)',
+        boxShadow: '0 0 8px rgba(0, 170, 255, 0.15)',
         zIndex: 8,
         pointerEvents: 'none',
         display: 'flex',
@@ -1393,7 +1393,7 @@ const Elite: React.FC<EliteProps> = ({
         right: 0,
         height: '210px',
         background: 'rgba(0, 4, 10, 0.65)',
-        boxShadow: '0 -4px 20px rgba(255, 170, 0, 0.25)',
+        boxShadow: '0 -4px 20px rgba(0, 170, 255, 0.15)',
         color: '#ffaa00',
         fontFamily: 'ui-monospace, monospace',
         fontSize: '10px',
@@ -1429,8 +1429,8 @@ const Elite: React.FC<EliteProps> = ({
             marginTop: SCANNER_2D.marginTop,
             width: SCANNER_2D.containerWidth,
             height: SCANNER_2D.containerHeight,
-            background: 'rgba(0,0,0,0.4)',
-            boxShadow: 'inset 0 0 14px rgba(255,170,0,0.25), 0 0 8px rgba(255,170,0,0.15)',
+            background: SCANNER_2D.containerBackground,
+            boxShadow: SCANNER_2D.containerBoxShadow,
             overflow: 'hidden',
           }}>
             <canvas ref={radar2DCanvasRef} width={SCANNER_2D.canvasWidth} height={SCANNER_2D.canvasHeight} style={{ position: 'absolute', top: SCANNER_2D.canvasTop, left: '2px' }} />
@@ -1441,9 +1441,8 @@ const Elite: React.FC<EliteProps> = ({
               No rotation (autoRotate=false), larger size (440x290 panel), our holo ring overlay (behind via stacking + half size), inner height calc(100%-120px) + cameraTarget for bottom clearance. Looks great! */}
           <div style={{
             position: 'absolute',
-            left: 'calc(50% + 156px + 12px)',
-            bottom: 100,
-            marginTop: '-150px',
+            left: 'calc(50% + 174px)',
+            bottom: 60,
             width: 440,
             height: 290,
             background: 'rgba(0, 6, 14, 0.1)',

@@ -6,8 +6,6 @@
  * Grouped for easy scanning. Values taken from the original working cockpit implementation.
  */
 
-import type { Vec3 } from './sim/core/types'
-
 // =============================================================================
 // COLORS (Three.js numbers + CSS strings where both are used)
 // =============================================================================
@@ -16,8 +14,8 @@ export const COLORS = {
   spaceFog: 0x00040a,
 
   // Classic Elite holo orange / amber
-  holoPrimary: 0xffaa00,       // radar rings, reticle, fuel, scanner grid, labels
-  holoPrimaryCss: '#ffaa00',
+  holoPrimary: '00aaff',       // radar rings, reticle, fuel, scanner grid, labels
+  holoPrimaryCss: '#00aaff',
 
   // VECH / cyan-blue accents
   vechRing: 0x66aaff,
@@ -161,6 +159,7 @@ export const SCANNER_2D = {
   bottom: 60,            // set higher so that with the height 200px and negative marginTop, the top of the black radar box extends ~50px (25% of 200px) into the windscreen above the ~210px bottom dashboard strip
   canvasTop: '2px',
   labelBottom: '1px',
+  containerBoxShadow: 'inset 0 0 14px rgba(102, 170, 255, .15), 0 0 8px rgba(102, 170, 255, .15)',
 }
 
 // =============================================================================
