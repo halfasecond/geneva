@@ -55,12 +55,7 @@ type EliteProps = AuthProps & {
   // extra if needed
 }
 
-const Elite: React.FC<EliteProps> = ({
-  loggedIn,
-  handleSignIn,
-  handleSignOut,
-  BASE_URL,
-}) => {
+const Elite: React.FC<EliteProps> = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const simRef = useRef<EliteSim>(new EliteSim(2))
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null)
@@ -97,8 +92,6 @@ const Elite: React.FC<EliteProps> = ({
     playerPos: { x: 0, y: 0, z: 0 },
     fuel: 120,
   })
-  const [showHelp, setShowHelp] = useState(false)
-  const [connected, setConnected] = useState(!!loggedIn)
 
   // Cartography + hyperspace overlay state
   const [mapOpen, setMapOpen] = useState(false)
@@ -121,16 +114,12 @@ const Elite: React.FC<EliteProps> = ({
   // Use the extracted flight input hook (replaces the old keysRef + onKeyDown/Up + getPlayerInput)
   const { getInput: getPlayerInput } = useFlightInput()
 
-  // Keyboard "action" keys (h/m/r) that affect React state are handled in this dedicated effect.
+  // Keyboard "action" keys (m) that affect React state are handled in this dedicated effect.
   // Flight controls (thrust/yaw/pitch/roll) + their preventDefaults are handled inside useFlightInput.
   useEffect(() => {
     const handleGlobalKeys = (e: KeyboardEvent) => {
       const k = e.key.toLowerCase()
-      if (k === 'h') setShowHelp(s => !s)
       if (k === 'm') setMapOpen(o => !o)
-      if (k === 'r') {
-        simRef.current.resetNpcs(2)
-      }
     }
     window.addEventListener('keydown', handleGlobalKeys)
     return () => window.removeEventListener('keydown', handleGlobalKeys)
@@ -235,8 +224,8 @@ const Elite: React.FC<EliteProps> = ({
     })
     scene.add(bodiesGroup)
     bodiesGroupRef.current = bodiesGroup
-    // store for live update (non-star bodies)
-    ;(bodiesGroup as any)._mainBodyMeshes = mainBodyMeshes
+      // store for live update (non-star bodies)
+      ; (bodiesGroup as any)._mainBodyMeshes = mainBodyMeshes
 
     // Hyperspace streak group (classic Elite tunnel lines, activated on jump)
     const streaksGroup = new THREE.Group()
@@ -259,7 +248,7 @@ const Elite: React.FC<EliteProps> = ({
     streaksGroup.visible = false
     scene.add(streaksGroup)
     hyperspaceStreaksRef.current = streaksGroup
-    ;(streaksGroup as any)._streaks = streaks
+      ; (streaksGroup as any)._streaks = streaks
 
     // === COCKPIT + 3D HOLO ELEMENTS (now built via extracted render helpers) ===
     // The create* functions add the groups directly to the camera (exact same parenting
@@ -451,7 +440,7 @@ const Elite: React.FC<EliteProps> = ({
           const mat = m.material as THREE.MeshBasicMaterial
           if (i < onCount) {
             mat.opacity = 0.85
-            mat.color.set( i < onCount - 2 ? 0xffaa00 : 0xff4444 ) // warning color when low
+            mat.color.set(i < onCount - 2 ? 0xffaa00 : 0xff4444) // warning color when low
           } else {
             mat.opacity = 0.2
             mat.color.set(0xffaa00)
@@ -504,7 +493,7 @@ const Elite: React.FC<EliteProps> = ({
             ud.angle = a
             line.visible = phase < 1.05
           }
-          ;(line.material as any).opacity = Math.max(0.2, 0.9 - phase * 0.7)
+          ; (line.material as any).opacity = Math.max(0.2, 0.9 - phase * 0.7)
         })
 
         if (phase >= 1.0) {
@@ -542,10 +531,10 @@ const Elite: React.FC<EliteProps> = ({
             npc.role === 'pirate'
               ? 0xff6b6b
               : npc.role === 'police'
-              ? 0x6bffa3
-              : npc.role === 'escort'
-              ? 0x88ddff
-              : 0xaabbcc
+                ? 0x6bffa3
+                : npc.role === 'escort'
+                  ? 0x88ddff
+                  : 0xaabbcc
 
           const geo = new THREE.ConeGeometry(size * 0.55, size * 2.4, 3)
           const mat = new THREE.MeshBasicMaterial({ color, wireframe: true })
@@ -672,8 +661,8 @@ const Elite: React.FC<EliteProps> = ({
       ctx.lineWidth = 1
       for (let i = -3; i <= 3; i++) {
         const p = center + i * 65
-        ctx.beginPath(); ctx.moveTo(p, 20); ctx.lineTo(p, size-20); ctx.stroke()
-        ctx.beginPath(); ctx.moveTo(20, p); ctx.lineTo(size-20, p); ctx.stroke()
+        ctx.beginPath(); ctx.moveTo(p, 20); ctx.lineTo(p, size - 20); ctx.stroke()
+        ctx.beginPath(); ctx.moveTo(20, p); ctx.lineTo(size - 20, p); ctx.stroke()
       }
 
       const bodies = getCartographyBodies(mapTime * 0.9)
@@ -982,22 +971,7 @@ const Elite: React.FC<EliteProps> = ({
     }
   }, [mapOpen])
 
-  // Keep connected state in sync with auth prop
-  useEffect(() => {
-    setConnected(!!loggedIn)
-  }, [loggedIn])
 
-  const handleConnect = () => {
-    if (connected && handleSignOut) {
-      handleSignOut()
-    } else if (handleSignIn) {
-      handleSignIn()
-    }
-  }
-
-  const resetSim = () => {
-    simRef.current.resetNpcs(2)
-  }
 
   return (
     <div style={{
@@ -1015,32 +989,6 @@ const Elite: React.FC<EliteProps> = ({
       />
 
       {/* Cockpit frame bezels - to make it feel like inside the spaceship (holo style, framing the central "window" for the 3D space) */}
-      {/* Left bezel - flight controls / ship status */}
-      <div style={{
-        position: 'absolute',
-        left: 0,
-        top: 0,
-        bottom: 0,
-        width: '85px',
-        background: 'rgba(0, 4, 10, 0.75)',
-        boxShadow: '0 0 12px rgba(0, 170, 255, 0.15)',
-        zIndex: 8,
-        pointerEvents: 'none',
-        fontSize: '9px',
-        padding: '8px 4px',
-        color: '#ffaa00',
-        overflow: 'hidden',
-      }}>
-        <div style={{ fontSize: '8px', marginBottom: '4px', opacity: 0.7, paddingBottom: '2px' }}>CONTROLS</div>
-        <div>W / ↑ thrust fwd</div>
-        <div>S / ↓ brake</div>
-        <div>A / ← yaw L</div>
-        <div>D / → yaw R</div>
-        <div>Q down pitch</div>
-        <div>E up pitch</div>
-        <div>Z / X roll</div>
-        <div style={{ marginTop: '6px', fontSize: '8px' }}>R respawn [H] help</div>
-      </div>
 
       {/* Right bezel - minimal frame (carto holo overlays when map open) */}
       <div style={{
@@ -1059,8 +1007,8 @@ const Elite: React.FC<EliteProps> = ({
       <div style={{
         position: 'absolute',
         top: 0,
-        left: '85px',
-        right: '85px',
+        left: '0',
+        right: 0,
         height: '45px',
         background: 'rgba(0, 4, 10, 0.65)',
         boxShadow: '0 0 8px rgba(0, 170, 255, 0.15)',
@@ -1071,121 +1019,23 @@ const Elite: React.FC<EliteProps> = ({
         padding: '0 10px',
         fontSize: '9px',
         color: '#ffaa00',
-      }}>
-        <div style={{ flex: 1 }}>INNER ORION SPUR</div>
-        <div style={{ textAlign: 'center' }}>GENEVA ELITE</div>
-        <div style={{ flex: 1, textAlign: 'right' }}>t+{hud.time}s</div>
-      </div>
+      }} />
 
-      {/* HUD Overlay */}
       <div style={{
         position: 'absolute',
-        top: 18,
-        left: 18,
-        right: 18,
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
+        left: 0,
+        top: 0,
+        bottom: 0,
+        width: '85px',
+        background: 'rgba(0, 4, 10, 0.75)',
+        boxShadow: '0 0 12px rgba(0, 170, 255, 0.15)',
+        zIndex: 8,
         pointerEvents: 'none',
-      }}>
-        <div style={{ pointerEvents: 'auto' }}>
-          <div style={{ fontSize: 13, letterSpacing: 3, opacity: 0.6 }}>GENEVA // DEEP SPACE</div>
-          <div style={{ fontSize: 28, fontWeight: 600, letterSpacing: 6, marginTop: -4 }}>ELITE</div>
-          <div style={{ fontSize: 11, opacity: 0.5, marginTop: -2 }}>three.js • web3 • flocking intelligence</div>
-        </div>
-
-        <div style={{ textAlign: 'right', fontSize: 12, pointerEvents: 'auto' }}>
-          <div>SPD <span style={{ color: '#66eeff' }}>{hud.speed}</span> • NPC {hud.npcs}</div>
-          <div style={{ opacity: 0.65 }}>X {hud.playerPos.x} Y {hud.playerPos.y} Z {hud.playerPos.z}</div>
-          <div style={{ marginTop: 4, fontSize: 10 }}>t+{hud.time}s &nbsp; [R] respawn &nbsp; [H] help</div>
-        </div>
-      </div>
-
-      {/* Bottom left: Wallet / Commander */}
-      <div style={{
-        position: 'absolute',
-        bottom: 18,
-        left: 18,
-        background: 'rgba(0,4,10,0.65)',
-        padding: '8px 12px',
-        border: '1px solid #223344',
-        fontSize: 12,
-        pointerEvents: 'auto',
-      }}>
-        <div style={{ marginBottom: 4, opacity: 0.7 }}>COMMANDER</div>
-        {connected && loggedIn ? (
-          <div>
-            <span style={{ color: '#6bffa3' }}>{loggedIn.slice(0, 6)}…{loggedIn.slice(-4)}</span>
-            <button onClick={handleConnect} style={{
-              marginLeft: 12, background: 'transparent', border: '1px solid #445566', color: '#aaccdd',
-              padding: '2px 8px', fontSize: 11, cursor: 'pointer'
-            }}>SIGN OUT</button>
-          </div>
-        ) : (
-          <button onClick={handleConnect} style={{
-            background: '#112233', border: '1px solid #446688', color: '#aaccdd',
-            padding: '4px 14px', fontSize: 12, cursor: 'pointer'
-          }}>
-            CONNECT WALLET
-          </button>
-        )}
-        <div style={{ fontSize: 10, marginTop: 6, opacity: 0.5 }}>
-          Your ship &amp; cargo can be on-chain (coming soon)
-        </div>
-      </div>
-
-      {/* Right side controls */}
-      <div style={{
-        position: 'absolute',
-        bottom: 18,
-        right: 18,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 8,
-        alignItems: 'flex-end',
-        pointerEvents: 'auto',
-      }}>
-        <button onClick={resetSim} style={{
-          background: 'rgba(0,4,10,0.7)', border: '1px solid #334455', color: '#aaccdd',
-          padding: '6px 14px', fontSize: 12, cursor: 'pointer'
-        }}>RESPAWN FLEET [R]</button>
-        <button onClick={() => setShowHelp(h => !h)} style={{
-          background: 'rgba(0,4,10,0.5)', border: '1px solid #223344', color: '#8899aa',
-          padding: '3px 10px', fontSize: 11, cursor: 'pointer'
-        }}>{showHelp ? 'HIDE HELP' : 'SHOW CONTROLS'} [H]</button>
-      </div>
-
-      {/* Old centered help removed - now using holo draggable flight controls panel on right under the map */}
-
-      {/* Role legend */}
-      <div style={{
-        position: 'absolute',
-        top: 18,
-        right: 18,
-        fontSize: 11,
-        opacity: 0.75,
-        background: 'rgba(0,4,10,0.5)',
-        padding: '6px 10px',
-        border: '1px solid #223344',
-        pointerEvents: 'none',
-      }}>
-        <span style={{ color: '#aabbcc' }}>■</span> trader &nbsp;
-        <span style={{ color: '#ff6b6b' }}>■</span> pirate &nbsp;
-        <span style={{ color: '#6bffa3' }}>■</span> police &nbsp;
-        <span style={{ color: '#88ddff' }}>■</span> escort
-      </div>
-
-      <div style={{
-        position: 'absolute',
-        bottom: 4,
-        left: '50%',
-        transform: 'translateX(-50%)',
-        fontSize: 10,
-        opacity: 0.35,
-        pointerEvents: 'none',
-      }}>
-        geneva modular • three.js • using flocker boids + belltoy
-      </div>
+        fontSize: '9px',
+        padding: '8px 4px',
+        color: '#ffaa00',
+        overflow: 'hidden',
+      }} />
 
       {/* HOLO PANELS - now using the extracted reusable HoloPanel component + useHoloDrag hooks */}
       {mapOpen && (
@@ -1225,8 +1075,8 @@ const Elite: React.FC<EliteProps> = ({
               <div>TO <span style={{ color: '#66ff99' }}>{getBodyById(route.destinationId, 0)?.name}</span></div>
               <div style={{ marginTop: 3, color: '#ffdd88', fontSize: 11 }}>
                 COST: {getJumpFuelCost(
-                  getBodyById(route.originId, 0)?.pos2d || {x:0,y:0},
-                  getBodyById(route.destinationId, 0)?.pos2d || {x:0,y:0}
+                  getBodyById(route.originId, 0)?.pos2d || { x: 0, y: 0 },
+                  getBodyById(route.destinationId, 0)?.pos2d || { x: 0, y: 0 }
                 )} FUEL
               </div>
             </div>
@@ -1234,11 +1084,11 @@ const Elite: React.FC<EliteProps> = ({
             <button
               onClick={() => {
                 const nearest = CARTOGRAPHY_BODIES.reduce((best, b) => {
-                  const p = snapRef.current?.player?.pos || {x:0,y:0}
+                  const p = snapRef.current?.player?.pos || { x: 0, y: 0 }
                   const d = Math.hypot(b.pos2d.x - p.x, b.pos2d.y - p.y)
-                  return d < best.d ? {id: b.id, d} : best
-                }, {id: route.originId, d: 9999})
-                setRoute(r => ({...r, originId: nearest.id }))
+                  return d < best.d ? { id: b.id, d } : best
+                }, { id: route.originId, d: 9999 })
+                setRoute(r => ({ ...r, originId: nearest.id }))
               }}
               style={{
                 width: '100%',
@@ -1256,8 +1106,8 @@ const Elite: React.FC<EliteProps> = ({
 
             <button
               disabled={isHyperspacing || hud.fuel < getJumpFuelCost(
-                getBodyById(route.originId, 0)?.pos2d || {x:0,y:0},
-                getBodyById(route.destinationId, 0)?.pos2d || {x:0,y:0}
+                getBodyById(route.originId, 0)?.pos2d || { x: 0, y: 0 },
+                getBodyById(route.destinationId, 0)?.pos2d || { x: 0, y: 0 }
               )}
               onClick={() => {
                 const o = getBodyById(route.originId, 0)
@@ -1329,8 +1179,8 @@ const Elite: React.FC<EliteProps> = ({
           {getBodyById(route.destinationId, 0)?.name || 'NO TARGET'}<br />
           {getBodyById(route.destinationId, 0) ?
             getJumpFuelCost(
-              getBodyById(route.originId, 0)?.pos2d || {x:0,y:0},
-              getBodyById(route.destinationId, 0)?.pos2d || {x:0,y:0}
+              getBodyById(route.originId, 0)?.pos2d || { x: 0, y: 0 },
+              getBodyById(route.destinationId, 0)?.pos2d || { x: 0, y: 0 }
             ) + ' FUEL'
             : ''}
           {isHyperspacing && <div style={{ color: '#ff6644', marginTop: '2px' }}>CHARGING</div>}
@@ -1362,32 +1212,32 @@ const Elite: React.FC<EliteProps> = ({
           padding: '4px 8px',
           background: 'rgba(0,0,0,0.3)',
         }}>
-          <div style={{fontWeight: 'bold'}}>{getBodyById(route.destinationId, 0)?.name || 'NO TARGET'}</div>
+          <div style={{ fontWeight: 'bold' }}>{getBodyById(route.destinationId, 0)?.name || 'NO TARGET'}</div>
           <div>6.23Ly</div>
-          <div style={{color: '#ff6666'}}>ANARCHY</div>
+          <div style={{ color: '#ff6666' }}>ANARCHY</div>
           <div>CLEAN</div>
-          <div style={{fontSize: '8px', marginTop: '4px'}}>COL 285 SECTOR SK-P A35-1</div>
+          <div style={{ fontSize: '8px', marginTop: '4px' }}>COL 285 SECTOR SK-P A35-1</div>
         </div>
 
 
-          {/* Classic Elite "nearby things" 2D visualiser (always-visible center bottom, side-on ~20deg angled view) */}
-          {/* This entire section (the perspective grid + NEARBY label) is what needs to be moved up 25% of its height to overlap more of the windscreen. */}
-          {/* Positioning is here in the bottom dashboard overlay (inline styles). Drawing constants are in SCANNER_2D in config. */}
-          <div style={{
-            position: 'absolute',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            bottom: SCANNER_2D.bottom,
-            marginTop: SCANNER_2D.marginTop,
-            width: SCANNER_2D.containerWidth,
-            height: SCANNER_2D.containerHeight,
-            background: SCANNER_2D.containerBackground,
-            boxShadow: SCANNER_2D.containerBoxShadow,
-            overflow: 'hidden',
-          }}>
-            <canvas ref={radar2DCanvasRef} width={SCANNER_2D.canvasWidth} height={SCANNER_2D.canvasHeight} style={{ position: 'absolute', top: SCANNER_2D.canvasTop, left: '2px' }} />
-            <div style={{position: 'absolute', bottom: SCANNER_2D.labelBottom, width: '100%', textAlign: 'center', fontSize: '8px', letterSpacing: '0.5px', color: SCANNER_2D.nearbyLabelColor}}>NEARBY</div>
-          </div>
+        {/* Classic Elite "nearby things" 2D visualiser (always-visible center bottom, side-on ~20deg angled view) */}
+        {/* This entire section (the perspective grid + NEARBY label) is what needs to be moved up 25% of its height to overlap more of the windscreen. */}
+        {/* Positioning is here in the bottom dashboard overlay (inline styles). Drawing constants are in SCANNER_2D in config. */}
+        <div style={{
+          position: 'absolute',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          bottom: SCANNER_2D.bottom,
+          marginTop: SCANNER_2D.marginTop,
+          width: SCANNER_2D.containerWidth,
+          height: SCANNER_2D.containerHeight,
+          background: SCANNER_2D.containerBackground,
+          boxShadow: SCANNER_2D.containerBoxShadow,
+          overflow: 'hidden',
+        }}>
+          <canvas ref={radar2DCanvasRef} width={SCANNER_2D.canvasWidth} height={SCANNER_2D.canvasHeight} style={{ position: 'absolute', top: SCANNER_2D.canvasTop, left: '2px' }} />
+          <div style={{ position: 'absolute', bottom: SCANNER_2D.labelBottom, width: '100%', textAlign: 'center', fontSize: '8px', letterSpacing: '0.5px', color: SCANNER_2D.nearbyLabelColor }}>NEARBY</div>
+        </div>
 
         {/* Fused VECH preview + status gauges as one component */}
         <VechPreview hud={hud} />
