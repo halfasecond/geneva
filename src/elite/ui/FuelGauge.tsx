@@ -5,7 +5,7 @@ interface FuelGaugeProps {
   barWidth?: number
 }
 
-const FuelGauge: React.FC<FuelGaugeProps> = ({ fuel, barWidth = 320 }) => {
+const FuelGauge: React.FC<FuelGaugeProps> = ({ fuel, barWidth = 150 }) => {
   const vechBlue = '#66aaff'
   const gaugeFill = '#ffaa00'
   const maxFuel = 120

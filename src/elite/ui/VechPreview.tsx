@@ -67,7 +67,7 @@ const VechPreview: React.FC<VechPreviewProps> = ({ hud }) => {
     <div style={{
       position: 'absolute',
       left: 'calc(50% + 174px)',
-      bottom: 40,
+      bottom: 0,
       width: 400,  /* single consistent width for the whole fused panel (Vech + rings + status). Matches the widest ring (canvas/ring visual). All inner JSX elements use 100% width (or flex/relative) so the status UI (SPD/FUEL/systems) is as wide as the ring, centered. */
       height: 300,
       background: 'rgba(0, 6, 14, 0.1)',
@@ -78,7 +78,7 @@ const VechPreview: React.FC<VechPreviewProps> = ({ hud }) => {
       alignItems: 'center',
     }}>
       {/* Model + ring area - reduced height to make ship smaller */}
-      <div style={{ position: 'relative', width: '100%', height: 160 }}>
+      <div style={{ position: 'relative', width: '100%', height: 120 }}>
         <canvas
           ref={vechRingCanvasRef}
           width="400"
@@ -99,7 +99,7 @@ const VechPreview: React.FC<VechPreviewProps> = ({ hud }) => {
           cameraOrbit="0deg 70deg 20%"  /* increased % to make ship appear smaller */
           cameraTarget="0 -0.15 0"
           onLoad={setVechCamera}
-          style={{ width: '100%', height: '100%', background: 'transparent', position: 'relative', zIndex: 2 }}
+          style={{ width: '100%', height: '100%', background: 'transparent', position: 'relative', zIndex: 2, marginTop: '-20px' }}  /* negative margin to pull the ship up into the ring */
         />
       </div>
 
@@ -111,14 +111,14 @@ const VechPreview: React.FC<VechPreviewProps> = ({ hud }) => {
         textShadow: '0 0 2px #000',
         pointerEvents: 'none',
         lineHeight: 1,
-        marginBottom: '2px'
+        marginBottom: '12px'
       }}>
         VECH
       </div>
 
       {/* Status UI - 3 rows vertical, width matching biggest ring (a bit less), centered */}
       <div style={{
-        width: '100%',  /* 100% of the single parent width (400), so the status UI is as wide as the ring/parent */
+        width: 200,  /* half the current width to make gauges narrower, centered under the ring/ship */
         margin: '0 auto',
         display: 'flex',
         flexDirection: 'column',
@@ -130,14 +130,14 @@ const VechPreview: React.FC<VechPreviewProps> = ({ hud }) => {
         {/* Row 1: Speed top */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <div>SPD</div>
-          <SpeedGauge speed={hud.speed} barWidth={320} />
+          <SpeedGauge speed={hud.speed} barWidth={150} />
           <div style={{ fontSize: '7px' }}>{hud.speed}</div>
         </div>
 
         {/* Row 2: Fuel middle */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <div>FUEL</div>
-          <FuelGauge fuel={hud.fuel} barWidth={320} />
+          <FuelGauge fuel={hud.fuel} barWidth={150} />
           <div style={{ fontSize: '7px' }}>1.10/h</div>
         </div>
 

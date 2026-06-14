@@ -5,7 +5,7 @@ interface SpeedGaugeProps {
   barWidth?: number
 }
 
-const SpeedGauge: React.FC<SpeedGaugeProps> = ({ speed, barWidth = 320 }) => {
+const SpeedGauge: React.FC<SpeedGaugeProps> = ({ speed, barWidth = 150 }) => {
   const vechBlue = '#66aaff'
   const gaugeFill = '#ffaa00'
   const maxSpeed = 52
