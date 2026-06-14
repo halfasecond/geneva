@@ -121,7 +121,7 @@ export default defineConfig(({ command, mode }) => {
       }
     },
     optimizeDeps: {
-      include: ['socket.io-client']
+      include: ['socket.io-client', '@google/model-viewer']
     },
     // Environment variable handling
     envPrefix: 'VITE_',

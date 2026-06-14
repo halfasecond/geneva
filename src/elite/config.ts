@@ -68,7 +68,7 @@ export const COCKPIT = {
   verticalStrut: { width: 0.15, height: 3.5, depth: 0.15, x: 2.3, z: -2.5 },
 
   // Darkening side/top walls to feel like looking out a window
-  wall: { width: 2.5, height: 5, x: 3.6, z: -2.2, opacity: 0.7 },
+  wall: { width: 2.5, height: 5, x: 3.6, z: -2.2, opacity: 0.2 },
   topWall: { width: 5, height: 2, y: 2.5, z: -2.2 },
 
   // External debug ship (currently hidden, kept for future external view)

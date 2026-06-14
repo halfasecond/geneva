@@ -9,10 +9,10 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 // - Camera/size changes often don't respond to attributes alone because the viewer's camera controller is async — we use ref + onLoad + imperative API (set cameraOrbit + jumpCameraToGoal) as recommended in those threads.
 // - This makes the % orbit value actually take effect for model size.
 // - Removed min/max pinning (was causing breakage/TS issues in some renders) and rely on controls=false + forced orbit.
-// Side-effect registration for <model-viewer> web component.
-// Commented for elite production build resolution (pre-existing quirk with the custom element package in this sub-app bundle).
-// Dev server (yarn dev:elite) loads it fine via the side-effect. The VECH preview panel depends on it at runtime in browser.
-// import '@google/model-viewer'
+// Side-effect import that registers the <model-viewer> custom element globally.
+// Required for the VECH ship preview panel to actually render the 3D model.
+// We also added '@google/model-viewer' to optimizeDeps in vite.config.ts to help with bundling in both dev and `yarn build:elite`.
+import '@google/model-viewer'
 
 // TypeScript support for the custom element in TSX (common pattern for model-viewer + React)
 declare global {
@@ -1460,7 +1460,7 @@ const Elite: React.FC<EliteProps> = ({
               />
               <model-viewer
                 ref={vechModelViewerRef}
-                src="https://raw2.seadn.io/ethereum/0x02e770a2f79ba4d3740a7273eca7e290d93ecc8a/f499a621b66cab834f06546f71875d06.glb"
+                src={VECH.glbUrl}
                 alt="VECH hovercraft"
                 cameraControls={false}
                 autoRotate={false}
