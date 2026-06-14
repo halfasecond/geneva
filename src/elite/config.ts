@@ -96,7 +96,7 @@ export const VIEW = {
 // 3D HOLO RADAR (lower center, classic circular scanner attached to camera)
 // =============================================================================
 export const RADAR_3D = {
-  position: { x: 0, y: -1.8, z: -4.2 },
+  position: { x: 0, y: -1.0, z: -4.2 },  // moved up 25% of radar height (outer ry=1.6 → height~3.2, 25%=0.8; -1.8 + 0.8 = -1.0) to overlap lower windscreen as requested
   outer: { rx: 2.4, ry: 1.6, segments: 48 },
   innerRadii: [0.8, 1.6],
   spokes: 4,
@@ -148,6 +148,19 @@ export const SCANNER_2D = {
 
   // Player marker
   chevron: { back: 10, side: 8, fwd: 6 },
+
+  // Layout of the scanner section in the bottom dashboard (HTML overlay on 3D windscreen)
+  // The section (200px high grid + NEARBY label) is positioned absolutely.
+  // To overlap the windscreen like the VECH ship model does, we lift the anchor with positive 'bottom'
+  // and use negative marginTop.
+  // 25% of its height (200px * 0.25 = 50px) upward move.
+  containerWidth: 712,
+  containerHeight: 200,
+  canvasWidth: 704,
+  canvasHeight: 190,
+  bottom: 60,            // set higher so that with the height 200px and negative marginTop, the top of the black radar box extends ~50px (25% of 200px) into the windscreen above the ~210px bottom dashboard strip
+  canvasTop: '2px',
+  labelBottom: '1px',
 }
 
 // =============================================================================

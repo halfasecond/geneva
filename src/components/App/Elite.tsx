@@ -43,7 +43,7 @@ import { length, cross, normalize } from '../../elite/sim/core/vector'
 import { getCartographyBodies, getJumpFuelCost, CARTOGRAPHY_BODIES, DEFAULT_ROUTE, getBodyById } from '../../elite/sim/cartography'
 
 // Tightening imports (config + extracted modules)
-import { COLORS, COCKPIT, RADAR_3D, FUEL, VECH, PANELS, HUD, BEZEL, WORLD, NPC, DT, roleColor, roleCss, npcSizeForRole } from '../../elite/config'
+import { COLORS, COCKPIT, RADAR_3D, SCANNER_2D, FUEL, VECH, PANELS, HUD, BEZEL, WORLD, NPC, DT, roleColor, roleCss, npcSizeForRole } from '../../elite/config'
 import { projectContacts } from '../../elite/sim/contacts'
 import { useFlightInput } from '../../elite/useFlightInput'
 import { useHoloDrag } from '../../elite/useHoloDrag'
@@ -843,15 +843,20 @@ const Elite: React.FC<EliteProps> = ({
       // Vertical = elevation (above/below plane) with clear sticks.
       // Depth/range recedes upward on screen via 20deg pitch projection so you can "see" the 3D volume.
       // Matches classic Elite scanner spirit but with explicit vertical awareness from a shallow angle.
+      //
+      // All tunables (including the container position for "move the section up") are in SCANNER_2D in src/elite/config.ts
+      // (this was the main place the layout was set before; drawing constants were also duplicated here).
 
       const W = canvas.width
       const H = canvas.height
       const cx = W * 0.5
-      const baseY = H * 0.76
-      const pitchRad = 20 * Math.PI / 180
-      const depthFactor = 0.42
-      const elevFactor = 2.1
-      const latFactor = 3.12
+
+      // Use centralized values from config (previously many magic numbers here)
+      const baseY = H * SCANNER_2D.baseYFactor
+      const pitchRad = SCANNER_2D.pitchDeg * Math.PI / 180
+      const depthFactor = SCANNER_2D.depthFactor
+      const elevFactor = SCANNER_2D.elevFactor
+      const latFactor = SCANNER_2D.latFactor
 
       // Background
       ctx.fillStyle = 'rgba(0,0,0,0.78)'
@@ -860,12 +865,12 @@ const Elite: React.FC<EliteProps> = ({
       // Receding range grid lines (angled 20deg plane)
       ctx.strokeStyle = 'rgba(255,170,0,0.32)'
       ctx.lineWidth = 1
-      const numLines = 5
+      const numLines = SCANNER_2D.numRangeLines
       for (let i = 0; i <= numLines; i++) {
         const t = i / numLines
-        const z = t * 155
+        const z = t * SCANNER_2D.maxZ
         const y = baseY - z * Math.sin(pitchRad) * depthFactor
-        const halfW = 272 * (1 - t * 0.52)
+        const halfW = SCANNER_2D.halfWidthBase * (1 - t * SCANNER_2D.taper)
         ctx.beginPath()
         ctx.moveTo(cx - halfW, y)
         ctx.lineTo(cx + halfW, y)
@@ -873,28 +878,29 @@ const Elite: React.FC<EliteProps> = ({
       }
 
       // Side walls of the scan volume (tapered)
+      // Note: wall base width 280 (slightly wider than grid halfWidthBase 272); slant uses sideWallZ
       ctx.beginPath()
       ctx.moveTo(cx - 280, baseY)
-      ctx.lineTo(cx - 120, baseY - 310 * Math.sin(pitchRad) * depthFactor)
+      ctx.lineTo(cx - 120, baseY - SCANNER_2D.sideWallZ * Math.sin(pitchRad) * depthFactor)
       ctx.moveTo(cx + 280, baseY)
-      ctx.lineTo(cx + 120, baseY - 310 * Math.sin(pitchRad) * depthFactor)
+      ctx.lineTo(cx + 120, baseY - SCANNER_2D.sideWallZ * Math.sin(pitchRad) * depthFactor)
       ctx.stroke()
 
       // Bright local/base plane line
       ctx.strokeStyle = '#ffaa00'
       ctx.lineWidth = 1.6
       ctx.beginPath()
-      ctx.moveTo(cx - 296, baseY)
-      ctx.lineTo(cx + 296, baseY)
+      ctx.moveTo(cx - SCANNER_2D.brightPlaneHalfW, baseY)
+      ctx.lineTo(cx + SCANNER_2D.brightPlaneHalfW, baseY)
       ctx.stroke()
 
       // Player own-ship marker (chevron pointing forward on the local line)
       ctx.fillStyle = '#ffdd88'
       ctx.lineWidth = 1
       ctx.beginPath()
-      ctx.moveTo(cx, baseY - 10)
-      ctx.lineTo(cx - 8, baseY + 6)
-      ctx.lineTo(cx + 8, baseY + 6)
+      ctx.moveTo(cx, baseY - SCANNER_2D.chevron.back)
+      ctx.lineTo(cx - SCANNER_2D.chevron.side, baseY + SCANNER_2D.chevron.fwd)
+      ctx.lineTo(cx + SCANNER_2D.chevron.side, baseY + SCANNER_2D.chevron.fwd)
       ctx.closePath()
       ctx.fill()
       ctx.strokeStyle = '#ffdd88'
@@ -928,7 +934,7 @@ const Elite: React.FC<EliteProps> = ({
         const planeY = baseY - z * Math.sin(pitchRad) * depthFactor
         const sy = planeY - c.y * elevFactor
 
-        const size = Math.max(8.8, 23.2 * (1 - Math.min(1, c.dist / 165)))
+        const size = Math.max(SCANNER_2D.sizeFar, SCANNER_2D.sizeNear * (1 - Math.min(1, c.dist / SCANNER_2D.sizeDistDiv)))
 
         // Yellow elevation stick (from the angled plane up/down to the contact)
         if (Math.abs(c.y) > 5) {
@@ -971,7 +977,7 @@ const Elite: React.FC<EliteProps> = ({
         }
 
         // Distance label for closer contacts
-        if (c.dist < 125) {
+        if (c.dist < SCANNER_2D.labelDist) {
           ctx.fillStyle = '#ffaa00'
           ctx.font = '8px monospace'
           ctx.fillText(Math.round(c.dist), sx + size + 6, sy + 3)
@@ -1413,20 +1419,22 @@ const Elite: React.FC<EliteProps> = ({
 
 
           {/* Classic Elite "nearby things" 2D visualiser (always-visible center bottom, side-on ~20deg angled view) */}
+          {/* This entire section (the perspective grid + NEARBY label) is what needs to be moved up 25% of its height to overlap more of the windscreen. */}
+          {/* Positioning is here in the bottom dashboard overlay (inline styles). Drawing constants are in SCANNER_2D in config. */}
           <div style={{
             position: 'absolute',
             left: '50%',
             transform: 'translateX(-50%)',
-            bottom: 0,
-            marginTop: '-50px',
-            width: '712px',
-            height: '200px',
+            bottom: SCANNER_2D.bottom,
+            marginTop: SCANNER_2D.marginTop,
+            width: SCANNER_2D.containerWidth,
+            height: SCANNER_2D.containerHeight,
             background: 'rgba(0,0,0,0.4)',
             boxShadow: 'inset 0 0 14px rgba(255,170,0,0.25), 0 0 8px rgba(255,170,0,0.15)',
             overflow: 'hidden',
           }}>
-            <canvas ref={radar2DCanvasRef} width="704" height="190" style={{ position: 'absolute', top: '2px', left: '2px' }} />
-            <div style={{position: 'absolute', bottom: '1px', width: '100%', textAlign: 'center', fontSize: '8px', letterSpacing: '0.5px'}}>NEARBY</div>
+            <canvas ref={radar2DCanvasRef} width={SCANNER_2D.canvasWidth} height={SCANNER_2D.canvasHeight} style={{ position: 'absolute', top: SCANNER_2D.canvasTop, left: '2px' }} />
+            <div style={{position: 'absolute', bottom: SCANNER_2D.labelBottom, width: '100%', textAlign: 'center', fontSize: '8px', letterSpacing: '0.5px'}}>NEARBY</div>
           </div>
 
           {/* VECH ship holo icon — separate panel to the right of the NEARBY radar (real loaded GLB model via model-viewer).
