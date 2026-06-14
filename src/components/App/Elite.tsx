@@ -2022,12 +2022,12 @@ const Elite: React.FC<EliteProps> = ({
               No rotation (autoRotate=false), larger size (440x290 panel), our holo ring overlay (behind via stacking + half size), inner height calc(100%-120px) + cameraTarget for bottom clearance. Looks great! */}
           <div style={{
             position: 'absolute',
-            left: 'calc(50% + 356px + 12px)',
-            bottom: 0,
-            marginTop: '-100px',
+            left: 'calc(50% + 156px + 12px)',
+            bottom: 100,
+            marginTop: '-150px',
             width: 440,
             height: 290,
-            background: 'rgba(0, 6, 14, 0.75)',
+            background: 'rgba(0, 6, 14, 0.1)',
             borderRadius: '2px',
             display: 'flex',
             flexDirection: 'column',
