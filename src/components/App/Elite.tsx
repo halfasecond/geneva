@@ -9,7 +9,10 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 // - Camera/size changes often don't respond to attributes alone because the viewer's camera controller is async — we use ref + onLoad + imperative API (set cameraOrbit + jumpCameraToGoal) as recommended in those threads.
 // - This makes the % orbit value actually take effect for model size.
 // - Removed min/max pinning (was causing breakage/TS issues in some renders) and rely on controls=false + forced orbit.
-import '@google/model-viewer'
+// Side-effect registration for <model-viewer> web component.
+// Commented for elite production build resolution (pre-existing quirk with the custom element package in this sub-app bundle).
+// Dev server (yarn dev:elite) loads it fine via the side-effect. The VECH preview panel depends on it at runtime in browser.
+// import '@google/model-viewer'
 
 // TypeScript support for the custom element in TSX (common pattern for model-viewer + React)
 declare global {
@@ -38,6 +41,14 @@ import { EliteSim } from '../../elite/sim/EliteSim'
 import type { NpcAgent } from '../../elite/sim/core/types'
 import { length, cross, normalize } from '../../elite/sim/core/vector'
 import { getCartographyBodies, getJumpFuelCost, CARTOGRAPHY_BODIES, DEFAULT_ROUTE, getBodyById } from '../../elite/sim/cartography'
+
+// Tightening imports (config + extracted modules)
+import { COLORS, COCKPIT, RADAR_3D, FUEL, VECH, PANELS, HUD, BEZEL, WORLD, NPC, DT, roleColor, roleCss, npcSizeForRole } from '../../elite/config'
+import { projectContacts } from '../../elite/sim/contacts'
+import { useFlightInput } from '../../elite/useFlightInput'
+import { useHoloDrag } from '../../elite/useHoloDrag'
+import * as CockpitRender from '../../elite/render/cockpit'
+import { HoloPanel } from '../../elite/ui'
 
 // Basic AuthProps shape we receive (wallet + controls)
 type EliteProps = AuthProps & {
@@ -116,68 +127,33 @@ const Elite: React.FC<EliteProps> = ({
   const hyperspaceTargetRef = useRef<{ x: number; y: number; z: number } | null>(null)
   const hyperspaceCostRef = useRef(0)
 
-  // Minority Report style floating holographic overlays - positioned top-right by default
-  const [mapPanelPos, setMapPanelPos] = useState({ x: 820, y: 60 }) // default top-right
-  const [isMapDragging, setIsMapDragging] = useState(false)
-  const dragRef = useRef<{ offsetX: number; offsetY: number } | null>(null)
+  // Draggable holo panels - now powered by the extracted useHoloDrag hook (deduped the 3x identical logic)
+  const [mapPanelPos, setMapPanelPos] = useState(PANELS.mapInitial)
+  const mapDrag = useHoloDrag(mapPanelPos, setMapPanelPos, { maxXPad: PANELS.dragBounds.maxXPad, maxYPad: PANELS.dragBounds.maxYPadMap })
 
-  // Separate draggable controls panel, positioned underneath the map, same holo style
-  const [controlsPanelPos, setControlsPanelPos] = useState({ x: 820, y: 430 }) // underneath the map panel
-  const [isControlsDragging, setIsControlsDragging] = useState(false)
-  const controlsDragRef = useRef<{ offsetX: number; offsetY: number } | null>(null)
+  const [controlsPanelPos, setControlsPanelPos] = useState(PANELS.controlsInitial)
+  const controlsDrag = useHoloDrag(controlsPanelPos, setControlsPanelPos, { maxXPad: PANELS.dragBounds.maxXPad, maxYPad: PANELS.dragBounds.maxYPadControls })
 
-  // Flight controls holo panel (the old key bindings + NPC info), same style, draggable, underneath the route controls
-  const [flightPanelPos, setFlightPanelPos] = useState({ x: 820, y: 620 })
-  const [isFlightDragging, setIsFlightDragging] = useState(false)
-  const flightDragRef = useRef<{ offsetX: number; offsetY: number } | null>(null)
+  const [flightPanelPos, setFlightPanelPos] = useState(PANELS.flightInitial)
+  const flightDrag = useHoloDrag(flightPanelPos, setFlightPanelPos, { maxXPad: PANELS.dragBounds.maxXPad, maxYPad: PANELS.dragBounds.maxYPadFlight })
 
-  const keysRef = useRef<Record<string, boolean>>({})
+  // Use the extracted flight input hook (replaces the old keysRef + onKeyDown/Up + getPlayerInput)
+  const { getInput: getPlayerInput } = useFlightInput()
 
-  // Keyboard handling (Elite classic feel: thrust, yaw, pitch)
-  const onKeyDown = useCallback((e: KeyboardEvent) => {
-    keysRef.current[e.key.toLowerCase()] = true
-    keysRef.current[e.code.toLowerCase()] = true
-    if ([' ', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'w', 'a', 's', 'd'].includes(e.key.toLowerCase())) {
-      e.preventDefault()
+  // Keyboard "action" keys (h/m/r) that affect React state are handled in this dedicated effect.
+  // Flight controls (thrust/yaw/pitch/roll) + their preventDefaults are handled inside useFlightInput.
+  useEffect(() => {
+    const handleGlobalKeys = (e: KeyboardEvent) => {
+      const k = e.key.toLowerCase()
+      if (k === 'h') setShowHelp(s => !s)
+      if (k === 'm') setMapOpen(o => !o)
+      if (k === 'r') {
+        simRef.current.resetNpcs(2)
+      }
     }
-    if (e.key.toLowerCase() === 'h') setShowHelp(s => !s)
-    if (e.key.toLowerCase() === 'm') setMapOpen(o => !o)
-    if (e.key.toLowerCase() === 'r') {
-      simRef.current.resetNpcs(2)
-    }
+    window.addEventListener('keydown', handleGlobalKeys)
+    return () => window.removeEventListener('keydown', handleGlobalKeys)
   }, [])
-
-  const onKeyUp = useCallback((e: KeyboardEvent) => {
-    keysRef.current[e.key.toLowerCase()] = false
-    keysRef.current[e.code.toLowerCase()] = false
-  }, [])
-
-  // Collect input from keys each frame
-  const getPlayerInput = () => {
-    const k = keysRef.current
-    let thrust = 0
-    let yaw = 0
-    let pitch = 0
-    let roll = 0
-
-    // Thrust (W = forward, S = brake/reverse)
-    if (k['w'] || k['arrowup']) thrust += 1
-    if (k['s'] || k['arrowdown']) thrust -= 0.7
-
-    // Yaw (A/D or left/right arrows) - left as-is
-    if (k['a'] || k['arrowleft']) yaw -= 1
-    if (k['d'] || k['arrowright']) yaw += 1
-
-    // Pitch: Q = down cursor, E = up cursor. (other cursors left as-is)
-    if (k['q']) pitch = -1
-    if (k['e']) pitch = 1
-
-    // Roll (z/x)
-    if (k['z']) roll -= 1
-    if (k['x']) roll += 1
-
-    return { thrust, yaw, pitch, roll }
-  }
 
   // Initialize Three.js scene (inspired by Flocker FlockScene + cartography aesthetic)
   useEffect(() => {
@@ -304,262 +280,49 @@ const Elite: React.FC<EliteProps> = ({
     hyperspaceStreaksRef.current = streaksGroup
     ;(streaksGroup as any)._streaks = streaks
 
-    // External player ship (kept for potential future external view / debug, hidden in pure cockpit)
-    const playerGroup = new THREE.Group()
-    // fuselage
-    const body = new THREE.Mesh(
-      new THREE.ConeGeometry(2.8, 11, 3),
-      new THREE.MeshBasicMaterial({ color: 0xccd5dd, wireframe: true })
-    )
-    body.rotation.x = Math.PI / 2
-    playerGroup.add(body)
-    // wings / accents
-    const wingMat = new THREE.MeshBasicMaterial({ color: 0x88aacc })
-    const wingL = new THREE.Mesh(new THREE.BoxGeometry(7, 0.6, 2.2), wingMat)
-    wingL.position.set(-4.5, 0, 1)
-    playerGroup.add(wingL)
-    const wingR = wingL.clone()
-    wingR.position.x = 4.5
-    playerGroup.add(wingR)
-    // cockpit glow
-    const glow = new THREE.Mesh(
-      new THREE.SphereGeometry(1.6, 12, 12),
-      new THREE.MeshBasicMaterial({ color: 0x66eeff, transparent: true, opacity: 0.6 })
-    )
-    glow.position.z = 3
-    playerGroup.add(glow)
+    // === COCKPIT + 3D HOLO ELEMENTS (now built via extracted render helpers) ===
+    // The create* functions add the groups directly to the camera (exact same parenting
+    // as the original inline code). Refs are still populated for the animate loop.
+    const { cockpit } = CockpitRender.createCockpitFrame(camera)
+    playerMeshRef.current = cockpit
 
-    playerGroup.visible = false
-    scene.add(playerGroup)
-
-    // COCKPIT VIEW: attach a clone of the ship frame to the camera.
-    // This gives the classic Elite "you are inside the ship" feel — the model stays fixed
-    // in the lower part of your view while the world (stars, planets, other ships) moves past.
-    const cockpit = playerGroup.clone()
-    cockpit.visible = true
-    cockpit.scale.setScalar(0.85)
-    cockpit.position.set(0, -2.8, -6.5)   // lower in view + slightly in front of camera in local space
-    // Slight rotation so the "body" frames the bottom of the screen nicely
-    cockpit.rotation.x = 0.35
-    camera.add(cockpit)   // child of camera → moves and orients with the viewpoint automatically
-    playerMeshRef.current = cockpit   // keep ref for future tweaks if needed (we don't world-update it)
-
-    // Extra canopy "glass" frame (large faint ring to suggest the window / canopy)
-    const canopyPts = Array.from({ length: 36 }, (_, i) => {
-      const a = (i / 36) * Math.PI * 2
-      return new THREE.Vector3(Math.cos(a) * 3.8, Math.sin(a) * 3.1 - 0.8, -2.2)
-    })
-    const canopy = new THREE.Line(
-      new THREE.BufferGeometry().setFromPoints(canopyPts),
-      new THREE.LineBasicMaterial({ color: 0x88aacc, transparent: true, opacity: 0.12 })
-    )
-    cockpit.add(canopy)
-
-    // Add cockpit interior structure to make it feel like inside a spaceship (lite 3D, heavy UI)
-    const cockpitInterior = new THREE.Group();
-    camera.add(cockpitInterior);
-
-    // Lower dashboard console
-    const consoleBase = new THREE.Mesh(
-      new THREE.BoxGeometry(5, 0.4, 1),
-      new THREE.MeshBasicMaterial({ color: 0x111111, wireframe: true })
-    );
-    consoleBase.position.set(0, -1.8, -3);
-    cockpitInterior.add(consoleBase);
-
-    // Left console / wall
-    const leftConsole = new THREE.Mesh(
-      new THREE.BoxGeometry(1.5, 2, 0.3),
-      new THREE.MeshBasicMaterial({ color: 0x1a1a1a, wireframe: true })
-    );
-    leftConsole.position.set(-2.5, -0.5, -2.8);
-    cockpitInterior.add(leftConsole);
-
-    // Right console / wall
-    const rightConsole = leftConsole.clone();
-    rightConsole.position.x = 2.5;
-    cockpitInterior.add(rightConsole);
-
-    // Top canopy strut / frame
-    const topStrut = new THREE.Mesh(
-      new THREE.BoxGeometry(4.5, 0.2, 0.3),
-      new THREE.MeshBasicMaterial({ color: 0x222222, wireframe: true })
-    );
-    topStrut.position.set(0, 1.8, -2.5);
-    cockpitInterior.add(topStrut);
-
-    // Left and right vertical struts for the "window" frame
-    const leftStrut = new THREE.Mesh(
-      new THREE.BoxGeometry(0.15, 3.5, 0.15),
-      new THREE.MeshBasicMaterial({ color: 0x333333, wireframe: true })
-    );
-    leftStrut.position.set(-2.3, 0, -2.5);
-    cockpitInterior.add(leftStrut);
-
-    const rightStrut = leftStrut.clone();
-    rightStrut.position.x = 2.3;
-    cockpitInterior.add(rightStrut);
-
-    // Add semi-transparent side walls to darken the edges of the 3D view, making it feel like looking out the front window of the spaceship (lite 3D, the "inside" frame)
-    const wallMat = new THREE.MeshBasicMaterial({ color: 0x0a0a1a, transparent: true, opacity: 0.7, side: THREE.DoubleSide });
-    const leftWall = new THREE.Mesh(new THREE.PlaneGeometry(2.5, 5), wallMat);
-    leftWall.position.set(-3.6, 0, -2.2);
-    leftWall.rotation.y = Math.PI / 2;
-    cockpitInterior.add(leftWall);
-
-    const rightWall = leftWall.clone();
-    rightWall.position.x = 3.6;
-    cockpitInterior.add(rightWall);
-
-    // Top wall / canopy interior
-    const topWall = new THREE.Mesh(new THREE.PlaneGeometry(5, 2), wallMat);
-    topWall.position.set(0, 2.5, -2.2);
-    topWall.rotation.x = Math.PI / 2;
-    cockpitInterior.add(topWall);
-
-    // === FIRST PASS COCKPIT ENHANCEMENT (inspired by classic Elite + ED reference) ===
-    // Add a central holographic radar/scanner + reticle + basic status elements attached to camera.
-    // These live "inside" the cockpit view while the React holo panels handle the complex right-side MFDs.
-
-    // Central reticle / targeting computer (always visible in middle of view)
-    const reticleGroup = new THREE.Group()
-    camera.add(reticleGroup)
-    reticleGroup.position.set(0, 0, -4.5)
-    const reticleMat = new THREE.LineBasicMaterial({ color: 0xffaa00, transparent: true, opacity: 0.75 })
-    // Horizontal line
-    reticleGroup.add(new THREE.Line(
-      new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-1.2, 0, 0), new THREE.Vector3(1.2, 0, 0)]),
-      reticleMat
-    ))
-    // Vertical line
-    reticleGroup.add(new THREE.Line(
-      new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, -0.9, 0), new THREE.Vector3(0, 0.9, 0)]),
-      reticleMat
-    ))
-    // Small targeting circle
-    const circlePts = Array.from({ length: 24 }, (_, i) => {
-      const a = (i / 24) * Math.PI * 2
-      return new THREE.Vector3(Math.cos(a) * 0.55, Math.sin(a) * 0.55, 0)
-    })
-    reticleGroup.add(new THREE.Line(
-      new THREE.BufferGeometry().setFromPoints(circlePts),
-      reticleMat
-    ))
+    const { reticleGroup, radarGroup, blips } = CockpitRender.createHoloRadarAndReticle(camera)
     reticleRef.current = reticleGroup
-
-    // Holographic radar / scanner (lower center, classic Elite style circular display)
-    const radarGroup = new THREE.Group()
-    camera.add(radarGroup)
-    radarGroup.position.set(0, -1.8, -4.2)   // lower in the view
-
-    const radarMat = new THREE.LineBasicMaterial({ color: 0xffaa00, transparent: true, opacity: 0.65 })
-    // Outer ring (slightly elliptical for perspective feel)
-    const outerPts = Array.from({ length: 48 }, (_, i) => {
-      const a = (i / 48) * Math.PI * 2
-      return new THREE.Vector3(Math.cos(a) * 2.4, Math.sin(a) * 1.6, 0)
-    })
-    radarGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(outerPts), radarMat))
-
-    // Inner rings
-    for (const r of [0.8, 1.6]) {
-      const pts = Array.from({ length: 32 }, (_, i) => {
-        const a = (i / 32) * Math.PI * 2
-        return new THREE.Vector3(Math.cos(a) * 2.4 * r, Math.sin(a) * 1.6 * r, 0)
-      })
-      radarGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: 0xffaa00, transparent: true, opacity: 0.35 })))
-    }
-
-    // Spokes
-    for (let i = 0; i < 4; i++) {
-      const a = (i / 4) * Math.PI * 2
-      radarGroup.add(new THREE.Line(
-        new THREE.BufferGeometry().setFromPoints([
-          new THREE.Vector3(0, 0, 0),
-          new THREE.Vector3(Math.cos(a) * 2.4, Math.sin(a) * 1.6, 0)
-        ]),
-        new THREE.LineBasicMaterial({ color: 0xffaa00, transparent: true, opacity: 0.3 })
-      ))
-    }
-
-    // Pre-create blip objects for contacts (NPCs + a few system bodies)
-    const blips: THREE.Object3D[] = []
-    const blipGeo = new THREE.SphereGeometry(0.09, 6, 6)
-    for (let i = 0; i < 10; i++) {
-      const blip = new THREE.Mesh(blipGeo, new THREE.MeshBasicMaterial({ color: 0xffff66 }))
-      blip.visible = false
-      radarGroup.add(blip)
-      blips.push(blip)
-    }
     radarRef.current = radarGroup
     radarBlipsRef.current = blips
 
-    // VECH ship holo icon (3D GLB model inside ring). The 2D bottom badge/placeholder was removed per request.
-    // This is the always-visible ship representation in the cockpit holo (right of the lower 3D radar area).
-    // Using VECH collection hovercraft NFT as the ship visual (web3 ship ownership)
-    // Collection: VECH - procedurally generated hovercrafts
-    // Example item provided: https://opensea.io/item/ethereum/0x02e770a2f79ba4d3740a7273eca7e290d93ecc8a/323
-    const shipIcon = new THREE.Group()
-    camera.add(shipIcon)
-    // Pulled closer (smaller |z|) + higher y + righter x so it sits in the visible lower-right of the 3D view above the bottom bar.
-    shipIcon.position.set(2.6, -0.9, -2.55)
-    const iconRing = new THREE.Line(
-      new THREE.BufferGeometry().setFromPoints(Array.from({ length: 24 }, (_, i) => {
-        const a = (i / 24) * Math.PI * 2
-        return new THREE.Vector3(Math.cos(a) * 1.55, Math.sin(a) * 1.0, 0)
-      })),
-      new THREE.LineBasicMaterial({ color: 0x66aaff, transparent: true, opacity: 0.85 })
-    )
-    shipIcon.add(iconRing)
-
-    // Add a local point light so the GLB model (which likely uses PBR materials) is visible
-    // even if the main scene has no lights or uses basic materials.
-    const shipLight = new THREE.PointLight(0x88aaff, 4, 10)
-    shipLight.position.set(0, 0, 1.6)
-    shipIcon.add(shipLight)
-
-    // Load the actual VECH NFT 3D model (GLB) as the ship visual in the holo icon.
-    // This is the user's specific item from the VECH collection.
-    // Model: https://raw2.seadn.io/ethereum/0x02e770a2f79ba4d3740a7273eca7e290d93ecc8a/f499a621b66cab834f06546f71875d06.glb
-    // (via the frameable model viewer link provided)
+    const { shipIcon } = CockpitRender.createVechHoloIcon(camera)
+    // VECH GLB load (async) - kept inline for now; will move to a render/vech helper in a follow-up
     const gltfLoader = new GLTFLoader()
     gltfLoader.load(
-      'https://raw2.seadn.io/ethereum/0x02e770a2f79ba4d3740a7273eca7e290d93ecc8a/f499a621b66cab834f06546f71875d06.glb',
+      VECH.glbUrl,
       (gltf) => {
         console.log('VECH ship GLB model loaded successfully for holo icon')
         const model = gltf.scene
 
-        // Center the model (GLBs often have offset origins)
         const box = new THREE.Box3().setFromObject(model)
         const center = box.getCenter(new THREE.Vector3())
         model.position.sub(center)
 
-        // Auto-scale to fit the holo ring nicely (no more hardcoded tiny scale)
         const sizeBox = new THREE.Box3().setFromObject(model)
         const size = sizeBox.getSize(new THREE.Vector3())
         const maxDim = Math.max(size.x, size.y, size.z) || 1
-        const targetSize = 1.15   // a bit larger now that the ring+pos are tuned for visibility
-        const autoScale = targetSize / maxDim
+        const autoScale = VECH.targetSize / maxDim
         model.scale.set(autoScale, autoScale, autoScale)
-        console.log('VECH model native size:', size, 'applied scale:', autoScale.toFixed(4))
 
-        // Orient the hovercraft for a nice 3D pop in the holo icon (angled slightly for depth)
-        // Tweak as needed; current gives a bit of "banked top/front" readable silhouette
-        model.rotation.set(-1.35, 0.15, 0.05)
+        model.rotation.set(VECH.modelRot.x, VECH.modelRot.y, VECH.modelRot.z)
+        model.position.z = VECH.modelZ
 
-        // Offset to sit nicely in front of the ring plane
-        model.position.z = 0.28
-
-        // Make it holo-like: emissive blue tint to match the ring, transparent, double sided
-        model.traverse((child) => {
+        model.traverse((child: any) => {
           if (child.isMesh && child.material) {
             const mat = child.material.clone()
             if (mat.emissive !== undefined) {
-              mat.emissive = new THREE.Color(0x4488ff)
-              mat.emissiveIntensity = 0.85
+              mat.emissive = new THREE.Color(VECH.emissive)
+              mat.emissiveIntensity = VECH.emissiveIntensity
             }
             mat.transparent = true
-            mat.opacity = 0.92
-            mat.side = THREE.DoubleSide // ensure visible from both sides
+            mat.opacity = VECH.opacity
+            mat.side = THREE.DoubleSide
             mat.depthWrite = false
             child.material = mat
             child.frustumCulled = false
@@ -567,39 +330,21 @@ const Elite: React.FC<EliteProps> = ({
         })
 
         shipIcon.add(model)
-
-        // Ensure it renders on top in the holo
         model.renderOrder = 10
         shipIcon.renderOrder = 10
         model.visible = true
         shipIcon.visible = true
-
-        // Bottom preview now uses <model-viewer> (see the panel JSX). No custom Three preview code needed.
       },
       undefined,
       (error) => {
-        console.error('Failed to load VECH ship GLB model (no fallback placeholder added):', error)
-        // No fallback geometry (ring only). The 2D placeholder image/badge was removed; we don't want any stand-in image/cone either.
+        console.error('Failed to load VECH ship GLB model (no fallback):', error)
       }
     )
 
-    // Simple left-side fuel / status holo bar (inspired by side panels in the reference)
-    const fuelGroup = new THREE.Group()
-    camera.add(fuelGroup)
-    fuelGroup.position.set(3.8, -1.2, -4.5) // right side to match the reference image's fuel panel location
-    const fuelBars: THREE.Object3D[] = []
-    for (let i = 0; i < 10; i++) {
-      const bar = new THREE.Mesh(
-        new THREE.BoxGeometry(0.12, 0.18, 0.04),
-        new THREE.MeshBasicMaterial({ color: 0xffaa00, transparent: true, opacity: 0.55 })
-      )
-      bar.position.y = i * 0.28
-      fuelGroup.add(bar)
-      fuelBars.push(bar)
-    }
+    const { fuelBars } = CockpitRender.createFuelBars(camera)
     fuelBarsRef.current = fuelBars
 
-    // NPC container
+    // NPC container (world space)
     const npcGroup = new THREE.Group()
     scene.add(npcGroup)
     npcGroupRef.current = npcGroup
@@ -625,9 +370,8 @@ const Elite: React.FC<EliteProps> = ({
     }
     window.addEventListener('resize', handleResize)
 
-    // Keyboard listeners
-    window.addEventListener('keydown', onKeyDown)
-    window.addEventListener('keyup', onKeyUp)
+    // Keyboard listeners are now managed by useFlightInput() hook (for flight controls)
+    // and a separate small useEffect (for h/m/r actions). No need to attach here.
 
     // Main render + sim loop
     const animate = () => {
@@ -697,106 +441,21 @@ const Elite: React.FC<EliteProps> = ({
         })
       }
 
-      // === Update cockpit 3D HUD elements (first pass radar + reticle + fuel bars) ===
-      // Classic Elite "nearby things" visualiser style radar:
-      // - 2D-like projection relative to player's heading (forward is "up" or center on radar).
-      // - X = left/right (azimuth), Y = up/down or forward depth mix for classic feel.
-      // - Size indicates distance (closer = larger).
-      // - Different "glyphs"/colors for ships vs planets/stations.
-      // - Only "nearby" within range; color by threat (pirates red, etc.).
+      // === 3D Holo Radar (now uses the shared projectContacts util + extracted updater) ===
       if (radarRef.current && radarBlipsRef.current && radarBlipsRef.current.length > 0) {
         const p = snap.player
-        const blips = radarBlipsRef.current
-        let bidx = 0
-
-        // Use true body axes from integrated up (consistent with camera/main view for pitch).
-        // (getLocalAxes with roll is still used elsewhere for legacy scanner banking if needed.)
         const fwd = p.heading
         const upv = p.up || { x: 0, y: 1, z: 0 }
-        const right = normalize(cross(fwd, upv))
 
-        const contacts: any[] = []
-
-        // Add NPCs as "ships"
-        snap.npcs.forEach((npc) => {
-          const dx = npc.pos.x - p.pos.x
-          const dy = npc.pos.y - p.pos.y
-          const dz = npc.pos.z - p.pos.z
-          const dist = Math.sqrt(dx*dx + dy*dy + dz*dz) || 1
-          if (dist > 300) return // nearby range limit like classic
-          // Full 3D body-relative coords (correct during pitch/roll/yaw)
-          const localX = dx * right.x + dy * right.y + dz * right.z
-          const localZ = dx * fwd.x + dy * fwd.y + dz * fwd.z
-          const localY = dx * upv.x + dy * upv.y + dz * upv.z
-          contacts.push({
-            x: localX,
-            y: localY,
-            z: localZ,
-            dist,
-            type: 'ship',
-            role: npc.role,
-            name: npc.role.toUpperCase()
-          })
-        })
-
-        // Add cartography bodies as "planets/stations" (bigger glyphs)
         const carto = getCartographyBodies(snap.time * 0.55)
-        carto.forEach((body) => {
-          if (body.type === 'star') return
-          const dx = body.pos3d.x - p.pos.x
-          const dy = body.pos3d.y - p.pos.y
-          const dz = body.pos3d.z - p.pos.z
-          const dist = Math.sqrt(dx*dx + dy*dy + dz*dz) || 1
-          if (dist > 500) return // slightly larger range for big objects
-          const localX = dx * right.x + dy * right.y + dz * right.z
-          const localZ = dx * fwd.x + dy * fwd.y + dz * fwd.z
-          const localY = dx * upv.x + dy * upv.y + dz * upv.z
-          contacts.push({
-            x: localX,
-            y: localY,
-            z: localZ,
-            dist,
-            type: body.type,
-            role: 'neutral',
-            name: body.name
-          })
-        })
+        const contacts = projectContacts(
+          { pos: p.pos, heading: fwd, up: upv },
+          snap.npcs,
+          carto,
+          { maxShip: 300, maxBody: 500 }
+        )
 
-        // Sort by distance for "nearby" priority (classic feel)
-        contacts.sort((a, b) => a.dist - b.dist)
-
-        // Plot on radar (classic style: horizontal azimuth, vertical mix of elevation/depth)
-        contacts.forEach((c, idx) => {
-          if (bidx >= blips.length) return
-          const blip = blips[bidx++]
-          const maxR = 200
-          const scale = Math.min(1.8, (c.dist / 200) * 1.5) // inverse for classic: closer bigger?
-          // For classic Elite, closer objects were often more prominent; use size inverse to dist for "near"
-          const size = Math.max(0.05, 0.15 * (1 - c.dist / 300))
-          const radarX = c.x * 0.012   // scale to radar radius
-          const radarY = (c.z * 0.008 + c.y * 0.005) // forward depth + elev for classic 2D-ish
-          blip.position.set(radarX, radarY, 0)
-          blip.visible = true
-          blip.scale.setScalar(size)
-
-          const mat = blip.material as THREE.MeshBasicMaterial
-          if (c.type === 'ship') {
-            if (c.role === 'pirate') mat.color.set(0xff4444)
-            else if (c.role === 'police' || c.role === 'escort') mat.color.set(0x44ff88)
-            else mat.color.set(0xffee44)
-            // Ships as slightly elongated for classic "square" feel (scale Y less)
-            blip.scale.y = size * 0.6
-          } else {
-            // Planets/stations bigger, neutral blue-ish
-            mat.color.set(c.type === 'station' ? 0x88ddff : 0xaaccff)
-            blip.scale.setScalar(size * 1.3)
-          }
-        })
-
-        // Hide unused
-        for (let i = bidx; i < blips.length; i++) {
-          blips[i].visible = false
-        }
+        CockpitRender.update3DRadar(radarBlipsRef.current, contacts)
       }
 
       // Fuel bars on the left (simple 3D holo representation)
@@ -987,13 +646,12 @@ const Elite: React.FC<EliteProps> = ({
     // Cleanup
     return () => {
       window.removeEventListener('resize', handleResize)
-      window.removeEventListener('keydown', onKeyDown)
-      window.removeEventListener('keyup', onKeyUp)
+      // Keyboard listeners are cleaned up inside useFlightInput hook and the action-keys useEffect.
       if (frameRef.current) cancelAnimationFrame(frameRef.current)
       renderer.dispose()
       // more thorough cleanup could be added
     }
-  }, [onKeyDown, onKeyUp])
+  }, [])  // No longer depends on keyboard handlers (now in dedicated hooks)
 
   // Draw the static blue holo ring overlay for the VECH preview (on top of <model-viewer>)
   useEffect(() => {
@@ -1246,49 +904,23 @@ const Elite: React.FC<EliteProps> = ({
       ctx.lineTo(cx + 6, baseY + 4)
       ctx.stroke()
 
-      // Get contacts - MUST be inside drawRadar (real + demo for visibility)
+      // Get contacts via the shared util (deduped the second copy of the projection math)
       const p = snapRef.current?.player
       if (!p) {
         raf = requestAnimationFrame(drawRadar)
         return
       }
 
-      // Use true body axes from integrated up (full 3D dot for correct relative during pitch/roll/yaw).
       const fwd = p.heading
       const upv = p.up || { x: 0, y: 1, z: 0 }
-      const right = normalize(cross(fwd, upv))
-
-      const contacts: any[] = []
-
-      // NPCs as ships
-      ;(snapRef.current?.npcs || []).forEach((npc: any) => {
-        const dx = npc.pos.x - p.pos.x
-        const dy = npc.pos.y - p.pos.y
-        const dz = npc.pos.z - p.pos.z
-        const dist = Math.sqrt(dx*dx + dy*dy + dz*dz) || 1
-        if (dist > 300) return
-        const localX = dx * right.x + dy * right.y + dz * right.z
-        const localZ = dx * fwd.x + dy * fwd.y + dz * fwd.z
-        const localY = dx * upv.x + dy * upv.y + dz * upv.z
-        contacts.push({ x: localX, y: localY, z: localZ, dist, type: 'ship', role: npc.role })
-      })
-
-      // Carto bodies as planets/stations
       const carto = getCartographyBodies((snapRef.current?.time || 0) * 0.55)
-      carto.forEach((body: any) => {
-        if (body.type === 'star') return
-        const dx = body.pos3d.x - p.pos.x
-        const dy = body.pos3d.y - p.pos.y
-        const dz = body.pos3d.z - p.pos.z
-        const dist = Math.sqrt(dx*dx + dy*dy + dz*dz) || 1
-        if (dist > 500) return
-        const localX = dx * right.x + dy * right.y + dz * right.z
-        const localZ = dx * fwd.x + dy * fwd.y + dz * fwd.z
-        const localY = dx * upv.x + dy * upv.y + dz * upv.z
-        contacts.push({ x: localX, y: localY, z: localZ, dist, type: body.type, role: 'neutral' })
-      })
 
-      contacts.sort((a, b) => a.dist - b.dist)
+      const contacts = projectContacts(
+        { pos: p.pos, heading: fwd, up: upv },
+        snapRef.current?.npcs || [],
+        carto,
+        { maxShip: 300, maxBody: 500 }
+      )
 
       contacts.forEach((c) => {
         const z = Math.max(0, c.z)
@@ -1380,113 +1012,15 @@ const Elite: React.FC<EliteProps> = ({
     }
   }
 
-  // Drag handlers for Minority Report-style movable holographic panels
-  const startMapDrag = (e: React.MouseEvent) => {
-    setIsMapDragging(true)
-    dragRef.current = {
-      offsetX: e.clientX - mapPanelPos.x,
-      offsetY: e.clientY - mapPanelPos.y,
-    }
-    e.preventDefault()
-  }
-
-  const handleMapDragMove = useCallback((e: MouseEvent) => {
-    if (!dragRef.current) return
-    const newX = Math.max(10, Math.min(window.innerWidth - 480, e.clientX - dragRef.current.offsetX))
-    const newY = Math.max(10, Math.min(window.innerHeight - 420, e.clientY - dragRef.current.offsetY))
-    setMapPanelPos({ x: newX, y: newY })
-  }, [])
-
-  const stopMapDrag = useCallback(() => {
-    setIsMapDragging(false)
-    dragRef.current = null
-  }, [])
-
-  // Attach global drag listeners when dragging
-  useEffect(() => {
-    if (!isMapDragging) return
-    window.addEventListener('mousemove', handleMapDragMove)
-    window.addEventListener('mouseup', stopMapDrag, { once: true })
-    return () => {
-      window.removeEventListener('mousemove', handleMapDragMove)
-      window.removeEventListener('mouseup', stopMapDrag)
-    }
-  }, [isMapDragging, handleMapDragMove, stopMapDrag])
-
-  // Controls drag handlers (parallel to map, same holo draggable style)
-  const startControlsDrag = (e: React.MouseEvent) => {
-    setIsControlsDragging(true)
-    controlsDragRef.current = {
-      offsetX: e.clientX - controlsPanelPos.x,
-      offsetY: e.clientY - controlsPanelPos.y,
-    }
-    e.preventDefault()
-  }
-
-  const handleControlsDragMove = useCallback((e: MouseEvent) => {
-    if (!controlsDragRef.current) return
-    const newX = Math.max(10, Math.min(window.innerWidth - 420, e.clientX - controlsDragRef.current.offsetX))
-    const newY = Math.max(10, Math.min(window.innerHeight - 200, e.clientY - controlsDragRef.current.offsetY))
-    setControlsPanelPos({ x: newX, y: newY })
-  }, [])
-
-  const stopControlsDrag = useCallback(() => {
-    setIsControlsDragging(false)
-    controlsDragRef.current = null
-  }, [])
-
-  // Attach global drag listeners for controls
-  useEffect(() => {
-    if (!isControlsDragging) return
-    window.addEventListener('mousemove', handleControlsDragMove)
-    window.addEventListener('mouseup', stopControlsDrag, { once: true })
-    return () => {
-      window.removeEventListener('mousemove', handleControlsDragMove)
-      window.removeEventListener('mouseup', stopControlsDrag)
-    }
-  }, [isControlsDragging, handleControlsDragMove, stopControlsDrag])
-
-  // Flight controls drag handlers (third holo panel)
-  const startFlightDrag = (e: React.MouseEvent) => {
-    setIsFlightDragging(true)
-    flightDragRef.current = {
-      offsetX: e.clientX - flightPanelPos.x,
-      offsetY: e.clientY - flightPanelPos.y,
-    }
-    e.preventDefault()
-  }
-
-  const handleFlightDragMove = useCallback((e: MouseEvent) => {
-    if (!flightDragRef.current) return
-    const newX = Math.max(10, Math.min(window.innerWidth - 420, e.clientX - flightDragRef.current.offsetX))
-    const newY = Math.max(10, Math.min(window.innerHeight - 300, e.clientY - flightDragRef.current.offsetY))
-    setFlightPanelPos({ x: newX, y: newY })
-  }, [])
-
-  const stopFlightDrag = useCallback(() => {
-    setIsFlightDragging(false)
-    flightDragRef.current = null
-  }, [])
-
-  // Attach global drag listeners for flight
-  useEffect(() => {
-    if (!isFlightDragging) return
-    window.addEventListener('mousemove', handleFlightDragMove)
-    window.addEventListener('mouseup', stopFlightDrag, { once: true })
-    return () => {
-      window.removeEventListener('mousemove', handleFlightDragMove)
-      window.removeEventListener('mouseup', stopFlightDrag)
-    }
-  }, [isFlightDragging, handleFlightDragMove, stopFlightDrag])
-
-  // Ensure the holo panels start top-right stacked: map, then route controls, then flight controls
+  // The useHoloDrag hooks above already attach their global listeners while dragging.
+  // Reset panel positions when the map is opened (kept from original behavior)
   useEffect(() => {
     if (mapOpen) {
       const rightX = Math.max(700, window.innerWidth - 400)
       const mapY = 55
       setMapPanelPos({ x: rightX, y: mapY })
       setControlsPanelPos({ x: rightX, y: mapY + 375 })
-      setFlightPanelPos({ x: rightX, y: mapY + 375 + 160 }) // under the route controls panel
+      setFlightPanelPos({ x: rightX, y: mapY + 375 + 160 })
     }
   }, [mapOpen])
 
@@ -1695,59 +1229,22 @@ const Elite: React.FC<EliteProps> = ({
         geneva modular • three.js • using flocker boids + belltoy
       </div>
 
-      {/* MAP HOLO PANEL - top right, draggable, shows by default */}
-      {/* Controls as separate matching holo panel directly underneath, also draggable */}
+      {/* HOLO PANELS - now using the extracted reusable HoloPanel component + useHoloDrag hooks */}
       {mapOpen && (
         <>
-          {/* Map panel (visual radar) - top right */}
-          <div
-            style={{
-              position: 'absolute',
-              left: mapPanelPos.x,
-              top: mapPanelPos.y,
-              width: 360,
-              background: 'rgba(4, 12, 22, 0.55)',
-              border: '1px solid #00aaff',
-              borderRadius: 4,
-              boxShadow: '0 0 25px rgba(0, 160, 255, 0.35), inset 0 0 30px rgba(0, 80, 140, 0.15)',
-              backdropFilter: 'blur(6px)',
-              zIndex: 25,
-              pointerEvents: 'auto',
-              fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
-              color: '#aaddff',
-              overflow: 'hidden',
-            }}
+          <HoloPanel
+            title="CARTOGRAPHY • HOLO • LIVE ORBITAL DATA"
+            pos={mapPanelPos}
+            onStartDrag={mapDrag.startDrag}
+            onClose={() => setMapOpen(false)}
+            footer="CLICK TO SELECT • ORBITS LIVE"
           >
-            <div
-              onMouseDown={startMapDrag}
-              style={{
-                background: 'linear-gradient(to right, rgba(0,120,200,0.25), rgba(0,80,150,0.1))',
-                padding: '4px 10px',
-                fontSize: 9,
-                letterSpacing: 1.2,
-                borderBottom: '1px solid #0099dd',
-                cursor: 'move',
-                userSelect: 'none',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-            >
-              <div>
-                CARTOGRAPHY • HOLO • LIVE ORBITAL DATA
-              </div>
-              <button
-                onClick={(e) => { e.stopPropagation(); setMapOpen(false); }}
-                style={{ background: 'transparent', border: 'none', color: '#66bbff', fontSize: 13, cursor: 'pointer', lineHeight: 1, padding: '0 2px' }}
-              >
-                ✕
-              </button>
-            </div>
-
-            <div style={{ padding: '8px 10px 2px 10px', display: 'flex', justifyContent: 'center' }}>
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
               <canvas
                 ref={mapCanvasRef}
                 onClick={handleMapClick}
+                width={340}
+                height={340}
                 style={{
                   border: '1px solid #0088cc',
                   background: 'rgba(0, 8, 18, 0.6)',
@@ -1756,215 +1253,130 @@ const Elite: React.FC<EliteProps> = ({
                 }}
               />
             </div>
-            <div style={{ textAlign: 'center', fontSize: 8, opacity: 0.45, margin: '2px 0 6px' }}>
-              CLICK TO SELECT • ORBITS LIVE
-            </div>
-          </div>
+          </HoloPanel>
 
-          {/* Route & Jump controls holo panel - underneath the map, same style */}
-          <div
-            style={{
-              position: 'absolute',
-              left: controlsPanelPos.x,
-              top: controlsPanelPos.y,
-              width: 360,
-              background: 'rgba(4, 12, 22, 0.55)',
-              border: '1px solid #00aaff',
-              borderRadius: 4,
-              boxShadow: '0 0 25px rgba(0, 160, 255, 0.35), inset 0 0 30px rgba(0, 80, 140, 0.15)',
-              backdropFilter: 'blur(6px)',
-              zIndex: 25,
-              pointerEvents: 'auto',
-              fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
-              color: '#aaddff',
-              overflow: 'hidden',
-            }}
+          <HoloPanel
+            title="CONTROLS • HOLO • ROUTE &amp; JUMP"
+            pos={controlsPanelPos}
+            onStartDrag={controlsDrag.startDrag}
+            footer="DRAG HEADER • SAME HOLO STYLE • UNDER MAP"
           >
-            <div
-              onMouseDown={startControlsDrag}
-              style={{
-                background: 'linear-gradient(to right, rgba(0,120,200,0.25), rgba(0,80,150,0.1))',
-                padding: '4px 10px',
-                fontSize: 9,
-                letterSpacing: 1.2,
-                borderBottom: '1px solid #0099dd',
-                cursor: 'move',
-                userSelect: 'none',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-            >
-              <div>
-                CONTROLS • HOLO • ROUTE &amp; JUMP
-              </div>
-            </div>
-
-            <div style={{ padding: 8, fontSize: 10 }}>
-              <div style={{ background: 'rgba(0, 20, 40, 0.45)', border: '1px solid #006699', padding: 6, marginBottom: 6 }}>
-                <div style={{ opacity: 0.6, fontSize: 9 }}>ROUTE</div>
-                <div>FROM <span style={{ color: '#ffcc66' }}>{getBodyById(route.originId, 0)?.name}</span></div>
-                <div>TO <span style={{ color: '#66ff99' }}>{getBodyById(route.destinationId, 0)?.name}</span></div>
-                <div style={{ marginTop: 3, color: '#ffdd88', fontSize: 11 }}>
-                  COST: {getJumpFuelCost(
-                    getBodyById(route.originId, 0)?.pos2d || {x:0,y:0},
-                    getBodyById(route.destinationId, 0)?.pos2d || {x:0,y:0}
-                  )} FUEL
-                </div>
-              </div>
-
-              <button
-                onClick={() => {
-                  const nearest = CARTOGRAPHY_BODIES.reduce((best, b) => {
-                    const p = snapRef.current?.player?.pos || {x:0,y:0}
-                    const d = Math.hypot(b.pos2d.x - p.x, b.pos2d.y - p.y)
-                    return d < best.d ? {id: b.id, d} : best
-                  }, {id: route.originId, d: 9999})
-                  setRoute(r => ({...r, originId: nearest.id }))
-                }}
-                style={{
-                  width: '100%',
-                  marginBottom: 4,
-                  padding: '3px 6px',
-                  background: 'rgba(0,40,70,0.6)',
-                  border: '1px solid #0088aa',
-                  color: '#aaddff',
-                  fontSize: 9,
-                  cursor: 'pointer'
-                }}
-              >
-                SET NEAREST AS ORIGIN
-              </button>
-
-              <button
-                disabled={isHyperspacing || hud.fuel < getJumpFuelCost(
+            <div style={{ background: 'rgba(0, 20, 40, 0.45)', border: '1px solid #006699', padding: 6, marginBottom: 6, fontSize: 10 }}>
+              <div style={{ opacity: 0.6, fontSize: 9 }}>ROUTE</div>
+              <div>FROM <span style={{ color: '#ffcc66' }}>{getBodyById(route.originId, 0)?.name}</span></div>
+              <div>TO <span style={{ color: '#66ff99' }}>{getBodyById(route.destinationId, 0)?.name}</span></div>
+              <div style={{ marginTop: 3, color: '#ffdd88', fontSize: 11 }}>
+                COST: {getJumpFuelCost(
                   getBodyById(route.originId, 0)?.pos2d || {x:0,y:0},
                   getBodyById(route.destinationId, 0)?.pos2d || {x:0,y:0}
-                )}
-                onClick={() => {
-                  const o = getBodyById(route.originId, 0)
-                  const d = getBodyById(route.destinationId, 0)
-                  if (!o || !d) return
-                  const cost = getJumpFuelCost(o.pos2d, d.pos2d)
-                  if (hud.fuel < cost) return
-
-                  hyperspaceTargetRef.current = { ...d.pos3d }
-                  hyperspaceCostRef.current = cost
-                  hyperspaceStartRef.current = 0
-                  setIsHyperspacing(true)
-                  isHyperspacingRef.current = true
-
-                  const sg: any = hyperspaceStreaksRef.current
-                  if (sg) sg.visible = true
-                }}
-                style={{
-                  width: '100%',
-                  padding: '4px 6px',
-                  background: isHyperspacing ? 'rgba(60,20,0,0.6)' : 'rgba(0,60,50,0.6)',
-                  border: '1px solid #00cc99',
-                  color: '#aaddff',
-                  fontSize: 10,
-                  cursor: isHyperspacing ? 'wait' : 'pointer'
-                }}
-              >
-                {isHyperspacing ? 'HYPERSPACE IN PROGRESS...' : 'INITIATE HYPERSPACE'}
-              </button>
+                )} FUEL
+              </div>
             </div>
 
-            <div style={{ fontSize: 7, opacity: 0.35, textAlign: 'center', marginBottom: 4 }}>
-              DRAG HEADER • SAME HOLO STYLE • UNDER MAP
-            </div>
-          </div>
-
-          {/* Flight controls holo panel - same style, draggable, underneath the route controls */}
-          <div
-            style={{
-              position: 'absolute',
-              left: flightPanelPos.x,
-              top: flightPanelPos.y,
-              width: 360,
-              background: 'rgba(4, 12, 22, 0.55)',
-              border: '1px solid #00aaff',
-              borderRadius: 4,
-              boxShadow: '0 0 25px rgba(0, 160, 255, 0.35), inset 0 0 30px rgba(0, 80, 140, 0.15)',
-              backdropFilter: 'blur(6px)',
-              zIndex: 25,
-              pointerEvents: 'auto',
-              fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
-              color: '#aaddff',
-              overflow: 'hidden',
-            }}
-          >
-            <div
-              onMouseDown={startFlightDrag}
+            <button
+              onClick={() => {
+                const nearest = CARTOGRAPHY_BODIES.reduce((best, b) => {
+                  const p = snapRef.current?.player?.pos || {x:0,y:0}
+                  const d = Math.hypot(b.pos2d.x - p.x, b.pos2d.y - p.y)
+                  return d < best.d ? {id: b.id, d} : best
+                }, {id: route.originId, d: 9999})
+                setRoute(r => ({...r, originId: nearest.id }))
+              }}
               style={{
-                background: 'linear-gradient(to right, rgba(0,120,200,0.25), rgba(0,80,150,0.1))',
-                padding: '4px 10px',
+                width: '100%',
+                marginBottom: 4,
+                padding: '3px 6px',
+                background: 'rgba(0,40,70,0.6)',
+                border: '1px solid #0088aa',
+                color: '#aaddff',
                 fontSize: 9,
-                letterSpacing: 1.2,
-                borderBottom: '1px solid #0099dd',
-                cursor: 'move',
-                userSelect: 'none',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
+                cursor: 'pointer'
               }}
             >
-              <div>
-                CONTROLS • HOLO • FLIGHT &amp; NPC
-              </div>
-            </div>
+              SET NEAREST AS ORIGIN
+            </button>
 
-            <div style={{ padding: 8, fontSize: 10, lineHeight: 1.3 }}>
-              <div>W / ↑ — thrust forward &nbsp;&nbsp; S / ↓ — brake</div>
-              <div>A / D or ← → — yaw</div>
-              <div>Q / E — pitch (Q=down, E=up) &nbsp;&nbsp; Z / X — roll</div>
-              <div style={{ margin: '4px 0', opacity: 0.7 }}>R — respawn NPC fleet &nbsp; H — toggle this</div>
-              <div style={{ fontSize: 9, opacity: 0.75 }}>
-                NPCs use the κ-framework flocking + BellToy state logic from Flockers.<br />
-                Pirates &amp; escorts are attracted to you. Traders mostly mind their routes.
-              </div>
-              <div style={{ marginTop: 4, fontSize: 9, opacity: 0.5 }}>
-                Next: 3D cartography map, station docking, live markets (Flocker port), ship NFT ownership (VECH hovercrafts collection).
-              </div>
-            </div>
+            <button
+              disabled={isHyperspacing || hud.fuel < getJumpFuelCost(
+                getBodyById(route.originId, 0)?.pos2d || {x:0,y:0},
+                getBodyById(route.destinationId, 0)?.pos2d || {x:0,y:0}
+              )}
+              onClick={() => {
+                const o = getBodyById(route.originId, 0)
+                const d = getBodyById(route.destinationId, 0)
+                if (!o || !d) return
+                const cost = getJumpFuelCost(o.pos2d, d.pos2d)
+                if (hud.fuel < cost) return
 
-            <div style={{ fontSize: 7, opacity: 0.35, textAlign: 'center', marginBottom: 4 }}>
-              DRAG HEADER • SAME HOLO STYLE • UNDER CONTROLS
-            </div>
-          </div>
+                hyperspaceTargetRef.current = { ...d.pos3d }
+                hyperspaceCostRef.current = cost
+                hyperspaceStartRef.current = 0
+                setIsHyperspacing(true)
+                isHyperspacingRef.current = true
 
-          {/* Central targeting computer / jump status (inspired by the central circle with name, distance, and CHARGING in the reference) */}
-          {mapOpen && (
-            <div style={{
-              position: 'absolute',
-              top: '36%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              background: 'rgba(0, 0, 0, 0.35)',
-              boxShadow: '0 0 8px rgba(255,170,0,0.25)',
-              padding: '3px 10px',
-              fontSize: 11,
-              color: '#ffaa00',
-              textAlign: 'center',
-              pointerEvents: 'none',
-              fontFamily: 'ui-monospace, monospace',
-              letterSpacing: '1px',
-              minWidth: '120px',
-            }}>
-              {getBodyById(route.destinationId, 0)?.name || 'NO TARGET'}<br />
-              {getBodyById(route.destinationId, 0) ? 
-                getJumpFuelCost(
-                  getBodyById(route.originId, 0)?.pos2d || {x:0,y:0}, 
-                  getBodyById(route.destinationId, 0)?.pos2d || {x:0,y:0}
-                ) + ' FUEL' 
-                : ''}
-              {isHyperspacing && <div style={{ color: '#ff6644', marginTop: '2px' }}>CHARGING</div>}
-            </div>
-          )}
+                const sg: any = hyperspaceStreaksRef.current
+                if (sg) sg.visible = true
+              }}
+              style={{
+                width: '100%',
+                padding: '4px 6px',
+                background: isHyperspacing ? 'rgba(60,20,0,0.6)' : 'rgba(0,60,50,0.6)',
+                border: '1px solid #00cc99',
+                color: '#aaddff',
+                fontSize: 10,
+                cursor: isHyperspacing ? 'wait' : 'pointer'
+              }}
+            >
+              {isHyperspacing ? 'HYPERSPACE IN PROGRESS...' : 'INITIATE HYPERSPACE'}
+            </button>
+          </HoloPanel>
 
-          {/* Ship UI (bottom dashboard) is default view when map closed. Linked to map button (M toggles carto map on/off) */}
+          <HoloPanel
+            title="FLIGHT • HOLO • CONTROLS &amp; NPCS"
+            pos={flightPanelPos}
+            onStartDrag={flightDrag.startDrag}
+            footer="DRAG HEADER • DEDUPED VIA useHoloDrag"
+          >
+            {/* Flight info content kept inline for this pass - can be moved to its own FlightPanel component later */}
+            <div style={{ fontSize: 10, lineHeight: 1.3 }}>
+              W/↑ thrust • S/↓ brake<br />
+              A/← yaw L • D/→ yaw R<br />
+              Q pitch down • E pitch up<br />
+              Z/X roll<br />
+              <div style={{ marginTop: 6, opacity: 0.7 }}>R respawn fleet • M toggle map • H help</div>
+              <div style={{ marginTop: 4 }}>NPCs: {hud.npcs} • Fuel: {hud.fuel}</div>
+            </div>
+          </HoloPanel>
         </>
+      )}
+
+      {/* Central targeting / jump status (preserved from original reference visuals) */}
+      {mapOpen && (
+        <div style={{
+          position: 'absolute',
+          top: '36%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          background: 'rgba(0, 0, 0, 0.35)',
+          boxShadow: '0 0 8px rgba(255,170,0,0.25)',
+          padding: '3px 10px',
+          fontSize: 11,
+          color: '#ffaa00',
+          textAlign: 'center',
+          pointerEvents: 'none',
+          fontFamily: 'ui-monospace, monospace',
+          letterSpacing: '1px',
+          minWidth: '120px',
+        }}>
+          {getBodyById(route.destinationId, 0)?.name || 'NO TARGET'}<br />
+          {getBodyById(route.destinationId, 0) ?
+            getJumpFuelCost(
+              getBodyById(route.originId, 0)?.pos2d || {x:0,y:0},
+              getBodyById(route.destinationId, 0)?.pos2d || {x:0,y:0}
+            ) + ' FUEL'
+            : ''}
+          {isHyperspacing && <div style={{ color: '#ff6644', marginTop: '2px' }}>CHARGING</div>}
+        </div>
       )}
 
       {/* Bottom Dashboard - Ship UI (default view, always visible as the "ship dashboard"; carto map overlays when M pressed) */}
@@ -2009,7 +1421,6 @@ const Elite: React.FC<EliteProps> = ({
             marginTop: '-50px',
             width: '712px',
             height: '200px',
-            position: 'relative',
             background: 'rgba(0,0,0,0.4)',
             boxShadow: 'inset 0 0 14px rgba(255,170,0,0.25), 0 0 8px rgba(255,170,0,0.15)',
             overflow: 'hidden',
