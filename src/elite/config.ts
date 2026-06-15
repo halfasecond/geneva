@@ -232,18 +232,6 @@ export const WORLD = {
   bodyOrbitRingOpacity: 0.2,
   stationPulseSpeed: 3,
   stationPulseAmp: 0.08,
-
-  /** Camera-parented windscreen decor — close enough to see, far enough to feel fixed */
-  skybox: {
-    baseDepth: 165,
-    depthPerMapZ: 0.28,
-    spreadX: 0.62,
-    spreadY: 0.22,
-    yOffset: 6,
-    radiusScale: 3.6,
-    sunDepth: 220,
-    sunY: 22,
-  },
 }
 
 // =============================================================================

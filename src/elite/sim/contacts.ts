@@ -35,6 +35,8 @@ const DEFAULT_MAX_BODY = 500
 /**
  * Project world entities into the player's local body frame.
  * Forward on radar is generally +Z in the returned contacts (classic "up on scope").
+ *
+ * player.pos must be in system navigation space (same frame as cartography pos3d).
  */
 export function projectContacts(
   player: { pos: Vec3; heading: Vec3; up: Vec3 },

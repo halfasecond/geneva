@@ -2,7 +2,7 @@ import type { EliteSnapshot, FlightMode, NpcAgent, PlayerState, SimConfig } from
 import { add, clampMagnitude, cross, length, normalize, scale, subtract, zero } from './core/vector'
 import { calculateFlocking } from './core/forces'
 import { addProgress, applyRoleFeedback } from './core/progress'
-import { getBodyById, DEFAULT_ROUTE } from './cartography'
+import { getBodyById, DEFAULT_ROUTE, navPos3dFromBody } from './cartography'
 
 const DEFAULT_CONFIG: SimConfig = {
   separationRadius: 28,
@@ -26,8 +26,9 @@ export class EliteSim {
   constructor(initialPopulation = 2) {
     this.config = { ...DEFAULT_CONFIG }
     const origin = getBodyById(DEFAULT_ROUTE.originId, 'frozen')
+    const spawn = origin ? navPos3dFromBody(origin) : { x: 0, y: 120, z: 40 }
     this.player = {
-      pos: { x: 0, y: 120, z: 40 },
+      pos: spawn,
       vel: { x: 0, y: 0, z: -6 },
       heading: { x: 0, y: 0, z: -1 },
       up: { x: 0, y: 1, z: 0 },
@@ -45,6 +46,7 @@ export class EliteSim {
   resetNpcs(count: number) {
     this.npcs = []
     const roles: NpcAgent['role'][] = ['trader', 'trader', 'pirate', 'police', 'escort', 'trader']
+    const anchor = this.player.pos
 
     for (let i = 0; i < count; i++) {
       const angle = (i / count) * Math.PI * 2
@@ -52,9 +54,9 @@ export class EliteSim {
       this.npcs.push({
         id: i,
         pos: {
-          x: Math.cos(angle) * radius,
-          y: Math.sin(angle) * radius * 0.6 + (i % 3 - 1) * 8,
-          z: (Math.random() - 0.5) * 40,
+          x: anchor.x + Math.cos(angle) * radius,
+          y: anchor.y + Math.sin(angle) * radius * 0.06 + (i % 3 - 1) * 8,
+          z: anchor.z + (Math.random() - 0.5) * 40,
         },
         vel: {
           x: -Math.sin(angle) * (1.5 + Math.random()),
@@ -250,11 +252,7 @@ export class EliteSim {
     this.player.dockedAtStationId = dest.type === 'station' ? dest.id : null
     this.player.flightMode = 'normal'
 
-    this.player.pos = {
-      x: dest.pos3d.x * 0.02,
-      y: 120,
-      z: dest.pos3d.z * 0.02,
-    }
+    this.player.pos = navPos3dFromBody(dest)
     this.player.vel = zero()
     this.player.heading = { x: 0, y: 0, z: -1 }
     this.player.up = { x: 0, y: 1, z: 0 }

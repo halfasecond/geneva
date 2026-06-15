@@ -41,8 +41,6 @@ import { EliteSim } from '../../elite/sim/EliteSim'
 import type { EliteSnapshot, NpcAgent } from '../../elite/sim/core/types'
 import { length } from '../../elite/sim/core/vector'
 import {
-  bodyToSkyboxLocal,
-  skyboxDisplayRadius,
   DEFAULT_ROUTE,
   getBodyById,
   getFrozenCartographyBodies,
@@ -195,31 +193,21 @@ const Elite: React.FC<EliteProps> = () => {
     const sunGeo = new THREE.SphereGeometry(WORLD.sunRadius, 32, 32)
     const sunMat = new THREE.MeshBasicMaterial({ color: WORLD.sunColor })
     const sun = new THREE.Mesh(sunGeo, sunMat)
-    sun.position.set(0, WORLD.skybox.sunY, -WORLD.skybox.sunDepth)
-    sun.material.fog = false
-    sun.renderOrder = -20
-    camera.add(sun)
+    scene.add(sun)
 
-    // Skybox decor — frozen ephemeris, camera-parented so bodies stay fixed in the windscreen
+    // System bodies — frozen ephemeris in world space (same frame as radar + player nav)
     const bodiesGroup = new THREE.Group()
-    bodiesGroup.renderOrder = -15
     const cartoInitial = getFrozenCartographyBodies()
     cartoInitial.forEach((b) => {
       if (b.type === 'star') return
       const mesh = new THREE.Mesh(
-        new THREE.SphereGeometry(skyboxDisplayRadius(b.radius), 18, 18),
-        new THREE.MeshBasicMaterial({
-          color: b.color,
-          fog: false,
-          depthWrite: true,
-        })
+        new THREE.SphereGeometry(b.radius * 0.9, 18, 18),
+        new THREE.MeshBasicMaterial({ color: b.color, fog: false })
       )
-      const local = bodyToSkyboxLocal(b)
-      mesh.position.set(local.x, local.y, local.z)
-      mesh.renderOrder = -15
+      mesh.position.set(b.pos3d.x, b.pos3d.y, b.pos3d.z)
       bodiesGroup.add(mesh)
     })
-    camera.add(bodiesGroup)
+    scene.add(bodiesGroup)
     bodiesGroupRef.current = bodiesGroup
 
     // Hyperspace tunnel — camera-attached so streaks align with the cockpit forward view
