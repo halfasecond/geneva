@@ -265,13 +265,13 @@ export const WINDSCREEN = {
   innerGlow: 'inset 0 0 48px rgba(102, 170, 255, 0.14), inset 0 0 12px rgba(0, 170, 255, 0.08)',
 }
 
-/** Cockpit overlay stacking — windscreen holo under radar/Vech; bezels frame everything. */
+/** Cockpit overlay stacking — holo effects full-screen but under translucent ship UI. */
 export const Z = {
   scene: 0,
   dashboard: 10,
   cartography: 15,
-  hyperspace: 16,       // tunnel holo — windscreen only, above map / 3D
-  cockpitWidgets: 17,   // radar + Vech preview (intrude into windscreen)
+  hyperspace: 16,       // full-viewport translucent tunnel — under cockpit chrome
+  cockpitWidgets: 17,   // radar, Vech, hyperspace panel
   logo: 18,
   bezel: 20,
 } as const

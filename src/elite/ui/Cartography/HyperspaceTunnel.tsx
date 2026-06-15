@@ -1,9 +1,9 @@
 import React, { useEffect, useRef } from 'react'
-import { WINDSCREEN, Z } from '../../config'
+import { Z } from '../../config'
 
 /**
- * Hyperspace tunnel projected onto the cockpit windscreen (the forward view),
- * not the dashboard / bezel chrome. Sits above cartography, below radar & Vech.
+ * Full-viewport translucent hyperspace holo — washes over the 3D scene but sits
+ * beneath all cockpit chrome (dashboard, radar, Vech, bezels) via z-index.
  */
 const HyperspaceTunnel: React.FC = () => {
   const wrapRef = useRef<HTMLDivElement>(null)
@@ -33,7 +33,7 @@ const HyperspaceTunnel: React.FC = () => {
     const ro = new ResizeObserver(resize)
     ro.observe(wrap)
 
-    const streaks = Array.from({ length: 88 }, () => ({
+    const streaks = Array.from({ length: 96 }, () => ({
       x: (Math.random() - 0.5) * 2.2,
       y: (Math.random() - 0.5) * 2.2,
       z: Math.random(),
@@ -47,9 +47,10 @@ const HyperspaceTunnel: React.FC = () => {
       const h = wrap.clientHeight
       const cx = w * 0.5
       const cy = h * 0.5
-      const spread = Math.max(w, h) * 0.58
+      const spread = Math.max(w, h) * 0.62
 
-      ctx.fillStyle = `rgba(2, 8, 16, ${0.3 + Math.min(0.3, elapsed * 0.1)})`
+      // Light translucent wash — cockpit UI on higher z-index shows through
+      ctx.fillStyle = `rgba(2, 10, 20, ${0.12 + Math.min(0.18, elapsed * 0.06)})`
       ctx.fillRect(0, 0, w, h)
 
       streaks.forEach(s => {
@@ -66,10 +67,10 @@ const HyperspaceTunnel: React.FC = () => {
         const tail = 1 - s.len
         const ex = cx + s.x * scale * tail
         const ey = cy + s.y * scale * tail
-        const alpha = Math.min(0.98, inv * 0.14 + elapsed * 0.06)
+        const alpha = Math.min(0.55, inv * 0.08 + elapsed * 0.04)
 
-        ctx.strokeStyle = `rgba(190, 235, 255, ${alpha})`
-        ctx.lineWidth = Math.min(4.5, 0.6 + inv * 1.1)
+        ctx.strokeStyle = `rgba(170, 225, 255, ${alpha})`
+        ctx.lineWidth = Math.min(3.5, 0.5 + inv * 0.85)
         ctx.beginPath()
         ctx.moveTo(sx, sy)
         ctx.lineTo(ex, ey)
@@ -91,15 +92,10 @@ const HyperspaceTunnel: React.FC = () => {
       ref={wrapRef}
       style={{
         position: 'fixed',
-        top: WINDSCREEN.top,
-        left: WINDSCREEN.left,
-        right: WINDSCREEN.right,
-        bottom: WINDSCREEN.bottom,
+        inset: 0,
         zIndex: Z.hyperspace,
         overflow: 'hidden',
         pointerEvents: 'none',
-        border: `1px solid ${WINDSCREEN.border}`,
-        boxShadow: WINDSCREEN.innerGlow,
       }}
     >
       <canvas
