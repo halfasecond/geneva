@@ -50,7 +50,8 @@ import {
 import { projectContacts } from '../../elite/sim/contacts'
 import { useFlightInput } from '../../elite/useFlightInput'
 import * as CockpitRender from '../../elite/render/cockpit'
-import { CartographyOverlay, HyperspacePanel, VechPreview } from '../../elite/ui'
+import * as HyperspaceRender from '../../elite/render/hyperspace'
+import { CartographyOverlay, HyperspacePanel, HyperspaceCountdown, VechPreview } from '../../elite/ui'
 
 // Basic AuthProps shape we receive (wallet + controls)
 type EliteProps = AuthProps & {
@@ -76,7 +77,9 @@ const Elite: React.FC<EliteProps> = () => {
   const bodiesGroupRef = useRef<THREE.Group | null>(null)
   const hyperspaceStreaksRef = useRef<THREE.Group | null>(null)
   const snapRef = useRef<any>(null) // latest sim snapshot for hyperspace + scanner
-  const isHyperspacingRef = useRef(false)
+  const hyperspacePhaseRef = useRef<'idle' | 'countdown' | 'jump'>('idle')
+  const hyperspaceSequenceStartRef = useRef(0)
+  const hyperspaceLastCountdownRef = useRef(-1)
 
   // Cockpit 3D elements
   const radarRef = useRef<THREE.Group | null>(null)
@@ -97,7 +100,8 @@ const Elite: React.FC<EliteProps> = () => {
   const [mapOpen, setMapOpen] = useState(false)
   const [route, setRoute] = useState(DEFAULT_ROUTE)
   const [isHyperspacing, setIsHyperspacing] = useState(false)
-  const hyperspaceStartRef = useRef(0)
+  const [hyperspaceCountdown, setHyperspaceCountdown] = useState<number | null>(null)
+  const hyperspaceJumpStartRef = useRef(0)
   const hyperspaceTargetRef = useRef<{ x: number; y: number; z: number } | null>(null)
   const hyperspaceCostRef = useRef(0)
 
@@ -109,8 +113,8 @@ const Elite: React.FC<EliteProps> = () => {
   useEffect(() => {
     const handleGlobalKeys = (e: KeyboardEvent) => {
       const k = e.key.toLowerCase()
-      if (k === 'm') setMapOpen(o => !o)
-      if (k === 'escape' && mapOpen) setMapOpen(false)
+      if (k === 'm' && hyperspacePhaseRef.current === 'idle') setMapOpen(o => !o)
+      if (k === 'escape' && mapOpen && hyperspacePhaseRef.current === 'idle') setMapOpen(false)
     }
     window.addEventListener('keydown', handleGlobalKeys)
     return () => window.removeEventListener('keydown', handleGlobalKeys)
@@ -218,26 +222,8 @@ const Elite: React.FC<EliteProps> = () => {
       // store for live update (non-star bodies)
       ; (bodiesGroup as any)._mainBodyMeshes = mainBodyMeshes
 
-    // Hyperspace streak group (classic Elite tunnel lines, activated on jump)
-    const streaksGroup = new THREE.Group()
-    const streakMat = new THREE.LineBasicMaterial({ color: 0x99ddff, transparent: true, opacity: 0.75 })
-    const streaks: THREE.Line[] = []
-    for (let i = 0; i < HYPERSPACE.streakCount; i++) {
-      const len = HYPERSPACE.streakLenMin + Math.random() * HYPERSPACE.streakLenVar
-      const geo = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(0, 0, 0),
-        new THREE.Vector3(0, 0, -len),
-      ])
-      const line = new THREE.Line(geo, streakMat)
-      const r = HYPERSPACE.streakRadiusMin + Math.random() * HYPERSPACE.streakRadiusVar
-      const a = Math.random() * Math.PI * 2
-      line.position.set(Math.cos(a) * r, (Math.random() - 0.5) * 22, HYPERSPACE.baseZ - Math.random() * HYPERSPACE.baseZVar)
-      line.userData = { baseZ: line.position.z, speed: HYPERSPACE.speedBase + Math.random() * HYPERSPACE.speedVar, radius: r, angle: a }
-      streaksGroup.add(line)
-      streaks.push(line)
-    }
-    streaksGroup.visible = false
-    scene.add(streaksGroup)
+    // Hyperspace tunnel — camera-attached so streaks align with the cockpit forward view
+    const { group: streaksGroup, streaks } = HyperspaceRender.createHyperspaceStreaks(camera)
     hyperspaceStreaksRef.current = streaksGroup
       ; (streaksGroup as any)._streaks = streaks
 
@@ -433,8 +419,9 @@ const Elite: React.FC<EliteProps> = () => {
         })
       }
 
-      // During hyperspace, make the central reticle "charge" / pulse (nod to the reference image "CHARGING" circle)
-      if (reticleRef.current && isHyperspacingRef.current) {
+      // Reticle charge pulse during countdown + jump
+      const hyperspaceActive = hyperspacePhaseRef.current !== 'idle'
+      if (reticleRef.current && hyperspaceActive) {
         const t = (snap.time * 8) % (Math.PI * 2)
         reticleRef.current.scale.setScalar(1 + Math.sin(t) * 0.15)
         reticleRef.current.children.forEach((c: any) => {
@@ -447,56 +434,43 @@ const Elite: React.FC<EliteProps> = () => {
         })
       }
 
-      // Hyperspace visual + completion (triggered from cartography overlay)
+      // Hyperspace sequence: countdown (3…2…1) then camera-aligned tunnel rush
       const streaksGrp: any = hyperspaceStreaksRef.current
-      if (isHyperspacingRef.current && streaksGrp && streaksGrp._streaks) {
-        if (hyperspaceStartRef.current === 0) hyperspaceStartRef.current = snap.time
-        const phase = (snap.time - hyperspaceStartRef.current) / HYPERSPACE.duration
-        const streaks = streaksGrp._streaks as THREE.Line[]
-        const fwd = snap.player.heading
+      if (hyperspaceActive && streaksGrp?._streaks) {
+        if (hyperspaceSequenceStartRef.current === 0) hyperspaceSequenceStartRef.current = snap.time
+        const elapsed = snap.time - hyperspaceSequenceStartRef.current
 
-        streaks.forEach((line, idx) => {
-          const ud = line.userData as any
-          // rush the streaks forward relative to player heading
-          const move = ud.speed * (0.016 + phase * HYPERSPACE.movePhaseFactor)
-          line.position.x = Math.cos(ud.angle) * ud.radius + fwd.x * move * 0.1
-          line.position.y = (Math.sin(idx) * 3) + fwd.y * move * 0.05
-          line.position.z = ud.baseZ + move
-
-          // fade and respawn behind when passed
-          const passed = line.position.z > 12
-          if (passed || phase > HYPERSPACE.fadeStart) {
-            const r = HYPERSPACE.streakRadiusMin + Math.random() * (HYPERSPACE.streakRadiusVar - 2)
-            const a = Math.random() * Math.PI * 2
-            line.position.set(
-              Math.cos(a) * r + fwd.x * HYPERSPACE.respawnBehind,
-              (Math.random() - 0.5) * 20 + fwd.y * -20,
-              HYPERSPACE.respawnZ - Math.random() * 40
-            )
-            ud.baseZ = line.position.z
-            ud.radius = r
-            ud.angle = a
-            line.visible = phase < 1.05
+        if (hyperspacePhaseRef.current === 'countdown') {
+          const remaining = Math.ceil(HYPERSPACE.countdown - elapsed)
+          if (remaining > 0 && remaining !== hyperspaceLastCountdownRef.current) {
+            hyperspaceLastCountdownRef.current = remaining
+            setHyperspaceCountdown(remaining)
           }
-          ; (line.material as any).opacity = Math.max(0.2, 0.9 - phase * 0.7)
-        })
-
-        if (phase >= 1.0) {
-          // Complete the jump
-          const target = hyperspaceTargetRef.current
-          if (target && simRef.current.performHyperspace(target, hyperspaceCostRef.current)) {
-            // slight arrival offset + velocity
-            const p = simRef.current.getSnapshot().player
-            // already teleported inside sim
+          if (elapsed >= HYPERSPACE.countdown) {
+            hyperspacePhaseRef.current = 'jump'
+            hyperspaceJumpStartRef.current = snap.time
+            hyperspaceLastCountdownRef.current = -1
+            setHyperspaceCountdown(null)
+            setIsHyperspacing(true)
+            streaksGrp.visible = true
           }
-          streaksGrp.visible = false
-          setIsHyperspacing(false)
-          isHyperspacingRef.current = false
-          hyperspaceStartRef.current = 0
-          hyperspaceTargetRef.current = null
-          // brief arrival "flash" by temporarily brightening fog or just let the new view settle
-        } else {
+        }
+
+        if (hyperspacePhaseRef.current === 'jump') {
+          const phase = (snap.time - hyperspaceJumpStartRef.current) / HYPERSPACE.duration
+          HyperspaceRender.updateHyperspaceStreaks(streaksGrp._streaks as THREE.Line[], phase, dt)
           streaksGrp.visible = true
+
+          if (phase >= 1.0) {
+            const target = hyperspaceTargetRef.current
+            if (target) simRef.current.performHyperspace(target, hyperspaceCostRef.current)
+            streaksGrp.visible = false
+            hyperspacePhaseRef.current = 'idle'
+            hyperspaceSequenceStartRef.current = 0
+            hyperspaceJumpStartRef.current = 0
+            hyperspaceTargetRef.current = null
+            setIsHyperspacing(false)
+          }
         }
       }
 
@@ -770,20 +744,21 @@ const Elite: React.FC<EliteProps> = () => {
   }, [mapOpen])  // re-draws on map toggle too, but always runs for ship UI
 
   const handleInitiateHyperspace = () => {
+    if (hyperspacePhaseRef.current !== 'idle') return
     const o = getBodyById(route.originId, 0)
     const d = getBodyById(route.destinationId, 0)
     if (!o || !d) return
     const cost = getJumpFuelCost(o.pos2d, d.pos2d)
     if (hud.fuel < cost) return
 
+    setMapOpen(false)
     hyperspaceTargetRef.current = { ...d.pos3d }
     hyperspaceCostRef.current = cost
-    hyperspaceStartRef.current = 0
-    setIsHyperspacing(true)
-    isHyperspacingRef.current = true
-
-    const sg: any = hyperspaceStreaksRef.current
-    if (sg) sg.visible = true
+    hyperspaceSequenceStartRef.current = 0
+    hyperspaceJumpStartRef.current = 0
+    hyperspaceLastCountdownRef.current = -1
+    hyperspacePhaseRef.current = 'countdown'
+    setHyperspaceCountdown(HYPERSPACE.countdown)
   }
 
   return (
@@ -813,6 +788,10 @@ const Elite: React.FC<EliteProps> = () => {
         zIndex: Z.logo,
         pointerEvents: 'none',
       }} />
+
+      {hyperspaceCountdown !== null && (
+        <HyperspaceCountdown count={hyperspaceCountdown} />
+      )}
 
       {mapOpen && (
         <>

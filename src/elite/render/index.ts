@@ -4,6 +4,6 @@
  */
 export * from './cockpit'
 export * from './cartographyMap'
-// Future: export * from './hyperspace'
+export * from './hyperspace'
 // Future: export * from './npcs'
 // Future: export * from './vech'
