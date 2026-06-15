@@ -776,7 +776,7 @@ const Elite: React.FC<EliteProps> = () => {
         style={{ display: 'block', width: '100%', height: '100%' }}
       />
 
-      {/* Cockpit frame bezels - to make it feel like inside the spaceship (holo style, framing the central "window" for the 3D space) */}
+      {isHyperspacing && <HyperspaceTunnel />}
 
       <img src={'https://cdn.halfasecond.com/images/vech/vech-logo.png'} alt="Vech" style={{
         width: 72,
@@ -792,8 +792,6 @@ const Elite: React.FC<EliteProps> = () => {
       {hyperspaceCountdown !== null && (
         <HyperspaceCountdown count={hyperspaceCountdown} />
       )}
-
-      {isHyperspacing && <HyperspaceTunnel />}
 
       {mapOpen && (
         <>

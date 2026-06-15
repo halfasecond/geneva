@@ -268,12 +268,12 @@ export const WINDSCREEN = {
 /** Cockpit overlay stacking — holo effects full-screen but under translucent ship UI. */
 export const Z = {
   scene: 0,
+  hyperspace: 5,        // full-viewport translucent tunnel — above 3D, below all cockpit UI
   dashboard: 10,
   cartography: 15,
-  hyperspace: 16,       // full-viewport translucent tunnel — under cockpit chrome
   cockpitWidgets: 17,   // radar, Vech, hyperspace panel
   logo: 18,
-  bezel: 20,
+  bezel: 20,            // windscreen frame — always over holo effects
 } as const
 
 /** Bottom cockpit dashboard chrome (scanner, Vech preview, left column). */

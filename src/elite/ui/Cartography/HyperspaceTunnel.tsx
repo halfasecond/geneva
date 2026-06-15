@@ -91,7 +91,7 @@ const HyperspaceTunnel: React.FC = () => {
     <div
       ref={wrapRef}
       style={{
-        position: 'fixed',
+        position: 'absolute',
         inset: 0,
         zIndex: Z.hyperspace,
         overflow: 'hidden',
