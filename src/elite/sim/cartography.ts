@@ -5,6 +5,7 @@
 // pos2d is authoritative for the orbital plane. pos3d is a catalog local position (star at origin).
 // Live 3D/radar positions use systemSpace.bodyLocalPos(body, player.systemPos2d).
 
+import { FUEL } from '../config'
 import { approachPose, catalogLocalPos } from './systemSpace'
 
 export interface StarSystem {
@@ -158,8 +159,10 @@ export function getDistance2D(a: { x: number; y: number }, b: { x: number; y: nu
   return Math.sqrt(dx * dx + dy * dy)
 }
 
+/** Where the player spawns (docked). */
+export const START_BODY_ID = 'aster-hub'
+
 export const DEFAULT_ROUTE = {
-  originId: 'aster-hub',
   destinationId: 'boreal-station',
 }
 
@@ -185,22 +188,22 @@ export function getInterSystemDistanceLy(systemAId: string, systemBId: string) {
   return Math.hypot(b.xLy - a.xLy, b.yLy - a.yLy, b.zLy - a.zLy)
 }
 
-export function getTravelDistance(
-  originId: string,
+export function getTravelDistanceFrom(
+  from: { x: number; y: number },
+  fromSystemId: string,
   destId: string,
   mode: CartographyTimeMode = 'frozen',
 ): TravelDistance | null {
-  const origin = getBodyById(originId, mode)
   const dest = getBodyById(destId, mode)
-  if (!origin || !dest) return null
+  if (!dest) return null
 
-  if (origin.systemId !== dest.systemId) {
-    const ly = getInterSystemDistanceLy(origin.systemId, dest.systemId)
+  if (fromSystemId !== dest.systemId) {
+    const ly = getInterSystemDistanceLy(fromSystemId, dest.systemId)
     if (ly === null) return null
     return { label: `${ly.toFixed(2)} Ly`, au: null, ly, sameSystem: false }
   }
 
-  const au = getSystemDistanceAu(origin.pos2d, dest.pos2d)
+  const au = getSystemDistanceAu(from, dest.pos2d)
   return {
     label: au < 0.01 ? `${(au * 149597870.7).toFixed(0)} km` : `${au.toFixed(2)} AU`,
     au,
@@ -214,22 +217,26 @@ export function getJumpFuelCost(
   to: { x: number; y: number },
   fromSystemId: string,
   toSystemId: string,
-  base = 12,
 ) {
+  const { jump } = FUEL
   if (fromSystemId !== toSystemId) {
     const ly = getInterSystemDistanceLy(fromSystemId, toSystemId)
     if (ly === null) return Infinity
-    return Math.round(base + ly * 8)
+    return Math.round(jump.interSystemBase + ly * jump.interSystemPerLy)
   }
   const au = getSystemDistanceAu(from, to)
-  return Math.round(base + au * 14)
+  return Math.round(jump.sameSystemBase + au * jump.sameSystemPerAu)
 }
 
-export function getRouteJumpCost(route: RouteSelection, mode: CartographyTimeMode = 'frozen') {
-  const origin = getBodyById(route.originId, mode)
+export function getRouteJumpCost(
+  from: { x: number; y: number },
+  fromSystemId: string,
+  route: RouteSelection,
+  mode: CartographyTimeMode = 'frozen',
+) {
   const dest = getBodyById(route.destinationId, mode)
-  if (!origin || !dest) return Infinity
-  return getJumpFuelCost(origin.pos2d, dest.pos2d, origin.systemId, dest.systemId)
+  if (!dest) return Infinity
+  return getJumpFuelCost(from, dest.pos2d, fromSystemId, dest.systemId)
 }
 
 /** @deprecated Use systemSpace.approachPose / dockedPose / arrivalPose */

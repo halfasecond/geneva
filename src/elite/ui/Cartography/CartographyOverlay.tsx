@@ -1,7 +1,6 @@
 import React from 'react'
 import { MAP, WINDSCREEN, Z } from '../../config'
 import CartographyMap from './CartographyMap'
-import OriginSelect from './OriginSelect'
 import DestinationList from './DestinationList'
 import type { CartographyRoute } from '../../render/cartographyMap'
 
@@ -9,7 +8,6 @@ interface CartographyOverlayProps {
   route: CartographyRoute
   playerPos: { x: number; y: number }
   onRouteChange: (route: CartographyRoute) => void
-  onClose: () => void
 }
 
 /**
@@ -20,7 +18,6 @@ const CartographyOverlay: React.FC<CartographyOverlayProps> = ({
   route,
   playerPos,
   onRouteChange,
-  onClose,
 }) => (
   <div
     style={{
@@ -42,71 +39,37 @@ const CartographyOverlay: React.FC<CartographyOverlayProps> = ({
     <CartographyMap
       route={route}
       playerPos={{ x: playerPos.x, y: playerPos.y }}
-      onDestinationPick={id => onRouteChange({ ...route, destinationId: id })}
+      onDestinationPick={destinationId => onRouteChange({ destinationId })}
     />
 
     <div style={{
       position: 'absolute',
-      inset: 0,
-      display: 'grid',
-      gridTemplateColumns: 'minmax(200px, 240px) 1fr minmax(200px, 260px)',
-      gridTemplateRows: 'auto 1fr',
-      padding: '16px 20px',
-      gap: 16,
+      top: 16,
+      left: '50%',
+      transform: 'translateX(-50%)',
+      fontSize: 9,
+      letterSpacing: 2,
+      color: MAP.ui.muted,
+      textTransform: 'uppercase',
+      padding: '4px 14px',
+      border: `1px solid ${MAP.ui.panelBorder}`,
+      borderRadius: 3,
+      background: MAP.ui.panelBg,
+      fontFamily: MAP.ui.font,
+      pointerEvents: 'none',
+    }}>
+      Cartography · Holo
+    </div>
+
+    <div style={{
+      position: 'absolute',
+      top: 16,
+      right: 20,
       pointerEvents: 'none',
       fontFamily: MAP.ui.font,
       color: MAP.ui.text,
     }}>
-      <div style={{ gridColumn: 1, gridRow: 1, alignSelf: 'start', justifySelf: 'start' }}>
-        <OriginSelect route={route} onRouteChange={onRouteChange} />
-      </div>
-
-      <div style={{
-        gridColumn: 2,
-        gridRow: 1,
-        justifySelf: 'center',
-        alignSelf: 'start',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: 6,
-        pointerEvents: 'none',
-      }}>
-        <div style={{
-          fontSize: 9,
-          letterSpacing: 2,
-          color: MAP.ui.muted,
-          textTransform: 'uppercase',
-          padding: '4px 14px',
-          border: `1px solid ${MAP.ui.panelBorder}`,
-          borderRadius: 3,
-          background: MAP.ui.panelBg,
-        }}>
-          Cartography · Holo
-        </div>
-        <button
-          type="button"
-          onClick={onClose}
-          style={{
-            padding: '4px 12px',
-            border: `1px solid ${MAP.ui.panelBorder}`,
-            borderRadius: 3,
-            background: MAP.ui.panelBg,
-            color: MAP.ui.muted,
-            font: '9px/1 ui-monospace, monospace',
-            letterSpacing: 1,
-            cursor: 'pointer',
-            pointerEvents: 'auto',
-            textTransform: 'uppercase',
-          }}
-        >
-          M — Dismiss
-        </button>
-      </div>
-
-      <div style={{ gridColumn: 3, gridRow: '1 / 3', alignSelf: 'start', justifySelf: 'end' }}>
-        <DestinationList route={route} onRouteChange={onRouteChange} />
-      </div>
+      <DestinationList route={route} onRouteChange={onRouteChange} />
     </div>
   </div>
 )

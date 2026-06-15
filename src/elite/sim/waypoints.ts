@@ -18,7 +18,7 @@ export interface WaypointIndicator {
   id: string
   name: string
   label: string
-  type: 'planet'
+  type: 'planet' | 'star'
   distLocal: number
   screenX: number
   screenY: number
@@ -165,7 +165,7 @@ export function computeWaypoints(
   const result: WaypointIndicator[] = []
 
   for (const body of bodies) {
-    if (body.type !== 'planet') continue
+    if (body.type !== 'planet' && body.type !== 'star') continue
 
     const s = 12
     const x = (body.pos2d.x - player.systemPos2d.x) * s
@@ -173,7 +173,7 @@ export function computeWaypoints(
     const y = bodyElevationOffset(body.type, body.id)
     const dist = Math.hypot(x, y, z)
 
-    if (isInsideBubble({ x, y, z })) continue
+    if (body.type !== 'star' && isInsideBubble({ x, y, z })) continue
     if (dist < WAYPOINTS.minLocalDist) continue
 
     const screen = projectOffsetToWindscreen({ x, y, z }, player.heading, viewport)
@@ -183,7 +183,7 @@ export function computeWaypoints(
       id: body.id,
       name: body.name,
       label: abbreviate(body.name),
-      type: 'planet',
+      type: body.type === 'star' ? 'star' : 'planet',
       distLocal: dist,
       screenX: screen.x,
       screenY: screen.y,

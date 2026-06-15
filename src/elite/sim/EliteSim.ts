@@ -2,7 +2,7 @@ import type { EliteSnapshot, FlightMode, NpcAgent, PlayerState, SimConfig, Vec3 
 import { add, clampMagnitude, cross, length, normalize, scale, subtract, zero } from './core/vector'
 import { calculateFlocking } from './core/forces'
 import { addProgress, applyRoleFeedback } from './core/progress'
-import { getBodyById, DEFAULT_ROUTE } from './cartography'
+import { getBodyById, START_BODY_ID } from './cartography'
 import {
   applyPlayerTrade,
   defaultMarketConfig,
@@ -14,7 +14,7 @@ import {
   type MarketConfig,
   type MarketState,
 } from './market'
-import { DOCK, MARKET } from '../config'
+import { DOCK, FUEL, MARKET } from '../config'
 import {
   approachPose,
   arrivalPose,
@@ -63,7 +63,7 @@ export class EliteSim {
       timeScale: 1 / MARKET.hourIntervalSeconds,
     }
     this.markets = initMarkets()
-    const origin = getBodyById(DEFAULT_ROUTE.originId, 'frozen')
+    const origin = getBodyById(START_BODY_ID, 'frozen')
     const ref2d = { ...(origin?.pos2d ?? { x: 0, y: 0 }) }
     const spawnPose = origin?.type === 'station'
       ? dockedPose(origin)
@@ -76,7 +76,7 @@ export class EliteSim {
       vel: zero(),
       roll: 0,
       speed: 0,
-      fuel: 120,
+      fuel: FUEL.max,
       credits: MARKET.startingCredits,
       cargo: {},
       cargoCapacity: MARKET.cargoCapacity,

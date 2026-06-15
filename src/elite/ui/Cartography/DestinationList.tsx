@@ -15,8 +15,6 @@ const DestinationList: React.FC<DestinationListProps> = ({ route, onRouteChange 
     .filter(b => b.type !== 'star')
     .sort((a, b) => a.name.localeCompare(b.name))
 
-  const available = destinations.filter(b => b.id !== route.originId)
-
   return (
     <div style={{
       display: 'grid',
@@ -33,13 +31,13 @@ const DestinationList: React.FC<DestinationListProps> = ({ route, onRouteChange 
       color: ui.text,
       pointerEvents: 'auto',
     }}>
-      {available.map(b => {
+      {destinations.map(b => {
         const active = route.destinationId === b.id
         return (
           <button
             key={b.id}
             type="button"
-            onClick={() => onRouteChange({ originId: route.originId, destinationId: b.id })}
+            onClick={() => onRouteChange({ destinationId: b.id })}
             style={{
               minWidth: 0,
               display: 'flex',

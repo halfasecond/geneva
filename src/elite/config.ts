@@ -152,6 +152,13 @@ export const SCANNER_2D = {
 // =============================================================================
 export const FUEL = {
   max: 120,
+  /** Hyperspace jump cost = base + distance × rate (rounded). Tuned so ~30 AU hops fit one tank. */
+  jump: {
+    sameSystemBase: 4,
+    sameSystemPerAu: 2.5,
+    interSystemBase: 8,
+    interSystemPerLy: 6,
+  },
   barCount: 10,
   bar: { w: 0.12, h: 0.18, d: 0.04, spacing: 0.28 },
   groupPos: { x: 3.8, y: -1.2, z: -4.5 },

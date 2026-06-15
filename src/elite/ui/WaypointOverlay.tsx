@@ -7,13 +7,25 @@ interface WaypointOverlayProps {
   hidden?: boolean
 }
 
+function formatWaypointDist(metres: number): string {
+  if (metres >= 1000) return `${(metres / 1000).toFixed(1)}k`
+  return `${Math.round(metres)}`
+}
+
 const WaypointStar: React.FC<{ wp: WaypointIndicator }> = ({ wp }) => {
-  const accent = wp.isDestination ? '#fff0a8' : '#d8f0ff'
-  const size = wp.isDestination ? 16 : 10
+  const isSun = wp.type === 'star'
+  const accent = isSun
+    ? '#ffe6a3'
+    : wp.isDestination
+      ? '#fff0a8'
+      : '#d8f0ff'
+  const size = wp.isDestination ? 8 : isSun ? 7 : 5
   const opacity = 1
-  const glow = wp.isDestination
-    ? `drop-shadow(0 0 8px ${accent}) drop-shadow(0 0 16px rgba(255, 240, 160, 0.9))`
-    : `drop-shadow(0 0 6px #ffffff) drop-shadow(0 0 10px rgba(180, 220, 255, 0.8))`
+  const glow = isSun
+    ? `drop-shadow(0 0 5px #ffe6a3) drop-shadow(0 0 10px rgba(255, 200, 80, 0.9))`
+    : wp.isDestination
+      ? `drop-shadow(0 0 4px ${accent}) drop-shadow(0 0 8px rgba(255, 240, 160, 0.85))`
+      : `drop-shadow(0 0 3px #ffffff) drop-shadow(0 0 6px rgba(180, 220, 255, 0.75))`
 
   return (
     <div
@@ -22,7 +34,7 @@ const WaypointStar: React.FC<{ wp: WaypointIndicator }> = ({ wp }) => {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: 3,
+        gap: 2,
         opacity,
       }}
     >
@@ -33,22 +45,45 @@ const WaypointStar: React.FC<{ wp: WaypointIndicator }> = ({ wp }) => {
         style={{ filter: glow, overflow: 'visible' }}
         aria-hidden
       >
-        <path
-          d="M0,-10 L2.6,-2.6 L10,0 L2.6,2.6 L0,10 L-2.6,2.6 L-10,0 L-2.6,-2.6 Z"
-          fill={accent}
-        />
-        <circle r="2.2" fill="#ffffff" opacity={0.95} />
+        {isSun ? (
+          <>
+            <circle r="9" fill="none" stroke={accent} strokeWidth="1.4" opacity={0.55} />
+            <circle r="6.2" fill={accent} />
+            <circle r="3.2" fill="#fff8e8" opacity={0.95} />
+          </>
+        ) : (
+          <>
+            <path
+              d="M0,-10 L2.6,-2.6 L10,0 L2.6,2.6 L0,10 L-2.6,2.6 L-10,0 L-2.6,-2.6 Z"
+              fill={accent}
+            />
+            <circle r="2.2" fill="#ffffff" opacity={0.95} />
+          </>
+        )}
       </svg>
       <span
         style={{
-          fontSize: 8,
+          fontSize: 7,
           letterSpacing: '0.12em',
           color: accent,
-          textShadow: `0 0 6px ${accent}`,
+          textShadow: `0 0 4px ${accent}`,
           fontWeight: 600,
+          lineHeight: 1.1,
         }}
       >
         {wp.label}
+      </span>
+      <span
+        style={{
+          fontSize: 5,
+          letterSpacing: '0.08em',
+          color: accent,
+          opacity: 0.75,
+          textShadow: `0 0 3px ${accent}`,
+          lineHeight: 1,
+        }}
+      >
+        {formatWaypointDist(wp.distLocal)}
       </span>
     </div>
   )

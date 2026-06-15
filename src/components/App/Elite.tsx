@@ -45,7 +45,7 @@ import {
   getBodyById,
   getFrozenCartographyBodies,
   getRouteJumpCost,
-  getTravelDistance,
+  getTravelDistanceFrom,
 } from '../../elite/sim/cartography'
 
 // Tightening imports (config + extracted modules)
@@ -117,7 +117,7 @@ const Elite: React.FC<EliteProps> = () => {
     time: 0,
     playerPos: { x: 0, y: 0, z: 0 },
     systemPos2d: { x: 0, y: 0 },
-    fuel: 120,
+    fuel: FUEL.max,
     credits: 12000,
     cargoUsed: 0,
     flightMode: 'docked' as const,
@@ -135,7 +135,7 @@ const Elite: React.FC<EliteProps> = () => {
   const routeRef = useRef(route)
   routeRef.current = route
 
-  const travelDistance = getTravelDistance(route.originId, route.destinationId)
+  const travelDistance = getTravelDistanceFrom(hud.systemPos2d, hud.systemId, route.destinationId)
   const destBody = getBodyById(route.destinationId, 'frozen')
   const [isHyperspacing, setIsHyperspacing] = useState(false)
   const [hyperspaceCountdown, setHyperspaceCountdown] = useState<number | null>(null)
@@ -828,7 +828,8 @@ const Elite: React.FC<EliteProps> = () => {
     if (hyperspacePhaseRef.current !== 'idle') return
     const d = getBodyById(route.destinationId, 'frozen')
     if (!d) return
-    const cost = getRouteJumpCost(route)
+    const snap = simRef.current.getSnapshot()
+    const cost = getRouteJumpCost(snap.player.systemPos2d, snap.player.systemId, route)
     if (hud.fuel < cost) return
 
     setMapOpen(false)
@@ -910,10 +911,11 @@ const Elite: React.FC<EliteProps> = () => {
             route={route}
             playerPos={hud.systemPos2d}
             onRouteChange={setRoute}
-            onClose={() => setMapOpen(false)}
           />
           <HyperspacePanel
             route={route}
+            fromPos2d={hud.systemPos2d}
+            systemId={hud.systemId}
             fuel={hud.fuel}
             flightMode={hud.flightMode}
             isHyperspacing={isHyperspacing}

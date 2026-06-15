@@ -1,10 +1,12 @@
 import React from 'react'
 import { COLORS, DASHBOARD, Z } from '../../config'
-import { getBodyById, getRouteJumpCost, getTravelDistance } from '../../sim/cartography'
+import { getBodyById, getRouteJumpCost, getTravelDistanceFrom } from '../../sim/cartography'
 import type { CartographyRoute } from '../../render/cartographyMap'
 
 interface HyperspacePanelProps {
   route: CartographyRoute
+  fromPos2d: { x: number; y: number }
+  systemId: string
   fuel: number
   flightMode: string
   isHyperspacing: boolean
@@ -14,14 +16,16 @@ interface HyperspacePanelProps {
 /** Destination intel + jump CTA — matches the left cockpit info card style. */
 const HyperspacePanel: React.FC<HyperspacePanelProps> = ({
   route,
+  fromPos2d,
+  systemId,
   fuel,
   flightMode,
   isHyperspacing,
   onInitiateHyperspace,
 }) => {
   const dest = getBodyById(route.destinationId, 'frozen')
-  const cost = getRouteJumpCost(route)
-  const travel = getTravelDistance(route.originId, route.destinationId)
+  const cost = getRouteJumpCost(fromPos2d, systemId, route)
+  const travel = getTravelDistanceFrom(fromPos2d, systemId, route.destinationId)
   const canJump = Boolean(dest) && !isHyperspacing && fuel >= cost
 
   return (

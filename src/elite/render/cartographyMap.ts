@@ -8,7 +8,6 @@ import { getFrozenCartographyBodies, getMapCartographyBodies } from '../sim/cart
 import type { CartographyBody } from '../sim/cartography'
 
 export interface CartographyRoute {
-  originId: string
   destinationId: string
 }
 
@@ -104,8 +103,8 @@ export function drawCartographyFrame(
       ctx.stroke()
     }
 
-    if (b.id === route.originId || b.id === route.destinationId) {
-      ctx.strokeStyle = b.id === route.destinationId ? MAP.highlightDest : MAP.highlightOrigin
+    if (b.id === route.destinationId) {
+      ctx.strokeStyle = MAP.highlightDest
       ctx.lineWidth = 2
       ctx.beginPath()
       ctx.arc(px, py, r + 5, 0, Math.PI * 2)
@@ -113,7 +112,7 @@ export function drawCartographyFrame(
     }
   })
 
-  drawRouteCurve(ctx, bodyMap, route, cx, cy, scale)
+  drawRouteCurve(ctx, bodyMap, route, playerPos, cx, cy, scale)
 
   // Player marker
   const playerX = cx + playerPos.x * scale
@@ -131,16 +130,16 @@ function drawRouteCurve(
   ctx: CanvasRenderingContext2D,
   bodyMap: Map<string, CartographyBody>,
   route: CartographyRoute,
+  playerPos: PlayerMapPos,
   cx: number,
   cy: number,
   scale: number,
 ) {
-  const origin = bodyMap.get(route.originId)
   const dest = bodyMap.get(route.destinationId)
-  if (!origin || !dest) return
+  if (!dest) return
 
-  const ox = cx + origin.pos2d.x * scale
-  const oy = cy + origin.pos2d.y * scale
+  const ox = cx + playerPos.x * scale
+  const oy = cy + playerPos.y * scale
   const dx = cx + dest.pos2d.x * scale
   const dy = cy + dest.pos2d.y * scale
   const mx = (ox + dx) / 2
