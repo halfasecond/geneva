@@ -264,12 +264,12 @@ export const WINDSCREEN = {
   innerGlow: 'inset 0 0 48px rgba(102, 170, 255, 0.14), inset 0 0 12px rgba(0, 170, 255, 0.08)',
 }
 
-/** Cockpit overlay stacking — cartography above dashboard; hyperspace controls above the map on the left. */
+/** Cockpit overlay stacking — cartography holo under radar/Vech widgets that intrude into the windscreen. */
 export const Z = {
   scene: 0,
   dashboard: 10,
   cartography: 15,
-  hyperspace: 16,
+  cockpitWidgets: 17,
   bezel: 20,
 } as const
 
@@ -280,6 +280,11 @@ export const DASHBOARD = {
     left: 'calc(50% - 614px)',
     width: 240,
     bottom: 60,
+  },
+  radar: {
+    bottom: 60,
+    width: 712,
+    height: 200,
   },
 } as const
 

@@ -1,6 +1,5 @@
 import React from 'react'
 import { DASHBOARD, Z } from '../../config'
-import OriginSelect from './OriginSelect'
 import JumpBar from './JumpBar'
 import type { CartographyRoute } from '../../render/cartographyMap'
 
@@ -8,20 +7,15 @@ interface HyperspacePanelProps {
   route: CartographyRoute
   fuel: number
   isHyperspacing: boolean
-  onRouteChange: (route: CartographyRoute) => void
   onSetNearestOrigin: () => void
   onInitiateHyperspace: () => void
 }
 
-/**
- * Route + jump controls docked in the left cockpit column, below the scanner strip.
- * Sits above the cartography holo so the dashboard stays visible at all times.
- */
+/** Route + jump controls in the left cockpit column, above the cartography holo. */
 const HyperspacePanel: React.FC<HyperspacePanelProps> = ({
   route,
   fuel,
   isHyperspacing,
-  onRouteChange,
   onSetNearestOrigin,
   onInitiateHyperspace,
 }) => (
@@ -31,14 +25,10 @@ const HyperspacePanel: React.FC<HyperspacePanelProps> = ({
       left: DASHBOARD.leftColumn.left,
       bottom: DASHBOARD.leftColumn.bottom,
       width: DASHBOARD.leftColumn.width,
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 8,
-      zIndex: Z.hyperspace,
+      zIndex: Z.cockpitWidgets,
       pointerEvents: 'auto',
     }}
   >
-    <OriginSelect route={route} onRouteChange={onRouteChange} />
     <JumpBar
       route={route}
       fuel={fuel}

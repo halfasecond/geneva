@@ -44,7 +44,7 @@ import { getCartographyBodies, getJumpFuelCost, CARTOGRAPHY_BODIES, DEFAULT_ROUT
 
 // Tightening imports (config + extracted modules)
 import {
-  COLORS, SCANNER_2D, VECH, VIEW, WORLD, HYPERSPACE, NPC, FUEL, Z,
+  COLORS, SCANNER_2D, VECH, VIEW, WORLD, HYPERSPACE, NPC, FUEL, Z, DASHBOARD,
   roleCss, roleColor, npcSizeForRole,
 } from '../../elite/config'
 import { projectContacts } from '../../elite/sim/contacts'
@@ -835,7 +835,6 @@ const Elite: React.FC<EliteProps> = () => {
             route={route}
             fuel={hud.fuel}
             isHyperspacing={isHyperspacing}
-            onRouteChange={setRoute}
             onSetNearestOrigin={handleSetNearestOrigin}
             onInitiateHyperspace={handleInitiateHyperspace}
           />
@@ -877,27 +876,38 @@ const Elite: React.FC<EliteProps> = () => {
         pointerEvents: 'none',
       }} />
 
-      {/* Bottom dashboard — always visible */}
+      {/* Bottom dashboard strip — behind cartography */}
       <div style={{
         position: 'absolute',
         bottom: 0,
         left: 0,
         right: 0,
-        height: '210px',
+        height: DASHBOARD.height,
         background: 'rgba(0, 4, 10, 0.65)',
         boxShadow: '0 -4px 20px rgba(0, 170, 255, 0.15)',
+        zIndex: Z.dashboard,
+        pointerEvents: 'none',
+      }} />
+
+      {/* Cockpit widgets — above cartography holo so radar/Vech stay fully visible */}
+      <div style={{
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: DASHBOARD.height,
+        zIndex: Z.cockpitWidgets,
+        pointerEvents: 'none',
         color: COLORS.vechRingCss,
         fontFamily: 'ui-monospace, monospace',
         fontSize: '18px',
-        zIndex: Z.dashboard,
-        pointerEvents: 'none',
       }}>
         {!mapOpen && (
           <div style={{
             position: 'absolute',
-            left: 'calc(50% - 614px)',
-            bottom: 60,
-            width: 240,
+            left: DASHBOARD.leftColumn.left,
+            bottom: DASHBOARD.leftColumn.bottom,
+            width: DASHBOARD.leftColumn.width,
             background: 'rgba(0, 6, 14, 0.8)',
             border: '1px solid rgba(0, 170, 255, 0.1)',
             borderRadius: '2px',
@@ -916,30 +926,25 @@ const Elite: React.FC<EliteProps> = () => {
           </div>
         )}
 
-
-        {/* Classic Elite "nearby things" 2D visualiser (always-visible center bottom, side-on ~20deg angled view) */}
-        {/* This entire section (the perspective grid + NEARBY label) is what needs to be moved up 25% of its height to overlap more of the windscreen. */}
-        {/* Positioning is here in the bottom dashboard overlay (inline styles). Drawing constants are in SCANNER_2D in config. */}
         <div style={{
           position: 'absolute',
           left: '50%',
           transform: 'translateX(-50%)',
-          bottom: 60,
-          width: 712,
-          height: 200,
+          bottom: DASHBOARD.radar.bottom,
+          width: DASHBOARD.radar.width,
+          height: DASHBOARD.radar.height,
           boxShadow: 'inset 0 0 14px rgba(102, 170, 255, .15), 0 0 8px rgba(102, 170, 255, .15)',
-          overflow: 'hidden',
+          overflow: 'visible',
         }}>
           <canvas ref={radar2DCanvasRef} width={704} height={190} style={{ position: 'absolute', top: 2, left: 2 }} />
           <div style={{ position: 'absolute', bottom: 1, width: '100%', textAlign: 'center', fontSize: '8px', letterSpacing: '0.5px', color: SCANNER_2D.nearbyLabelColor }}>NEARBY</div>
         </div>
 
-        {/* Fused VECH preview + status gauges as one component */}
         <div style={{
           position: 'absolute',
           left: 'calc(50% + 174px)',
           bottom: 0,
-          width: 400,  /* single consistent width for the whole fused panel (Vech + rings + status). Matches the widest ring (canvas/ring visual). All inner JSX elements use 100% width (or flex/relative) so the status UI (SPD/FUEL/systems) is as wide as the ring, centered. */
+          width: 400,
           height: 300,
           background: 'rgba(0, 6, 14, 0.1)',
           borderRadius: '2px',
