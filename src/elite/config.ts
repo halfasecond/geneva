@@ -281,6 +281,13 @@ export const DASHBOARD = {
     width: 240,
     bottom: 60,
   },
+  /** Shared chrome for left destination / hyperspace info card */
+  leftPanel: {
+    background: 'rgba(0, 6, 14, 0.8)',
+    border: '1px solid rgba(0, 170, 255, 0.1)',
+    borderRadius: 2,
+    padding: '24px 18px',
+  },
   radar: {
     bottom: 60,
     width: 712,

@@ -40,7 +40,7 @@ import type { AuthProps } from '../../types/auth'
 import { EliteSim } from '../../elite/sim/EliteSim'
 import type { NpcAgent } from '../../elite/sim/core/types'
 import { length } from '../../elite/sim/core/vector'
-import { getCartographyBodies, getJumpFuelCost, CARTOGRAPHY_BODIES, DEFAULT_ROUTE, getBodyById } from '../../elite/sim/cartography'
+import { getCartographyBodies, getJumpFuelCost, DEFAULT_ROUTE, getBodyById } from '../../elite/sim/cartography'
 
 // Tightening imports (config + extracted modules)
 import {
@@ -769,15 +769,6 @@ const Elite: React.FC<EliteProps> = () => {
     return () => { if (raf) cancelAnimationFrame(raf) }
   }, [mapOpen])  // re-draws on map toggle too, but always runs for ship UI
 
-  const handleSetNearestOrigin = () => {
-    const nearest = CARTOGRAPHY_BODIES.reduce((best, b) => {
-      const p = snapRef.current?.player?.pos || { x: 0, y: 0 }
-      const d = Math.hypot(b.pos2d.x - p.x, b.pos2d.y - p.y)
-      return d < best.d ? { id: b.id, d } : best
-    }, { id: route.originId, d: 9999 })
-    setRoute(r => ({ ...r, originId: nearest.id }))
-  }
-
   const handleInitiateHyperspace = () => {
     const o = getBodyById(route.originId, 0)
     const d = getBodyById(route.destinationId, 0)
@@ -835,7 +826,6 @@ const Elite: React.FC<EliteProps> = () => {
             route={route}
             fuel={hud.fuel}
             isHyperspacing={isHyperspacing}
-            onSetNearestOrigin={handleSetNearestOrigin}
             onInitiateHyperspace={handleInitiateHyperspace}
           />
         </>
@@ -908,16 +898,13 @@ const Elite: React.FC<EliteProps> = () => {
             left: DASHBOARD.leftColumn.left,
             bottom: DASHBOARD.leftColumn.bottom,
             width: DASHBOARD.leftColumn.width,
-            background: 'rgba(0, 6, 14, 0.8)',
-            border: '1px solid rgba(0, 170, 255, 0.1)',
-            borderRadius: '2px',
+            boxSizing: 'border-box',
             overflow: 'hidden',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'flex-start',
             justifyContent: 'flex-start',
-            padding: '24px 18px',
-            boxSizing: 'border-box',
+            ...DASHBOARD.leftPanel,
           }}>
             <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>{getBodyById(route.destinationId, 0)?.name || 'NO TARGET'}</div>
             <div style={{ marginBottom: '8px' }}>6.23Ly</div>
