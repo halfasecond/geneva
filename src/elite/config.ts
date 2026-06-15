@@ -270,6 +270,7 @@ export const Z = {
   dashboard: 10,
   cartography: 15,
   cockpitWidgets: 17,
+  logo: 18,
   bezel: 20,
 } as const
 

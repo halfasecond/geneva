@@ -810,7 +810,7 @@ const Elite: React.FC<EliteProps> = () => {
         left: 'calc(50% - 310px)',
         transform: 'translateX(-50%)',
         bottom: 164,
-        zIndex: Z.dashboard + 1,
+        zIndex: Z.logo,
         pointerEvents: 'none',
       }} />
 
