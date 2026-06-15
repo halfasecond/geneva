@@ -44,12 +44,11 @@ import { getCartographyBodies, getJumpFuelCost, CARTOGRAPHY_BODIES, DEFAULT_ROUT
 
 // Tightening imports (config + extracted modules)
 import {
-  COLORS, SCANNER_2D, VECH, PANELS, VIEW, WORLD, HYPERSPACE, NPC, FUEL,
+  COLORS, SCANNER_2D, VECH, VIEW, WORLD, HYPERSPACE, NPC, FUEL,
   roleCss, roleColor, npcSizeForRole,
 } from '../../elite/config'
 import { projectContacts } from '../../elite/sim/contacts'
 import { useFlightInput } from '../../elite/useFlightInput'
-import { useHoloDrag } from '../../elite/useHoloDrag'
 import * as CockpitRender from '../../elite/render/cockpit'
 import { CartographyOverlay, VechPreview } from '../../elite/ui'
 
@@ -102,13 +101,6 @@ const Elite: React.FC<EliteProps> = () => {
   const hyperspaceTargetRef = useRef<{ x: number; y: number; z: number } | null>(null)
   const hyperspaceCostRef = useRef(0)
 
-  // Draggable holo panels - now powered by the extracted useHoloDrag hook (deduped the 3x identical logic)
-  const [mapPanelPos, setMapPanelPos] = useState(PANELS.mapInitial)
-  const mapDrag = useHoloDrag(mapPanelPos, setMapPanelPos, { maxXPad: PANELS.dragBounds.maxXPad, maxYPad: PANELS.dragBounds.maxYPadMap })
-
-  const [controlsPanelPos, setControlsPanelPos] = useState(PANELS.controlsInitial)
-  const controlsDrag = useHoloDrag(controlsPanelPos, setControlsPanelPos, { maxXPad: PANELS.dragBounds.maxXPad, maxYPad: PANELS.dragBounds.maxYPadControls })
-
   // Use the extracted flight input hook (replaces the old keysRef + onKeyDown/Up + getPlayerInput)
   const { getInput: getPlayerInput } = useFlightInput()
 
@@ -118,10 +110,11 @@ const Elite: React.FC<EliteProps> = () => {
     const handleGlobalKeys = (e: KeyboardEvent) => {
       const k = e.key.toLowerCase()
       if (k === 'm') setMapOpen(o => !o)
+      if (k === 'escape' && mapOpen) setMapOpen(false)
     }
     window.addEventListener('keydown', handleGlobalKeys)
     return () => window.removeEventListener('keydown', handleGlobalKeys)
-  }, [])
+  }, [mapOpen])
 
   // Initialize Three.js scene (inspired by Flocker FlockScene + cartography aesthetic)
   useEffect(() => {
@@ -802,19 +795,6 @@ const Elite: React.FC<EliteProps> = () => {
     if (sg) sg.visible = true
   }
 
-  // The useHoloDrag hooks above already attach their global listeners while dragging.
-  // Reset panel positions when the map is opened (kept from original behavior)
-  useEffect(() => {
-    if (mapOpen) {
-      const rightX = Math.max(700, window.innerWidth - 400)
-      const mapY = 55
-      setMapPanelPos({ x: rightX, y: mapY })
-      setControlsPanelPos({ x: rightX, y: mapY + 375 })
-    }
-  }, [mapOpen])
-
-
-
   return (
     <div style={{
       position: 'fixed',
@@ -832,63 +812,56 @@ const Elite: React.FC<EliteProps> = () => {
 
       {/* Cockpit frame bezels - to make it feel like inside the spaceship (holo style, framing the central "window" for the 3D space) */}
 
-      {/* Right bezel - minimal frame (carto holo overlays when map open) */}
-      <div style={{
-        position: 'absolute',
-        right: 0,
-        top: 0,
-        bottom: 0,
-        width: '85px',
-        background: 'rgba(0, 4, 10, 0.6)',
-        boxShadow: '0 0 12px rgba(0, 170, 255, 0.15)',
-        zIndex: 8,
-        pointerEvents: 'none',
-      }} />
+      {!mapOpen && (
+        <>
+          <div style={{
+            position: 'absolute',
+            right: 0,
+            top: 0,
+            bottom: 0,
+            width: '85px',
+            background: 'rgba(0, 4, 10, 0.6)',
+            boxShadow: '0 0 12px rgba(0, 170, 255, 0.15)',
+            zIndex: 8,
+            pointerEvents: 'none',
+          }} />
 
-      <img src={'https://cdn.halfasecond.com/images/vech/vech-logo.png'} alt="Vech" style={{ 
-        width: 72,
-        opacity: .4 ,
-        position: 'fixed',
-        left: 'calc(50% - 310px)',
-        transform: 'translateX(-50%)',
-        bottom: 164,
-        zIndex: 11,
-        pointerEvents: 'none'
-       }} />
+          <img src={'https://cdn.halfasecond.com/images/vech/vech-logo.png'} alt="Vech" style={{
+            width: 72,
+            opacity: 0.4,
+            position: 'fixed',
+            left: 'calc(50% - 310px)',
+            transform: 'translateX(-50%)',
+            bottom: 164,
+            zIndex: 11,
+            pointerEvents: 'none',
+          }} />
 
-      {/* Top bezel - canopy frame */}
-      <div style={{
-        position: 'absolute',
-        top: 0,
-        left: '0',
-        right: 0,
-        height: '45px',
-        background: 'rgba(0, 4, 10, 0.65)',
-        boxShadow: '0 0 8px rgba(0, 170, 255, 0.15)',
-        zIndex: 8,
-        pointerEvents: 'none',
-        display: 'flex',
-        alignItems: 'center',
-        padding: '0 10px',
-        fontSize: '9px',
-        color: '#ffaa00',
-      }} />
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '45px',
+            background: 'rgba(0, 4, 10, 0.65)',
+            boxShadow: '0 0 8px rgba(0, 170, 255, 0.15)',
+            zIndex: 8,
+            pointerEvents: 'none',
+          }} />
 
-      <div style={{
-        position: 'absolute',
-        left: 0,
-        top: 0,
-        bottom: 0,
-        width: '85px',
-        background: 'rgba(0, 4, 10, 0.75)',
-        boxShadow: '0 0 12px rgba(0, 170, 255, 0.15)',
-        zIndex: 8,
-        pointerEvents: 'none',
-        fontSize: '9px',
-        padding: '8px 4px',
-        color: '#ffaa00',
-        overflow: 'hidden',
-      }} />
+          <div style={{
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: '85px',
+            background: 'rgba(0, 4, 10, 0.75)',
+            boxShadow: '0 0 12px rgba(0, 170, 255, 0.15)',
+            zIndex: 8,
+            pointerEvents: 'none',
+          }} />
+        </>
+      )}
 
       {mapOpen && (
         <CartographyOverlay
@@ -896,19 +869,15 @@ const Elite: React.FC<EliteProps> = () => {
           fuel={hud.fuel}
           playerPos={hud.playerPos}
           isHyperspacing={isHyperspacing}
-          mapPanelPos={mapPanelPos}
-          controlsPanelPos={controlsPanelPos}
           onRouteChange={setRoute}
           onSetNearestOrigin={handleSetNearestOrigin}
           onInitiateHyperspace={handleInitiateHyperspace}
-          onStartMapDrag={mapDrag.startDrag}
-          onStartControlsDrag={controlsDrag.startDrag}
           onClose={() => setMapOpen(false)}
         />
       )}
 
-      {/* Bottom Dashboard - Ship UI (default view, always visible as the "ship dashboard"; carto map overlays when M pressed) */}
-      <div style={{
+      {/* Bottom Dashboard — hidden during cartography (play-blocking) */}
+      {!mapOpen && <div style={{
         position: 'absolute',
         bottom: 0,
         left: 0,
@@ -980,7 +949,7 @@ const Elite: React.FC<EliteProps> = () => {
         }}>
           <VechPreview hud={hud} glbUrl={glbUrl} />
         </div>
-      </div>
+      </div>}
     </div>
   )
 }

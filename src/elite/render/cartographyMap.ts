@@ -1,9 +1,9 @@
 /**
  * 2D cartography map canvas drawing + click picking.
- * Extracted from Elite.tsx — pure functions, no React.
+ * Fullscreen windscreen overlay — Flocker-inspired visuals.
  */
 
-import { COLORS, MAP } from '../config'
+import { MAP } from '../config'
 import { getCartographyBodies } from '../sim/cartography'
 import type { CartographyBody } from '../sim/cartography'
 
@@ -17,123 +17,158 @@ export interface PlayerMapPos {
   y: number
 }
 
+/** Scale orbital layout to fit the viewport (Flocker fills the windscreen). */
+export function mapScaleForViewport(width: number, height: number): number {
+  const minDim = Math.min(width, height)
+  return (minDim * 0.42) / 320
+}
+
 export function drawCartographyFrame(
   ctx: CanvasRenderingContext2D,
-  size: number,
+  width: number,
+  height: number,
   mapTime: number,
   route: CartographyRoute,
   playerPos: PlayerMapPos,
 ) {
-  const center = size / 2
-  const scale = MAP.scale
+  const cx = width / 2
+  const cy = height / 2
+  const scale = mapScaleForViewport(width, height)
 
-  ctx.fillStyle = MAP.background
-  ctx.fillRect(0, 0, size, size)
+  // Flocker-like deep space backdrop
+  ctx.fillStyle = MAP.fullscreenBg
+  ctx.fillRect(0, 0, width, height)
 
-  ctx.strokeStyle = MAP.gridColor
-  ctx.lineWidth = 1
-  for (let i = -3; i <= 3; i++) {
-    const p = center + i * MAP.gridStep
+  // Sparse star field
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.55)'
+  for (let i = 0; i < 120; i++) {
+    const sx = ((i * 97 + 13) % 1000) / 1000 * width
+    const sy = ((i * 53 + 7) % 1000) / 1000 * height
+    const sr = (i % 3 === 0) ? 1.2 : 0.6
     ctx.beginPath()
-    ctx.moveTo(p, 20)
-    ctx.lineTo(p, size - 20)
-    ctx.stroke()
-    ctx.beginPath()
-    ctx.moveTo(20, p)
-    ctx.lineTo(size - 20, p)
-    ctx.stroke()
+    ctx.arc(sx, sy, sr, 0, Math.PI * 2)
+    ctx.fill()
   }
 
   const bodies = getCartographyBodies(mapTime * 0.9)
   const bodyMap = new Map(bodies.map(b => [b.id, b]))
 
-  ctx.strokeStyle = `rgba(140, 170, 200, ${MAP.orbitOpacity})`
-  ctx.lineWidth = 1.5
+  // Orbit rings — thin, pale (matches flockers.halfasecond.com)
+  ctx.strokeStyle = MAP.orbitStroke
+  ctx.lineWidth = 1
   bodies.forEach(b => {
     if (!b.orbitRadius || b.type === 'star') return
     const parent = b.parentId ? bodyMap.get(b.parentId) : null
-    const cx = parent ? center + parent.pos2d.x * scale : center
-    const cy = parent ? center + parent.pos2d.y * scale : center
+    const ox = parent ? cx + parent.pos2d.x * scale : cx
+    const oy = parent ? cy + parent.pos2d.y * scale : cy
     ctx.beginPath()
-    ctx.ellipse(cx, cy, b.orbitRadius * scale, b.orbitRadius * scale * 0.72, 0, 0, Math.PI * 2)
+    ctx.ellipse(ox, oy, b.orbitRadius * scale, b.orbitRadius * scale * 0.72, 0, 0, Math.PI * 2)
     ctx.stroke()
   })
 
+  // Central star glow
+  const star = bodies.find(b => b.type === 'star')
+  if (star) {
+    const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 28 * scale)
+    grad.addColorStop(0, 'rgba(255, 230, 163, 0.95)')
+    grad.addColorStop(0.4, 'rgba(255, 200, 80, 0.35)')
+    grad.addColorStop(1, 'rgba(255, 200, 80, 0)')
+    ctx.fillStyle = grad
+    ctx.beginPath()
+    ctx.arc(cx, cy, 28 * scale, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.fillStyle = '#ffe6a3'
+    ctx.beginPath()
+    ctx.arc(cx, cy, Math.max(4, star.radius * scale * 0.5), 0, Math.PI * 2)
+    ctx.fill()
+  }
+
+  // Bodies — no on-map labels (Flocker uses sidebar only)
   bodies.forEach(b => {
-    const px = center + b.pos2d.x * scale
-    const py = center + b.pos2d.y * scale
-    const r = Math.max(2.5, b.radius * 1.6 * scale)
+    if (b.type === 'star') return
+    const px = cx + b.pos2d.x * scale
+    const py = cy + b.pos2d.y * scale
+    const r = Math.max(3, b.radius * 1.4 * scale)
 
     ctx.fillStyle = b.color
     ctx.beginPath()
     ctx.arc(px, py, r, 0, Math.PI * 2)
     ctx.fill()
 
-    ctx.fillStyle = COLORS.textMuted
-    ctx.font = MAP.bodyLabelFont
-    ctx.fillText(b.name, px + r + 3, py - 2)
+    if (b.type === 'station') {
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)'
+      ctx.lineWidth = 0.8
+      ctx.beginPath()
+      ctx.moveTo(px - r * 0.7, py)
+      ctx.lineTo(px + r * 0.7, py)
+      ctx.moveTo(px, py - r * 0.7)
+      ctx.lineTo(px, py + r * 0.7)
+      ctx.stroke()
+    }
 
     if (b.id === route.originId || b.id === route.destinationId) {
       ctx.strokeStyle = b.id === route.destinationId ? MAP.highlightDest : MAP.highlightOrigin
       ctx.lineWidth = 2
       ctx.beginPath()
-      ctx.arc(px, py, r + 4, 0, Math.PI * 2)
+      ctx.arc(px, py, r + 5, 0, Math.PI * 2)
       ctx.stroke()
     }
   })
 
-  drawRouteCurve(ctx, bodyMap, route, center, scale)
+  drawRouteCurve(ctx, bodyMap, route, cx, cy, scale)
 
-  const playerX = center + playerPos.x * scale * 0.65
-  const playerY = center + playerPos.y * scale * 0.65
+  // Player marker
+  const playerX = cx + playerPos.x * scale * 0.65
+  const playerY = cy + playerPos.y * scale * 0.65
   ctx.fillStyle = MAP.playerColor
   ctx.beginPath()
-  ctx.moveTo(playerX, playerY - 6)
-  ctx.lineTo(playerX - 4, playerY + 5)
-  ctx.lineTo(playerX + 4, playerY + 5)
+  ctx.moveTo(playerX, playerY - 7)
+  ctx.lineTo(playerX - 5, playerY + 6)
+  ctx.lineTo(playerX + 5, playerY + 6)
   ctx.closePath()
   ctx.fill()
-  ctx.fillStyle = MAP.playerDot
-  ctx.fillRect(playerX - 1, playerY - 1, 2, 2)
 }
 
 function drawRouteCurve(
   ctx: CanvasRenderingContext2D,
   bodyMap: Map<string, CartographyBody>,
   route: CartographyRoute,
-  center: number,
+  cx: number,
+  cy: number,
   scale: number,
 ) {
   const origin = bodyMap.get(route.originId)
   const dest = bodyMap.get(route.destinationId)
   if (!origin || !dest) return
 
-  const ox = center + origin.pos2d.x * scale
-  const oy = center + origin.pos2d.y * scale
-  const dx = center + dest.pos2d.x * scale
-  const dy = center + dest.pos2d.y * scale
+  const ox = cx + origin.pos2d.x * scale
+  const oy = cy + origin.pos2d.y * scale
+  const dx = cx + dest.pos2d.x * scale
+  const dy = cy + dest.pos2d.y * scale
   const mx = (ox + dx) / 2
   const my = (oy + dy) / 2
   const dist = Math.hypot(dx - ox, dy - oy)
-  const bend = Math.min(70, dist * 0.22)
+  const bend = Math.min(85, dist * 0.18)
   const nx = -(dy - oy) / (dist || 1)
   const ny = (dx - ox) / (dist || 1)
-  const cx = mx + nx * bend
-  const cy = my + ny * bend
+  const qx = mx + nx * bend
+  const qy = my + ny * bend
 
   ctx.strokeStyle = MAP.routeColor
-  ctx.lineWidth = 1.8
+  ctx.lineWidth = 1.6
+  ctx.globalAlpha = 0.75
   ctx.beginPath()
   ctx.moveTo(ox, oy)
-  ctx.quadraticCurveTo(cx, cy, dx, dy)
+  ctx.quadraticCurveTo(qx, qy, dx, dy)
   ctx.stroke()
+  ctx.globalAlpha = 1
 
-  const ang = Math.atan2(dy - cy, dx - cx)
+  const ang = Math.atan2(dy - qy, dx - qx)
   ctx.fillStyle = MAP.routeColor
   ctx.beginPath()
   ctx.moveTo(dx, dy)
-  ctx.lineTo(dx - 9 * Math.cos(ang - 0.5), dy - 9 * Math.sin(ang - 0.5))
-  ctx.lineTo(dx - 9 * Math.cos(ang + 0.5), dy - 9 * Math.sin(ang + 0.5))
+  ctx.lineTo(dx - 10 * Math.cos(ang - 0.45), dy - 10 * Math.sin(ang - 0.45))
+  ctx.lineTo(dx - 10 * Math.cos(ang + 0.45), dy - 10 * Math.sin(ang + 0.45))
   ctx.closePath()
   ctx.fill()
 }
@@ -142,9 +177,9 @@ function drawRouteCurve(
 export function pickCartographyDestination(
   mx: number,
   my: number,
+  scale: number,
   elapsedSeconds = 0,
 ): string | null {
-  const scale = MAP.scale
   let best: { id: string; dist: number } | null = null
 
   getCartographyBodies(elapsedSeconds).forEach(b => {
@@ -152,7 +187,7 @@ export function pickCartographyDestination(
     const bx = b.pos2d.x * scale
     const by = b.pos2d.y * scale
     const d = Math.hypot(mx - bx, my - by)
-    const hit = Math.max(18, b.radius * 2.2)
+    const hit = Math.max(22, b.radius * 2.8 * scale)
     if (d < hit && (!best || d < best.dist)) {
       best = { id: b.id, dist: d }
     }
