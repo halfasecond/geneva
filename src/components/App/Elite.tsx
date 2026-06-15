@@ -44,7 +44,7 @@ import { getCartographyBodies, getJumpFuelCost, CARTOGRAPHY_BODIES, DEFAULT_ROUT
 
 // Tightening imports (config + extracted modules)
 import {
-  COLORS, SCANNER_2D, VECH, VIEW, WORLD, HYPERSPACE, NPC, FUEL,
+  COLORS, SCANNER_2D, VECH, VIEW, WORLD, HYPERSPACE, NPC, FUEL, Z,
   roleCss, roleColor, npcSizeForRole,
 } from '../../elite/config'
 import { projectContacts } from '../../elite/sim/contacts'
@@ -812,52 +812,18 @@ const Elite: React.FC<EliteProps> = () => {
 
       {/* Cockpit frame bezels - to make it feel like inside the spaceship (holo style, framing the central "window" for the 3D space) */}
 
-      <div style={{
-        position: 'absolute',
-        right: 0,
-        top: 0,
-        bottom: 0,
-        width: '85px',
-        background: 'rgba(0, 4, 10, 0.6)',
-        boxShadow: '0 0 12px rgba(0, 170, 255, 0.15)',
-        zIndex: 10,
-        pointerEvents: 'none',
-      }} />
-
-      <img src={'https://cdn.halfasecond.com/images/vech/vech-logo.png'} alt="Vech" style={{
-        width: 72,
-        opacity: 0.4,
-        position: 'fixed',
-        left: 'calc(50% - 310px)',
-        transform: 'translateX(-50%)',
-        bottom: 164,
-        zIndex: 11,
-        pointerEvents: 'none',
-      }} />
-
-      <div style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        height: '45px',
-        background: 'rgba(0, 4, 10, 0.65)',
-        boxShadow: '0 0 8px rgba(0, 170, 255, 0.15)',
-        zIndex: 10,
-        pointerEvents: 'none',
-      }} />
-
-      <div style={{
-        position: 'absolute',
-        left: 0,
-        top: 0,
-        bottom: 0,
-        width: '85px',
-        background: 'rgba(0, 4, 10, 0.75)',
-        boxShadow: '0 0 12px rgba(0, 170, 255, 0.15)',
-        zIndex: 10,
-        pointerEvents: 'none',
-      }} />
+      {!mapOpen && (
+        <img src={'https://cdn.halfasecond.com/images/vech/vech-logo.png'} alt="Vech" style={{
+          width: 72,
+          opacity: 0.4,
+          position: 'fixed',
+          left: 'calc(50% - 310px)',
+          transform: 'translateX(-50%)',
+          bottom: 164,
+          zIndex: Z.dashboard + 1,
+          pointerEvents: 'none',
+        }} />
+      )}
 
       {mapOpen && (
         <CartographyOverlay
@@ -872,8 +838,43 @@ const Elite: React.FC<EliteProps> = () => {
         />
       )}
 
-      {/* Bottom Dashboard — always visible; cartography holo sits in windscreen above */}
+      {/* Cockpit bezels — always on top to frame the windscreen */}
       <div style={{
+        position: 'absolute',
+        right: 0,
+        top: 0,
+        bottom: 0,
+        width: '85px',
+        background: 'rgba(0, 4, 10, 0.6)',
+        boxShadow: '0 0 12px rgba(0, 170, 255, 0.15)',
+        zIndex: Z.bezel,
+        pointerEvents: 'none',
+      }} />
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: '45px',
+        background: 'rgba(0, 4, 10, 0.65)',
+        boxShadow: '0 0 8px rgba(0, 170, 255, 0.15)',
+        zIndex: Z.bezel,
+        pointerEvents: 'none',
+      }} />
+      <div style={{
+        position: 'absolute',
+        left: 0,
+        top: 0,
+        bottom: 0,
+        width: '85px',
+        background: 'rgba(0, 4, 10, 0.75)',
+        boxShadow: '0 0 12px rgba(0, 170, 255, 0.15)',
+        zIndex: Z.bezel,
+        pointerEvents: 'none',
+      }} />
+
+      {/* Bottom dashboard — hidden while cartography is up (widgets intrude into windscreen) */}
+      {!mapOpen && <div style={{
         position: 'absolute',
         bottom: 0,
         left: 0,
@@ -884,10 +885,9 @@ const Elite: React.FC<EliteProps> = () => {
         color: COLORS.vechRingCss,
         fontFamily: 'ui-monospace, monospace',
         fontSize: '18px',
-        zIndex: 10,
+        zIndex: Z.dashboard,
         pointerEvents: 'none',
       }}>
-        {/* Left system info - far left of screen */}
         <div style={{
           position: 'absolute',
           left: 'calc(50% - 614px)',
@@ -901,7 +901,6 @@ const Elite: React.FC<EliteProps> = () => {
           flexDirection: 'column',
           alignItems: 'flex-start',
           justifyContent: 'flex-start',
-          zIndex: 11,
           padding: '24px 18px',
           boxSizing: 'border-box',
         }}>
@@ -945,7 +944,7 @@ const Elite: React.FC<EliteProps> = () => {
         }}>
           <VechPreview hud={hud} glbUrl={glbUrl} />
         </div>
-      </div>
+      </div>}
     </div>
   )
 }

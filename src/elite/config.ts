@@ -253,7 +253,6 @@ export const NPC = {
 // =============================================================================
 // 2D HOLO MAP (draggable cartography panel)
 // =============================================================================
-// =============================================================================
 // COCKPIT WINDSCREEN (cartography holo projects here, not full viewport)
 // =============================================================================
 export const WINDSCREEN = {
@@ -264,6 +263,14 @@ export const WINDSCREEN = {
   border: 'rgba(102, 170, 255, 0.28)',
   innerGlow: 'inset 0 0 48px rgba(102, 170, 255, 0.14), inset 0 0 12px rgba(0, 170, 255, 0.08)',
 }
+
+/** Cockpit overlay stacking — cartography must sit above dashboard widgets that intrude into the windscreen. */
+export const Z = {
+  scene: 0,
+  dashboard: 10,
+  cartography: 15,
+  bezel: 20,
+} as const
 
 export const MAP = {
   // Legacy reference scale (340px panel era)

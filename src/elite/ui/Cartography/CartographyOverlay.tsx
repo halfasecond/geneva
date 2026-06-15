@@ -1,5 +1,5 @@
 import React from 'react'
-import { MAP, WINDSCREEN } from '../../config'
+import { MAP, WINDSCREEN, Z } from '../../config'
 import CartographyMap from './CartographyMap'
 import OriginSelect from './OriginSelect'
 import DestinationList from './DestinationList'
@@ -38,7 +38,7 @@ const CartographyOverlay: React.FC<CartographyOverlayProps> = ({
       left: WINDSCREEN.left,
       right: WINDSCREEN.right,
       bottom: WINDSCREEN.bottom,
-      zIndex: 9,
+      zIndex: Z.cartography,
       overflow: 'hidden',
       pointerEvents: 'auto',
       border: `1px solid ${WINDSCREEN.border}`,
