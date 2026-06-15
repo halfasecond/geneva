@@ -3,6 +3,18 @@ import { add, clampMagnitude, cross, length, normalize, scale, subtract, zero } 
 import { calculateFlocking } from './core/forces'
 import { addProgress, applyRoleFeedback } from './core/progress'
 import { getBodyById, DEFAULT_ROUTE, navPos3dFromBody } from './cartography'
+import {
+  applyPlayerTrade,
+  defaultMarketConfig,
+  getCargoUsed,
+  getMarketDiagnostics,
+  initMarkets,
+  nearestDockableStation,
+  stepMarkets,
+  type MarketConfig,
+  type MarketState,
+} from './market'
+import { DOCK, MARKET } from '../config'
 
 const DEFAULT_CONFIG: SimConfig = {
   separationRadius: 28,
@@ -21,10 +33,17 @@ export class EliteSim {
   private npcs: NpcAgent[] = []
   private player: PlayerState
   private config: SimConfig
+  private marketConfig: MarketConfig
+  private markets: MarketState[]
   private time = 0
 
   constructor(initialPopulation = 2) {
     this.config = { ...DEFAULT_CONFIG }
+    this.marketConfig = {
+      ...defaultMarketConfig,
+      timeScale: 1 / MARKET.hourIntervalSeconds,
+    }
+    this.markets = initMarkets()
     const origin = getBodyById(DEFAULT_ROUTE.originId, 'frozen')
     const spawn = origin ? navPos3dFromBody(origin) : { x: 0, y: 120, z: 40 }
     this.player = {
@@ -35,12 +54,21 @@ export class EliteSim {
       roll: 0,
       speed: 6,
       fuel: 120,
+      credits: MARKET.startingCredits,
+      cargo: {},
+      cargoCapacity: MARKET.cargoCapacity,
       systemId: origin?.systemId ?? 'helios',
       systemPos2d: { ...(origin?.pos2d ?? { x: 0, y: 0 }) },
       flightMode: 'normal',
       dockedAtStationId: null,
     }
     this.resetNpcs(initialPopulation)
+    if (origin?.type === 'station') {
+      this.player.flightMode = 'docked'
+      this.player.dockedAtStationId = origin.id
+      this.player.vel = zero()
+      this.player.speed = 0
+    }
   }
 
   resetNpcs(count: number) {
@@ -83,68 +111,146 @@ export class EliteSim {
     this.config = { ...this.config, ...partial }
   }
 
+  getMarkets() {
+    return this.markets
+  }
+
+  getDockedMarket(): MarketState | null {
+    const id = this.player.dockedAtStationId
+    if (!id) return null
+    return this.markets.find(m => m.id === id) ?? null
+  }
+
+  tryDock(): boolean {
+    if (this.player.flightMode === 'docked') return true
+    const nearest = nearestDockableStation(this.player.pos, DOCK.range)
+    if (!nearest) return false
+
+    const body = getBodyById(nearest.id, 'frozen')
+    if (!body) return false
+
+    this.player.dockedAtStationId = nearest.id
+    this.player.flightMode = 'docked'
+    this.player.pos = navPos3dFromBody(body)
+    this.player.vel = zero()
+    this.player.speed = 0
+    this.player.systemPos2d = { ...body.pos2d }
+    return true
+  }
+
+  undock(): void {
+    if (this.player.flightMode !== 'docked') return
+    this.player.dockedAtStationId = null
+    this.player.flightMode = 'normal'
+    this.player.vel = scale(this.player.heading, 4)
+    this.player.speed = 4
+  }
+
+  toggleDock(): boolean {
+    if (this.player.flightMode === 'docked') {
+      this.undock()
+      return true
+    }
+    return this.tryDock()
+  }
+
+  tradeCommodity(commodityId: string, tons: number, direction: 'buy' | 'sell'): boolean {
+    const stationId = this.player.dockedAtStationId
+    if (!stationId || this.player.flightMode !== 'docked') return false
+    if (tons <= 0) return false
+
+    const marketIndex = this.markets.findIndex(m => m.id === stationId)
+    if (marketIndex < 0) return false
+
+    const market = this.markets[marketIndex]
+    const listing = market.commodities[commodityId]
+    if (!listing) return false
+
+    if (direction === 'buy') {
+      const cost = listing.price * tons
+      const cargoUsed = getCargoUsed(this.player.cargo)
+      if (this.player.credits < cost) return false
+      if (cargoUsed + tons > this.player.cargoCapacity) return false
+      if (listing.stock < tons) return false
+
+      this.player.credits -= cost
+      this.player.cargo[commodityId] = (this.player.cargo[commodityId] ?? 0) + tons
+    } else {
+      const held = this.player.cargo[commodityId] ?? 0
+      if (held < tons) return false
+      this.player.credits += listing.price * tons
+      const next = held - tons
+      if (next <= 0) delete this.player.cargo[commodityId]
+      else this.player.cargo[commodityId] = next
+    }
+
+    this.markets[marketIndex] = applyPlayerTrade(market, commodityId, tons, direction)
+    return true
+  }
+
   step(deltaSeconds: number, playerInput: { thrust: number; yaw: number; pitch: number; roll: number }) {
     this.time += deltaSeconds
+    this.markets = stepMarkets(this.markets, this.time, this.marketConfig)
 
-    // --- Player update (direct control, elite-style) ---
     const p = this.player
+    if (p.flightMode === 'docked') {
+      p.vel = zero()
+      p.speed = 0
+      this.stepNpcs(deltaSeconds)
+      return
+    }
+
     const thrust = Math.max(-0.6, Math.min(1.6, playerInput.thrust))
     const yaw = playerInput.yaw * 1.8
     const pitch = playerInput.pitch * 1.6
     const roll = playerInput.roll * 2.4
 
-    // Full 6DOF using incremental body-rate rotations on fwd + up (proper integration, no world-level reconstruction per frame).
-    // This fixes pitch conflicts where "level" basis was causing background to appear to move in conflicting directions.
     let fwd = p.heading
-    let upv = p.up   // local up
-
-    // derive current right to match previous convention: cross(fwd, up) == right for our level case
+    let upv = p.up
     let right = normalize(cross(fwd, upv))
 
-    // Yaw: rotate fwd and right around up (positive yaw turns right in our convention)
     if (Math.abs(yaw) > 0.001) {
       const rot = yaw * deltaSeconds
       fwd = this.rotateAroundAxis(fwd, upv, rot)
       right = this.rotateAroundAxis(right, upv, rot)
     }
 
-    // Pitch: rotate fwd and up around right. Positive pitch lifts nose (consistent with E=up input).
     if (Math.abs(pitch) > 0.001) {
       const rot = pitch * deltaSeconds
       fwd = this.rotateAroundAxis(fwd, right, rot)
       upv = this.rotateAroundAxis(upv, right, rot)
     }
 
-    // Roll: rotate right and up around fwd
     if (Math.abs(roll) > 0.001) {
       const rot = roll * deltaSeconds
       right = this.rotateAroundAxis(right, fwd, rot)
       upv = this.rotateAroundAxis(upv, fwd, rot)
     }
 
-    // normalize and re-derive right to keep orthonormal + consistent handedness
     fwd = normalize(fwd)
     upv = normalize(upv)
     right = normalize(cross(fwd, upv))
 
     p.heading = fwd
     p.up = upv
-    p.roll = (p.roll + roll * deltaSeconds) % (Math.PI * 2)  // keep scalar for radar banking etc.
+    p.roll = (p.roll + roll * deltaSeconds) % (Math.PI * 2)
 
-    // thrust along heading
     const accel = scale(fwd, thrust * 38 * deltaSeconds)
     p.vel = add(p.vel, accel)
-    p.vel = scale(p.vel, 0.986) // drag
+    p.vel = scale(p.vel, 0.986)
     p.vel = clampMagnitude(p.vel, 52)
     p.pos = add(p.pos, scale(p.vel, deltaSeconds))
     p.speed = length(p.vel)
 
-    // --- NPC flocking (Flocker logic) ---
+    this.stepNpcs(deltaSeconds)
+  }
+
+  private stepNpcs(deltaSeconds: number) {
+    const p = this.player
     const cfg = this.config
     this.npcs = this.npcs.map((self) => {
       let accel = calculateFlocking(self, this.npcs, cfg)
 
-      // mild attraction toward player for some roles (pirates & escorts)
       if (self.role === 'pirate' || self.role === 'escort') {
         const toPlayer = subtract(p.pos, self.pos)
         const dist = length(toPlayer)
@@ -162,7 +268,6 @@ export class EliteSim {
       const crowd = this.localPressure(self, 32)
       const contagion = this.localPressure(self, 55)
       const speed = length(vel)
-
       const pressure = Math.min(1, crowd * 0.3 + contagion * 0.45 + Math.min(0.4, speed / 30))
 
       const primary = addProgress(
@@ -202,22 +307,19 @@ export class EliteSim {
     return n > 0 ? sum / n : 0
   }
 
-  // Local axes are now provided by the shared getLocalAxes() in vector.ts (handles roll + full pitch correctly)
-
-  private rotateAroundAxis(v: Vec3, axis: Vec3, angle: number): Vec3 {
-    // Rodrigues' rotation formula (minimal)
+  private rotateAroundAxis(v: { x: number; y: number; z: number }, axis: { x: number; y: number; z: number }, angle: number) {
     const cos = Math.cos(angle)
     const sin = Math.sin(angle)
     const dot = v.x * axis.x + v.y * axis.y + v.z * axis.z
-    const cross = {
+    const crossProd = {
       x: axis.y * v.z - axis.z * v.y,
       y: axis.z * v.x - axis.x * v.z,
       z: axis.x * v.y - axis.y * v.x,
     }
     return {
-      x: v.x * cos + cross.x * sin + axis.x * dot * (1 - cos),
-      y: v.y * cos + cross.y * sin + axis.y * dot * (1 - cos),
-      z: v.z * cos + cross.z * sin + axis.z * dot * (1 - cos),
+      x: v.x * cos + crossProd.x * sin + axis.x * dot * (1 - cos),
+      y: v.y * cos + crossProd.y * sin + axis.y * dot * (1 - cos),
+      z: v.z * cos + crossProd.z * sin + axis.z * dot * (1 - cos),
     }
   }
 
@@ -231,9 +333,18 @@ export class EliteSim {
         up: { ...p.up },
         pos: { ...p.pos },
         systemPos2d: { ...p.systemPos2d },
+        cargo: { ...p.cargo },
       },
       npcs: this.npcs.map(n => ({ ...n, pos: { ...n.pos }, vel: { ...n.vel } })),
       time: this.time,
+      markets: this.markets.map(m => ({
+        ...m,
+        commodities: Object.fromEntries(
+          Object.entries(m.commodities).map(([id, c]) => [id, { ...c, candles: [...c.candles] }]),
+        ),
+      })),
+      marketDiagnostics: getMarketDiagnostics(this.markets),
+      nearestDock: nearestDockableStation(p.pos, DOCK.range),
     }
   }
 
@@ -250,7 +361,7 @@ export class EliteSim {
     this.player.systemId = dest.systemId
     this.player.systemPos2d = { ...dest.pos2d }
     this.player.dockedAtStationId = dest.type === 'station' ? dest.id : null
-    this.player.flightMode = 'normal'
+    this.player.flightMode = dest.type === 'station' ? 'docked' : 'normal'
 
     this.player.pos = navPos3dFromBody(dest)
     this.player.vel = zero()

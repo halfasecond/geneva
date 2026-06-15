@@ -1,3 +1,5 @@
+import type { MarketDiagnostics, MarketState } from '../market'
+
 export interface Vec3 {
   x: number
   y: number
@@ -46,6 +48,9 @@ export interface PlayerState {
   roll: number  // accumulated roll input (for radar banking etc, kept for compatibility)
   speed: number
   fuel: number
+  credits: number
+  cargo: Record<string, number>
+  cargoCapacity: number
   systemId: string
   systemPos2d: { x: number; y: number }
   flightMode: FlightMode
@@ -57,4 +62,7 @@ export interface EliteSnapshot {
   npcs: NpcAgent[]
   /** Local flight bubble time — unrelated to galaxy ephemeris */
   time: number
+  markets: MarketState[]
+  marketDiagnostics: MarketDiagnostics
+  nearestDock: { id: string; name: string; dist: number } | null
 }

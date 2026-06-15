@@ -235,6 +235,51 @@ export const WORLD = {
 }
 
 // =============================================================================
+// SPACE STATION MESH (procedural ring habitat)
+// =============================================================================
+export const DOCK = {
+  range: 80,
+}
+
+export const MARKET = {
+  startingCredits: 12000,
+  cargoCapacity: 20,
+  /** One discrete market hour tick per this many sim seconds */
+  hourIntervalSeconds: 10,
+  maxChartPrice: 7000,
+  ui: {
+    title: 'BellToy Marketplace',
+    cardBg: 'rgba(8, 12, 24, 0.88)',
+    cardBorder: 'rgba(80, 100, 140, 0.35)',
+    cardActiveBorder: 'rgba(102, 170, 255, 0.45)',
+    price: '#e8d070',
+    surplus: '#6dffb2',
+    scarcity: '#ff8866',
+    demand: '#e8b050',
+    stock: '#6eb8ff',
+    chartUp: '#5ddf8a',
+    chartDown: '#ff7a6a',
+    chartBg: 'rgba(0, 4, 10, 0.75)',
+  },
+}
+
+export const STATION = {
+  scaleFromRadius: 1.35,
+  ringMajor: 1.55,
+  ringMinor: 0.14,
+  armLength: 1.05,
+  solarW: 0.75,
+  solarH: 0.42,
+  hullOpacity: 0.82,
+  panelColor: 0x446688,
+  panelOpacity: 0.35,
+  ringSpin: 0.12,
+  beaconPulse: 2.8,
+  beaconA: 0x66ffaa,
+  beaconB: 0xff6688,
+}
+
+// =============================================================================
 // NPC MESHES (in-world 3D cones + pressure dots)
 // =============================================================================
 export const NPC = {
@@ -271,6 +316,7 @@ export const Z = {
   hyperspace: 5,        // full-viewport translucent tunnel — above 3D, below all cockpit UI
   dashboard: 10,
   cartography: 15,
+  market: 15,
   cockpitWidgets: 17,   // radar, Vech, hyperspace panel
   logo: 18,
   bezel: 20,            // windscreen frame — always over holo effects

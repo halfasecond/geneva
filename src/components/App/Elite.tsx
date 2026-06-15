@@ -54,10 +54,20 @@ import {
   roleCss, roleColor, npcSizeForRole,
 } from '../../elite/config'
 import { projectContacts } from '../../elite/sim/contacts'
+import { getCargoUsed } from '../../elite/sim/market'
 import { useFlightInput } from '../../elite/useFlightInput'
 import * as CockpitRender from '../../elite/render/cockpit'
 import * as HyperspaceRender from '../../elite/render/hyperspace'
-import { CartographyOverlay, HyperspacePanel, HyperspaceCountdown, HyperspaceTunnel, VechPreview } from '../../elite/ui'
+import * as StationRender from '../../elite/render/station'
+import {
+  CartographyOverlay,
+  HyperspacePanel,
+  HyperspaceCountdown,
+  HyperspaceTunnel,
+  CockpitStatusPanel,
+  MarketOverlay,
+  VechPreview,
+} from '../../elite/ui'
 
 // Basic AuthProps shape we receive (wallet + controls)
 type EliteProps = AuthProps & {
@@ -101,9 +111,16 @@ const Elite: React.FC<EliteProps> = () => {
     playerPos: { x: 0, y: 0, z: 0 },
     systemPos2d: { x: 0, y: 0 },
     fuel: 120,
-    flightMode: 'normal' as const,
+    credits: 12000,
+    cargoUsed: 0,
+    flightMode: 'docked' as const,
+    dockedAtStationId: 'aster-hub' as string | null,
+    nearestDock: null as { id: string; name: string; dist: number } | null,
     systemId: 'helios',
   })
+
+  const [marketOpen, setMarketOpen] = useState(true)
+  const [marketSnap, setMarketSnap] = useState<EliteSnapshot | null>(() => simRef.current.getSnapshot())
 
   // Cartography + hyperspace overlay state
   const [mapOpen, setMapOpen] = useState(false)
@@ -127,6 +144,18 @@ const Elite: React.FC<EliteProps> = () => {
       const k = e.key.toLowerCase()
       if (k === 'm' && hyperspacePhaseRef.current === 'idle') setMapOpen(o => !o)
       if (k === 'escape' && mapOpen && hyperspacePhaseRef.current === 'idle') setMapOpen(false)
+      if (k === 'f' && hyperspacePhaseRef.current === 'idle') {
+        if (snapRef.current?.player.flightMode === 'docked') {
+          simRef.current.undock()
+          setMarketOpen(false)
+          setMarketSnap(simRef.current.getSnapshot())
+        } else if (simRef.current.tryDock()) {
+          setMarketOpen(true)
+          setMarketSnap(simRef.current.getSnapshot())
+        }
+      }
+      if (k === 't' && snapRef.current?.player.flightMode === 'docked') setMarketOpen(o => !o)
+      if (k === 'escape' && marketOpen && snapRef.current?.player.flightMode === 'docked') setMarketOpen(false)
     }
     window.addEventListener('keydown', handleGlobalKeys)
     return () => window.removeEventListener('keydown', handleGlobalKeys)
@@ -200,10 +229,9 @@ const Elite: React.FC<EliteProps> = () => {
     const cartoInitial = getFrozenCartographyBodies()
     cartoInitial.forEach((b) => {
       if (b.type === 'star') return
-      const mesh = new THREE.Mesh(
-        new THREE.SphereGeometry(b.radius * 0.9, 18, 18),
-        new THREE.MeshBasicMaterial({ color: b.color, fog: false })
-      )
+      const mesh = b.type === 'station'
+        ? StationRender.createStationMesh(b.color, b.radius)
+        : StationRender.createPlanetMesh(b.color, b.radius)
       mesh.position.set(b.pos3d.x, b.pos3d.y, b.pos3d.z)
       bodiesGroup.add(mesh)
     })
@@ -318,6 +346,10 @@ const Elite: React.FC<EliteProps> = () => {
 
       const snap = sim.getSnapshot()
       snapRef.current = snap
+
+      if (bodiesGroupRef.current) {
+        StationRender.updateStationAnimations(bodiesGroupRef.current, snap.time)
+      }
 
       // COCKPIT CAMERA (first-person Elite style)
       // The camera *is* your viewpoint from inside the ship.
@@ -524,13 +556,18 @@ const Elite: React.FC<EliteProps> = () => {
             z: Math.round(snap.player.pos.z),
           },
           fuel: Math.round(snap.player.fuel ?? 0),
+          credits: Math.round(snap.player.credits),
+          cargoUsed: getCargoUsed(snap.player.cargo),
           systemPos2d: {
             x: Math.round(snap.player.systemPos2d.x),
             y: Math.round(snap.player.systemPos2d.y),
           },
           flightMode: snap.player.flightMode,
+          dockedAtStationId: snap.player.dockedAtStationId,
+          nearestDock: snap.nearestDock,
           systemId: snap.player.systemId,
         })
+        if (snap.player.flightMode === 'docked') setMarketSnap(snap)
       }
 
       if (renderer && scene && cam) {
@@ -771,6 +808,28 @@ const Elite: React.FC<EliteProps> = () => {
         <HyperspaceCountdown count={hyperspaceCountdown} />
       )}
 
+      {marketOpen && marketSnap && marketSnap.player.flightMode === 'docked' && !mapOpen && (() => {
+        const dockedMarket = marketSnap.markets.find(m => m.id === marketSnap.player.dockedAtStationId)
+        if (!dockedMarket) return null
+        return (
+          <MarketOverlay
+            homeMarket={dockedMarket}
+            markets={marketSnap.markets}
+            cargo={marketSnap.player.cargo}
+            onClose={() => setMarketOpen(false)}
+            onUndock={() => {
+              simRef.current.undock()
+              setMarketOpen(false)
+              setMarketSnap(simRef.current.getSnapshot())
+            }}
+            onTrade={(commodityId, tons, direction) => {
+              simRef.current.tradeCommodity(commodityId, tons, direction)
+              setMarketSnap(simRef.current.getSnapshot())
+            }}
+          />
+        )
+      })()}
+
       {mapOpen && (
         <>
           <CartographyOverlay
@@ -851,25 +910,15 @@ const Elite: React.FC<EliteProps> = () => {
         fontSize: '18px',
       }}>
         {!mapOpen && (
-          <div style={{
-            position: 'absolute',
-            left: DASHBOARD.leftColumn.left,
-            bottom: DASHBOARD.leftColumn.bottom,
-            width: DASHBOARD.leftColumn.width,
-            boxSizing: 'border-box',
-            overflow: 'hidden',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'flex-start',
-            justifyContent: 'flex-start',
-            ...DASHBOARD.leftPanel,
-          }}>
-            <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>{destBody?.name || 'NO TARGET'}</div>
-            <div style={{ marginBottom: '8px' }}>{travelDistance?.label ?? '—'}</div>
-            <div style={{ fontSize: '10px', marginBottom: '6px', opacity: 0.85 }}>{hud.flightMode.toUpperCase()}</div>
-            <div style={{ fontSize: '10px', marginBottom: '6px' }}>{destBody?.government ?? '—'}</div>
-            <div style={{ fontSize: '10px' }}>{destBody?.sector ?? '—'}</div>
-          </div>
+          <CockpitStatusPanel
+            flightMode={hud.flightMode}
+            dockedAtStationId={hud.dockedAtStationId}
+            destinationId={route.destinationId}
+            travelDistance={travelDistance}
+            credits={hud.credits}
+            cargoUsed={hud.cargoUsed}
+            nearestDock={hud.nearestDock}
+          />
         )}
 
         <div style={{
