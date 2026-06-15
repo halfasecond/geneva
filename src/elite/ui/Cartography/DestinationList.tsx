@@ -29,8 +29,6 @@ const DestinationList: React.FC<DestinationListProps> = ({ route, onRouteChange 
       borderRadius: 5,
       background: ui.listBg,
       boxShadow: '0 0 24px rgba(102, 170, 255, 0.1)',
-      backdropFilter: 'blur(8px)',
-      WebkitBackdropFilter: 'blur(8px)',
       fontFamily: ui.font,
       color: ui.text,
       pointerEvents: 'auto',

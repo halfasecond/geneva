@@ -17,22 +17,29 @@ const CartographyMap: React.FC<CartographyMapProps> = ({ route, playerPos, onDes
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const rafRef = useRef<number | null>(null)
   const sizeRef = useRef({ w: 0, h: 0 })
+  const routeRef = useRef(route)
+  const playerPosRef = useRef(playerPos)
+
+  routeRef.current = route
+  playerPosRef.current = playerPos
 
   useEffect(() => {
     const wrap = wrapRef.current
     const canvas = canvasRef.current
     if (!wrap || !canvas) return
 
-    const ctx = canvas.getContext('2d', { alpha: true })
+    const ctx = canvas.getContext('2d', { alpha: false })
     if (!ctx) return
 
     const resize = () => {
       const { width, height } = wrap.getBoundingClientRect()
       const w = Math.max(1, Math.floor(width))
       const h = Math.max(1, Math.floor(height))
-      canvas.width = w
-      canvas.height = h
-      sizeRef.current = { w, h }
+      if (canvas.width !== w || canvas.height !== h) {
+        canvas.width = w
+        canvas.height = h
+        sizeRef.current = { w, h }
+      }
     }
 
     resize()
@@ -44,7 +51,7 @@ const CartographyMap: React.FC<CartographyMapProps> = ({ route, playerPos, onDes
       mapTime += 0.016
       const { w, h } = sizeRef.current
       if (w && h) {
-        drawCartographyFrame(ctx, w, h, mapTime, route, playerPos)
+        drawCartographyFrame(ctx, w, h, mapTime, routeRef.current, playerPosRef.current)
       }
       rafRef.current = requestAnimationFrame(draw)
     }
@@ -54,7 +61,7 @@ const CartographyMap: React.FC<CartographyMapProps> = ({ route, playerPos, onDes
       ro.disconnect()
       if (rafRef.current) cancelAnimationFrame(rafRef.current)
     }
-  }, [route, playerPos])
+  }, [])
 
   const handleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current

@@ -17,14 +17,9 @@ interface CartographyOverlayProps {
   onClose: () => void
 }
 
-const holoGlass: React.CSSProperties = {
-  backdropFilter: 'blur(8px)',
-  WebkitBackdropFilter: 'blur(8px)',
-}
-
 /**
- * Cartography holo projected onto the cockpit windscreen only.
- * Minority Report: translucent (~0.85), floating glass UI, space visible behind.
+ * Cartography holo projected onto the cockpit windscreen.
+ * Opaque map layer (no translucency) to avoid compositor flicker over the 3D canvas.
  */
 const CartographyOverlay: React.FC<CartographyOverlayProps> = ({
   route,
@@ -48,40 +43,17 @@ const CartographyOverlay: React.FC<CartographyOverlayProps> = ({
       pointerEvents: 'auto',
       border: `1px solid ${WINDSCREEN.border}`,
       boxShadow: WINDSCREEN.innerGlow,
+      background: MAP.windscreenBg,
     }}
     role="dialog"
     aria-label="Cartography holo"
   >
-    {/* Holo projection layer — translucent so 3D windscreen bleeds through */}
-    <div style={{
-      position: 'absolute',
-      inset: 0,
-      opacity: WINDSCREEN.holoOpacity,
-      background: WINDSCREEN.holoTint,
-      ...holoGlass,
-    }}>
-      <CartographyMap
-        route={route}
-        playerPos={{ x: playerPos.x, y: playerPos.y }}
-        onDestinationPick={id => onRouteChange({ ...route, destinationId: id })}
-      />
+    <CartographyMap
+      route={route}
+      playerPos={{ x: playerPos.x, y: playerPos.y }}
+      onDestinationPick={id => onRouteChange({ ...route, destinationId: id })}
+    />
 
-      {/* MR scan-line wash */}
-      <div style={{
-        position: 'absolute',
-        inset: 0,
-        pointerEvents: 'none',
-        background: `repeating-linear-gradient(
-          0deg,
-          transparent,
-          transparent 3px,
-          ${WINDSCREEN.scanLine} 3px,
-          ${WINDSCREEN.scanLine} 4px
-        )`,
-      }} />
-    </div>
-
-    {/* Floating holo chrome — full opacity for legibility */}
     <div style={{
       position: 'absolute',
       inset: 0,
@@ -114,7 +86,6 @@ const CartographyOverlay: React.FC<CartographyOverlayProps> = ({
           letterSpacing: 2,
           color: MAP.ui.muted,
           textTransform: 'uppercase',
-          ...holoGlass,
           padding: '4px 14px',
           border: `1px solid ${MAP.ui.panelBorder}`,
           borderRadius: 3,
@@ -130,7 +101,6 @@ const CartographyOverlay: React.FC<CartographyOverlayProps> = ({
             border: `1px solid ${MAP.ui.panelBorder}`,
             borderRadius: 3,
             background: MAP.ui.panelBg,
-            ...holoGlass,
             color: MAP.ui.muted,
             font: '9px/1 ui-monospace, monospace',
             letterSpacing: 1,

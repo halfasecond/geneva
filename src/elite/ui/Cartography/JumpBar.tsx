@@ -36,8 +36,6 @@ const JumpBar: React.FC<JumpBarProps> = ({
       border: `1px solid ${ui.panelBorder}`,
       borderRadius: 7,
       background: ui.panelBg,
-      backdropFilter: 'blur(8px)',
-      WebkitBackdropFilter: 'blur(8px)',
       boxShadow: '0 0 28px rgba(102, 170, 255, 0.14)',
       fontFamily: ui.font,
       color: ui.text,
