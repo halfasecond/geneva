@@ -31,8 +31,9 @@ const OriginSelect: React.FC<OriginSelectProps> = ({ route, onRouteChange }) => 
       border: `1px solid ${ui.panelBorder}`,
       borderRadius: 7,
       background: ui.panelBg,
-      boxShadow: '0 14px 44px rgba(0, 0, 0, 0.18)',
-      backdropFilter: 'blur(10px)',
+      boxShadow: '0 0 20px rgba(102, 170, 255, 0.12)',
+      backdropFilter: 'blur(8px)',
+      WebkitBackdropFilter: 'blur(8px)',
       fontFamily: ui.font,
       pointerEvents: 'auto',
     }}>

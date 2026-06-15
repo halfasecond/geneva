@@ -13,25 +13,31 @@ interface CartographyMapProps {
 }
 
 const CartographyMap: React.FC<CartographyMapProps> = ({ route, playerPos, onDestinationPick }) => {
+  const wrapRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const rafRef = useRef<number | null>(null)
   const sizeRef = useRef({ w: 0, h: 0 })
 
   useEffect(() => {
+    const wrap = wrapRef.current
     const canvas = canvasRef.current
-    if (!canvas) return
+    if (!wrap || !canvas) return
 
-    const ctx = canvas.getContext('2d', { alpha: false })
+    const ctx = canvas.getContext('2d', { alpha: true })
     if (!ctx) return
 
     const resize = () => {
-      canvas.width = window.innerWidth
-      canvas.height = window.innerHeight
-      sizeRef.current = { w: canvas.width, h: canvas.height }
+      const { width, height } = wrap.getBoundingClientRect()
+      const w = Math.max(1, Math.floor(width))
+      const h = Math.max(1, Math.floor(height))
+      canvas.width = w
+      canvas.height = h
+      sizeRef.current = { w, h }
     }
 
     resize()
-    window.addEventListener('resize', resize)
+    const ro = new ResizeObserver(resize)
+    ro.observe(wrap)
 
     let mapTime = 0
     const draw = () => {
@@ -45,7 +51,7 @@ const CartographyMap: React.FC<CartographyMapProps> = ({ route, playerPos, onDes
 
     draw()
     return () => {
-      window.removeEventListener('resize', resize)
+      ro.disconnect()
       if (rafRef.current) cancelAnimationFrame(rafRef.current)
     }
   }, [route, playerPos])
@@ -62,18 +68,20 @@ const CartographyMap: React.FC<CartographyMapProps> = ({ route, playerPos, onDes
   }
 
   return (
-    <canvas
-      ref={canvasRef}
-      onClick={handleClick}
-      style={{
-        position: 'absolute',
-        inset: 0,
-        width: '100%',
-        height: '100%',
-        display: 'block',
-        cursor: 'crosshair',
-      }}
-    />
+    <div ref={wrapRef} style={{ position: 'absolute', inset: 0 }}>
+      <canvas
+        ref={canvasRef}
+        onClick={handleClick}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          display: 'block',
+          cursor: 'crosshair',
+        }}
+      />
+    </div>
   )
 }
 

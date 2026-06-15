@@ -36,8 +36,9 @@ const JumpBar: React.FC<JumpBarProps> = ({
       border: `1px solid ${ui.panelBorder}`,
       borderRadius: 7,
       background: ui.panelBg,
-      backdropFilter: 'blur(10px)',
-      boxShadow: '0 14px 44px rgba(0, 0, 0, 0.22)',
+      backdropFilter: 'blur(8px)',
+      WebkitBackdropFilter: 'blur(8px)',
+      boxShadow: '0 0 28px rgba(102, 170, 255, 0.14)',
       fontFamily: ui.font,
       color: ui.text,
       pointerEvents: 'auto',
@@ -69,8 +70,8 @@ const JumpBar: React.FC<JumpBarProps> = ({
         onClick={onInitiateHyperspace}
         style={{
           ...btnStyle(isHyperspacing),
-          background: isHyperspacing ? 'rgba(60, 20, 0, 0.5)' : 'rgba(50, 210, 150, 0.18)',
-          border: `1px solid ${isHyperspacing ? '#ff6644' : 'rgba(50, 210, 150, 0.45)'}`,
+          background: isHyperspacing ? 'rgba(60, 20, 0, 0.5)' : 'rgba(102, 170, 255, 0.18)',
+          border: `1px solid ${isHyperspacing ? '#ff6644' : 'rgba(102, 170, 255, 0.45)'}`,
           opacity: fuel < cost ? 0.45 : 1,
         }}
       >

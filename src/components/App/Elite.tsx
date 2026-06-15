@@ -812,56 +812,52 @@ const Elite: React.FC<EliteProps> = () => {
 
       {/* Cockpit frame bezels - to make it feel like inside the spaceship (holo style, framing the central "window" for the 3D space) */}
 
-      {!mapOpen && (
-        <>
-          <div style={{
-            position: 'absolute',
-            right: 0,
-            top: 0,
-            bottom: 0,
-            width: '85px',
-            background: 'rgba(0, 4, 10, 0.6)',
-            boxShadow: '0 0 12px rgba(0, 170, 255, 0.15)',
-            zIndex: 8,
-            pointerEvents: 'none',
-          }} />
+      <div style={{
+        position: 'absolute',
+        right: 0,
+        top: 0,
+        bottom: 0,
+        width: '85px',
+        background: 'rgba(0, 4, 10, 0.6)',
+        boxShadow: '0 0 12px rgba(0, 170, 255, 0.15)',
+        zIndex: 10,
+        pointerEvents: 'none',
+      }} />
 
-          <img src={'https://cdn.halfasecond.com/images/vech/vech-logo.png'} alt="Vech" style={{
-            width: 72,
-            opacity: 0.4,
-            position: 'fixed',
-            left: 'calc(50% - 310px)',
-            transform: 'translateX(-50%)',
-            bottom: 164,
-            zIndex: 11,
-            pointerEvents: 'none',
-          }} />
+      <img src={'https://cdn.halfasecond.com/images/vech/vech-logo.png'} alt="Vech" style={{
+        width: 72,
+        opacity: 0.4,
+        position: 'fixed',
+        left: 'calc(50% - 310px)',
+        transform: 'translateX(-50%)',
+        bottom: 164,
+        zIndex: 11,
+        pointerEvents: 'none',
+      }} />
 
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: '45px',
-            background: 'rgba(0, 4, 10, 0.65)',
-            boxShadow: '0 0 8px rgba(0, 170, 255, 0.15)',
-            zIndex: 8,
-            pointerEvents: 'none',
-          }} />
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: '45px',
+        background: 'rgba(0, 4, 10, 0.65)',
+        boxShadow: '0 0 8px rgba(0, 170, 255, 0.15)',
+        zIndex: 10,
+        pointerEvents: 'none',
+      }} />
 
-          <div style={{
-            position: 'absolute',
-            left: 0,
-            top: 0,
-            bottom: 0,
-            width: '85px',
-            background: 'rgba(0, 4, 10, 0.75)',
-            boxShadow: '0 0 12px rgba(0, 170, 255, 0.15)',
-            zIndex: 8,
-            pointerEvents: 'none',
-          }} />
-        </>
-      )}
+      <div style={{
+        position: 'absolute',
+        left: 0,
+        top: 0,
+        bottom: 0,
+        width: '85px',
+        background: 'rgba(0, 4, 10, 0.75)',
+        boxShadow: '0 0 12px rgba(0, 170, 255, 0.15)',
+        zIndex: 10,
+        pointerEvents: 'none',
+      }} />
 
       {mapOpen && (
         <CartographyOverlay
@@ -876,8 +872,8 @@ const Elite: React.FC<EliteProps> = () => {
         />
       )}
 
-      {/* Bottom Dashboard — hidden during cartography (play-blocking) */}
-      {!mapOpen && <div style={{
+      {/* Bottom Dashboard — always visible; cartography holo sits in windscreen above */}
+      <div style={{
         position: 'absolute',
         bottom: 0,
         left: 0,
@@ -949,7 +945,7 @@ const Elite: React.FC<EliteProps> = () => {
         }}>
           <VechPreview hud={hud} glbUrl={glbUrl} />
         </div>
-      </div>}
+      </div>
     </div>
   )
 }

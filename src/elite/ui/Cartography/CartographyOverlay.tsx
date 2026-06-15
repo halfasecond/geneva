@@ -1,5 +1,5 @@
 import React from 'react'
-import { MAP } from '../../config'
+import { MAP, WINDSCREEN } from '../../config'
 import CartographyMap from './CartographyMap'
 import OriginSelect from './OriginSelect'
 import DestinationList from './DestinationList'
@@ -17,9 +17,14 @@ interface CartographyOverlayProps {
   onClose: () => void
 }
 
+const holoGlass: React.CSSProperties = {
+  backdropFilter: 'blur(8px)',
+  WebkitBackdropFilter: 'blur(8px)',
+}
+
 /**
- * Full-screen play-blocking cartography mode.
- * Flocker-style: map fills the windscreen, origin left, destinations right, jump bar bottom.
+ * Cartography holo projected onto the cockpit windscreen only.
+ * Minority Report: translucent (~0.85), floating glass UI, space visible behind.
  */
 const CartographyOverlay: React.FC<CartographyOverlayProps> = ({
   route,
@@ -33,35 +38,109 @@ const CartographyOverlay: React.FC<CartographyOverlayProps> = ({
 }) => (
   <div
     style={{
-      position: 'fixed',
-      inset: 0,
-      zIndex: 50,
+      position: 'absolute',
+      top: WINDSCREEN.top,
+      left: WINDSCREEN.left,
+      right: WINDSCREEN.right,
+      bottom: WINDSCREEN.bottom,
+      zIndex: 9,
+      overflow: 'hidden',
       pointerEvents: 'auto',
+      border: `1px solid ${WINDSCREEN.border}`,
+      boxShadow: WINDSCREEN.innerGlow,
     }}
     role="dialog"
-    aria-label="Cartography"
+    aria-label="Cartography holo"
   >
-    <CartographyMap
-      route={route}
-      playerPos={{ x: playerPos.x, y: playerPos.y }}
-      onDestinationPick={id => onRouteChange({ ...route, destinationId: id })}
-    />
+    {/* Holo projection layer — translucent so 3D windscreen bleeds through */}
+    <div style={{
+      position: 'absolute',
+      inset: 0,
+      opacity: WINDSCREEN.holoOpacity,
+      background: WINDSCREEN.holoTint,
+      ...holoGlass,
+    }}>
+      <CartographyMap
+        route={route}
+        playerPos={{ x: playerPos.x, y: playerPos.y }}
+        onDestinationPick={id => onRouteChange({ ...route, destinationId: id })}
+      />
 
-    {/* Floating chrome — no HoloPanel boxes */}
+      {/* MR scan-line wash */}
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        pointerEvents: 'none',
+        background: `repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 3px,
+          ${WINDSCREEN.scanLine} 3px,
+          ${WINDSCREEN.scanLine} 4px
+        )`,
+      }} />
+    </div>
+
+    {/* Floating holo chrome — full opacity for legibility */}
     <div style={{
       position: 'absolute',
       inset: 0,
       display: 'grid',
-      gridTemplateColumns: '280px 1fr 280px',
+      gridTemplateColumns: 'minmax(200px, 240px) 1fr minmax(200px, 260px)',
       gridTemplateRows: 'auto 1fr auto',
-      padding: '28px',
-      gap: 24,
+      padding: '16px 20px',
+      gap: 16,
       pointerEvents: 'none',
       fontFamily: MAP.ui.font,
       color: MAP.ui.text,
     }}>
       <div style={{ gridColumn: 1, gridRow: 1, alignSelf: 'start' }}>
         <OriginSelect route={route} onRouteChange={onRouteChange} />
+      </div>
+
+      <div style={{
+        gridColumn: 2,
+        gridRow: 1,
+        justifySelf: 'center',
+        alignSelf: 'start',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 6,
+        pointerEvents: 'none',
+      }}>
+        <div style={{
+          fontSize: 9,
+          letterSpacing: 2,
+          color: MAP.ui.muted,
+          textTransform: 'uppercase',
+          ...holoGlass,
+          padding: '4px 14px',
+          border: `1px solid ${MAP.ui.panelBorder}`,
+          borderRadius: 3,
+          background: MAP.ui.panelBg,
+        }}>
+          Cartography · Holo
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          style={{
+            padding: '4px 12px',
+            border: `1px solid ${MAP.ui.panelBorder}`,
+            borderRadius: 3,
+            background: MAP.ui.panelBg,
+            ...holoGlass,
+            color: MAP.ui.muted,
+            font: '9px/1 ui-monospace, monospace',
+            letterSpacing: 1,
+            cursor: 'pointer',
+            pointerEvents: 'auto',
+            textTransform: 'uppercase',
+          }}
+        >
+          M — Dismiss
+        </button>
       </div>
 
       <div style={{ gridColumn: 3, gridRow: '1 / 3', alignSelf: 'start', justifySelf: 'end' }}>
@@ -74,7 +153,7 @@ const CartographyOverlay: React.FC<CartographyOverlayProps> = ({
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'end',
-        paddingBottom: 8,
+        paddingBottom: 4,
       }}>
         <JumpBar
           route={route}
@@ -85,30 +164,6 @@ const CartographyOverlay: React.FC<CartographyOverlayProps> = ({
         />
       </div>
     </div>
-
-    <button
-      type="button"
-      onClick={onClose}
-      style={{
-        position: 'absolute',
-        top: 28,
-        left: '50%',
-        transform: 'translateX(-50%)',
-        padding: '6px 12px',
-        border: `1px solid ${MAP.ui.listBorder}`,
-        borderRadius: 5,
-        background: MAP.ui.panelBg,
-        backdropFilter: 'blur(10px)',
-        color: MAP.ui.muted,
-        font: '850 9px/1 ui-monospace, monospace',
-        letterSpacing: 0.8,
-        cursor: 'pointer',
-        pointerEvents: 'auto',
-        textTransform: 'uppercase',
-      }}
-    >
-      M — Close
-    </button>
   </div>
 )
 

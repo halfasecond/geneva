@@ -253,6 +253,22 @@ export const NPC = {
 // =============================================================================
 // 2D HOLO MAP (draggable cartography panel)
 // =============================================================================
+// =============================================================================
+// COCKPIT WINDSCREEN (cartography holo projects here, not full viewport)
+// =============================================================================
+export const WINDSCREEN = {
+  top: 45,
+  left: 85,
+  right: 85,
+  bottom: 210,
+  /** Holo overlay translucency — space visible through the projection */
+  holoOpacity: 0.85,
+  holoTint: 'rgba(0, 10, 24, 0.35)',
+  border: 'rgba(102, 170, 255, 0.28)',
+  innerGlow: 'inset 0 0 48px rgba(102, 170, 255, 0.14), inset 0 0 12px rgba(0, 170, 255, 0.08)',
+  scanLine: 'rgba(102, 170, 255, 0.04)',
+}
+
 export const MAP = {
   // Legacy reference scale (340px panel era)
   canvasSize: 340,
@@ -261,22 +277,22 @@ export const MAP = {
   orbitOpacity: 0.22,
   bodyLabelFont: '10px ui-monospace, monospace',
   // Fullscreen windscreen overlay (Flocker palette)
-  fullscreenBg: '#050e15',
+  windscreenBg: 'rgba(5, 14, 21, 0.55)',
   orbitStroke: 'rgba(169, 199, 216, 0.22)',
   routeColor: '#d9f2ff',
   highlightOrigin: '#ffcc66',
-  highlightDest: '#32d296',
+  highlightDest: '#66aaff',
   playerColor: '#ffdd88',
   ui: {
-    text: '#f7fff9',
-    muted: 'rgba(225, 237, 231, 0.66)',
-    panelBg: 'rgba(5, 14, 21, 0.42)',
-    panelBorder: 'rgba(229, 236, 224, 0.1)',
-    listBg: 'rgba(5, 14, 21, 0.36)',
-    listBorder: 'rgba(229, 236, 224, 0.09)',
-    rowBg: 'rgba(22, 39, 56, 0.42)',
-    rowBorder: 'rgba(229, 236, 224, 0.08)',
-    activeBg: 'rgba(50, 210, 150, 0.14)',
+    text: '#d8eeff',
+    muted: 'rgba(170, 204, 221, 0.7)',
+    panelBg: 'rgba(4, 12, 22, 0.42)',
+    panelBorder: 'rgba(102, 170, 255, 0.22)',
+    listBg: 'rgba(4, 12, 22, 0.38)',
+    listBorder: 'rgba(102, 170, 255, 0.18)',
+    rowBg: 'rgba(4, 16, 32, 0.45)',
+    rowBorder: 'rgba(102, 170, 255, 0.12)',
+    activeBg: 'rgba(102, 170, 255, 0.2)',
     activeColor: '#ffffff',
     font: 'ui-monospace, SFMono-Regular, Menlo, monospace',
   },

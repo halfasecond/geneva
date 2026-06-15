@@ -35,8 +35,8 @@ export function drawCartographyFrame(
   const cy = height / 2
   const scale = mapScaleForViewport(width, height)
 
-  // Flocker-like deep space backdrop
-  ctx.fillStyle = MAP.fullscreenBg
+  ctx.clearRect(0, 0, width, height)
+  ctx.fillStyle = MAP.windscreenBg
   ctx.fillRect(0, 0, width, height)
 
   // Sparse star field
