@@ -156,7 +156,8 @@ export function computeWaypoints(
   const viewport = opts.viewport ?? { width: 1920, height: 1080 }
 
   if (WAYPOINTS.debugHardcoded) {
-    return [hardcodedDebugWaypoint(player.heading, viewport)]
+    const dbg = hardcodedDebugWaypoint(player.heading, viewport)
+    return dbg.behind ? [] : [dbg]
   }
 
   const destPlanetId = resolveDestinationPlanetId(opts.destinationId)
@@ -176,6 +177,7 @@ export function computeWaypoints(
     if (dist < WAYPOINTS.minLocalDist) continue
 
     const screen = projectOffsetToWindscreen({ x, y, z }, player.heading, viewport)
+    if (screen.behind) continue
 
     result.push({
       id: body.id,

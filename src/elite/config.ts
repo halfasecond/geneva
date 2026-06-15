@@ -265,8 +265,8 @@ export const DOCK = {
 export const WAYPOINTS = {
   edgeInset: 0.08,
   minLocalDist: 400,
-  /** One hardcoded test star — bypasses cartography until projection is verified. */
-  debugHardcoded: true,
+  /** One hardcoded test star — set true to verify projection in isolation. */
+  debugHardcoded: false,
   /** Scene-space offset from player (floating origin). Pure +X = off the right wing. */
   debugOffset: { x: 6000, y: 0, z: 2000 },
 }

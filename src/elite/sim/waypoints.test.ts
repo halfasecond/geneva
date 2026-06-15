@@ -13,14 +13,11 @@ function yawHeading(yaw: number): { x: number; y: number; z: number } {
   return { x: Math.sin(yaw), y: 0, z: Math.cos(yaw) }
 }
 
-describe('waypoint debug star', () => {
-  it('returns exactly one DBG star', () => {
-    const result = computeWaypoints(
-      { heading: { x: 0, y: 0, z: -1 }, systemPos2d: { x: 0, y: 0 } },
-      { viewport: VP },
-    )
-    expect(result).toHaveLength(1)
-    expect(result[0].label).toBe('DBG')
+describe('waypoint projection', () => {
+  it('hides targets behind the ship', () => {
+    const off = WAYPOINTS.debugOffset
+    const screen = projectOffsetToWindscreen(off, { x: 0, y: 0, z: 1 }, VP)
+    expect(screen.behind).toBe(true)
   })
 
   it('screen X is monotonic while yawing toward the target (no rim snap-back)', () => {

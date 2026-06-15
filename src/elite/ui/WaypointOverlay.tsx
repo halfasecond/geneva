@@ -9,8 +9,8 @@ interface WaypointOverlayProps {
 
 const WaypointStar: React.FC<{ wp: WaypointIndicator }> = ({ wp }) => {
   const accent = wp.isDestination ? '#fff0a8' : '#d8f0ff'
-  const size = wp.isDestination ? 16 : wp.behind ? 8 : 10
-  const opacity = wp.behind ? 0.5 : 1
+  const size = wp.isDestination ? 16 : 10
+  const opacity = 1
   const glow = wp.isDestination
     ? `drop-shadow(0 0 8px ${accent}) drop-shadow(0 0 16px rgba(255, 240, 160, 0.9))`
     : `drop-shadow(0 0 6px #ffffff) drop-shadow(0 0 10px rgba(180, 220, 255, 0.8))`
