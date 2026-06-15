@@ -1,8 +1,8 @@
-import type { EliteSnapshot, FlightMode, NpcAgent, PlayerState, SimConfig } from './core/types'
+import type { EliteSnapshot, FlightMode, NpcAgent, PlayerState, SimConfig, Vec3 } from './core/types'
 import { add, clampMagnitude, cross, length, normalize, scale, subtract, zero } from './core/vector'
 import { calculateFlocking } from './core/forces'
 import { addProgress, applyRoleFeedback } from './core/progress'
-import { getBodyById, DEFAULT_ROUTE, navPos3dFromBody } from './cartography'
+import { getBodyById, DEFAULT_ROUTE } from './cartography'
 import {
   applyPlayerTrade,
   defaultMarketConfig,
@@ -15,6 +15,15 @@ import {
   type MarketState,
 } from './market'
 import { DOCK, MARKET } from '../config'
+import {
+  approachPose,
+  arrivalPose,
+  dockedPose,
+  systemPos2dFromLocal,
+  type FlightPose,
+  undockPose,
+} from './systemSpace'
+import { createPoseTween, stepPoseTween, type PoseTween } from '../render/dockCutscene'
 
 const DEFAULT_CONFIG: SimConfig = {
   separationRadius: 28,
@@ -29,6 +38,14 @@ const DEFAULT_CONFIG: SimConfig = {
   k0: 1.0,
 }
 
+function poseToPlayerFields(pose: FlightPose): Pick<PlayerState, 'pos' | 'heading' | 'up'> {
+  return {
+    pos: { ...pose.pos },
+    heading: { ...pose.heading },
+    up: { ...pose.up },
+  }
+}
+
 export class EliteSim {
   private npcs: NpcAgent[] = []
   private player: PlayerState
@@ -36,6 +53,8 @@ export class EliteSim {
   private marketConfig: MarketConfig
   private markets: MarketState[]
   private time = 0
+  private poseTween: PoseTween | null = null
+  private dockTargetId: string | null = null
 
   constructor(initialPopulation = 2) {
     this.config = { ...DEFAULT_CONFIG }
@@ -45,30 +64,39 @@ export class EliteSim {
     }
     this.markets = initMarkets()
     const origin = getBodyById(DEFAULT_ROUTE.originId, 'frozen')
-    const spawn = origin ? navPos3dFromBody(origin) : { x: 0, y: 120, z: 40 }
+    const ref2d = { ...(origin?.pos2d ?? { x: 0, y: 0 }) }
+    const spawnPose = origin?.type === 'station'
+      ? dockedPose(origin)
+      : origin
+        ? arrivalPose(origin)
+        : { pos: { x: 0, y: 0, z: -120 }, heading: { x: 0, y: 0, z: 1 }, up: { x: 0, y: 1, z: 0 } }
+
     this.player = {
-      pos: spawn,
-      vel: { x: 0, y: 0, z: -6 },
-      heading: { x: 0, y: 0, z: -1 },
-      up: { x: 0, y: 1, z: 0 },
+      ...poseToPlayerFields(spawnPose),
+      vel: zero(),
       roll: 0,
-      speed: 6,
+      speed: 0,
       fuel: 120,
       credits: MARKET.startingCredits,
       cargo: {},
       cargoCapacity: MARKET.cargoCapacity,
       systemId: origin?.systemId ?? 'helios',
-      systemPos2d: { ...(origin?.pos2d ?? { x: 0, y: 0 }) },
+      navReference2d: ref2d,
+      systemPos2d: { ...ref2d },
       flightMode: 'normal',
       dockedAtStationId: null,
     }
+    this.syncSystemPos2d()
     this.resetNpcs(initialPopulation)
+
     if (origin?.type === 'station') {
       this.player.flightMode = 'docked'
       this.player.dockedAtStationId = origin.id
-      this.player.vel = zero()
-      this.player.speed = 0
     }
+  }
+
+  private syncSystemPos2d() {
+    this.player.systemPos2d = systemPos2dFromLocal(this.player.navReference2d, this.player.pos)
   }
 
   resetNpcs(count: number) {
@@ -121,37 +149,125 @@ export class EliteSim {
     return this.markets.find(m => m.id === id) ?? null
   }
 
-  tryDock(): boolean {
-    if (this.player.flightMode === 'docked') return true
-    const nearest = nearestDockableStation(this.player.pos, DOCK.range)
+  /** Begin dock cutscene if in range and slow enough. */
+  startDocking(): boolean {
+    const p = this.player
+    if (p.flightMode === 'docked' || p.flightMode === 'docking_in' || p.flightMode === 'undocking') {
+      return p.flightMode === 'docked'
+    }
+
+    const nearest = nearestDockableStation(p.pos, p.systemPos2d, p.speed, DOCK.range, DOCK.maxApproachSpeed)
     if (!nearest) return false
 
     const body = getBodyById(nearest.id, 'frozen')
     if (!body) return false
 
-    this.player.dockedAtStationId = nearest.id
-    this.player.flightMode = 'docked'
-    this.player.pos = navPos3dFromBody(body)
-    this.player.vel = zero()
-    this.player.speed = 0
-    this.player.systemPos2d = { ...body.pos2d }
+    const from: FlightPose = {
+      pos: { ...p.pos },
+      heading: { ...p.heading },
+      up: { ...p.up },
+    }
+    const to = approachPose(body)
+
+    this.dockTargetId = body.id
+    this.poseTween = createPoseTween(from, to)
+    p.flightMode = 'docking_in'
+    p.vel = zero()
+    p.speed = 0
     return true
   }
 
+  /** Begin undock cutscene from docked state. */
+  startUndocking(): boolean {
+    const p = this.player
+    if (p.flightMode !== 'docked' || !p.dockedAtStationId) return false
+
+    const body = getBodyById(p.dockedAtStationId, 'frozen')
+    if (!body) return false
+
+    const from: FlightPose = {
+      pos: { ...p.pos },
+      heading: { ...p.heading },
+      up: { ...p.up },
+    }
+    const to = undockPose(body)
+
+    this.dockTargetId = null
+    this.poseTween = createPoseTween(from, to)
+    p.flightMode = 'undocking'
+    p.vel = zero()
+    p.speed = 0
+    return true
+  }
+
+  private finishDocking() {
+    const p = this.player
+    const stationId = this.dockTargetId
+    if (!stationId) {
+      p.flightMode = 'normal'
+      return
+    }
+
+    const body = getBodyById(stationId, 'frozen')
+    if (!body) {
+      p.flightMode = 'normal'
+      return
+    }
+
+    const pose = dockedPose(body)
+    Object.assign(p, poseToPlayerFields(pose))
+    p.navReference2d = { ...body.pos2d }
+    p.systemPos2d = { ...body.pos2d }
+    p.dockedAtStationId = stationId
+    p.flightMode = 'docked'
+    p.vel = zero()
+    p.speed = 0
+    this.dockTargetId = null
+    this.poseTween = null
+  }
+
+  private finishUndocking() {
+    const p = this.player
+    p.dockedAtStationId = null
+    p.flightMode = 'normal'
+    p.vel = scale(p.heading, DOCK.undockBoost)
+    p.speed = DOCK.undockBoost
+    this.poseTween = null
+    this.syncSystemPos2d()
+  }
+
+  private stepPoseCutscene(deltaSeconds: number) {
+    if (!this.poseTween) return
+
+    const { pose, done } = stepPoseTween(this.poseTween, deltaSeconds)
+    const p = this.player
+    p.pos = pose.pos
+    p.heading = pose.heading
+    p.up = pose.up
+    p.vel = zero()
+    p.speed = 0
+    this.syncSystemPos2d()
+
+    if (!done) return
+
+    if (p.flightMode === 'docking_in') this.finishDocking()
+    else if (p.flightMode === 'undocking') this.finishUndocking()
+  }
+
+  tryDock(): boolean {
+    return this.startDocking()
+  }
+
   undock(): void {
-    if (this.player.flightMode !== 'docked') return
-    this.player.dockedAtStationId = null
-    this.player.flightMode = 'normal'
-    this.player.vel = scale(this.player.heading, 4)
-    this.player.speed = 4
+    this.startUndocking()
   }
 
   toggleDock(): boolean {
     if (this.player.flightMode === 'docked') {
-      this.undock()
+      this.startUndocking()
       return true
     }
-    return this.tryDock()
+    return this.startDocking()
   }
 
   tradeCommodity(commodityId: string, tons: number, direction: 'buy' | 'sell'): boolean {
@@ -193,6 +309,13 @@ export class EliteSim {
     this.markets = stepMarkets(this.markets, this.time, this.marketConfig)
 
     const p = this.player
+
+    if (p.flightMode === 'docking_in' || p.flightMode === 'undocking') {
+      this.stepPoseCutscene(deltaSeconds)
+      this.stepNpcs(deltaSeconds)
+      return
+    }
+
     if (p.flightMode === 'docked') {
       p.vel = zero()
       p.speed = 0
@@ -241,6 +364,7 @@ export class EliteSim {
     p.vel = clampMagnitude(p.vel, 52)
     p.pos = add(p.pos, scale(p.vel, deltaSeconds))
     p.speed = length(p.vel)
+    this.syncSystemPos2d()
 
     this.stepNpcs(deltaSeconds)
   }
@@ -307,7 +431,7 @@ export class EliteSim {
     return n > 0 ? sum / n : 0
   }
 
-  private rotateAroundAxis(v: { x: number; y: number; z: number }, axis: { x: number; y: number; z: number }, angle: number) {
+  private rotateAroundAxis(v: Vec3, axis: Vec3, angle: number): Vec3 {
     const cos = Math.cos(angle)
     const sin = Math.sin(angle)
     const dot = v.x * axis.x + v.y * axis.y + v.z * axis.z
@@ -332,6 +456,7 @@ export class EliteSim {
         heading: { ...p.heading },
         up: { ...p.up },
         pos: { ...p.pos },
+        navReference2d: { ...p.navReference2d },
         systemPos2d: { ...p.systemPos2d },
         cargo: { ...p.cargo },
       },
@@ -344,7 +469,7 @@ export class EliteSim {
         ),
       })),
       marketDiagnostics: getMarketDiagnostics(this.markets),
-      nearestDock: nearestDockableStation(p.pos, DOCK.range),
+      nearestDock: nearestDockableStation(p.pos, p.systemPos2d, p.speed, DOCK.range, DOCK.maxApproachSpeed),
     }
   }
 
@@ -359,16 +484,18 @@ export class EliteSim {
 
     this.player.fuel = Math.max(0, this.player.fuel - fuelCost)
     this.player.systemId = dest.systemId
-    this.player.systemPos2d = { ...dest.pos2d }
+    this.player.navReference2d = { ...dest.pos2d }
     this.player.dockedAtStationId = dest.type === 'station' ? dest.id : null
     this.player.flightMode = dest.type === 'station' ? 'docked' : 'normal'
 
-    this.player.pos = navPos3dFromBody(dest)
+    const pose = dest.type === 'station' ? dockedPose(dest) : arrivalPose(dest)
+    Object.assign(this.player, poseToPlayerFields(pose))
+    this.player.systemPos2d = { ...dest.pos2d }
     this.player.vel = zero()
-    this.player.heading = { x: 0, y: 0, z: -1 }
-    this.player.up = { x: 0, y: 1, z: 0 }
     this.player.roll = 0
     this.player.speed = 0
+    this.poseTween = null
+    this.dockTargetId = null
     return true
   }
 

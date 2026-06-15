@@ -1,6 +1,11 @@
 // Galaxy + system cartography.
 // Positions are deterministic from GALAXY_EPOCH_UNIX so all clients (and future server) agree.
 // Local flight sim time is unrelated — see getGalaxyElapsedSeconds() vs EliteSim.time.
+//
+// pos2d is authoritative for the orbital plane. pos3d is a catalog local position (star at origin).
+// Live 3D/radar positions use systemSpace.bodyLocalPos(body, player.systemPos2d).
+
+import { approachPose, catalogLocalPos } from './systemSpace'
 
 export interface StarSystem {
   id: string
@@ -108,10 +113,12 @@ export function getCartographyBodies(
 
     positioned.set(preset.id, { x, y })
 
-    const height = preset.type === 'star'
-      ? 0
-      : (preset.type === 'station' ? 18 : preset.type === 'moon' ? 8 : 0) + Math.sin(angle * 1.7) * 4
-    const pos3d = { x, y: height, z: y * 0.65 }
+    const pos2d = { x, y }
+    const pos3d = catalogLocalPos({
+      id: preset.id,
+      type: preset.type,
+      pos2d,
+    })
 
     result.push({
       id: preset.id,
@@ -122,7 +129,7 @@ export function getCartographyBodies(
       radius: preset.radius,
       orbitRadius: preset.orbitRadius,
       parentId: preset.parentId,
-      pos2d: { x, y },
+      pos2d,
       pos3d,
       government: preset.government,
       sector: preset.sector,
@@ -225,14 +232,7 @@ export function getRouteJumpCost(route: RouteSelection, mode: CartographyTimeMod
   return getJumpFuelCost(origin.pos2d, dest.pos2d, origin.systemId, dest.systemId)
 }
 
-/** Cruise altitude above a body's orbital plane (system-space units) */
-export const NAV_ALTITUDE = 100
-
-/** Player / camera position in the same frame as cartography pos3d + radar contacts */
+/** @deprecated Use systemSpace.approachPose / dockedPose / arrivalPose */
 export function navPos3dFromBody(body: CartographyBody): { x: number; y: number; z: number } {
-  return {
-    x: body.pos3d.x,
-    y: body.pos3d.y + NAV_ALTITUDE,
-    z: body.pos3d.z,
-  }
+  return approachPose(body).pos
 }

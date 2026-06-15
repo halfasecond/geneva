@@ -237,8 +237,26 @@ export const WORLD = {
 // =============================================================================
 // SPACE STATION MESH (procedural ring habitat)
 // =============================================================================
+// =============================================================================
+// LAYERED SPACE (system map units ↔ local flight meters)
+// =============================================================================
+export const SPACE = {
+  /** Local flight meters per cartography map unit (orbital plane). */
+  localUnitsPerMapUnit: 12,
+  /** Max distance to render bodies / contacts in local flight frame. */
+  bubbleRadius: 2800,
+  /** Standoff when arriving at a non-station body via hyperspace. */
+  arrivalStandoff: 140,
+} as const
+
 export const DOCK = {
   range: 80,
+  maxApproachSpeed: 8,
+  approachDistance: 55,
+  dockedDistance: 28,
+  undockBackDistance: 40,
+  cutsceneDuration: 1.4,
+  undockBoost: 4,
 }
 
 export const MARKET = {

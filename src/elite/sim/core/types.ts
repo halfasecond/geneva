@@ -38,7 +38,13 @@ export interface NpcAgent {
   role: 'trader' | 'pirate' | 'police' | 'escort'
 }
 
-export type FlightMode = 'normal' | 'supercruise' | 'hyperspace' | 'docked'
+export type FlightMode =
+  | 'normal'
+  | 'supercruise'
+  | 'hyperspace'
+  | 'docking_in'
+  | 'undocking'
+  | 'docked'
 
 export interface PlayerState {
   pos: Vec3
@@ -52,6 +58,8 @@ export interface PlayerState {
   cargo: Record<string, number>
   cargoCapacity: number
   systemId: string
+  /** System pos2d when local pos is (0,0,0) — set on spawn / jump / dock. */
+  navReference2d: { x: number; y: number }
   systemPos2d: { x: number; y: number }
   flightMode: FlightMode
   dockedAtStationId: string | null

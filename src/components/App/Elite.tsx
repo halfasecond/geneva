@@ -55,6 +55,8 @@ import {
 } from '../../elite/config'
 import { projectContacts } from '../../elite/sim/contacts'
 import { getCargoUsed } from '../../elite/sim/market'
+import { bodyLocalPos, isInsideBubble } from '../../elite/sim/systemSpace'
+import type { CartographyBody } from '../../elite/sim/cartography'
 import { useFlightInput } from '../../elite/useFlightInput'
 import * as CockpitRender from '../../elite/render/cockpit'
 import * as HyperspaceRender from '../../elite/render/hyperspace'
@@ -93,6 +95,8 @@ const Elite: React.FC<EliteProps> = () => {
   const bodiesGroupRef = useRef<THREE.Group | null>(null)
   const hyperspaceStreaksRef = useRef<THREE.Group | null>(null)
   const snapRef = useRef<EliteSnapshot | null>(null)
+  const prevFlightModeRef = useRef<string>('docked')
+  const sunMeshRef = useRef<THREE.Mesh | null>(null)
   const hyperspacePhaseRef = useRef<'idle' | 'countdown' | 'jump'>('idle')
   const hyperspaceSequenceStartRef = useRef(0)
   const hyperspaceLastCountdownRef = useRef(-1)
@@ -145,13 +149,12 @@ const Elite: React.FC<EliteProps> = () => {
       if (k === 'm' && hyperspacePhaseRef.current === 'idle') setMapOpen(o => !o)
       if (k === 'escape' && mapOpen && hyperspacePhaseRef.current === 'idle') setMapOpen(false)
       if (k === 'f' && hyperspacePhaseRef.current === 'idle') {
-        if (snapRef.current?.player.flightMode === 'docked') {
-          simRef.current.undock()
+        const mode = snapRef.current?.player.flightMode
+        if (mode === 'docked') {
+          simRef.current.startUndocking()
           setMarketOpen(false)
-          setMarketSnap(simRef.current.getSnapshot())
-        } else if (simRef.current.tryDock()) {
-          setMarketOpen(true)
-          setMarketSnap(simRef.current.getSnapshot())
+        } else if (mode === 'normal' || mode === 'supercruise') {
+          simRef.current.startDocking()
         }
       }
       if (k === 't' && snapRef.current?.player.flightMode === 'docked') setMarketOpen(o => !o)
@@ -223,6 +226,7 @@ const Elite: React.FC<EliteProps> = () => {
     const sunMat = new THREE.MeshBasicMaterial({ color: WORLD.sunColor })
     const sun = new THREE.Mesh(sunGeo, sunMat)
     scene.add(sun)
+    sunMeshRef.current = sun
 
     // System bodies — frozen ephemeris in world space (same frame as radar + player nav)
     const bodiesGroup = new THREE.Group()
@@ -232,7 +236,8 @@ const Elite: React.FC<EliteProps> = () => {
       const mesh = b.type === 'station'
         ? StationRender.createStationMesh(b.color, b.radius)
         : StationRender.createPlanetMesh(b.color, b.radius)
-      mesh.position.set(b.pos3d.x, b.pos3d.y, b.pos3d.z)
+      mesh.userData.bodyId = b.id
+      mesh.position.set(0, 0, 0)
       bodiesGroup.add(mesh)
     })
     scene.add(bodiesGroup)
@@ -347,7 +352,38 @@ const Elite: React.FC<EliteProps> = () => {
       const snap = sim.getSnapshot()
       snapRef.current = snap
 
+      const systemPos2d = snap.player.systemPos2d
+      const carto = getFrozenCartographyBodies()
+      const cartoById = new Map(carto.map(b => [b.id, b]))
+
+      const bodiesForContacts: Array<Pick<CartographyBody, 'pos3d' | 'type' | 'name' | 'id'>> = []
+
+      if (sunMeshRef.current) {
+        const helios = cartoById.get('helios')
+        if (helios) {
+          const local = bodyLocalPos(helios, systemPos2d)
+          sunMeshRef.current.position.set(local.x, local.y, local.z)
+          sunMeshRef.current.visible = isInsideBubble(local)
+        }
+      }
+
       if (bodiesGroupRef.current) {
+        bodiesGroupRef.current.children.forEach((child) => {
+          const bodyId = child.userData.bodyId as string | undefined
+          const body = bodyId ? cartoById.get(bodyId) : undefined
+          if (!body) return
+          const local = bodyLocalPos(body, systemPos2d)
+          child.position.set(local.x, local.y, local.z)
+          child.visible = isInsideBubble(local)
+          if (child.visible) {
+            bodiesForContacts.push({
+              id: body.id,
+              name: body.name,
+              type: body.type,
+              pos3d: local,
+            })
+          }
+        })
         StationRender.updateStationAnimations(bodiesGroupRef.current, snap.time)
       }
 
@@ -393,11 +429,15 @@ const Elite: React.FC<EliteProps> = () => {
         const fwd = p.heading
         const upv = p.up || { x: 0, y: 1, z: 0 }
 
-        const carto = getFrozenCartographyBodies()
         const contacts = projectContacts(
           { pos: p.pos, heading: fwd, up: upv },
           snap.npcs,
-          carto,
+          bodiesForContacts.length > 0 ? bodiesForContacts : carto.map(b => ({
+            id: b.id,
+            name: b.name,
+            type: b.type,
+            pos3d: bodyLocalPos(b, systemPos2d),
+          })),
           { maxShip: 300, maxBody: 500 }
         )
 
@@ -544,6 +584,15 @@ const Elite: React.FC<EliteProps> = () => {
         }
       }
 
+      if (
+        snap.player.flightMode === 'docked'
+        && prevFlightModeRef.current === 'docking_in'
+      ) {
+        setMarketOpen(true)
+        setMarketSnap(snap)
+      }
+      prevFlightModeRef.current = snap.player.flightMode
+
       // HUD state (throttled a bit)
       if (Math.random() < 0.6) {
         setHud({
@@ -686,11 +735,20 @@ const Elite: React.FC<EliteProps> = () => {
       const fwd = p.heading
       const upv = p.up || { x: 0, y: 1, z: 0 }
       const carto = getFrozenCartographyBodies()
+      const sys2d = p.systemPos2d
+      const radarBodies = carto
+        .filter(b => b.type !== 'star')
+        .map(b => ({
+          id: b.id,
+          name: b.name,
+          type: b.type,
+          pos3d: bodyLocalPos(b, sys2d),
+        }))
 
       const contacts = projectContacts(
         { pos: p.pos, heading: fwd, up: upv },
         snapRef.current?.npcs || [],
-        carto,
+        radarBodies,
         { maxShip: 300, maxBody: 500 }
       )
 

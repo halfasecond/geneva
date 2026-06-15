@@ -3,7 +3,8 @@
  * Discrete-hour supply/demand, regime-gated pricing, hub-and-spoke arbitrage.
  */
 
-import { getFrozenCartographyBodies, navPos3dFromBody } from './cartography'
+import { getFrozenCartographyBodies } from './cartography'
+import { bodyLocalPos } from './systemSpace'
 
 export interface MarketCandle {
   close: number
@@ -335,15 +336,20 @@ export function applyPlayerTrade(
 
 export function nearestDockableStation(
   playerPos: { x: number; y: number; z: number },
+  playerSystemPos2d: { x: number; y: number },
+  playerSpeed: number,
   dockRange: number,
+  maxApproachSpeed: number,
 ): { id: string; name: string; dist: number } | null {
+  if (playerSpeed > maxApproachSpeed) return null
+
   let best: { id: string; name: string; dist: number } | null = null
   for (const body of getFrozenCartographyBodies()) {
     if (body.type !== 'station') continue
-    const approach = navPos3dFromBody(body)
-    const dx = approach.x - playerPos.x
-    const dy = approach.y - playerPos.y
-    const dz = approach.z - playerPos.z
+    const stationLocal = bodyLocalPos(body, playerSystemPos2d)
+    const dx = stationLocal.x - playerPos.x
+    const dy = stationLocal.y - playerPos.y
+    const dz = stationLocal.z - playerPos.z
     const dist = Math.hypot(dx, dy, dz)
     if (dist <= dockRange && (!best || dist < best.dist)) {
       best = { id: body.id, name: body.name, dist }
