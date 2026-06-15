@@ -346,11 +346,8 @@ export function nearestDockableStation(
   let best: { id: string; name: string; dist: number } | null = null
   for (const body of getFrozenCartographyBodies()) {
     if (body.type !== 'station') continue
-    const stationLocal = bodyLocalPos(body, playerSystemPos2d)
-    const dx = stationLocal.x - playerPos.x
-    const dy = stationLocal.y - playerPos.y
-    const dz = stationLocal.z - playerPos.z
-    const dist = Math.hypot(dx, dy, dz)
+    const offset = bodyLocalPos(body, playerSystemPos2d)
+    const dist = Math.hypot(offset.x, offset.y, offset.z)
     if (dist <= dockRange && (!best || dist < best.dist)) {
       best = { id: body.id, name: body.name, dist }
     }

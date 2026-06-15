@@ -11,8 +11,8 @@
 
 import type { Vec3 } from './core/types'
 import type { NpcAgent } from './core/types'
-import { normalize, cross } from './core/vector'
 import type { CartographyBody } from './cartography'
+import { offsetFromPlayer, worldOffsetToBodyFrame } from './systemSpace'
 
 export interface Contact {
   x: number // right (lateral)
@@ -33,11 +33,11 @@ const DEFAULT_MAX_SHIP = 300
 const DEFAULT_MAX_BODY = 500
 
 /**
- * Project world entities into the player's local body frame.
+ * Project entities into the player's local body frame.
  * Forward on radar is generally +Z in the returned contacts (classic "up on scope").
  *
- * player.pos and body pos3d must both be in the local flight frame
- * (see systemSpace.bodyLocalPos).
+ * NPC positions are absolute in the nav-anchor frame; cartography body pos3d must be
+ * player-relative offsets from bodyOffsetFromPlayer / bodyLocalPos.
  */
 export function projectContacts(
   player: { pos: Vec3; heading: Vec3; up: Vec3 },
@@ -46,61 +46,44 @@ export function projectContacts(
   opts: ProjectOpts = {}
 ): Contact[] {
   const { pos: pPos, heading: fwd, up: upv } = player
-  const right = normalize(cross(fwd, upv))
 
   const maxShip = opts.maxShip ?? DEFAULT_MAX_SHIP
   const maxBody = opts.maxBody ?? DEFAULT_MAX_BODY
 
   const contacts: Contact[] = []
 
-  // Ships / NPCs
   for (const npc of npcs) {
-    const dx = npc.pos.x - pPos.x
-    const dy = npc.pos.y - pPos.y
-    const dz = npc.pos.z - pPos.z
-    const dist = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1
-    if (dist > maxShip) continue
-
-    const localX = dx * right.x + dy * right.y + dz * right.z
-    const localZ = dx * fwd.x + dy * fwd.y + dz * fwd.z
-    const localY = dx * upv.x + dy * upv.y + dz * upv.z
+    const offset = offsetFromPlayer(pPos, npc.pos)
+    const frame = worldOffsetToBodyFrame(offset, fwd, upv)
+    if (frame.dist > maxShip) continue
 
     contacts.push({
-      x: localX,
-      y: localY,
-      z: localZ,
-      dist,
+      x: frame.x,
+      y: frame.y,
+      z: frame.z,
+      dist: frame.dist,
       type: 'ship',
       role: npc.role,
       name: npc.role.toUpperCase(),
     })
   }
 
-  // Cartography bodies (planets, moons, stations)
   for (const b of bodies) {
     if (b.type === 'star') continue
-    const dx = b.pos3d.x - pPos.x
-    const dy = b.pos3d.y - pPos.y
-    const dz = b.pos3d.z - pPos.z
-    const dist = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1
-    if (dist > maxBody) continue
-
-    const localX = dx * right.x + dy * right.y + dz * right.z
-    const localZ = dx * fwd.x + dy * fwd.y + dz * fwd.z
-    const localY = dx * upv.x + dy * upv.y + dz * upv.z
+    const frame = worldOffsetToBodyFrame(b.pos3d, fwd, upv)
+    if (frame.dist > maxBody) continue
 
     contacts.push({
-      x: localX,
-      y: localY,
-      z: localZ,
-      dist,
+      x: frame.x,
+      y: frame.y,
+      z: frame.z,
+      dist: frame.dist,
       type: b.type,
       role: 'neutral',
       name: b.name,
     })
   }
 
-  // Classic "nearby first" priority
   contacts.sort((a, b) => a.dist - b.dist)
   return contacts
 }

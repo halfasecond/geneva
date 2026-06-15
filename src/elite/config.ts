@@ -259,6 +259,18 @@ export const DOCK = {
   undockBoost: 4,
 }
 
+// =============================================================================
+// WINDSCREEN WAYPOINTS (off-bubble body direction tags)
+// =============================================================================
+export const WAYPOINTS = {
+  edgeInset: 0.08,
+  minLocalDist: 400,
+  /** One hardcoded test star — bypasses cartography until projection is verified. */
+  debugHardcoded: true,
+  /** Scene-space offset from player (floating origin). Pure +X = off the right wing. */
+  debugOffset: { x: 6000, y: 0, z: 2000 },
+}
+
 export const MARKET = {
   startingCredits: 12000,
   cargoCapacity: 20,
@@ -326,6 +338,13 @@ export const WINDSCREEN = {
   bottom: 210,
   border: 'rgba(102, 170, 255, 0.28)',
   innerGlow: 'inset 0 0 48px rgba(102, 170, 255, 0.14), inset 0 0 12px rgba(0, 170, 255, 0.08)',
+}
+
+/** Aspect ratio of the windscreen cutout (not the full browser viewport). */
+export function windscreenAspect(windowW: number, windowH: number): number {
+  const w = windowW - WINDSCREEN.left - WINDSCREEN.right
+  const h = windowH - WINDSCREEN.top - WINDSCREEN.bottom
+  return w / Math.max(h, 1)
 }
 
 /** Cockpit overlay stacking — holo effects full-screen but under translucent ship UI. */

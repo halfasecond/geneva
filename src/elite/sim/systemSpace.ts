@@ -8,12 +8,21 @@
  * player.navReference2d is the system pos2d that corresponds to local (0, 0, 0).
  * player.systemPos2d is updated each sim step from navReference2d + local offset.
  *
+ * Render uses a floating origin: the player sits at scene (0,0,0); bodies are placed at
+ * bodyOffsetFromPlayer (world-axis offset). NPC meshes subtract player.pos the same way.
+ *
+ * Heading convention: heading is always thrust / camera-look axis. Map depth maps to local +Z.
+ * Free flight often starts at {0,0,-1}; dock poses set +Z toward the station corridor explicitly.
+ *
  * Future: OnGravity / REBOUND ephemeris can feed pos2d without changing this module.
  */
 
 import type { Vec3 } from './core/types'
 import type { CartographyBody } from './cartography'
-import { DOCK, SPACE } from '../config'
+import { add, cross, dot, length, normalize, scale, subtract } from './core/vector'
+import type { LocalAxes } from './core/vector'
+import { getLocalAxes } from './core/vector'
+import { DOCK, SPACE, VIEW } from '../config'
 
 export interface Vec2 {
   x: number
@@ -53,7 +62,7 @@ export function systemPos2dFromLocal(navReference2d: Vec2, localPos: Vec3): Vec2
   return { x: navReference2d.x + d.x, y: navReference2d.y + d.y }
 }
 
-/** Body position in the player's local flight frame. */
+/** Body offset from player in world-aligned local axes (floating-origin render + radar). */
 export function bodyLocalPos(body: Pick<CartographyBody, 'pos2d' | 'type' | 'id'>, playerSystemPos2d: Vec2): Vec3 {
   const s = SPACE.localUnitsPerMapUnit
   return {
@@ -61,6 +70,14 @@ export function bodyLocalPos(body: Pick<CartographyBody, 'pos2d' | 'type' | 'id'
     y: bodyElevationOffset(body.type, body.id),
     z: (body.pos2d.y - playerSystemPos2d.y) * s,
   }
+}
+
+/** Alias — already accounts for player.pos via playerSystemPos2d; never subtract player.pos again. */
+export function bodyOffsetFromPlayer(
+  body: Pick<CartographyBody, 'pos2d' | 'type' | 'id'>,
+  playerSystemPos2d: Vec2,
+): Vec3 {
+  return bodyLocalPos(body, playerSystemPos2d)
 }
 
 /** Catalog pos3d when system origin is the star (map display / legacy callers). */
@@ -121,6 +138,66 @@ export function arrivalPose(body: Pick<CartographyBody, 'pos2d' | 'type' | 'id'>
     },
     heading: { x: 0, y: 0, z: 1 },
     up: { x: 0, y: 1, z: 0 },
+  }
+}
+
+export interface BodyFrameOffset {
+  x: number
+  y: number
+  z: number
+  dist: number
+}
+
+/** Offset from player to an entity stored in absolute nav-anchor coordinates. */
+export function offsetFromPlayer(playerPos: Vec3, worldPos: Vec3): Vec3 {
+  return {
+    x: worldPos.x - playerPos.x,
+    y: worldPos.y - playerPos.y,
+    z: worldPos.z - playerPos.z,
+  }
+}
+
+/**
+ * Orthonormal view basis from integrated attitude.
+ * Uses heading as forward and up as a hint (matches Three.js camera lookAt).
+ */
+export function viewBasisFromAttitude(heading: Vec3, upHint: Vec3): LocalAxes {
+  const f = normalize(heading)
+  const hint = normalize(upHint)
+  let r = cross(f, hint)
+  const rlen = length(r)
+  if (rlen < 1e-4) return getLocalAxes(heading, 0)
+  r = scale(r, 1 / rlen)
+  const u = normalize(cross(r, f))
+  return { forward: f, right: r, up: u }
+}
+
+/** Cockpit eye position in the floating-origin frame (matches Elite.tsx camera). */
+export function cockpitEyeOffset(heading: Vec3, up: Vec3): Vec3 {
+  const axes = viewBasisFromAttitude(heading, up)
+  return add(scale(axes.forward, -VIEW.cockpitBack), scale(axes.up, VIEW.eyeHeight))
+}
+
+export interface BodyFrameOpts {
+  /** When true, offset is from ship origin; subtract eye offset so projection matches the camera. */
+  fromCockpitEye?: boolean
+}
+
+/** Rotate a world-axis offset into the ship body frame (waypoints, radar). */
+export function worldOffsetToBodyFrame(
+  offset: Vec3,
+  heading: Vec3,
+  up: Vec3,
+  opts: BodyFrameOpts = {},
+): BodyFrameOffset {
+  const axes = viewBasisFromAttitude(heading, up)
+  const v = opts.fromCockpitEye ? subtract(offset, cockpitEyeOffset(heading, up)) : offset
+  const dist = length(v) || 1
+  return {
+    x: dot(v, axes.right),
+    y: dot(v, axes.up),
+    z: dot(v, axes.forward),
+    dist,
   }
 }
 

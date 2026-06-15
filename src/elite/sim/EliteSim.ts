@@ -319,11 +319,32 @@ export class EliteSim {
     if (p.flightMode === 'docked') {
       p.vel = zero()
       p.speed = 0
+      this.applyAttitudeFromInput(p, playerInput, deltaSeconds)
       this.stepNpcs(deltaSeconds)
       return
     }
 
+    this.applyAttitudeFromInput(p, playerInput, deltaSeconds)
+
     const thrust = Math.max(-0.6, Math.min(1.6, playerInput.thrust))
+    const fwd = p.heading
+    const accel = scale(fwd, thrust * 38 * deltaSeconds)
+    p.vel = add(p.vel, accel)
+    p.vel = scale(p.vel, 0.986)
+    p.vel = clampMagnitude(p.vel, 52)
+    p.pos = add(p.pos, scale(p.vel, deltaSeconds))
+    p.speed = length(p.vel)
+    this.syncSystemPos2d()
+
+    this.stepNpcs(deltaSeconds)
+  }
+
+  /** Yaw / pitch / roll only — used in flight and while docked (look around). */
+  private applyAttitudeFromInput(
+    p: PlayerState,
+    playerInput: { yaw: number; pitch: number; roll: number },
+    deltaSeconds: number,
+  ) {
     const yaw = playerInput.yaw * 1.8
     const pitch = playerInput.pitch * 1.6
     const roll = playerInput.roll * 2.4
@@ -350,23 +371,9 @@ export class EliteSim {
       upv = this.rotateAroundAxis(upv, fwd, rot)
     }
 
-    fwd = normalize(fwd)
-    upv = normalize(upv)
-    right = normalize(cross(fwd, upv))
-
-    p.heading = fwd
-    p.up = upv
+    p.heading = normalize(fwd)
+    p.up = normalize(upv)
     p.roll = (p.roll + roll * deltaSeconds) % (Math.PI * 2)
-
-    const accel = scale(fwd, thrust * 38 * deltaSeconds)
-    p.vel = add(p.vel, accel)
-    p.vel = scale(p.vel, 0.986)
-    p.vel = clampMagnitude(p.vel, 52)
-    p.pos = add(p.pos, scale(p.vel, deltaSeconds))
-    p.speed = length(p.vel)
-    this.syncSystemPos2d()
-
-    this.stepNpcs(deltaSeconds)
   }
 
   private stepNpcs(deltaSeconds: number) {

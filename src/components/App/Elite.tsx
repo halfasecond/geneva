@@ -50,12 +50,13 @@ import {
 
 // Tightening imports (config + extracted modules)
 import {
-  COLORS, SCANNER_2D, VECH, VIEW, WORLD, HYPERSPACE, NPC, FUEL, Z, DASHBOARD,
+  COLORS, SCANNER_2D, VECH, VIEW, WORLD, HYPERSPACE, NPC, FUEL, Z, DASHBOARD, WAYPOINTS,
   roleCss, roleColor, npcSizeForRole,
 } from '../../elite/config'
 import { projectContacts } from '../../elite/sim/contacts'
 import { getCargoUsed } from '../../elite/sim/market'
-import { bodyLocalPos, isInsideBubble } from '../../elite/sim/systemSpace'
+import { bodyLocalPos, isInsideBubble, viewBasisFromAttitude } from '../../elite/sim/systemSpace'
+import { computeWaypoints, type WaypointIndicator } from '../../elite/sim/waypoints'
 import type { CartographyBody } from '../../elite/sim/cartography'
 import { useFlightInput } from '../../elite/useFlightInput'
 import * as CockpitRender from '../../elite/render/cockpit'
@@ -69,6 +70,7 @@ import {
   CockpitStatusPanel,
   MarketOverlay,
   VechPreview,
+  WaypointOverlay,
 } from '../../elite/ui'
 
 // Basic AuthProps shape we receive (wallet + controls)
@@ -97,6 +99,7 @@ const Elite: React.FC<EliteProps> = () => {
   const snapRef = useRef<EliteSnapshot | null>(null)
   const prevFlightModeRef = useRef<string>('docked')
   const sunMeshRef = useRef<THREE.Mesh | null>(null)
+  const [waypoints, setWaypoints] = useState<WaypointIndicator[]>([])
   const hyperspacePhaseRef = useRef<'idle' | 'countdown' | 'jump'>('idle')
   const hyperspaceSequenceStartRef = useRef(0)
   const hyperspaceLastCountdownRef = useRef(-1)
@@ -129,6 +132,8 @@ const Elite: React.FC<EliteProps> = () => {
   // Cartography + hyperspace overlay state
   const [mapOpen, setMapOpen] = useState(false)
   const [route, setRoute] = useState(DEFAULT_ROUTE)
+  const routeRef = useRef(route)
+  routeRef.current = route
 
   const travelDistance = getTravelDistance(route.originId, route.destinationId)
   const destBody = getBodyById(route.destinationId, 'frozen')
@@ -352,6 +357,7 @@ const Elite: React.FC<EliteProps> = () => {
       const snap = sim.getSnapshot()
       snapRef.current = snap
 
+      const viewport = { width: window.innerWidth, height: window.innerHeight }
       const systemPos2d = snap.player.systemPos2d
       const carto = getFrozenCartographyBodies()
       const cartoById = new Map(carto.map(b => [b.id, b]))
@@ -393,34 +399,31 @@ const Elite: React.FC<EliteProps> = () => {
       const cam = cameraRef.current
       if (cam) {
         const p = snap.player
-        const fwd = p.heading
-        // Use the integrated ship up (from incremental rotations in sim) for the main cockpit view.
-        // This ensures pitch properly orients the view without "level reconstruction" conflicts.
-        // (Radars continue to use getLocalAxes(heading, roll) for their classic projection.)
-        const up = p.up || { x: 0, y: 1, z: 0 }
+        const upHint = p.up || { x: 0, y: 1, z: 0 }
+        const axes = viewBasisFromAttitude(p.heading, upHint)
 
-        // Position the camera inside the cockpit, offset backward along -heading and "up" along ship's up.
-        // This makes the viewpoint follow full 6DOF attitude (pitch/yaw/roll all visible).
+        // Floating origin + orthonormal basis (same as waypoint projection).
         cam.position.set(
-          p.pos.x - fwd.x * VIEW.cockpitBack + up.x * VIEW.eyeHeight,
-          p.pos.y - fwd.y * VIEW.cockpitBack + up.y * VIEW.eyeHeight,
-          p.pos.z - fwd.z * VIEW.cockpitBack + up.z * VIEW.eyeHeight
+          -axes.forward.x * VIEW.cockpitBack + axes.up.x * VIEW.eyeHeight,
+          -axes.forward.y * VIEW.cockpitBack + axes.up.y * VIEW.eyeHeight,
+          -axes.forward.z * VIEW.cockpitBack + axes.up.z * VIEW.eyeHeight
         )
-
-        // Set the camera's up to the ship's local up. This makes roll bank the view and
-        // pitch "up" in the image match the ship's orientation.
-        cam.up.set(up.x, up.y, up.z)
-
-        // Look exactly forward along the ship's heading (from the eye point).
-        // Pure fwd direction avoids conflicting biases that could make background appear to
-        // move in "both directions" during pitch. The eyeHeight offset + cockpit model already
-        // give the "looking out the window" framing.
-        const lookTarget = new THREE.Vector3(
-          cam.position.x + fwd.x * VIEW.lookFar,
-          cam.position.y + fwd.y * VIEW.lookFar,
-          cam.position.z + fwd.z * VIEW.lookFar
+        cam.up.set(axes.up.x, axes.up.y, axes.up.z)
+        cam.lookAt(
+          cam.position.x + axes.forward.x * VIEW.lookFar,
+          cam.position.y + axes.forward.y * VIEW.lookFar,
+          cam.position.z + axes.forward.z * VIEW.lookFar
         )
-        cam.lookAt(lookTarget)
+      }
+
+      if (snap.player.flightMode !== 'hyperspace') {
+        const p = snap.player
+        setWaypoints(computeWaypoints(
+          { heading: p.heading, systemPos2d: p.systemPos2d },
+          { destinationId: routeRef.current.destinationId, viewport },
+        ))
+      } else {
+        setWaypoints([])
       }
 
       // === 3D Holo Radar (now uses the shared projectContacts util + extracted updater) ===
@@ -549,11 +552,16 @@ const Elite: React.FC<EliteProps> = () => {
         }
 
         // Update existing meshes (or hide extras)
+        const playerPos = snap.player.pos
         current.forEach((npc: NpcAgent, i: number) => {
           const m = npcMeshes[i]
           if (!m) return
           m.visible = true
-          m.position.set(npc.pos.x, npc.pos.y, npc.pos.z)
+          m.position.set(
+            npc.pos.x - playerPos.x,
+            npc.pos.y - playerPos.y,
+            npc.pos.z - playerPos.z,
+          )
 
           // face velocity direction
           const vlen = length(npc.vel)
@@ -850,6 +858,14 @@ const Elite: React.FC<EliteProps> = () => {
       />
 
       {isHyperspacing && <HyperspaceTunnel />}
+
+      <WaypointOverlay
+        waypoints={waypoints}
+        hidden={
+          !WAYPOINTS.debugHardcoded
+          && (mapOpen || marketOpen || isHyperspacing || hyperspaceCountdown !== null)
+        }
+      />
 
       <img src={'https://cdn.halfasecond.com/images/vech/vech-logo.png'} alt="Vech" style={{
         width: 72,
