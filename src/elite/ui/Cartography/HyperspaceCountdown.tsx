@@ -1,5 +1,5 @@
 import React from 'react'
-import { Z } from '../../config'
+import { WINDSCREEN, Z } from '../../config'
 
 interface HyperspaceCountdownProps {
   count: number
@@ -9,7 +9,7 @@ const HyperspaceCountdown: React.FC<HyperspaceCountdownProps> = ({ count }) => (
   <div
     style={{
       position: 'fixed',
-      top: '42%',
+      top: `calc((${WINDSCREEN.top}px + 100vh - ${WINDSCREEN.bottom}px) / 2)`,
       left: '50%',
       transform: 'translate(-50%, -50%)',
       zIndex: Z.logo,

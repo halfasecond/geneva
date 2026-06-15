@@ -1,13 +1,18 @@
 import React, { useEffect, useRef } from 'react'
-import { Z } from '../../config'
+import { WINDSCREEN, Z } from '../../config'
 
-/** Full-viewport hyperspace tunnel rush (2D overlay — reliable across GPUs). */
+/**
+ * Hyperspace tunnel projected onto the cockpit windscreen (the forward view),
+ * not the dashboard / bezel chrome. Sits above cartography, below radar & Vech.
+ */
 const HyperspaceTunnel: React.FC = () => {
+  const wrapRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
+    const wrap = wrapRef.current
     const canvas = canvasRef.current
-    if (!canvas) return
+    if (!wrap || !canvas) return
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
@@ -16,18 +21,19 @@ const HyperspaceTunnel: React.FC = () => {
 
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2)
-      const w = window.innerWidth
-      const h = window.innerHeight
-      canvas.width = Math.max(1, Math.floor(w * dpr))
-      canvas.height = Math.max(1, Math.floor(h * dpr))
+      const w = Math.max(1, Math.floor(wrap.clientWidth))
+      const h = Math.max(1, Math.floor(wrap.clientHeight))
+      canvas.width = Math.floor(w * dpr)
+      canvas.height = Math.floor(h * dpr)
       canvas.style.width = `${w}px`
       canvas.style.height = `${h}px`
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
     }
     resize()
-    window.addEventListener('resize', resize)
+    const ro = new ResizeObserver(resize)
+    ro.observe(wrap)
 
-    const streaks = Array.from({ length: 96 }, () => ({
+    const streaks = Array.from({ length: 88 }, () => ({
       x: (Math.random() - 0.5) * 2.2,
       y: (Math.random() - 0.5) * 2.2,
       z: Math.random(),
@@ -37,13 +43,13 @@ const HyperspaceTunnel: React.FC = () => {
 
     const draw = (now: number) => {
       const elapsed = (now - t0) / 1000
-      const w = window.innerWidth
-      const h = window.innerHeight
+      const w = wrap.clientWidth
+      const h = wrap.clientHeight
       const cx = w * 0.5
       const cy = h * 0.5
-      const spread = Math.max(w, h) * 0.62
+      const spread = Math.max(w, h) * 0.58
 
-      ctx.fillStyle = `rgba(2, 8, 16, ${0.28 + Math.min(0.35, elapsed * 0.12)})`
+      ctx.fillStyle = `rgba(2, 8, 16, ${0.3 + Math.min(0.3, elapsed * 0.1)})`
       ctx.fillRect(0, 0, w, h)
 
       streaks.forEach(s => {
@@ -75,24 +81,32 @@ const HyperspaceTunnel: React.FC = () => {
 
     raf = requestAnimationFrame(draw)
     return () => {
-      window.removeEventListener('resize', resize)
+      ro.disconnect()
       cancelAnimationFrame(raf)
     }
   }, [])
 
   return (
-    <canvas
-      ref={canvasRef}
+    <div
+      ref={wrapRef}
       style={{
         position: 'fixed',
-        inset: 0,
-        width: '100%',
-        height: '100%',
-        display: 'block',
-        zIndex: Z.bezel - 1,
+        top: WINDSCREEN.top,
+        left: WINDSCREEN.left,
+        right: WINDSCREEN.right,
+        bottom: WINDSCREEN.bottom,
+        zIndex: Z.hyperspace,
+        overflow: 'hidden',
         pointerEvents: 'none',
+        border: `1px solid ${WINDSCREEN.border}`,
+        boxShadow: WINDSCREEN.innerGlow,
       }}
-    />
+    >
+      <canvas
+        ref={canvasRef}
+        style={{ display: 'block', width: '100%', height: '100%' }}
+      />
+    </div>
   )
 }
 
