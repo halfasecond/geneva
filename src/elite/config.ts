@@ -259,10 +259,17 @@ export const MAP = {
   gridStep: 65,
   orbitOpacity: 0.22,
   bodyLabelFont: '10px ui-monospace, monospace',
+  background: 'rgba(0, 6, 14, 0.92)',
+  gridColor: 'rgba(80, 110, 140, 0.15)',
   routeColor: '#66ddff',
   highlightOrigin: '#ffcc66',
   highlightDest: '#66ff99',
   playerColor: '#ffdd88',
+  playerDot: '#ffaa33',
+  // Canvas chrome (HoloPanel child)
+  canvasBorder: 'rgba(102, 170, 255, 0.45)',
+  canvasBg: 'rgba(0, 8, 18, 0.6)',
+  canvasGlow: 'inset 0 0 12px rgba(102, 170, 255, 0.2)',
 }
 
 // =============================================================================

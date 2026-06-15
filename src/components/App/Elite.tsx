@@ -44,14 +44,14 @@ import { getCartographyBodies, getJumpFuelCost, CARTOGRAPHY_BODIES, DEFAULT_ROUT
 
 // Tightening imports (config + extracted modules)
 import {
-  COLORS, SCANNER_2D, VECH, PANELS, VIEW, WORLD, HYPERSPACE, MAP, NPC, FUEL,
+  COLORS, SCANNER_2D, VECH, PANELS, VIEW, WORLD, HYPERSPACE, NPC, FUEL,
   roleCss, roleColor, npcSizeForRole,
 } from '../../elite/config'
 import { projectContacts } from '../../elite/sim/contacts'
 import { useFlightInput } from '../../elite/useFlightInput'
 import { useHoloDrag } from '../../elite/useHoloDrag'
 import * as CockpitRender from '../../elite/render/cockpit'
-import { HoloPanel, VechPreview } from '../../elite/ui'
+import { CartographyOverlay, VechPreview } from '../../elite/ui'
 
 // Basic AuthProps shape we receive (wallet + controls)
 type EliteProps = AuthProps & {
@@ -76,9 +76,7 @@ const Elite: React.FC<EliteProps> = () => {
   const starFieldRef = useRef<THREE.Points | null>(null)
   const bodiesGroupRef = useRef<THREE.Group | null>(null)
   const hyperspaceStreaksRef = useRef<THREE.Group | null>(null)
-  const mapCanvasRef = useRef<HTMLCanvasElement | null>(null)
-  const mapRafRef = useRef<number | null>(null)
-  const snapRef = useRef<any>(null) // latest sim snapshot for map overlay + hyperspace
+  const snapRef = useRef<any>(null) // latest sim snapshot for hyperspace + scanner
   const isHyperspacingRef = useRef(false)
 
   // Cockpit 3D elements
@@ -611,146 +609,6 @@ const Elite: React.FC<EliteProps> = () => {
 
 
 
-  // Cartography map overlay (2D canvas for clarity + live orbits, click to select destination)
-  // This is the "overlay UI such as Cartography" the user requested.
-  useEffect(() => {
-    if (!mapOpen) {
-      if (mapRafRef.current) {
-        cancelAnimationFrame(mapRafRef.current)
-        mapRafRef.current = null
-      }
-      return
-    }
-
-    const canvas = mapCanvasRef.current
-    if (!canvas) return
-
-    const ctx = canvas.getContext('2d', { alpha: true })
-    if (!ctx) return
-
-    // Smaller holographic map size for floating Minority Report style overlay
-    const size = MAP.canvasSize
-    canvas.width = size
-    canvas.height = size
-
-    const center = size / 2
-    const scale = MAP.scale
-
-    let mapTime = 0
-    const draw = () => {
-      mapTime += 0.016
-      ctx.fillStyle = 'rgba(0, 6, 14, 0.92)'
-      ctx.fillRect(0, 0, size, size)
-
-      // subtle grid
-      ctx.strokeStyle = 'rgba(80, 110, 140, 0.15)'
-      ctx.lineWidth = 1
-      for (let i = -3; i <= 3; i++) {
-        const p = center + i * MAP.gridStep
-        ctx.beginPath(); ctx.moveTo(p, 20); ctx.lineTo(p, size - 20); ctx.stroke()
-        ctx.beginPath(); ctx.moveTo(20, p); ctx.lineTo(size - 20, p); ctx.stroke()
-      }
-
-      const bodies = getCartographyBodies(mapTime * 0.9)
-      const bodyMap = new Map(bodies.map(b => [b.id, b]))
-
-      // Draw orbits (faint ellipses)
-      ctx.strokeStyle = `rgba(140, 170, 200, ${MAP.orbitOpacity})`
-      ctx.lineWidth = 1.5
-      bodies.forEach(b => {
-        if (!b.orbitRadius || b.type === 'star') return
-        const parent = b.parentId ? bodyMap.get(b.parentId) : null
-        const cx = parent ? center + parent.pos2d.x * scale : center
-        const cy = parent ? center + parent.pos2d.y * scale : center
-        ctx.beginPath()
-        ctx.ellipse(cx, cy, b.orbitRadius * scale, b.orbitRadius * scale * 0.72, 0, 0, Math.PI * 2)
-        ctx.stroke()
-      })
-
-      // Draw bodies
-      bodies.forEach(b => {
-        const px = center + b.pos2d.x * scale
-        const py = center + b.pos2d.y * scale
-        const r = Math.max(2.5, b.radius * 1.6 * scale)
-
-        ctx.fillStyle = b.color
-        ctx.beginPath()
-        ctx.arc(px, py, r, 0, Math.PI * 2)
-        ctx.fill()
-
-        // label
-        ctx.fillStyle = COLORS.textMuted
-        ctx.font = MAP.bodyLabelFont
-        ctx.fillText(b.name, px + r + 3, py - 2)
-
-        // highlight current route
-        if (b.id === route.originId || b.id === route.destinationId) {
-          ctx.strokeStyle = b.id === route.destinationId ? MAP.highlightDest : MAP.highlightOrigin
-          ctx.lineWidth = 2
-          ctx.beginPath()
-          ctx.arc(px, py, r + 4, 0, Math.PI * 2)
-          ctx.stroke()
-        }
-      })
-
-      // Draw route curve (quadratic like Flocker)
-      const origin = bodyMap.get(route.originId)
-      const dest = bodyMap.get(route.destinationId)
-      if (origin && dest) {
-        const ox = center + origin.pos2d.x * scale
-        const oy = center + origin.pos2d.y * scale
-        const dx = center + dest.pos2d.x * scale
-        const dy = center + dest.pos2d.y * scale
-        const mx = (ox + dx) / 2
-        const my = (oy + dy) / 2
-        const dist = Math.hypot(dx - ox, dy - oy)
-        const bend = Math.min(70, dist * 0.22)
-        const nx = -(dy - oy) / (dist || 1)
-        const ny = (dx - ox) / (dist || 1)
-        const cx = mx + nx * bend
-        const cy = my + ny * bend
-
-        ctx.strokeStyle = MAP.routeColor
-        ctx.lineWidth = 1.8
-        ctx.beginPath()
-        ctx.moveTo(ox, oy)
-        ctx.quadraticCurveTo(cx, cy, dx, dy)
-        ctx.stroke()
-
-        const ang = Math.atan2(dy - cy, dx - cx)
-        ctx.fillStyle = MAP.routeColor
-        ctx.beginPath()
-        ctx.moveTo(dx, dy)
-        ctx.lineTo(dx - 9 * Math.cos(ang - 0.5), dy - 9 * Math.sin(ang - 0.5))
-        ctx.lineTo(dx - 9 * Math.cos(ang + 0.5), dy - 9 * Math.sin(ang + 0.5))
-        ctx.closePath()
-        ctx.fill()
-      }
-
-      // Player ship position on map (scaled current cockpit location)
-      const pp = snapRef.current?.player?.pos || { x: 0, y: 120 }
-      const playerX = center + pp.x * scale * 0.65
-      const playerY = center + pp.y * scale * 0.65
-      ctx.fillStyle = MAP.playerColor
-      ctx.beginPath()
-      ctx.moveTo(playerX, playerY - 6)
-      ctx.lineTo(playerX - 4, playerY + 5)
-      ctx.lineTo(playerX + 4, playerY + 5)
-      ctx.closePath()
-      ctx.fill()
-      ctx.fillStyle = '#ffaa33'
-      ctx.fillRect(playerX - 1, playerY - 1, 2, 2)
-
-      mapRafRef.current = requestAnimationFrame(draw)
-    }
-
-    draw()
-
-    return () => {
-      if (mapRafRef.current) cancelAnimationFrame(mapRafRef.current)
-    }
-  }, [mapOpen, route])
-
   // 2D side-on ~20deg angled "nearby things" scanner in the bottom dashboard (always visible, center bottom).
   // Larger rectangular holo panel. Contacts projected so lateral spreads horizontally, elevation is direct vertical offset
   // from the receding angled depth plane (20deg pitch), range recedes up-screen. Yellow height sticks for vertical clarity.
@@ -918,30 +776,30 @@ const Elite: React.FC<EliteProps> = () => {
     return () => { if (raf) cancelAnimationFrame(raf) }
   }, [mapOpen])  // re-draws on map toggle too, but always runs for ship UI
 
-  // Click to pick destination on the map canvas
-  const handleMapClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = mapCanvasRef.current
-    if (!canvas) return
-    const rect = canvas.getBoundingClientRect()
-    const mx = ((e.clientX - rect.left) / rect.width) * canvas.width - canvas.width / 2
-    const my = ((e.clientY - rect.top) / rect.height) * canvas.height - canvas.height / 2
-    const scale = MAP.scale
+  const handleSetNearestOrigin = () => {
+    const nearest = CARTOGRAPHY_BODIES.reduce((best, b) => {
+      const p = snapRef.current?.player?.pos || { x: 0, y: 0 }
+      const d = Math.hypot(b.pos2d.x - p.x, b.pos2d.y - p.y)
+      return d < best.d ? { id: b.id, d } : best
+    }, { id: route.originId, d: 9999 })
+    setRoute(r => ({ ...r, originId: nearest.id }))
+  }
 
-    let best: { id: string; dist: number } | null = null
-    const bodies = getCartographyBodies(0) // use base for picking
-    bodies.forEach(b => {
-      if (b.type === 'star') return
-      const bx = b.pos2d.x * scale
-      const by = b.pos2d.y * scale
-      const d = Math.hypot(mx - bx, my - by)
-      const hit = Math.max(18, b.radius * 2.2)
-      if (d < hit && (!best || d < best.dist)) {
-        best = { id: b.id, dist: d }
-      }
-    })
-    if (best) {
-      setRoute(r => ({ ...r, destinationId: best!.id }))
-    }
+  const handleInitiateHyperspace = () => {
+    const o = getBodyById(route.originId, 0)
+    const d = getBodyById(route.destinationId, 0)
+    if (!o || !d) return
+    const cost = getJumpFuelCost(o.pos2d, d.pos2d)
+    if (hud.fuel < cost) return
+
+    hyperspaceTargetRef.current = { ...d.pos3d }
+    hyperspaceCostRef.current = cost
+    hyperspaceStartRef.current = 0
+    setIsHyperspacing(true)
+    isHyperspacingRef.current = true
+
+    const sg: any = hyperspaceStreaksRef.current
+    if (sg) sg.visible = true
   }
 
   // The useHoloDrag hooks above already attach their global listeners while dragging.
@@ -1032,137 +890,21 @@ const Elite: React.FC<EliteProps> = () => {
         overflow: 'hidden',
       }} />
 
-      {/* HOLO PANELS - now using the extracted reusable HoloPanel component + useHoloDrag hooks */}
       {mapOpen && (
-        <>
-          <HoloPanel
-            title="CARTOGRAPHY • HOLO • LIVE ORBITAL DATA"
-            pos={mapPanelPos}
-            onStartDrag={mapDrag.startDrag}
-            onClose={() => setMapOpen(false)}
-            footer="CLICK TO SELECT • ORBITS LIVE"
-          >
-            <div style={{ display: 'flex', justifyContent: 'center' }}>
-              <canvas
-                ref={mapCanvasRef}
-                onClick={handleMapClick}
-                width={340}
-                height={340}
-                style={{
-                  border: '1px solid #0088cc',
-                  background: 'rgba(0, 8, 18, 0.6)',
-                  cursor: 'crosshair',
-                  boxShadow: 'inset 0 0 12px rgba(0, 140, 255, 0.2)',
-                }}
-              />
-            </div>
-          </HoloPanel>
-
-          <HoloPanel
-            title="CONTROLS • HOLO • ROUTE &amp; JUMP"
-            pos={controlsPanelPos}
-            onStartDrag={controlsDrag.startDrag}
-            footer="DRAG HEADER • SAME HOLO STYLE • UNDER MAP"
-          >
-            <div style={{ background: 'rgba(0, 20, 40, 0.45)', border: '1px solid #006699', padding: 6, marginBottom: 6, fontSize: 10 }}>
-              <div style={{ opacity: 0.6, fontSize: 9 }}>ROUTE</div>
-              <div>FROM <span style={{ color: '#ffcc66' }}>{getBodyById(route.originId, 0)?.name}</span></div>
-              <div>TO <span style={{ color: '#66ff99' }}>{getBodyById(route.destinationId, 0)?.name}</span></div>
-              <div style={{ marginTop: 3, color: '#ffdd88', fontSize: 11 }}>
-                COST: {getJumpFuelCost(
-                  getBodyById(route.originId, 0)?.pos2d || { x: 0, y: 0 },
-                  getBodyById(route.destinationId, 0)?.pos2d || { x: 0, y: 0 }
-                )} FUEL
-              </div>
-            </div>
-
-            <button
-              onClick={() => {
-                const nearest = CARTOGRAPHY_BODIES.reduce((best, b) => {
-                  const p = snapRef.current?.player?.pos || { x: 0, y: 0 }
-                  const d = Math.hypot(b.pos2d.x - p.x, b.pos2d.y - p.y)
-                  return d < best.d ? { id: b.id, d } : best
-                }, { id: route.originId, d: 9999 })
-                setRoute(r => ({ ...r, originId: nearest.id }))
-              }}
-              style={{
-                width: '100%',
-                marginBottom: 4,
-                padding: '3px 6px',
-                background: 'rgba(0,40,70,0.6)',
-                border: '1px solid #0088aa',
-                color: '#aaddff',
-                fontSize: 9,
-                cursor: 'pointer'
-              }}
-            >
-              SET NEAREST AS ORIGIN
-            </button>
-
-            <button
-              disabled={isHyperspacing || hud.fuel < getJumpFuelCost(
-                getBodyById(route.originId, 0)?.pos2d || { x: 0, y: 0 },
-                getBodyById(route.destinationId, 0)?.pos2d || { x: 0, y: 0 }
-              )}
-              onClick={() => {
-                const o = getBodyById(route.originId, 0)
-                const d = getBodyById(route.destinationId, 0)
-                if (!o || !d) return
-                const cost = getJumpFuelCost(o.pos2d, d.pos2d)
-                if (hud.fuel < cost) return
-
-                hyperspaceTargetRef.current = { ...d.pos3d }
-                hyperspaceCostRef.current = cost
-                hyperspaceStartRef.current = 0
-                setIsHyperspacing(true)
-                isHyperspacingRef.current = true
-
-                const sg: any = hyperspaceStreaksRef.current
-                if (sg) sg.visible = true
-              }}
-              style={{
-                width: '100%',
-                padding: '4px 6px',
-                background: isHyperspacing ? 'rgba(60,20,0,0.6)' : 'rgba(0,60,50,0.6)',
-                border: '1px solid #00cc99',
-                color: '#aaddff',
-                fontSize: 10,
-                cursor: isHyperspacing ? 'wait' : 'pointer'
-              }}
-            >
-              {isHyperspacing ? 'HYPERSPACE IN PROGRESS...' : 'INITIATE HYPERSPACE'}
-            </button>
-          </HoloPanel>
-        </>
-      )}
-
-      {/* Central targeting / jump status (preserved from original reference visuals) */}
-      {mapOpen && (
-        <div style={{
-          position: 'absolute',
-          top: '36%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          background: 'rgba(0, 0, 0, 0.35)',
-          boxShadow: '0 0 8px rgba(255,170,0,0.25)',
-          padding: '3px 10px',
-          fontSize: 11,
-          color: '#ffaa00',
-          textAlign: 'center',
-          pointerEvents: 'none',
-          fontFamily: 'ui-monospace, monospace',
-          letterSpacing: '1px',
-          minWidth: '120px',
-        }}>
-          {getBodyById(route.destinationId, 0)?.name || 'NO TARGET'}<br />
-          {getBodyById(route.destinationId, 0) ?
-            getJumpFuelCost(
-              getBodyById(route.originId, 0)?.pos2d || { x: 0, y: 0 },
-              getBodyById(route.destinationId, 0)?.pos2d || { x: 0, y: 0 }
-            ) + ' FUEL'
-            : ''}
-          {isHyperspacing && <div style={{ color: '#ff6644', marginTop: '2px' }}>CHARGING</div>}
-        </div>
+        <CartographyOverlay
+          route={route}
+          fuel={hud.fuel}
+          playerPos={hud.playerPos}
+          isHyperspacing={isHyperspacing}
+          mapPanelPos={mapPanelPos}
+          controlsPanelPos={controlsPanelPos}
+          onRouteChange={setRoute}
+          onSetNearestOrigin={handleSetNearestOrigin}
+          onInitiateHyperspace={handleInitiateHyperspace}
+          onStartMapDrag={mapDrag.startDrag}
+          onStartControlsDrag={controlsDrag.startDrag}
+          onClose={() => setMapOpen(false)}
+        />
       )}
 
       {/* Bottom Dashboard - Ship UI (default view, always visible as the "ship dashboard"; carto map overlays when M pressed) */}

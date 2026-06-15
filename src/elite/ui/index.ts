@@ -7,6 +7,4 @@ export { default as SpeedGauge } from './SpeedGauge'
 export { default as FuelGauge } from './FuelGauge'
 export { default as SystemStatus } from './SystemStatus'
 export { default as VechPreview } from './VechPreview'
-// Future exports:
-// export * from './CartographyPanel'
-// etc.
+export { CartographyOverlay } from './Cartography'
