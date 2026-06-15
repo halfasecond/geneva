@@ -205,7 +205,7 @@ export const HYPERSPACE = {
   streakLenVar: 48,
   streakWidth: 0.14,
   streakRadiusMin: 0.5,
-  streakRadiusVar: 22,
+  streakRadiusVar: 38,
   streakYScale: 0.75,
   streakColor: 0xbbeeff,
   spawnZMin: -120,
