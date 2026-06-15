@@ -293,7 +293,7 @@ export function createVechHoloIcon(camera: THREE.PerspectiveCamera) {
         )
       })
     ),
-    new THREE.LineBasicMaterial({ color: VECH.vechRing, transparent: true, opacity: 0.85 })
+    new THREE.LineBasicMaterial({ color: COLORS.vechRing, transparent: true, opacity: 0.85 })
   )
   shipIcon.add(iconRing)
 
@@ -312,7 +312,6 @@ export function update3DRadar(
   contacts: Array<{ x: number; y: number; z: number; dist: number; type: string; role?: string }>
 ) {
   let bidx = 0
-  const maxR = 200 // legacy visual scale from original
 
   contacts.forEach((c) => {
     if (bidx >= blips.length) return

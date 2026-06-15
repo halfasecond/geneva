@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 
@@ -39,11 +39,11 @@ declare global {
 import type { AuthProps } from '../../types/auth'
 import { EliteSim } from '../../elite/sim/EliteSim'
 import type { NpcAgent } from '../../elite/sim/core/types'
-import { length, cross, normalize } from '../../elite/sim/core/vector'
+import { length } from '../../elite/sim/core/vector'
 import { getCartographyBodies, getJumpFuelCost, CARTOGRAPHY_BODIES, DEFAULT_ROUTE, getBodyById } from '../../elite/sim/cartography'
 
 // Tightening imports (config + extracted modules)
-import { COLORS, COCKPIT, RADAR_3D, SCANNER_2D, FUEL, VECH, PANELS, HUD, BEZEL, WORLD, NPC, DT, roleColor, roleCss, npcSizeForRole } from '../../elite/config'
+import { COLORS, SCANNER_2D, VECH, PANELS,  } from '../../elite/config'
 import { projectContacts } from '../../elite/sim/contacts'
 import { useFlightInput } from '../../elite/useFlightInput'
 import { useHoloDrag } from '../../elite/useHoloDrag'
@@ -54,6 +54,8 @@ import { HoloPanel, VechPreview } from '../../elite/ui'
 type EliteProps = AuthProps & {
   // extra if needed
 }
+
+const glbUrl = 'https://raw2.seadn.io/ethereum/0x02e770a2f79ba4d3740a7273eca7e290d93ecc8a/f499a621b66cab834f06546f71875d06.glb'
 
 const Elite: React.FC<EliteProps> = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -76,14 +78,12 @@ const Elite: React.FC<EliteProps> = () => {
   const snapRef = useRef<any>(null) // latest sim snapshot for map overlay + hyperspace
   const isHyperspacingRef = useRef(false)
 
-  // New cockpit 3D elements
+  // Cockpit 3D elements
   const radarRef = useRef<THREE.Group | null>(null)
   const radarBlipsRef = useRef<THREE.Object3D[]>([])
   const radar2DCanvasRef = useRef<HTMLCanvasElement | null>(null)
   const fuelBarsRef = useRef<THREE.Object3D[]>([])
   const reticleRef = useRef<THREE.Group | null>(null)
-
-
 
   const [hud, setHud] = useState({
     speed: 0,
@@ -107,9 +107,6 @@ const Elite: React.FC<EliteProps> = () => {
 
   const [controlsPanelPos, setControlsPanelPos] = useState(PANELS.controlsInitial)
   const controlsDrag = useHoloDrag(controlsPanelPos, setControlsPanelPos, { maxXPad: PANELS.dragBounds.maxXPad, maxYPad: PANELS.dragBounds.maxYPadControls })
-
-  const [flightPanelPos, setFlightPanelPos] = useState(PANELS.flightInitial)
-  const flightDrag = useHoloDrag(flightPanelPos, setFlightPanelPos, { maxXPad: PANELS.dragBounds.maxXPad, maxYPad: PANELS.dragBounds.maxYPadFlight })
 
   // Use the extracted flight input hook (replaces the old keysRef + onKeyDown/Up + getPlayerInput)
   const { getInput: getPlayerInput } = useFlightInput()
@@ -265,9 +262,8 @@ const Elite: React.FC<EliteProps> = () => {
     // VECH GLB load (async) - kept inline for now; will move to a render/vech helper in a follow-up
     const gltfLoader = new GLTFLoader()
     gltfLoader.load(
-      VECH.glbUrl,
-      (gltf) => {
-        console.log('VECH ship GLB model loaded successfully for holo icon')
+      glbUrl,
+      (gltf: any) => {
         const model = gltf.scene
 
         const box = new THREE.Box3().setFromObject(model)
@@ -306,7 +302,7 @@ const Elite: React.FC<EliteProps> = () => {
         shipIcon.visible = true
       },
       undefined,
-      (error) => {
+      (error: any) => {
         console.error('Failed to load VECH ship GLB model (no fallback):', error)
       }
     )
@@ -601,6 +597,7 @@ const Elite: React.FC<EliteProps> = () => {
             z: Math.round(snap.player.pos.z),
           },
           fuel: Math.round(snap.player.fuel ?? 0),
+          glb: hud.glb,
         })
       }
 
@@ -967,7 +964,6 @@ const Elite: React.FC<EliteProps> = () => {
       const mapY = 55
       setMapPanelPos({ x: rightX, y: mapY })
       setControlsPanelPos({ x: rightX, y: mapY + 375 })
-      setFlightPanelPos({ x: rightX, y: mapY + 375 + 160 })
     }
   }, [mapOpen])
 
@@ -1003,8 +999,15 @@ const Elite: React.FC<EliteProps> = () => {
         pointerEvents: 'none',
       }} />
 
-      <img src={'https://cdn.halfasecond.com/images/vech/vech-logo.png'} alt="Vech" style={{ width: 72, opacity: 0.25,
-        position: 'fixed', left: 'calc(50% - 310px)', transform: 'translateX(-50%)', bottom: 164, zIndex: 14, pointerEvents: 'none'
+      <img src={'https://cdn.halfasecond.com/images/vech/vech-logo.png'} alt="Vech" style={{ 
+        width: 72,
+        opacity: .4 ,
+        position: 'fixed',
+        left: 'calc(50% - 310px)',
+        transform: 'translateX(-50%)',
+        bottom: 164,
+        zIndex: 11,
+        pointerEvents: 'none'
        }} />
 
       {/* Top bezel - canopy frame */}
@@ -1194,7 +1197,7 @@ const Elite: React.FC<EliteProps> = () => {
           position: 'absolute',
           left: 'calc(50% - 614px)',
           bottom: 60,
-          width: 240,  /* single consistent width for the whole fused panel (Vech + rings + status). Matches the widest ring (canvas/ring visual). All inner JSX elements use 100% width (or flex/relative) so the status UI (SPD/FUEL/systems) is as wide as the ring, centered. */
+          width: 240,
           background: 'rgba(0, 6, 14, 0.8)',
           border: '1px solid rgba(0, 170, 255, 0.1)',
           borderRadius: '2px',
@@ -1221,16 +1224,14 @@ const Elite: React.FC<EliteProps> = () => {
           position: 'absolute',
           left: '50%',
           transform: 'translateX(-50%)',
-          bottom: SCANNER_2D.bottom,
-          marginTop: SCANNER_2D.marginTop,
-          width: SCANNER_2D.containerWidth,
-          height: SCANNER_2D.containerHeight,
-          background: SCANNER_2D.containerBackground,
-          boxShadow: SCANNER_2D.containerBoxShadow,
+          bottom: 60,
+          width: 712,
+          height: 200,
+          boxShadow: 'inset 0 0 14px rgba(102, 170, 255, .15), 0 0 8px rgba(102, 170, 255, .15)',
           overflow: 'hidden',
         }}>
-          <canvas ref={radar2DCanvasRef} width={SCANNER_2D.canvasWidth} height={SCANNER_2D.canvasHeight} style={{ position: 'absolute', top: SCANNER_2D.canvasTop, left: '2px' }} />
-          <div style={{ position: 'absolute', bottom: SCANNER_2D.labelBottom, width: '100%', textAlign: 'center', fontSize: '8px', letterSpacing: '0.5px', color: SCANNER_2D.nearbyLabelColor }}>NEARBY</div>
+          <canvas ref={radar2DCanvasRef} width={704} height={190} style={{ position: 'absolute', top: 2, left: 2 }} />
+          <div style={{ position: 'absolute', bottom: 1, width: '100%', textAlign: 'center', fontSize: '8px', letterSpacing: '0.5px', color: SCANNER_2D.nearbyLabelColor }}>NEARBY</div>
         </div>
 
         {/* Fused VECH preview + status gauges as one component */}
@@ -1247,7 +1248,7 @@ const Elite: React.FC<EliteProps> = () => {
           flexDirection: 'column',
           alignItems: 'center',
         }}>
-          <VechPreview hud={hud} />
+          <VechPreview hud={hud} glbUrl={glbUrl} />
         </div>
       </div>
     </div>

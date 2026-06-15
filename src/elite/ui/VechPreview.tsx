@@ -9,9 +9,10 @@ interface VechPreviewProps {
     speed: number
     fuel: number
   }
+  glbUrl: string
 }
 
-const VechPreview: React.FC<VechPreviewProps> = ({ hud }) => {
+const VechPreview: React.FC<VechPreviewProps> = ({ hud, glbUrl }) => {
   const vechRingCanvasRef = useRef<HTMLCanvasElement | null>(null)
   const vechModelViewerRef = useRef<any>(null)
 
@@ -61,31 +62,42 @@ const VechPreview: React.FC<VechPreviewProps> = ({ hud }) => {
     ctx.stroke()
   }, [])
 
-  const vechBlue = COLORS.vechRingCss
-
   return (
     <>
       {/* Model + ring area - reduced height to make ship smaller */}
-      <div style={{ position: 'relative', width: '100%', height: 120 }}>
+      <div style={{ 
+        position: 'relative',
+        width: '100%',
+        height: 110
+      }}>
         <canvas
           ref={vechRingCanvasRef}
-          width="400"
-          height="140"
-          style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 1 }}
+          width={400}
+          height={140}
+          style={{ 
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            marginTop: '10px',
+            width: '100%',
+            height: '100%',
+            pointerEvents: 'none',
+            zIndex: 1
+          }}
         />
         <model-viewer
           ref={vechModelViewerRef}
-          src={VECH.glbUrl}
-          alt="VECH hovercraft"
+          src={glbUrl}
+          alt="VECH Founder Edition"
           cameraControls={false}
           autoRotate={false}
           disableZoom={false}
           disablePan={true}
           interactionPrompt="none"
           shadowIntensity={0.6}
-          exposure={1.2}
+          exposure={0.4}
           cameraOrbit="0deg 70deg 20%"  /* increased % to make ship appear smaller */
-          cameraTarget="0 -0.15 0"
+          camera-target="0 -0.15 0"
           onLoad={setVechCamera}
           style={{ width: '100%', height: '100%', background: 'transparent', position: 'relative', zIndex: 2, marginTop: '-20px' }}  /* negative margin to pull the ship up into the ring */
         />
@@ -94,12 +106,12 @@ const VechPreview: React.FC<VechPreviewProps> = ({ hud }) => {
       {/* Small VECH label */}
       <div style={{
         fontSize: '9px',
-        color: vechBlue,
+        color: COLORS.vechRingCss,
         letterSpacing: '0.7px',
         textShadow: '0 0 2px #000',
         pointerEvents: 'none',
         lineHeight: 1,
-        marginBottom: '12px'
+        marginBottom: 8
       }}>
         VECH #5759
       </div>
@@ -111,7 +123,7 @@ const VechPreview: React.FC<VechPreviewProps> = ({ hud }) => {
         display: 'flex',
         flexDirection: 'column',
         gap: '6px',
-        color: vechBlue,
+        color: COLORS.vechRingCss,
         fontSize: '12px',  /* 50% larger */
         paddingBottom: '4px'
       }}>

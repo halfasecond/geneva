@@ -125,7 +125,6 @@ export const SCANNER_2D = {
   depthFactor: 0.52,
   elevFactor: 1.1,
   latFactor: 3.12,
-
   // Grid / volume
   numRangeLines: 5,
   maxZ: 155,
@@ -133,36 +132,17 @@ export const SCANNER_2D = {
   halfWidthBase: 272,
   taper: 0.52,
   brightPlaneHalfW: 296,
-
   // Glyph sizing
   sizeNear: 23.2,
   sizeFar: 8.8,
   sizeDistDiv: 165,
-
   // Filters + labels
   maxRangeShip: 300,
   maxRangeBody: 500,
   labelDist: 125,
-
   // Player marker
   chevron: { back: 10, side: 8, fwd: 6 },
-
-  // Layout of the scanner section in the bottom dashboard (HTML overlay on 3D windscreen)
-  // The section (200px high grid + NEARBY label) is positioned absolutely.
-  // To overlap the windscreen like the VECH ship model does, we lift the anchor with positive 'bottom'
-  // and use negative marginTop.
-  // 25% of its height (200px * 0.25 = 50px) upward move.
-  containerWidth: 712,
-  containerHeight: 200,
-  canvasWidth: 704,
-  canvasHeight: 190,
-  bottom: 60,            // set higher so that with the height 200px and negative marginTop, the top of the black radar box extends ~50px (25% of 200px) into the windscreen above the ~210px bottom dashboard strip
-  canvasTop: '2px',
-  labelBottom: '1px',
-  containerBoxShadow: 'inset 0 0 14px rgba(102, 170, 255, .15), 0 0 8px rgba(102, 170, 255, .15)',
-
-  // Radar UI element colors - updated to deep ocean blue "vech" color (#66aaff / rgba(102,170,255,...))
-  // replacing the previous amber/gold (#ffaa00) for grid lines, labels, chevrons etc. in the "nearby" radar.
+  // Radar UI element colors
   gridColor: 'rgba(102,170,255,0.4)',
   brightColor: '#66aaff',
   labelColor: '#66aaff',
@@ -196,9 +176,6 @@ export const RETICLE = {
 // VECH SHIP HOLO ICON (3D GLB inside ring, right of lower radar)
 // =============================================================================
 export const VECH = {
-  // The specific collection item used for the player's ship visual
-  glbUrl: 'https://raw2.seadn.io/ethereum/0x02e770a2f79ba4d3740a7273eca7e290d93ecc8a/f499a621b66cab834f06546f71875d06.glb',
-
   groupPos: { x: 2.6, y: -0.9, z: -2.55 },
   ring: { r: 1.55, ry: 1.0, segments: 24 },
 
@@ -311,30 +288,6 @@ export const PANELS = {
   z: 25,
   headerGradient: 'linear-gradient(to right, rgba(0,120,200,0.25), rgba(0,80,150,0.1))',
   headerBorder: '#0099dd',
-}
-
-// =============================================================================
-// HUD / BEZELS / MISC
-// =============================================================================
-export const HUD = {
-  topOffset: 18,
-  sideOffset: 18,
-  bottomOffset: 18,
-  titleSize: 28,
-  spdColor: '#66eeff',
-}
-
-export const BEZEL = {
-  leftWidth: 85,
-  rightWidth: 85,
-  topHeight: 45,
-  opacity: 0.65,
-  shadow: '0 0 12px rgba(255, 170, 0, 0.25)',
-}
-
-export const DT = {
-  max: 0.066,
-  throttleChance: 0.6, // for setHud
 }
 
 // Small helpers kept with config for convenience
