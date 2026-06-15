@@ -344,5 +344,3 @@ export function update3DRadar(
   }
 }
 
-// Small re-export of role color helper for render code that doesn't want the full config
-export { roleColor } from '../config'

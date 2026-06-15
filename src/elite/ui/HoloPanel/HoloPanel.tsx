@@ -9,7 +9,7 @@
  */
 
 import React from 'react'
-import { PANELS } from '../../config'
+import { COLORS, PANELS } from '../../config'
 
 interface HoloPanelProps {
   title: string
@@ -37,8 +37,8 @@ const HoloPanel: React.FC<HoloPanelProps> = ({
         left: pos.x,
         top: pos.y,
         width,
-        background: PANELS.panelBg,
-        border: `1px solid ${PANELS.panelBorder}`,
+        background: COLORS.panelBg,
+        border: `1px solid ${COLORS.panelBorder}`,
         borderRadius: 4,
         boxShadow: '0 0 25px rgba(0, 160, 255, 0.35), inset 0 0 30px rgba(0, 80, 140, 0.15)',
         backdropFilter: 'blur(6px)',

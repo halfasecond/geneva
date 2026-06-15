@@ -11,16 +11,13 @@
 // =============================================================================
 export const COLORS = {
   spaceBg: 0x00040a,
-  spaceFog: 0x00040a,
 
   // Classic Elite holo orange / amber
-  holoPrimary: '00aaff',       // radar rings, reticle, fuel, scanner grid, labels
-  holoPrimaryCss: '#00aaff',
+  holoPrimary: 0x00aaff,
 
   // VECH / cyan-blue accents
   vechRing: 0x66aaff,
   vechRingCss: '#66aaff',
-  vechEmissive: 0x4488ff,
 
   // NPC / contact glyphs
   trader: 0xaabbcc,
@@ -40,7 +37,6 @@ export const COLORS = {
   panelBorder: '#00aaff',
   panelBg: 'rgba(4, 12, 22, 0.55)',
   textMuted: '#aaccdd',
-  textAccent: '#66eeff',
   warning: 0xff4444,
 } as const
 
@@ -276,14 +272,12 @@ export const PANELS = {
   width: 360,
   mapInitial: { x: 820, y: 60 },
   controlsInitial: { x: 820, y: 430 },
-  flightInitial: { x: 820, y: 620 },
   dragBounds: {
     minX: 10,
     maxXPad: 480,
     minY: 10,
     maxYPadMap: 420,
     maxYPadControls: 200,
-    maxYPadFlight: 300,
   },
   z: 25,
   headerGradient: 'linear-gradient(to right, rgba(0,120,200,0.25), rgba(0,80,150,0.1))',

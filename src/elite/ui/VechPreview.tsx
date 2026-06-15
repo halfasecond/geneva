@@ -19,8 +19,8 @@ const VechPreview: React.FC<VechPreviewProps> = ({ hud, glbUrl }) => {
   const setVechCamera = () => {
     const mv = vechModelViewerRef.current
     if (mv) {
-      mv.cameraOrbit = '0deg 70deg 15%'
-      mv.cameraTarget = '0 -0.15 0'
+      mv.cameraOrbit = VECH.cameraOrbit
+      mv.cameraTarget = VECH.cameraTarget
       if (mv.jumpCameraToGoal) mv.jumpCameraToGoal()
     }
   }
@@ -96,8 +96,8 @@ const VechPreview: React.FC<VechPreviewProps> = ({ hud, glbUrl }) => {
           interactionPrompt="none"
           shadowIntensity={0.6}
           exposure={0.4}
-          cameraOrbit="0deg 70deg 20%"  /* increased % to make ship appear smaller */
-          camera-target="0 -0.15 0"
+          cameraOrbit={VECH.cameraOrbit}
+          camera-target={VECH.cameraTarget}
           onLoad={setVechCamera}
           style={{ width: '100%', height: '100%', background: 'transparent', position: 'relative', zIndex: 2, marginTop: '-20px' }}  /* negative margin to pull the ship up into the ring */
         />

@@ -43,7 +43,10 @@ import { length } from '../../elite/sim/core/vector'
 import { getCartographyBodies, getJumpFuelCost, CARTOGRAPHY_BODIES, DEFAULT_ROUTE, getBodyById } from '../../elite/sim/cartography'
 
 // Tightening imports (config + extracted modules)
-import { COLORS, SCANNER_2D, VECH, PANELS,  } from '../../elite/config'
+import {
+  COLORS, SCANNER_2D, VECH, PANELS, VIEW, WORLD, HYPERSPACE, MAP, NPC, FUEL,
+  roleCss, roleColor, npcSizeForRole,
+} from '../../elite/config'
 import { projectContacts } from '../../elite/sim/contacts'
 import { useFlightInput } from '../../elite/useFlightInput'
 import { useHoloDrag } from '../../elite/useHoloDrag'
@@ -137,24 +140,24 @@ const Elite: React.FC<EliteProps> = () => {
     rendererRef.current = renderer
 
     const scene = new THREE.Scene()
-    scene.fog = new THREE.FogExp2(0x00040a, 0.0018)
+    scene.fog = new THREE.FogExp2(COLORS.spaceBg, 0.0018)
     sceneRef.current = scene
 
     const camera = new THREE.PerspectiveCamera(
-      68,
+      VIEW.fov,
       window.innerWidth / window.innerHeight,
-      0.5,
-      4000
+      VIEW.near,
+      VIEW.far
     )
-    camera.position.set(0, 40, 140)
+    camera.position.set(VIEW.initialPos.x, VIEW.initialPos.y, VIEW.initialPos.z)
     cameraRef.current = camera
 
     // Stars (cheap dense starfield)
-    const starCount = 4200
+    const starCount = WORLD.starCount
     const starPositions = new Float32Array(starCount * 3)
     const starColors = new Float32Array(starCount * 3)
     for (let i = 0; i < starCount; i++) {
-      const r = 650 + Math.random() * 1100
+      const r = WORLD.starRadiusMin + Math.random() * WORLD.starRadiusVar
       const theta = Math.random() * Math.PI * 2
       const phi = Math.acos(2 * Math.random() - 1)
       starPositions[i * 3] = r * Math.sin(phi) * Math.cos(theta)
@@ -169,7 +172,7 @@ const Elite: React.FC<EliteProps> = () => {
     starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3))
     starGeo.setAttribute('color', new THREE.BufferAttribute(starColors, 3))
     const starMat = new THREE.PointsMaterial({
-      size: 2.8,
+      size: WORLD.starSize,
       vertexColors: true,
       transparent: true,
       opacity: 0.95,
@@ -180,8 +183,8 @@ const Elite: React.FC<EliteProps> = () => {
     starFieldRef.current = stars
 
     // Central sun (glowing)
-    const sunGeo = new THREE.SphereGeometry(9, 32, 32)
-    const sunMat = new THREE.MeshBasicMaterial({ color: 0xffe6a3 })
+    const sunGeo = new THREE.SphereGeometry(WORLD.sunRadius, 32, 32)
+    const sunMat = new THREE.MeshBasicMaterial({ color: WORLD.sunColor })
     const sun = new THREE.Mesh(sunGeo, sunMat)
     scene.add(sun)
 
@@ -214,7 +217,7 @@ const Elite: React.FC<EliteProps> = () => {
               )
             })
           ),
-          new THREE.LineBasicMaterial({ color: 0x334455, transparent: true, opacity: 0.2 })
+          new THREE.LineBasicMaterial({ color: 0x334455, transparent: true, opacity: WORLD.bodyOrbitRingOpacity })
         )
         bodiesGroup.add(ring)
       }
@@ -228,17 +231,17 @@ const Elite: React.FC<EliteProps> = () => {
     const streaksGroup = new THREE.Group()
     const streakMat = new THREE.LineBasicMaterial({ color: 0x99ddff, transparent: true, opacity: 0.75 })
     const streaks: THREE.Line[] = []
-    for (let i = 0; i < 70; i++) {
-      const len = 22 + Math.random() * 38
+    for (let i = 0; i < HYPERSPACE.streakCount; i++) {
+      const len = HYPERSPACE.streakLenMin + Math.random() * HYPERSPACE.streakLenVar
       const geo = new THREE.BufferGeometry().setFromPoints([
         new THREE.Vector3(0, 0, 0),
         new THREE.Vector3(0, 0, -len),
       ])
       const line = new THREE.Line(geo, streakMat)
-      const r = 5 + Math.random() * 26
+      const r = HYPERSPACE.streakRadiusMin + Math.random() * HYPERSPACE.streakRadiusVar
       const a = Math.random() * Math.PI * 2
-      line.position.set(Math.cos(a) * r, (Math.random() - 0.5) * 22, -55 - Math.random() * 80)
-      line.userData = { baseZ: line.position.z, speed: 220 + Math.random() * 110, radius: r, angle: a }
+      line.position.set(Math.cos(a) * r, (Math.random() - 0.5) * 22, HYPERSPACE.baseZ - Math.random() * HYPERSPACE.baseZVar)
+      line.userData = { baseZ: line.position.z, speed: HYPERSPACE.speedBase + Math.random() * HYPERSPACE.speedVar, radius: r, angle: a }
       streaksGroup.add(line)
       streaks.push(line)
     }
@@ -316,11 +319,10 @@ const Elite: React.FC<EliteProps> = () => {
     npcGroupRef.current = npcGroup
 
     // Lighting (subtle, mostly emissive world)
-    const hemi = new THREE.HemisphereLight(0x334466, 0x000011, 0.6)
+    const hemi = new THREE.HemisphereLight(WORLD.hemi.sky, WORLD.hemi.ground, WORLD.hemi.intensity)
     scene.add(hemi)
 
-    // Make sure WebGL clears to our dark space color
-    renderer.setClearColor(0x00040a, 1)
+    renderer.setClearColor(COLORS.spaceBg, 1)
 
     // Give the camera an initial look toward the starting area so something is visible immediately
     camera.lookAt(0, 80, 20)
@@ -342,7 +344,7 @@ const Elite: React.FC<EliteProps> = () => {
     // Main render + sim loop
     const animate = () => {
       const now = performance.now()
-      const dt = Math.min(0.066, (now - lastTimeRef.current) / 1000)
+      const dt = Math.min(0.066, (now - lastTimeRef.current) / 1000) // matches former DT.max
       lastTimeRef.current = now
 
       const sim = simRef.current
@@ -366,12 +368,10 @@ const Elite: React.FC<EliteProps> = () => {
 
         // Position the camera inside the cockpit, offset backward along -heading and "up" along ship's up.
         // This makes the viewpoint follow full 6DOF attitude (pitch/yaw/roll all visible).
-        const cockpitBack = 5.5
-        const eyeHeight = 1.8
         cam.position.set(
-          p.pos.x - fwd.x * cockpitBack + up.x * eyeHeight,
-          p.pos.y - fwd.y * cockpitBack + up.y * eyeHeight,
-          p.pos.z - fwd.z * cockpitBack + up.z * eyeHeight
+          p.pos.x - fwd.x * VIEW.cockpitBack + up.x * VIEW.eyeHeight,
+          p.pos.y - fwd.y * VIEW.cockpitBack + up.y * VIEW.eyeHeight,
+          p.pos.z - fwd.z * VIEW.cockpitBack + up.z * VIEW.eyeHeight
         )
 
         // Set the camera's up to the ship's local up. This makes roll bank the view and
@@ -382,11 +382,10 @@ const Elite: React.FC<EliteProps> = () => {
         // Pure fwd direction avoids conflicting biases that could make background appear to
         // move in "both directions" during pitch. The eyeHeight offset + cockpit model already
         // give the "looking out the window" framing.
-        const far = 300
         const lookTarget = new THREE.Vector3(
-          cam.position.x + fwd.x * far,
-          cam.position.y + fwd.y * far,
-          cam.position.z + fwd.z * far
+          cam.position.x + fwd.x * VIEW.lookFar,
+          cam.position.y + fwd.y * VIEW.lookFar,
+          cam.position.z + fwd.z * VIEW.lookFar
         )
         cam.lookAt(lookTarget)
       }
@@ -402,7 +401,7 @@ const Elite: React.FC<EliteProps> = () => {
           if (m) {
             m.position.set(b.pos3d.x, b.pos3d.y, b.pos3d.z)
             // gentle scale pulse for stations
-            if (b.type === 'station') m.scale.setScalar(1 + Math.sin(snap.time * 3 + mi) * 0.08)
+            if (b.type === 'station') m.scale.setScalar(1 + Math.sin(snap.time * WORLD.stationPulseSpeed + mi) * WORLD.stationPulseAmp)
           }
         })
       }
@@ -426,9 +425,8 @@ const Elite: React.FC<EliteProps> = () => {
 
       // Fuel bars on the left (simple 3D holo representation)
       if (fuelBarsRef.current && fuelBarsRef.current.length > 0) {
-        const fuel = snap.player.fuel ?? 120
-        const maxFuel = 120
-        const level = Math.max(0, Math.min(1, fuel / maxFuel))
+        const fuel = snap.player.fuel ?? FUEL.max
+        const level = Math.max(0, Math.min(1, fuel / FUEL.max))
         const bars = fuelBarsRef.current
         const onCount = Math.floor(level * bars.length)
         bars.forEach((bar, i) => {
@@ -436,7 +434,7 @@ const Elite: React.FC<EliteProps> = () => {
           const mat = m.material as THREE.MeshBasicMaterial
           if (i < onCount) {
             mat.opacity = 0.85
-            mat.color.set(i < onCount - 2 ? 0xffaa00 : 0xff4444) // warning color when low
+            mat.color.set(i < onCount - 2 ? 0xffaa00 : COLORS.warning)
           } else {
             mat.opacity = 0.2
             mat.color.set(0xffaa00)
@@ -462,27 +460,27 @@ const Elite: React.FC<EliteProps> = () => {
       const streaksGrp: any = hyperspaceStreaksRef.current
       if (isHyperspacingRef.current && streaksGrp && streaksGrp._streaks) {
         if (hyperspaceStartRef.current === 0) hyperspaceStartRef.current = snap.time
-        const phase = (snap.time - hyperspaceStartRef.current) / 2.3 // ~2.3s tunnel
+        const phase = (snap.time - hyperspaceStartRef.current) / HYPERSPACE.duration
         const streaks = streaksGrp._streaks as THREE.Line[]
         const fwd = snap.player.heading
 
         streaks.forEach((line, idx) => {
           const ud = line.userData as any
           // rush the streaks forward relative to player heading
-          const move = ud.speed * (0.016 + phase * 0.8)
+          const move = ud.speed * (0.016 + phase * HYPERSPACE.movePhaseFactor)
           line.position.x = Math.cos(ud.angle) * ud.radius + fwd.x * move * 0.1
           line.position.y = (Math.sin(idx) * 3) + fwd.y * move * 0.05
           line.position.z = ud.baseZ + move
 
           // fade and respawn behind when passed
           const passed = line.position.z > 12
-          if (passed || phase > 0.95) {
-            const r = 5 + Math.random() * 24
+          if (passed || phase > HYPERSPACE.fadeStart) {
+            const r = HYPERSPACE.streakRadiusMin + Math.random() * (HYPERSPACE.streakRadiusVar - 2)
             const a = Math.random() * Math.PI * 2
             line.position.set(
-              Math.cos(a) * r + fwd.x * -35,
+              Math.cos(a) * r + fwd.x * HYPERSPACE.respawnBehind,
               (Math.random() - 0.5) * 20 + fwd.y * -20,
-              -70 - Math.random() * 40
+              HYPERSPACE.respawnZ - Math.random() * 40
             )
             ud.baseZ = line.position.z
             ud.radius = r
@@ -522,26 +520,18 @@ const Elite: React.FC<EliteProps> = () => {
         while (npcMeshes.length < current.length) {
           const idx = npcMeshes.length
           const npc = current[idx] || current[0]
-          const size = npc.role === 'pirate' ? 2.6 : npc.role === 'police' ? 2.1 : 1.7
-          const color =
-            npc.role === 'pirate'
-              ? 0xff6b6b
-              : npc.role === 'police'
-                ? 0x6bffa3
-                : npc.role === 'escort'
-                  ? 0x88ddff
-                  : 0xaabbcc
+          const size = npcSizeForRole(npc.role)
+          const { r, h } = NPC.cone(size)
 
-          const geo = new THREE.ConeGeometry(size * 0.55, size * 2.4, 3)
-          const mat = new THREE.MeshBasicMaterial({ color, wireframe: true })
+          const geo = new THREE.ConeGeometry(r, h, 3)
+          const mat = new THREE.MeshBasicMaterial({ color: roleColor(npc.role), wireframe: true })
           const m = new THREE.Mesh(geo, mat)
 
-          // pressure indicator dot as a permanent child (toggle visibility)
           const dot = new THREE.Mesh(
-            new THREE.SphereGeometry(0.9, 8, 8),
-            new THREE.MeshBasicMaterial({ color: 0xffee66, transparent: true, opacity: 0.85 })
+            new THREE.SphereGeometry(NPC.dot.r, 8, 8),
+            new THREE.MeshBasicMaterial({ color: 0xffee66, transparent: true, opacity: NPC.dot.opacity })
           )
-          dot.position.y = size * 1.8
+          dot.position.y = size * NPC.dot.yOffset
           dot.visible = false
           m.add(dot)
 
@@ -563,18 +553,18 @@ const Elite: React.FC<EliteProps> = () => {
             const vy = npc.vel.y / vlen
             const vz = npc.vel.z / vlen
             m.lookAt(
-              m.position.x + vx * 5,
-              m.position.y + vy * 5,
-              m.position.z + vz * 5
+              m.position.x + vx * NPC.lookAhead,
+              m.position.y + vy * NPC.lookAhead,
+              m.position.z + vz * NPC.lookAhead
             )
           }
 
           // pressure glow dot
           const dot = m.children[0] as THREE.Mesh | undefined
           if (dot) {
-            dot.visible = npc.pressure > 0.55
+            dot.visible = npc.pressure > NPC.pressureThreshold
             if (dot.visible) {
-              dot.position.y = (npc.role === 'pirate' ? 2.6 : npc.role === 'police' ? 2.1 : 1.7) * 1.8
+              dot.position.y = npcSizeForRole(npc.role) * NPC.dot.yOffset
             }
           }
         })
@@ -597,7 +587,6 @@ const Elite: React.FC<EliteProps> = () => {
             z: Math.round(snap.player.pos.z),
           },
           fuel: Math.round(snap.player.fuel ?? 0),
-          glb: hud.glb,
         })
       }
 
@@ -640,12 +629,12 @@ const Elite: React.FC<EliteProps> = () => {
     if (!ctx) return
 
     // Smaller holographic map size for floating Minority Report style overlay
-    const size = 340
+    const size = MAP.canvasSize
     canvas.width = size
     canvas.height = size
 
     const center = size / 2
-    const scale = 0.48 // fit the largest orbits nicely on smaller top-right holo panel
+    const scale = MAP.scale
 
     let mapTime = 0
     const draw = () => {
@@ -657,7 +646,7 @@ const Elite: React.FC<EliteProps> = () => {
       ctx.strokeStyle = 'rgba(80, 110, 140, 0.15)'
       ctx.lineWidth = 1
       for (let i = -3; i <= 3; i++) {
-        const p = center + i * 65
+        const p = center + i * MAP.gridStep
         ctx.beginPath(); ctx.moveTo(p, 20); ctx.lineTo(p, size - 20); ctx.stroke()
         ctx.beginPath(); ctx.moveTo(20, p); ctx.lineTo(size - 20, p); ctx.stroke()
       }
@@ -666,7 +655,7 @@ const Elite: React.FC<EliteProps> = () => {
       const bodyMap = new Map(bodies.map(b => [b.id, b]))
 
       // Draw orbits (faint ellipses)
-      ctx.strokeStyle = 'rgba(140, 170, 200, 0.22)'
+      ctx.strokeStyle = `rgba(140, 170, 200, ${MAP.orbitOpacity})`
       ctx.lineWidth = 1.5
       bodies.forEach(b => {
         if (!b.orbitRadius || b.type === 'star') return
@@ -690,13 +679,13 @@ const Elite: React.FC<EliteProps> = () => {
         ctx.fill()
 
         // label
-        ctx.fillStyle = '#aaccdd'
-        ctx.font = '10px ui-monospace, monospace'
+        ctx.fillStyle = COLORS.textMuted
+        ctx.font = MAP.bodyLabelFont
         ctx.fillText(b.name, px + r + 3, py - 2)
 
         // highlight current route
         if (b.id === route.originId || b.id === route.destinationId) {
-          ctx.strokeStyle = b.id === route.destinationId ? '#66ff99' : '#ffcc66'
+          ctx.strokeStyle = b.id === route.destinationId ? MAP.highlightDest : MAP.highlightOrigin
           ctx.lineWidth = 2
           ctx.beginPath()
           ctx.arc(px, py, r + 4, 0, Math.PI * 2)
@@ -721,16 +710,15 @@ const Elite: React.FC<EliteProps> = () => {
         const cx = mx + nx * bend
         const cy = my + ny * bend
 
-        ctx.strokeStyle = '#66ddff'
+        ctx.strokeStyle = MAP.routeColor
         ctx.lineWidth = 1.8
         ctx.beginPath()
         ctx.moveTo(ox, oy)
         ctx.quadraticCurveTo(cx, cy, dx, dy)
         ctx.stroke()
 
-        // arrow head at dest
         const ang = Math.atan2(dy - cy, dx - cx)
-        ctx.fillStyle = '#66ddff'
+        ctx.fillStyle = MAP.routeColor
         ctx.beginPath()
         ctx.moveTo(dx, dy)
         ctx.lineTo(dx - 9 * Math.cos(ang - 0.5), dy - 9 * Math.sin(ang - 0.5))
@@ -743,7 +731,7 @@ const Elite: React.FC<EliteProps> = () => {
       const pp = snapRef.current?.player?.pos || { x: 0, y: 120 }
       const playerX = center + pp.x * scale * 0.65
       const playerY = center + pp.y * scale * 0.65
-      ctx.fillStyle = '#ffdd88'
+      ctx.fillStyle = MAP.playerColor
       ctx.beginPath()
       ctx.moveTo(playerX, playerY - 6)
       ctx.lineTo(playerX - 4, playerY + 5)
@@ -885,7 +873,7 @@ const Elite: React.FC<EliteProps> = () => {
         }
 
         if (c.type === 'ship') {
-          ctx.fillStyle = c.role === 'pirate' ? '#ff4444' : (c.role === 'police' || c.role === 'escort' ? '#44ff88' : '#ffee44')
+          ctx.fillStyle = roleCss(c.role)
           ctx.save()
           ctx.translate(sx, sy)
           ctx.beginPath()
@@ -937,7 +925,7 @@ const Elite: React.FC<EliteProps> = () => {
     const rect = canvas.getBoundingClientRect()
     const mx = ((e.clientX - rect.left) / rect.width) * canvas.width - canvas.width / 2
     const my = ((e.clientY - rect.top) / rect.height) * canvas.height - canvas.height / 2
-    const scale = 0.48
+    const scale = MAP.scale
 
     let best: { id: string; dist: number } | null = null
     const bodies = getCartographyBodies(0) // use base for picking
