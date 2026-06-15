@@ -9,6 +9,7 @@ interface JumpBarProps {
   isHyperspacing: boolean
   onSetNearestOrigin: () => void
   onInitiateHyperspace: () => void
+  layout?: 'horizontal' | 'vertical'
 }
 
 const ui = MAP.ui
@@ -19,7 +20,9 @@ const JumpBar: React.FC<JumpBarProps> = ({
   isHyperspacing,
   onSetNearestOrigin,
   onInitiateHyperspace,
+  layout = 'horizontal',
 }) => {
+  const vertical = layout === 'vertical'
   const origin = getBodyById(route.originId, 0)
   const dest = getBodyById(route.destinationId, 0)
   const cost = getJumpFuelCost(
@@ -30,9 +33,10 @@ const JumpBar: React.FC<JumpBarProps> = ({
   return (
     <div style={{
       display: 'flex',
-      alignItems: 'center',
-      gap: 12,
-      padding: '10px 16px',
+      flexDirection: vertical ? 'column' : 'row',
+      alignItems: vertical ? 'stretch' : 'center',
+      gap: vertical ? 8 : 12,
+      padding: vertical ? '10px 12px' : '10px 16px',
       border: `1px solid ${ui.panelBorder}`,
       borderRadius: 7,
       background: ui.panelBg,
@@ -41,7 +45,7 @@ const JumpBar: React.FC<JumpBarProps> = ({
       color: ui.text,
       pointerEvents: 'auto',
     }}>
-      <div style={{ fontSize: 11, minWidth: 180 }}>
+      <div style={{ fontSize: 11, minWidth: vertical ? 0 : 180 }}>
         <div style={{ color: ui.muted, fontSize: 9, marginBottom: 2 }}>ROUTE</div>
         <div>
           {origin?.name} → <span style={{ color: MAP.highlightDest }}>{dest?.name || '—'}</span>
@@ -54,27 +58,35 @@ const JumpBar: React.FC<JumpBarProps> = ({
         )}
       </div>
 
-      <button
-        type="button"
-        onClick={onSetNearestOrigin}
-        style={btnStyle(false)}
-      >
-        NEAREST ORIGIN
-      </button>
+      <div style={{
+        display: 'flex',
+        flexDirection: vertical ? 'column' : 'row',
+        gap: 6,
+        width: vertical ? '100%' : undefined,
+      }}>
+        <button
+          type="button"
+          onClick={onSetNearestOrigin}
+          style={{ ...btnStyle(false), width: vertical ? '100%' : undefined }}
+        >
+          NEAREST ORIGIN
+        </button>
 
-      <button
-        type="button"
-        disabled={isHyperspacing || fuel < cost}
-        onClick={onInitiateHyperspace}
-        style={{
-          ...btnStyle(isHyperspacing),
-          background: isHyperspacing ? 'rgba(60, 20, 0, 0.5)' : 'rgba(102, 170, 255, 0.18)',
-          border: `1px solid ${isHyperspacing ? '#ff6644' : 'rgba(102, 170, 255, 0.45)'}`,
-          opacity: fuel < cost ? 0.45 : 1,
-        }}
-      >
-        {isHyperspacing ? 'JUMPING…' : 'INITIATE HYPERSPACE'}
-      </button>
+        <button
+          type="button"
+          disabled={isHyperspacing || fuel < cost}
+          onClick={onInitiateHyperspace}
+          style={{
+            ...btnStyle(isHyperspacing),
+            width: vertical ? '100%' : undefined,
+            background: isHyperspacing ? 'rgba(60, 20, 0, 0.5)' : 'rgba(102, 170, 255, 0.18)',
+            border: `1px solid ${isHyperspacing ? '#ff6644' : 'rgba(102, 170, 255, 0.45)'}`,
+            opacity: fuel < cost ? 0.45 : 1,
+          }}
+        >
+          {isHyperspacing ? 'JUMPING…' : 'INITIATE HYPERSPACE'}
+        </button>
+      </div>
     </div>
   )
 }

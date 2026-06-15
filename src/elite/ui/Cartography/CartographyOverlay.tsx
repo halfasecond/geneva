@@ -1,19 +1,13 @@
 import React from 'react'
 import { MAP, WINDSCREEN, Z } from '../../config'
 import CartographyMap from './CartographyMap'
-import OriginSelect from './OriginSelect'
 import DestinationList from './DestinationList'
-import JumpBar from './JumpBar'
 import type { CartographyRoute } from '../../render/cartographyMap'
 
 interface CartographyOverlayProps {
   route: CartographyRoute
-  fuel: number
   playerPos: { x: number; y: number; z: number }
-  isHyperspacing: boolean
   onRouteChange: (route: CartographyRoute) => void
-  onSetNearestOrigin: () => void
-  onInitiateHyperspace: () => void
   onClose: () => void
 }
 
@@ -23,12 +17,8 @@ interface CartographyOverlayProps {
  */
 const CartographyOverlay: React.FC<CartographyOverlayProps> = ({
   route,
-  fuel,
   playerPos,
-  isHyperspacing,
   onRouteChange,
-  onSetNearestOrigin,
-  onInitiateHyperspace,
   onClose,
 }) => (
   <div
@@ -58,20 +48,16 @@ const CartographyOverlay: React.FC<CartographyOverlayProps> = ({
       position: 'absolute',
       inset: 0,
       display: 'grid',
-      gridTemplateColumns: 'minmax(200px, 240px) 1fr minmax(200px, 260px)',
-      gridTemplateRows: 'auto 1fr auto',
+      gridTemplateColumns: '1fr minmax(200px, 260px)',
+      gridTemplateRows: 'auto 1fr',
       padding: '16px 20px',
       gap: 16,
       pointerEvents: 'none',
       fontFamily: MAP.ui.font,
       color: MAP.ui.text,
     }}>
-      <div style={{ gridColumn: 1, gridRow: 1, alignSelf: 'start' }}>
-        <OriginSelect route={route} onRouteChange={onRouteChange} />
-      </div>
-
       <div style={{
-        gridColumn: 2,
+        gridColumn: 1,
         gridRow: 1,
         justifySelf: 'center',
         alignSelf: 'start',
@@ -113,25 +99,8 @@ const CartographyOverlay: React.FC<CartographyOverlayProps> = ({
         </button>
       </div>
 
-      <div style={{ gridColumn: 3, gridRow: '1 / 3', alignSelf: 'start', justifySelf: 'end' }}>
+      <div style={{ gridColumn: 2, gridRow: '1 / 3', alignSelf: 'start', justifySelf: 'end' }}>
         <DestinationList route={route} onRouteChange={onRouteChange} />
-      </div>
-
-      <div style={{
-        gridColumn: '1 / -1',
-        gridRow: 3,
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'end',
-        paddingBottom: 4,
-      }}>
-        <JumpBar
-          route={route}
-          fuel={fuel}
-          isHyperspacing={isHyperspacing}
-          onSetNearestOrigin={onSetNearestOrigin}
-          onInitiateHyperspace={onInitiateHyperspace}
-        />
       </div>
     </div>
   </div>

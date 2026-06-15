@@ -50,7 +50,7 @@ import {
 import { projectContacts } from '../../elite/sim/contacts'
 import { useFlightInput } from '../../elite/useFlightInput'
 import * as CockpitRender from '../../elite/render/cockpit'
-import { CartographyOverlay, VechPreview } from '../../elite/ui'
+import { CartographyOverlay, HyperspacePanel, VechPreview } from '../../elite/ui'
 
 // Basic AuthProps shape we receive (wallet + controls)
 type EliteProps = AuthProps & {
@@ -812,30 +812,34 @@ const Elite: React.FC<EliteProps> = () => {
 
       {/* Cockpit frame bezels - to make it feel like inside the spaceship (holo style, framing the central "window" for the 3D space) */}
 
-      {!mapOpen && (
-        <img src={'https://cdn.halfasecond.com/images/vech/vech-logo.png'} alt="Vech" style={{
-          width: 72,
-          opacity: 0.4,
-          position: 'fixed',
-          left: 'calc(50% - 310px)',
-          transform: 'translateX(-50%)',
-          bottom: 164,
-          zIndex: Z.dashboard + 1,
-          pointerEvents: 'none',
-        }} />
-      )}
+      <img src={'https://cdn.halfasecond.com/images/vech/vech-logo.png'} alt="Vech" style={{
+        width: 72,
+        opacity: 0.4,
+        position: 'fixed',
+        left: 'calc(50% - 310px)',
+        transform: 'translateX(-50%)',
+        bottom: 164,
+        zIndex: Z.dashboard + 1,
+        pointerEvents: 'none',
+      }} />
 
       {mapOpen && (
-        <CartographyOverlay
-          route={route}
-          fuel={hud.fuel}
-          playerPos={hud.playerPos}
-          isHyperspacing={isHyperspacing}
-          onRouteChange={setRoute}
-          onSetNearestOrigin={handleSetNearestOrigin}
-          onInitiateHyperspace={handleInitiateHyperspace}
-          onClose={() => setMapOpen(false)}
-        />
+        <>
+          <CartographyOverlay
+            route={route}
+            playerPos={hud.playerPos}
+            onRouteChange={setRoute}
+            onClose={() => setMapOpen(false)}
+          />
+          <HyperspacePanel
+            route={route}
+            fuel={hud.fuel}
+            isHyperspacing={isHyperspacing}
+            onRouteChange={setRoute}
+            onSetNearestOrigin={handleSetNearestOrigin}
+            onInitiateHyperspace={handleInitiateHyperspace}
+          />
+        </>
       )}
 
       {/* Cockpit bezels — always on top to frame the windscreen */}
@@ -873,8 +877,8 @@ const Elite: React.FC<EliteProps> = () => {
         pointerEvents: 'none',
       }} />
 
-      {/* Bottom dashboard — hidden while cartography is up (widgets intrude into windscreen) */}
-      {!mapOpen && <div style={{
+      {/* Bottom dashboard — always visible */}
+      <div style={{
         position: 'absolute',
         bottom: 0,
         left: 0,
@@ -888,27 +892,29 @@ const Elite: React.FC<EliteProps> = () => {
         zIndex: Z.dashboard,
         pointerEvents: 'none',
       }}>
-        <div style={{
-          position: 'absolute',
-          left: 'calc(50% - 614px)',
-          bottom: 60,
-          width: 240,
-          background: 'rgba(0, 6, 14, 0.8)',
-          border: '1px solid rgba(0, 170, 255, 0.1)',
-          borderRadius: '2px',
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'flex-start',
-          justifyContent: 'flex-start',
-          padding: '24px 18px',
-          boxSizing: 'border-box',
-        }}>
-          <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>{getBodyById(route.destinationId, 0)?.name || 'NO TARGET'}</div>
-          <div style={{ marginBottom: '8px' }}>6.23Ly</div>
-          <div style={{ fontSize: '10px', marginBottom: '6px' }}>ANARCHY</div>
-          <div style={{ fontSize: '10px' }}>COL 285 SECTOR SK-P A35-1</div>
-        </div>
+        {!mapOpen && (
+          <div style={{
+            position: 'absolute',
+            left: 'calc(50% - 614px)',
+            bottom: 60,
+            width: 240,
+            background: 'rgba(0, 6, 14, 0.8)',
+            border: '1px solid rgba(0, 170, 255, 0.1)',
+            borderRadius: '2px',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-start',
+            justifyContent: 'flex-start',
+            padding: '24px 18px',
+            boxSizing: 'border-box',
+          }}>
+            <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>{getBodyById(route.destinationId, 0)?.name || 'NO TARGET'}</div>
+            <div style={{ marginBottom: '8px' }}>6.23Ly</div>
+            <div style={{ fontSize: '10px', marginBottom: '6px' }}>ANARCHY</div>
+            <div style={{ fontSize: '10px' }}>COL 285 SECTOR SK-P A35-1</div>
+          </div>
+        )}
 
 
         {/* Classic Elite "nearby things" 2D visualiser (always-visible center bottom, side-on ~20deg angled view) */}
@@ -944,7 +950,7 @@ const Elite: React.FC<EliteProps> = () => {
         }}>
           <VechPreview hud={hud} glbUrl={glbUrl} />
         </div>
-      </div>}
+      </div>
     </div>
   )
 }
