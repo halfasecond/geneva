@@ -2,6 +2,8 @@
 // Positions are deterministic from GALAXY_EPOCH_UNIX so all clients (and future server) agree.
 // Local flight sim time is unrelated — see getGalaxyElapsedSeconds() vs EliteSim.time.
 
+import { WORLD } from '../config'
+
 export interface StarSystem {
   id: string
   name: string
@@ -227,9 +229,14 @@ export function getRouteJumpCost(route: RouteSelection, mode: CartographyTimeMod
 
 /** Camera-local skybox offset for a system-map body (fixed in windscreen) */
 export function bodyToSkyboxLocal(b: CartographyBody): { x: number; y: number; z: number } {
+  const s = WORLD.skybox
   return {
-    x: b.pos3d.x * 0.14,
-    y: b.pos3d.y * 0.06 + 12,
-    z: -520 - Math.abs(b.pos3d.z) * 0.18,
+    x: b.pos3d.x * s.spreadX,
+    y: b.pos3d.y * s.spreadY + s.yOffset,
+    z: -(s.baseDepth + Math.abs(b.pos3d.z) * s.depthPerMapZ),
   }
+}
+
+export function skyboxDisplayRadius(bodyRadius: number): number {
+  return bodyRadius * WORLD.skybox.radiusScale
 }
