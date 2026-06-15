@@ -7,7 +7,7 @@ import type { CartographyRoute } from '../../render/cartographyMap'
 
 interface CartographyOverlayProps {
   route: CartographyRoute
-  playerPos: { x: number; y: number; z: number }
+  playerPos: { x: number; y: number }
   onRouteChange: (route: CartographyRoute) => void
   onClose: () => void
 }

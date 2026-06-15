@@ -1,11 +1,12 @@
 import React from 'react'
 import { COLORS, DASHBOARD, Z } from '../../config'
-import { getBodyById, getDistance2D, getJumpFuelCost } from '../../sim/cartography'
+import { getBodyById, getRouteJumpCost, getTravelDistance } from '../../sim/cartography'
 import type { CartographyRoute } from '../../render/cartographyMap'
 
 interface HyperspacePanelProps {
   route: CartographyRoute
   fuel: number
+  flightMode: string
   isHyperspacing: boolean
   onInitiateHyperspace: () => void
 }
@@ -14,18 +15,13 @@ interface HyperspacePanelProps {
 const HyperspacePanel: React.FC<HyperspacePanelProps> = ({
   route,
   fuel,
+  flightMode,
   isHyperspacing,
   onInitiateHyperspace,
 }) => {
-  const origin = getBodyById(route.originId, 0)
-  const dest = getBodyById(route.destinationId, 0)
-  const cost = getJumpFuelCost(
-    origin?.pos2d || { x: 0, y: 0 },
-    dest?.pos2d || { x: 0, y: 0 },
-  )
-  const distanceLy = origin && dest
-    ? (getDistance2D(origin.pos2d, dest.pos2d) * 0.0195).toFixed(2)
-    : '—'
+  const dest = getBodyById(route.destinationId, 'frozen')
+  const cost = getRouteJumpCost(route)
+  const travel = getTravelDistance(route.originId, route.destinationId)
   const canJump = Boolean(dest) && !isHyperspacing && fuel >= cost
 
   return (
@@ -47,9 +43,12 @@ const HyperspacePanel: React.FC<HyperspacePanelProps> = ({
       <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
         {dest?.name || 'NO TARGET'}
       </div>
-      <div style={{ marginBottom: '8px' }}>{distanceLy}Ly</div>
-      <div style={{ fontSize: '10px', marginBottom: '6px' }}>ANARCHY</div>
-      <div style={{ fontSize: '10px', marginBottom: '14px' }}>COL 285 SECTOR SK-P A35-1</div>
+      <div style={{ marginBottom: '8px' }}>{travel?.label ?? '—'}</div>
+      <div style={{ fontSize: '10px', marginBottom: '6px', opacity: 0.85 }}>
+        {flightMode.toUpperCase()}
+      </div>
+      <div style={{ fontSize: '10px', marginBottom: '6px' }}>{dest?.government ?? '—'}</div>
+      <div style={{ fontSize: '10px', marginBottom: '14px' }}>{dest?.sector ?? '—'}</div>
 
       <div style={{ fontSize: '10px', marginBottom: '12px', color: COLORS.textMuted }}>
         {cost} FUEL · {fuel} AVAILABLE

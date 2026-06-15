@@ -38,9 +38,16 @@ declare global {
 }
 import type { AuthProps } from '../../types/auth'
 import { EliteSim } from '../../elite/sim/EliteSim'
-import type { NpcAgent } from '../../elite/sim/core/types'
+import type { EliteSnapshot, NpcAgent } from '../../elite/sim/core/types'
 import { length } from '../../elite/sim/core/vector'
-import { getCartographyBodies, getJumpFuelCost, DEFAULT_ROUTE, getBodyById } from '../../elite/sim/cartography'
+import {
+  bodyToSkyboxLocal,
+  DEFAULT_ROUTE,
+  getBodyById,
+  getFrozenCartographyBodies,
+  getRouteJumpCost,
+  getTravelDistance,
+} from '../../elite/sim/cartography'
 
 // Tightening imports (config + extracted modules)
 import {
@@ -76,7 +83,7 @@ const Elite: React.FC<EliteProps> = () => {
   const starFieldRef = useRef<THREE.Points | null>(null)
   const bodiesGroupRef = useRef<THREE.Group | null>(null)
   const hyperspaceStreaksRef = useRef<THREE.Group | null>(null)
-  const snapRef = useRef<any>(null) // latest sim snapshot for hyperspace + scanner
+  const snapRef = useRef<EliteSnapshot | null>(null)
   const hyperspacePhaseRef = useRef<'idle' | 'countdown' | 'jump'>('idle')
   const hyperspaceSequenceStartRef = useRef(0)
   const hyperspaceLastCountdownRef = useRef(-1)
@@ -93,16 +100,22 @@ const Elite: React.FC<EliteProps> = () => {
     npcs: 2,
     time: 0,
     playerPos: { x: 0, y: 0, z: 0 },
+    systemPos2d: { x: 0, y: 0 },
     fuel: 120,
+    flightMode: 'normal' as const,
+    systemId: 'helios',
   })
 
   // Cartography + hyperspace overlay state
   const [mapOpen, setMapOpen] = useState(false)
   const [route, setRoute] = useState(DEFAULT_ROUTE)
+
+  const travelDistance = getTravelDistance(route.originId, route.destinationId)
+  const destBody = getBodyById(route.destinationId, 'frozen')
   const [isHyperspacing, setIsHyperspacing] = useState(false)
   const [hyperspaceCountdown, setHyperspaceCountdown] = useState<number | null>(null)
   const hyperspaceJumpStartRef = useRef(0)
-  const hyperspaceTargetRef = useRef<{ x: number; y: number; z: number } | null>(null)
+  const hyperspaceDestinationRef = useRef<string | null>(null)
   const hyperspaceCostRef = useRef(0)
 
   // Use the extracted flight input hook (replaces the old keysRef + onKeyDown/Up + getPlayerInput)
@@ -181,46 +194,24 @@ const Elite: React.FC<EliteProps> = () => {
     const sunGeo = new THREE.SphereGeometry(WORLD.sunRadius, 32, 32)
     const sunMat = new THREE.MeshBasicMaterial({ color: WORLD.sunColor })
     const sun = new THREE.Mesh(sunGeo, sunMat)
-    scene.add(sun)
+    sun.position.set(0, 28, -680)
+    camera.add(sun)
 
-    // System bodies driven by cartography (live orbits even in cockpit view)
+    // Skybox decor — frozen ephemeris, camera-parented so bodies stay fixed in the windscreen
     const bodiesGroup = new THREE.Group()
-    // Create meshes for the cartography bodies (we'll sync positions every frame)
-    const cartoInitial = getCartographyBodies(0)
-    const mainBodyMeshes: THREE.Mesh[] = []
+    const cartoInitial = getFrozenCartographyBodies()
     cartoInitial.forEach((b) => {
-      if (b.type === 'star') return // sun already added separately
+      if (b.type === 'star') return
       const mesh = new THREE.Mesh(
         new THREE.SphereGeometry(b.radius * 0.9, 18, 18),
         new THREE.MeshBasicMaterial({ color: b.color })
       )
-      // initial pos from carto 3d
-      mesh.position.set(b.pos3d.x, b.pos3d.y, b.pos3d.z)
+      const local = bodyToSkyboxLocal(b)
+      mesh.position.set(local.x, local.y, local.z)
       bodiesGroup.add(mesh)
-      mainBodyMeshes.push(mesh)
-
-      // faint orbit ring (approximate, 2d projection)
-      if (b.orbitRadius > 10) {
-        const ring = new THREE.LineLoop(
-          new THREE.BufferGeometry().setFromPoints(
-            Array.from({ length: 48 }, (_, i) => {
-              const a = (i / 48) * Math.PI * 2
-              return new THREE.Vector3(
-                Math.cos(a) * b.orbitRadius,
-                4,
-                Math.sin(a) * b.orbitRadius * 0.7
-              )
-            })
-          ),
-          new THREE.LineBasicMaterial({ color: 0x334455, transparent: true, opacity: WORLD.bodyOrbitRingOpacity })
-        )
-        bodiesGroup.add(ring)
-      }
     })
-    scene.add(bodiesGroup)
+    camera.add(bodiesGroup)
     bodiesGroupRef.current = bodiesGroup
-      // store for live update (non-star bodies)
-      ; (bodiesGroup as any)._mainBodyMeshes = mainBodyMeshes
 
     // Hyperspace tunnel — camera-attached so streaks align with the cockpit forward view
     const { group: streaksGroup, streaks } = HyperspaceRender.createHyperspaceStreaks(camera)
@@ -367,29 +358,13 @@ const Elite: React.FC<EliteProps> = () => {
         cam.lookAt(lookTarget)
       }
 
-      // Live orbiting bodies in the main cockpit view (using cartography math)
-      const bodiesGrp: any = bodiesGroupRef.current
-      if (bodiesGrp && bodiesGrp._mainBodyMeshes) {
-        const cartoBodies = getCartographyBodies(snap.time * 0.55) // slightly slower, pleasing pace
-        let mi = 0
-        cartoBodies.forEach((b) => {
-          if (b.type === 'star') return
-          const m = bodiesGrp._mainBodyMeshes[mi++]
-          if (m) {
-            m.position.set(b.pos3d.x, b.pos3d.y, b.pos3d.z)
-            // gentle scale pulse for stations
-            if (b.type === 'station') m.scale.setScalar(1 + Math.sin(snap.time * WORLD.stationPulseSpeed + mi) * WORLD.stationPulseAmp)
-          }
-        })
-      }
-
       // === 3D Holo Radar (now uses the shared projectContacts util + extracted updater) ===
       if (radarRef.current && radarBlipsRef.current && radarBlipsRef.current.length > 0) {
         const p = snap.player
         const fwd = p.heading
         const upv = p.up || { x: 0, y: 1, z: 0 }
 
-        const carto = getCartographyBodies(snap.time * 0.55)
+        const carto = getFrozenCartographyBodies()
         const contacts = projectContacts(
           { pos: p.pos, heading: fwd, up: upv },
           snap.npcs,
@@ -462,13 +437,13 @@ const Elite: React.FC<EliteProps> = () => {
           streaksGrp.visible = true
 
           if (phase >= 1.0) {
-            const target = hyperspaceTargetRef.current
-            if (target) simRef.current.performHyperspace(target, hyperspaceCostRef.current)
+            const destId = hyperspaceDestinationRef.current
+            if (destId) simRef.current.performHyperspaceJump(destId, hyperspaceCostRef.current)
             streaksGrp.visible = false
             hyperspacePhaseRef.current = 'idle'
             hyperspaceSequenceStartRef.current = 0
             hyperspaceJumpStartRef.current = 0
-            hyperspaceTargetRef.current = null
+            hyperspaceDestinationRef.current = null
             setIsHyperspacing(false)
           }
         }
@@ -552,6 +527,12 @@ const Elite: React.FC<EliteProps> = () => {
             z: Math.round(snap.player.pos.z),
           },
           fuel: Math.round(snap.player.fuel ?? 0),
+          systemPos2d: {
+            x: Math.round(snap.player.systemPos2d.x),
+            y: Math.round(snap.player.systemPos2d.y),
+          },
+          flightMode: snap.player.flightMode,
+          systemId: snap.player.systemId,
         })
       }
 
@@ -670,7 +651,7 @@ const Elite: React.FC<EliteProps> = () => {
 
       const fwd = p.heading
       const upv = p.up || { x: 0, y: 1, z: 0 }
-      const carto = getCartographyBodies((snapRef.current?.time || 0) * 0.55)
+      const carto = getFrozenCartographyBodies()
 
       const contacts = projectContacts(
         { pos: p.pos, heading: fwd, up: upv },
@@ -745,15 +726,15 @@ const Elite: React.FC<EliteProps> = () => {
 
   const handleInitiateHyperspace = () => {
     if (hyperspacePhaseRef.current !== 'idle') return
-    const o = getBodyById(route.originId, 0)
-    const d = getBodyById(route.destinationId, 0)
-    if (!o || !d) return
-    const cost = getJumpFuelCost(o.pos2d, d.pos2d)
+    const d = getBodyById(route.destinationId, 'frozen')
+    if (!d) return
+    const cost = getRouteJumpCost(route)
     if (hud.fuel < cost) return
 
     setMapOpen(false)
-    hyperspaceTargetRef.current = { ...d.pos3d }
+    hyperspaceDestinationRef.current = route.destinationId
     hyperspaceCostRef.current = cost
+    simRef.current.setFlightMode('hyperspace')
     hyperspaceSequenceStartRef.current = performance.now()
     hyperspaceJumpStartRef.current = 0
     hyperspaceLastCountdownRef.current = -1
@@ -797,13 +778,14 @@ const Elite: React.FC<EliteProps> = () => {
         <>
           <CartographyOverlay
             route={route}
-            playerPos={hud.playerPos}
+            playerPos={hud.systemPos2d}
             onRouteChange={setRoute}
             onClose={() => setMapOpen(false)}
           />
           <HyperspacePanel
             route={route}
             fuel={hud.fuel}
+            flightMode={hud.flightMode}
             isHyperspacing={isHyperspacing}
             onInitiateHyperspace={handleInitiateHyperspace}
           />
@@ -885,10 +867,11 @@ const Elite: React.FC<EliteProps> = () => {
             justifyContent: 'flex-start',
             ...DASHBOARD.leftPanel,
           }}>
-            <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>{getBodyById(route.destinationId, 0)?.name || 'NO TARGET'}</div>
-            <div style={{ marginBottom: '8px' }}>6.23Ly</div>
-            <div style={{ fontSize: '10px', marginBottom: '6px' }}>ANARCHY</div>
-            <div style={{ fontSize: '10px' }}>COL 285 SECTOR SK-P A35-1</div>
+            <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>{destBody?.name || 'NO TARGET'}</div>
+            <div style={{ marginBottom: '8px' }}>{travelDistance?.label ?? '—'}</div>
+            <div style={{ fontSize: '10px', marginBottom: '6px', opacity: 0.85 }}>{hud.flightMode.toUpperCase()}</div>
+            <div style={{ fontSize: '10px', marginBottom: '6px' }}>{destBody?.government ?? '—'}</div>
+            <div style={{ fontSize: '10px' }}>{destBody?.sector ?? '—'}</div>
           </div>
         )}
 

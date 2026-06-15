@@ -36,6 +36,8 @@ export interface NpcAgent {
   role: 'trader' | 'pirate' | 'police' | 'escort'
 }
 
+export type FlightMode = 'normal' | 'supercruise' | 'hyperspace' | 'docked'
+
 export interface PlayerState {
   pos: Vec3
   vel: Vec3
@@ -44,10 +46,15 @@ export interface PlayerState {
   roll: number  // accumulated roll input (for radar banking etc, kept for compatibility)
   speed: number
   fuel: number
+  systemId: string
+  systemPos2d: { x: number; y: number }
+  flightMode: FlightMode
+  dockedAtStationId: string | null
 }
 
 export interface EliteSnapshot {
   player: PlayerState
   npcs: NpcAgent[]
+  /** Local flight bubble time — unrelated to galaxy ephemeris */
   time: number
 }

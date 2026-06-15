@@ -46,12 +46,10 @@ const CartographyMap: React.FC<CartographyMapProps> = ({ route, playerPos, onDes
     const ro = new ResizeObserver(resize)
     ro.observe(wrap)
 
-    let mapTime = 0
     const draw = () => {
-      mapTime += 0.016
       const { w, h } = sizeRef.current
       if (w && h) {
-        drawCartographyFrame(ctx, w, h, mapTime, routeRef.current, playerPosRef.current)
+        drawCartographyFrame(ctx, w, h, routeRef.current, playerPosRef.current)
       }
       rafRef.current = requestAnimationFrame(draw)
     }

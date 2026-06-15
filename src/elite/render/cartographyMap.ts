@@ -4,7 +4,7 @@
  */
 
 import { MAP } from '../config'
-import { getCartographyBodies } from '../sim/cartography'
+import { getFrozenCartographyBodies, getMapCartographyBodies } from '../sim/cartography'
 import type { CartographyBody } from '../sim/cartography'
 
 export interface CartographyRoute {
@@ -27,7 +27,6 @@ export function drawCartographyFrame(
   ctx: CanvasRenderingContext2D,
   width: number,
   height: number,
-  mapTime: number,
   route: CartographyRoute,
   playerPos: PlayerMapPos,
 ) {
@@ -49,7 +48,7 @@ export function drawCartographyFrame(
     ctx.fill()
   }
 
-  const bodies = getCartographyBodies(mapTime * 0.9)
+  const bodies = getMapCartographyBodies()
   const bodyMap = new Map(bodies.map(b => [b.id, b]))
 
   // Orbit rings — thin, pale (matches flockers.halfasecond.com)
@@ -117,8 +116,8 @@ export function drawCartographyFrame(
   drawRouteCurve(ctx, bodyMap, route, cx, cy, scale)
 
   // Player marker
-  const playerX = cx + playerPos.x * scale * 0.65
-  const playerY = cy + playerPos.y * scale * 0.65
+  const playerX = cx + playerPos.x * scale
+  const playerY = cy + playerPos.y * scale
   ctx.fillStyle = MAP.playerColor
   ctx.beginPath()
   ctx.moveTo(playerX, playerY - 7)
@@ -177,11 +176,10 @@ export function pickCartographyDestination(
   mx: number,
   my: number,
   scale: number,
-  elapsedSeconds = 0,
 ): string | null {
   let best: { id: string; dist: number } | null = null
 
-  getCartographyBodies(elapsedSeconds).forEach(b => {
+  getFrozenCartographyBodies().forEach(b => {
     if (b.type === 'star') return
     const bx = b.pos2d.x * scale
     const by = b.pos2d.y * scale

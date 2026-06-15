@@ -1,7 +1,8 @@
-import type { NpcAgent, PlayerState, SimConfig, Vec3 } from './core/types'
+import type { EliteSnapshot, FlightMode, NpcAgent, PlayerState, SimConfig } from './core/types'
 import { add, clampMagnitude, cross, length, normalize, scale, subtract, zero } from './core/vector'
 import { calculateFlocking } from './core/forces'
 import { addProgress, applyRoleFeedback } from './core/progress'
+import { getBodyById, DEFAULT_ROUTE } from './cartography'
 
 const DEFAULT_CONFIG: SimConfig = {
   separationRadius: 28,
@@ -24,6 +25,7 @@ export class EliteSim {
 
   constructor(initialPopulation = 2) {
     this.config = { ...DEFAULT_CONFIG }
+    const origin = getBodyById(DEFAULT_ROUTE.originId, 'frozen')
     this.player = {
       pos: { x: 0, y: 120, z: 40 },
       vel: { x: 0, y: 0, z: -6 },
@@ -32,6 +34,10 @@ export class EliteSim {
       roll: 0,
       speed: 6,
       fuel: 120,
+      systemId: origin?.systemId ?? 'helios',
+      systemPos2d: { ...(origin?.pos2d ?? { x: 0, y: 0 }) },
+      flightMode: 'normal',
+      dockedAtStationId: null,
     }
     this.resetNpcs(initialPopulation)
   }
@@ -213,21 +219,43 @@ export class EliteSim {
     }
   }
 
-  getSnapshot(): { player: PlayerState; npcs: NpcAgent[]; time: number } {
+  getSnapshot(): EliteSnapshot {
+    const p = this.player
     return {
-      player: { ...this.player, vel: { ...this.player.vel }, heading: { ...this.player.heading }, up: { ...this.player.up }, pos: { ...this.player.pos } },
+      player: {
+        ...p,
+        vel: { ...p.vel },
+        heading: { ...p.heading },
+        up: { ...p.up },
+        pos: { ...p.pos },
+        systemPos2d: { ...p.systemPos2d },
+      },
       npcs: this.npcs.map(n => ({ ...n, pos: { ...n.pos }, vel: { ...n.vel } })),
       time: this.time,
     }
   }
 
-  // Hyperspace jump support (fuel + teleport)
-  performHyperspace(targetPos: Vec3, fuelCost: number): boolean {
+  setFlightMode(mode: FlightMode) {
+    this.player.flightMode = mode
+  }
+
+  performHyperspaceJump(destinationBodyId: string, fuelCost: number): boolean {
     if (this.player.fuel < fuelCost) return false
-    this.player.pos = { ...targetPos }
-    this.player.vel = zero()
+    const dest = getBodyById(destinationBodyId, 'frozen')
+    if (!dest) return false
+
     this.player.fuel = Math.max(0, this.player.fuel - fuelCost)
-    // Face roughly "forward" after arrival
+    this.player.systemId = dest.systemId
+    this.player.systemPos2d = { ...dest.pos2d }
+    this.player.dockedAtStationId = dest.type === 'station' ? dest.id : null
+    this.player.flightMode = 'normal'
+
+    this.player.pos = {
+      x: dest.pos3d.x * 0.02,
+      y: 120,
+      z: dest.pos3d.z * 0.02,
+    }
+    this.player.vel = zero()
     this.player.heading = { x: 0, y: 0, z: -1 }
     this.player.up = { x: 0, y: 1, z: 0 }
     this.player.roll = 0
