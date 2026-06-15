@@ -64,19 +64,7 @@ const VechPreview: React.FC<VechPreviewProps> = ({ hud }) => {
   const vechBlue = COLORS.vechRingCss
 
   return (
-    <div style={{
-      position: 'absolute',
-      left: 'calc(50% + 174px)',
-      bottom: 0,
-      width: 400,  /* single consistent width for the whole fused panel (Vech + rings + status). Matches the widest ring (canvas/ring visual). All inner JSX elements use 100% width (or flex/relative) so the status UI (SPD/FUEL/systems) is as wide as the ring, centered. */
-      height: 300,
-      background: 'rgba(0, 6, 14, 0.1)',
-      borderRadius: '2px',
-      overflow: 'hidden',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-    }}>
+    <>
       {/* Model + ring area - reduced height to make ship smaller */}
       <div style={{ position: 'relative', width: '100%', height: 120 }}>
         <canvas
@@ -144,7 +132,7 @@ const VechPreview: React.FC<VechPreviewProps> = ({ hud }) => {
         {/* Row 3: System stuff (SYS ENG RST WEP) as 2 rows of 2 (refactored for larger size) */}
         <SystemStatus />
       </div>
-    </div>
+    </>
   )
 }
 

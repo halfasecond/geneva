@@ -1003,6 +1003,10 @@ const Elite: React.FC<EliteProps> = () => {
         pointerEvents: 'none',
       }} />
 
+      <img src={'https://cdn.halfasecond.com/images/vech/vech-logo.png'} alt="Vech" style={{ width: 72, opacity: 0.25,
+        position: 'fixed', left: 'calc(50% - 310px)', transform: 'translateX(-50%)', bottom: 164, zIndex: 14, pointerEvents: 'none'
+       }} />
+
       {/* Top bezel - canopy frame */}
       <div style={{
         position: 'absolute',
@@ -1138,23 +1142,6 @@ const Elite: React.FC<EliteProps> = () => {
               {isHyperspacing ? 'HYPERSPACE IN PROGRESS...' : 'INITIATE HYPERSPACE'}
             </button>
           </HoloPanel>
-
-          <HoloPanel
-            title="FLIGHT • HOLO • CONTROLS &amp; NPCS"
-            pos={flightPanelPos}
-            onStartDrag={flightDrag.startDrag}
-            footer="DRAG HEADER • DEDUPED VIA useHoloDrag"
-          >
-            {/* Flight info content kept inline for this pass - can be moved to its own FlightPanel component later */}
-            <div style={{ fontSize: 10, lineHeight: 1.3 }}>
-              W/↑ thrust • S/↓ brake<br />
-              A/← yaw L • D/→ yaw R<br />
-              Q pitch down • E pitch up<br />
-              Z/X roll<br />
-              <div style={{ marginTop: 6, opacity: 0.7 }}>R respawn fleet • M toggle map • H help</div>
-              <div style={{ marginTop: 4 }}>NPCs: {hud.npcs} • Fuel: {hud.fuel}</div>
-            </div>
-          </HoloPanel>
         </>
       )}
 
@@ -1196,27 +1183,34 @@ const Elite: React.FC<EliteProps> = () => {
         height: '210px',
         background: 'rgba(0, 4, 10, 0.65)',
         boxShadow: '0 -4px 20px rgba(0, 170, 255, 0.15)',
-        color: '#ffaa00',
+        color: COLORS.vechRingCss,
         fontFamily: 'ui-monospace, monospace',
-        fontSize: '10px',
+        fontSize: '18px',
         zIndex: 10,
         pointerEvents: 'none',
       }}>
         {/* Left system info - far left of screen */}
         <div style={{
           position: 'absolute',
-          left: 0,
-          bottom: 0,
-          width: '170px',
-          height: '210px',
-          padding: '4px 8px',
-          background: 'rgba(0,0,0,0.3)',
+          left: 'calc(50% - 614px)',
+          bottom: 60,
+          width: 240,  /* single consistent width for the whole fused panel (Vech + rings + status). Matches the widest ring (canvas/ring visual). All inner JSX elements use 100% width (or flex/relative) so the status UI (SPD/FUEL/systems) is as wide as the ring, centered. */
+          background: 'rgba(0, 6, 14, 0.8)',
+          border: '1px solid rgba(0, 170, 255, 0.1)',
+          borderRadius: '2px',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-start',
+          justifyContent: 'flex-start',
+          zIndex: 11,
+          padding: '24px 18px',
+          boxSizing: 'border-box',
         }}>
-          <div style={{ fontWeight: 'bold' }}>{getBodyById(route.destinationId, 0)?.name || 'NO TARGET'}</div>
-          <div>6.23Ly</div>
-          <div style={{ color: '#ff6666' }}>ANARCHY</div>
-          <div>CLEAN</div>
-          <div style={{ fontSize: '8px', marginTop: '4px' }}>COL 285 SECTOR SK-P A35-1</div>
+          <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>{getBodyById(route.destinationId, 0)?.name || 'NO TARGET'}</div>
+          <div style={{ marginBottom: '8px' }}>6.23Ly</div>
+          <div style={{ fontSize: '10px', marginBottom: '6px' }}>ANARCHY</div>
+          <div style={{ fontSize: '10px' }}>COL 285 SECTOR SK-P A35-1</div>
         </div>
 
 
@@ -1240,7 +1234,21 @@ const Elite: React.FC<EliteProps> = () => {
         </div>
 
         {/* Fused VECH preview + status gauges as one component */}
-        <VechPreview hud={hud} />
+        <div style={{
+          position: 'absolute',
+          left: 'calc(50% + 174px)',
+          bottom: 0,
+          width: 400,  /* single consistent width for the whole fused panel (Vech + rings + status). Matches the widest ring (canvas/ring visual). All inner JSX elements use 100% width (or flex/relative) so the status UI (SPD/FUEL/systems) is as wide as the ring, centered. */
+          height: 300,
+          background: 'rgba(0, 6, 14, 0.1)',
+          borderRadius: '2px',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+        }}>
+          <VechPreview hud={hud} />
+        </div>
       </div>
     </div>
   )
