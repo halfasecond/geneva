@@ -1,39 +1,46 @@
 /**
- * Camera-attached hyperspace tunnel streaks — aligned with the cockpit reticle / forward view.
+ * Camera-attached hyperspace tunnel — box streaks (WebGL lines are 1px and vanish in fog).
  */
 import * as THREE from 'three'
 import { HYPERSPACE } from '../config'
 
 export interface HyperspaceStreakGroup {
   group: THREE.Group
-  streaks: THREE.Line[]
+  streaks: THREE.Mesh[]
 }
 
 export function createHyperspaceStreaks(camera: THREE.Camera): HyperspaceStreakGroup {
   const group = new THREE.Group()
+  group.renderOrder = 200
+  group.frustumCulled = false
   camera.add(group)
 
-  const streakMat = new THREE.LineBasicMaterial({
-    color: HYPERSPACE.streakColor,
-    transparent: true,
-    opacity: 0.8,
-  })
-
-  const streaks: THREE.Line[] = []
+  const streaks: THREE.Mesh[] = []
   for (let i = 0; i < HYPERSPACE.streakCount; i++) {
     const len = HYPERSPACE.streakLenMin + Math.random() * HYPERSPACE.streakLenVar
-    const geo = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(0, 0, 0),
-      new THREE.Vector3(0, 0, -len),
-    ])
-    const line = new THREE.Line(geo, streakMat.clone())
+    const geo = new THREE.BoxGeometry(HYPERSPACE.streakWidth, HYPERSPACE.streakWidth, len)
+    const mat = new THREE.MeshBasicMaterial({
+      color: HYPERSPACE.streakColor,
+      transparent: true,
+      opacity: 0.85,
+      fog: false,
+      depthWrite: false,
+    })
+    const mesh = new THREE.Mesh(geo, mat)
+    mesh.frustumCulled = false
+    mesh.renderOrder = 200
+
     const r = HYPERSPACE.streakRadiusMin + Math.random() * HYPERSPACE.streakRadiusVar
     const a = Math.random() * Math.PI * 2
     const z = HYPERSPACE.spawnZMin - Math.random() * HYPERSPACE.spawnZVar
-    line.position.set(Math.cos(a) * r, Math.sin(a) * r * HYPERSPACE.streakYScale, z)
-    line.userData = { radius: r, angle: a }
-    group.add(line)
-    streaks.push(line)
+    mesh.position.set(
+      Math.cos(a) * r,
+      Math.sin(a) * r * HYPERSPACE.streakYScale,
+      z - len * 0.5,
+    )
+    mesh.userData.baseLen = len
+    streaks.push(mesh)
+    group.add(mesh)
   }
 
   group.visible = false
@@ -41,25 +48,28 @@ export function createHyperspaceStreaks(camera: THREE.Camera): HyperspaceStreakG
 }
 
 /** Rush streaks toward the camera along the forward axis (camera-local space). */
-export function updateHyperspaceStreaks(streaks: THREE.Line[], phase: number, dt: number) {
+export function updateHyperspaceStreaks(streaks: THREE.Mesh[], phase: number, dt: number) {
   const speed = HYPERSPACE.speedBase * (1 + phase * HYPERSPACE.movePhaseFactor)
 
-  streaks.forEach(line => {
-    line.position.z += speed * dt
+  streaks.forEach(mesh => {
+    mesh.position.z += speed * dt
+    const len = mesh.userData.baseLen as number
 
-    if (line.position.z > HYPERSPACE.passZ) {
+    if (mesh.position.z + len * 0.5 > HYPERSPACE.passZ) {
       const r = HYPERSPACE.streakRadiusMin + Math.random() * HYPERSPACE.streakRadiusVar
       const a = Math.random() * Math.PI * 2
-      line.position.set(
+      const newLen = HYPERSPACE.streakLenMin + Math.random() * HYPERSPACE.streakLenVar
+      const z = HYPERSPACE.spawnZMin - Math.random() * HYPERSPACE.spawnZVar
+      mesh.position.set(
         Math.cos(a) * r,
         Math.sin(a) * r * HYPERSPACE.streakYScale,
-        HYPERSPACE.spawnZMin - Math.random() * HYPERSPACE.spawnZVar,
+        z - newLen * 0.5,
       )
-      ;(line.userData as { radius: number; angle: number }).radius = r
-      ;(line.userData as { radius: number; angle: number }).angle = a
+      mesh.scale.set(1, 1, newLen / len)
+      mesh.userData.baseLen = newLen
     }
 
-    const mat = line.material as THREE.LineBasicMaterial
-    mat.opacity = Math.max(0.15, 0.85 - phase * 0.55)
+    const mat = mesh.material as THREE.MeshBasicMaterial
+    mat.opacity = Math.max(0.2, 0.9 - phase * 0.5)
   })
 }

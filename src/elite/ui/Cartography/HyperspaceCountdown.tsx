@@ -12,7 +12,7 @@ const HyperspaceCountdown: React.FC<HyperspaceCountdownProps> = ({ count }) => (
       top: '42%',
       left: '50%',
       transform: 'translate(-50%, -50%)',
-      zIndex: Z.cockpitWidgets + 1,
+      zIndex: Z.logo,
       pointerEvents: 'none',
       fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
       fontSize: 96,

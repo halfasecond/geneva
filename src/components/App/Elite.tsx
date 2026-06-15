@@ -51,7 +51,7 @@ import { projectContacts } from '../../elite/sim/contacts'
 import { useFlightInput } from '../../elite/useFlightInput'
 import * as CockpitRender from '../../elite/render/cockpit'
 import * as HyperspaceRender from '../../elite/render/hyperspace'
-import { CartographyOverlay, HyperspacePanel, HyperspaceCountdown, VechPreview } from '../../elite/ui'
+import { CartographyOverlay, HyperspacePanel, HyperspaceCountdown, HyperspaceTunnel, VechPreview } from '../../elite/ui'
 
 // Basic AuthProps shape we receive (wallet + controls)
 type EliteProps = AuthProps & {
@@ -437,8 +437,8 @@ const Elite: React.FC<EliteProps> = () => {
       // Hyperspace sequence: countdown (3…2…1) then camera-aligned tunnel rush
       const streaksGrp: any = hyperspaceStreaksRef.current
       if (hyperspaceActive && streaksGrp?._streaks) {
-        if (hyperspaceSequenceStartRef.current === 0) hyperspaceSequenceStartRef.current = snap.time
-        const elapsed = snap.time - hyperspaceSequenceStartRef.current
+        const now = performance.now()
+        const elapsed = (now - hyperspaceSequenceStartRef.current) / 1000
 
         if (hyperspacePhaseRef.current === 'countdown') {
           const remaining = Math.ceil(HYPERSPACE.countdown - elapsed)
@@ -448,7 +448,7 @@ const Elite: React.FC<EliteProps> = () => {
           }
           if (elapsed >= HYPERSPACE.countdown) {
             hyperspacePhaseRef.current = 'jump'
-            hyperspaceJumpStartRef.current = snap.time
+            hyperspaceJumpStartRef.current = now
             hyperspaceLastCountdownRef.current = -1
             setHyperspaceCountdown(null)
             setIsHyperspacing(true)
@@ -457,8 +457,8 @@ const Elite: React.FC<EliteProps> = () => {
         }
 
         if (hyperspacePhaseRef.current === 'jump') {
-          const phase = (snap.time - hyperspaceJumpStartRef.current) / HYPERSPACE.duration
-          HyperspaceRender.updateHyperspaceStreaks(streaksGrp._streaks as THREE.Line[], phase, dt)
+          const phase = (now - hyperspaceJumpStartRef.current) / 1000 / HYPERSPACE.duration
+          HyperspaceRender.updateHyperspaceStreaks(streaksGrp._streaks as THREE.Mesh[], phase, dt)
           streaksGrp.visible = true
 
           if (phase >= 1.0) {
@@ -754,7 +754,7 @@ const Elite: React.FC<EliteProps> = () => {
     setMapOpen(false)
     hyperspaceTargetRef.current = { ...d.pos3d }
     hyperspaceCostRef.current = cost
-    hyperspaceSequenceStartRef.current = 0
+    hyperspaceSequenceStartRef.current = performance.now()
     hyperspaceJumpStartRef.current = 0
     hyperspaceLastCountdownRef.current = -1
     hyperspacePhaseRef.current = 'countdown'
@@ -792,6 +792,8 @@ const Elite: React.FC<EliteProps> = () => {
       {hyperspaceCountdown !== null && (
         <HyperspaceCountdown count={hyperspaceCountdown} />
       )}
+
+      {isHyperspacing && <HyperspaceTunnel />}
 
       {mapOpen && (
         <>

@@ -199,20 +199,21 @@ export const VECH = {
 // HYPERSPACE (classic Elite tunnel + cartography jump)
 // =============================================================================
 export const HYPERSPACE = {
-  countdown: 3,              // seconds — 3, 2, 1 before tunnel rush
-  streakCount: 70,
-  streakLenMin: 18,
-  streakLenVar: 32,
-  streakRadiusMin: 1.5,
-  streakRadiusVar: 14,
-  streakYScale: 0.72,
-  streakColor: 0x99ddff,
-  spawnZMin: -95,
-  spawnZVar: 55,
-  passZ: 6,
-  speedBase: 28,
-  duration: 2.4,
-  movePhaseFactor: 1.4,
+  countdown: 3,
+  streakCount: 90,
+  streakLenMin: 24,
+  streakLenVar: 48,
+  streakWidth: 0.14,
+  streakRadiusMin: 0.5,
+  streakRadiusVar: 22,
+  streakYScale: 0.75,
+  streakColor: 0xbbeeff,
+  spawnZMin: -120,
+  spawnZVar: 70,
+  passZ: 14,
+  speedBase: 55,
+  duration: 2.6,
+  movePhaseFactor: 1.6,
 }
 
 // =============================================================================
