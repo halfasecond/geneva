@@ -249,6 +249,12 @@ export const VECH = {
   // model-viewer preview (separate panel)
   cameraOrbit: '0deg 70deg 15%',
   cameraTarget: '0 -0.15 0',
+
+  /** Docked ship upgrades holo — wider framing for orbit / inspect. */
+  upgradesPreview: {
+    cameraOrbit: '0deg 72deg 120%',
+    cameraTarget: '0 -0.12 0',
+  },
 }
 
 // =============================================================================

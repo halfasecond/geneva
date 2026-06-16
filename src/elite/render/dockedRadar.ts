@@ -26,23 +26,26 @@ export function firstSelectableServiceIndex(services: StationServiceRow[]): numb
 
 export interface DockedServiceActivateResult {
   marketOpen: boolean
+  upgradesOpen: boolean
   refuel?: boolean
 }
 
-/** Enter on the highlighted row — market toggles; other services close overlays first. */
+/** Enter on the highlighted row — market / upgrades toggle; others close overlays first. */
 export function activateDockedService(
   serviceId: string,
-  opts: { marketOpen: boolean },
+  opts: { marketOpen: boolean; upgradesOpen: boolean },
 ): DockedServiceActivateResult {
   switch (serviceId) {
     case 'market':
-      return { marketOpen: !opts.marketOpen }
+      return { marketOpen: !opts.marketOpen, upgradesOpen: false }
+    case 'upgrades':
+      return { marketOpen: false, upgradesOpen: !opts.upgradesOpen }
     case 'refuel':
-      return { marketOpen: false, refuel: true }
+      return { marketOpen: false, upgradesOpen: false, refuel: true }
     case 'news':
-      return { marketOpen: false }
+      return { marketOpen: false, upgradesOpen: false }
     default:
-      return { marketOpen: false }
+      return { marketOpen: false, upgradesOpen: false }
   }
 }
 
@@ -88,6 +91,7 @@ export function buildDockedStationServices(opts: {
   fuel: number
   fuelMax: number
   marketOpen: boolean
+  upgradesOpen: boolean
 }): StationServiceRow[] {
   const fuelPct = Math.round((opts.fuel / Math.max(1, opts.fuelMax)) * 100)
   const needsFuel = opts.fuel < opts.fuelMax
@@ -102,8 +106,9 @@ export function buildDockedStationServices(opts: {
     {
       id: 'upgrades',
       label: 'Ship Upgrades',
-      status: '—',
-      available: false,
+      status: opts.upgradesOpen ? 'OPEN' : 'POC',
+      available: true,
+      active: opts.upgradesOpen,
     },
     {
       id: 'market',

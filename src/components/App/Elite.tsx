@@ -87,6 +87,7 @@ import {
   HyperspaceTunnel,
   CockpitStatusPanel,
   MarketOverlay,
+  ShipUpgradesOverlay,
   VechPreview,
   WaypointOverlay,
   PositionDebug,
@@ -150,6 +151,9 @@ const Elite: React.FC<EliteProps> = () => {
   const [marketOpen, setMarketOpen] = useState(false)
   const marketOpenRef = useRef(false)
   marketOpenRef.current = marketOpen
+  const [upgradesOpen, setUpgradesOpen] = useState(false)
+  const upgradesOpenRef = useRef(false)
+  upgradesOpenRef.current = upgradesOpen
   const dockedServiceIndexRef = useRef(0)
   const [marketSnap, setMarketSnap] = useState<EliteSnapshot | null>(() => simRef.current.getSnapshot())
 
@@ -182,11 +186,15 @@ const Elite: React.FC<EliteProps> = () => {
         if (mode === 'docked') {
           simRef.current.startUndocking()
           setMarketOpen(false)
+          setUpgradesOpen(false)
         } else if (mode === 'normal' || mode === 'supercruise') {
           simRef.current.startDocking()
         }
       }
-      if (k === 'escape' && marketOpen && snapRef.current?.player.flightMode === 'docked') setMarketOpen(false)
+      if (k === 'escape' && snapRef.current?.player.flightMode === 'docked') {
+        if (marketOpen) setMarketOpen(false)
+        else if (upgradesOpen) setUpgradesOpen(false)
+      }
 
       const docked = snapRef.current?.player.flightMode === 'docked'
       if (docked && !e.repeat) {
@@ -197,10 +205,13 @@ const Elite: React.FC<EliteProps> = () => {
           fuel: snap.player.fuel ?? FUEL.starting,
           fuelMax: FUEL.max,
           marketOpen: marketOpenRef.current,
+          upgradesOpen: upgradesOpenRef.current,
         })
 
         if (k === 'arrowup' || k === 'arrowdown') {
           e.preventDefault()
+          e.stopPropagation()
+          if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
           dockedServiceIndexRef.current = stepDockedServiceIndex(
             dockedServices(),
             dockedServiceIndexRef.current,
@@ -210,18 +221,23 @@ const Elite: React.FC<EliteProps> = () => {
 
         if (k === 'enter') {
           e.preventDefault()
+          e.stopPropagation()
           const selected = dockedServices()[dockedServiceIndexRef.current]
           if (!selected?.available) return
-          const result = activateDockedService(selected.id, { marketOpen: marketOpenRef.current })
+          const result = activateDockedService(selected.id, {
+            marketOpen: marketOpenRef.current,
+            upgradesOpen: upgradesOpenRef.current,
+          })
           if (result.refuel) simRef.current.refuel()
           setMarketOpen(result.marketOpen)
+          setUpgradesOpen(result.upgradesOpen)
           setMarketSnap(simRef.current.getSnapshot())
         }
       }
     }
-    window.addEventListener('keydown', handleGlobalKeys)
-    return () => window.removeEventListener('keydown', handleGlobalKeys)
-  }, [mapOpen, marketOpen])
+    window.addEventListener('keydown', handleGlobalKeys, true)
+    return () => window.removeEventListener('keydown', handleGlobalKeys, true)
+  }, [mapOpen, marketOpen, upgradesOpen])
 
   // Initialize Three.js scene (inspired by Flocker FlockScene + cartography aesthetic)
   useEffect(() => {
@@ -679,10 +695,12 @@ const Elite: React.FC<EliteProps> = () => {
 
       if (snap.player.flightMode === 'docked' && prevFlightModeRef.current !== 'docked') {
         setMarketOpen(false)
+        setUpgradesOpen(false)
         const services = buildDockedStationServices({
           fuel: snap.player.fuel ?? FUEL.starting,
           fuelMax: FUEL.max,
-          marketOpen: marketOpenRef.current,
+          marketOpen: false,
+          upgradesOpen: false,
         })
         dockedServiceIndexRef.current = firstSelectableServiceIndex(services)
       }
@@ -849,6 +867,7 @@ const Elite: React.FC<EliteProps> = () => {
           fuel: p.fuel ?? FUEL.starting,
           fuelMax: FUEL.max,
           marketOpen: marketOpenRef.current,
+          upgradesOpen: upgradesOpenRef.current,
         })
         if (!dockedServices[dockedServiceIndexRef.current]?.available) {
           dockedServiceIndexRef.current = firstSelectableServiceIndex(dockedServices)
@@ -1056,6 +1075,7 @@ const Elite: React.FC<EliteProps> = () => {
             onUndock={() => {
               simRef.current.undock()
               setMarketOpen(false)
+              setUpgradesOpen(false)
               setMarketSnap(simRef.current.getSnapshot())
             }}
             onTrade={(commodityId, tons, direction) => {
@@ -1065,6 +1085,13 @@ const Elite: React.FC<EliteProps> = () => {
           />
         )
       })()}
+
+      {upgradesOpen && hud.flightMode === 'docked' && !mapOpen && (
+        <ShipUpgradesOverlay
+          glbUrl={glbUrl}
+          onClose={() => setUpgradesOpen(false)}
+        />
+      )}
 
       {mapOpen && (
         <>
