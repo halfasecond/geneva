@@ -12,7 +12,7 @@ import * as THREE from 'three'
 import { BIG_SHIP, BOREAL_DOCK_BAY } from '../config'
 
 /** Bump when layout changes so NPC mesh pools recreate. */
-export const BOREAL_DOCK_BAY_VERSION = 11
+export const BOREAL_DOCK_BAY_VERSION = 12
 
 type DockSide = 'starboard' | 'port'
 
