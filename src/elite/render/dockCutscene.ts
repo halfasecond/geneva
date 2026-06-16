@@ -1,10 +1,17 @@
 /**
  * Dock / undock pose tweens — short cinematic transitions into docked state.
+ *
+ * Live bay flow (see DOCK_LIVE):
+ *   approach trigger → dock_flyin filmed spline → force-field cross → market handoff
+ * Bay door stays open; approach lights sequence on the hull only.
  */
 
 import type { Vec3 } from '../sim/core/types'
 import type { FlightPose } from '../sim/systemSpace'
-import { DOCK } from '../config'
+import { DOCK, DOCK_LIVE } from '../config'
+
+/** Phases for the always-open bay live cutscene (wired in EliteSim later). */
+export type DockLivePhase = 'idle' | 'approach' | 'flyin' | 'through_field' | 'handoff'
 
 export interface PoseTween {
   from: FlightPose
@@ -52,3 +59,5 @@ export function stepPoseTween(tween: PoseTween, dt: number): { pose: FlightPose;
 
   return { pose, done: tween.elapsed >= tween.duration }
 }
+
+export { DOCK_LIVE }

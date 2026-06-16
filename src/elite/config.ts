@@ -109,6 +109,23 @@ export const RADAR_3D = {
   sizeDistDiv: 300,
   shipYScale: 0.6,   // slightly elongated squares
   bodyScale: 1.3,
+  mindSizeMul: 2.5,
+  mindYScale: 0.42,
+}
+
+/** Capital Mind (GSV) radar glyph — Culture-style contact on both scanners. */
+export const MIND_RADAR = {
+  /** Minds are visible far beyond normal ship radar (hull is huge; centre is distant). */
+  maxRange: 2500,
+  colors: {
+    hull2d: '#7a6e58',
+    ring2d: '#c8b878',
+    core2d: '#66aaff',
+    blip3d: 0xc8b878,
+    core3d: 0x66aaff,
+  },
+  sizeMul2d: 2.5,
+  labelDist: 1200,
 }
 
 // =============================================================================
@@ -266,6 +283,17 @@ export const DOCK = {
   undockBoost: 4,
 }
 
+/**
+ * Live dock cutscene — filmed fly-in through the always-open bay, no door animation.
+ * Trigger on approach → spline fly-in → force-field cross → market/interior handoff.
+ */
+export const DOCK_LIVE = {
+  approachTrigger: 140,
+  forceFieldCrossZ: -6,
+  flyInDuration: 4.8,
+  handoffToMarket: true,
+} as const
+
 // =============================================================================
 // WINDSCREEN WAYPOINTS (off-bubble body direction tags)
 // =============================================================================
@@ -365,6 +393,34 @@ export const BIG_SHIP = {
     litColor: 0xfff0c2,
     dimColor: { r: 0.05, g: 0.06, b: 0.09 },
   },
+} as const
+
+/** Standalone BOREAL dock bay — always-open entrance below the hull nameplate. */
+export const BOREAL_DOCK_BAY = {
+  widthMul: 0.3,
+  heightMul: 0.11,
+  surfaceOffset: 0.22,
+  gapBelowLabel: 0.45,
+  lipDepth: 0.07,
+  lipThickness: 0.06,
+  voidColor: 0x000000,
+  lipColor: 0x06080c,
+  forceFieldColor: 0x020304,
+  forceFieldOpacity: 0.18,
+  guideLightLit: 0xffffff,
+  guideLightWarm: 0xffe8a8,
+  guideLightDim: 0x1a1e24,
+  guideLightW: 0.05,
+  guideLightsPerEdge: 18,
+  approachGuideW: 0.042,
+  approachGuideCount: 5,
+  approachGuideRunwayMul: 0.44,
+  /** Airstrip chase — head travels 0→1; trail = affected fraction behind head. */
+  airstripFlashHz: 1.0,
+  airstripTrail: 0.32,
+  /** Perpendicular approach rails: same wave, inverted (always on, brief dip). */
+  approachFlashHz: 0.72,
+  approachChaseDelay: 0.12,
 } as const
 
 // =============================================================================

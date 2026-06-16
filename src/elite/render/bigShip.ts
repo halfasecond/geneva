@@ -5,6 +5,7 @@
 
 import * as THREE from 'three'
 import { BIG_SHIP, HULL_LABEL_FONTS, NPC } from '../config'
+import { attachBorealDockBay, BOREAL_DOCK_BAY_VERSION } from './borealDockBay'
 
 export interface CityLightSlot {
   x: number
@@ -72,6 +73,8 @@ function scaleBlocks(scale: number): HullBlock[] {
     labelYFrac: b.labelYFrac,
   }))
 }
+
+export const BIG_SHIP_MESH_VERSION = BOREAL_DOCK_BAY_VERSION
 
 function fitHullLabelFontSize(
   ctx: CanvasRenderingContext2D,
@@ -377,6 +380,9 @@ export function createBigShipMesh(): THREE.Group {
       addHullLabels(group, b, labelTex, scale, planeWidthMul, planeHeightMul)
     }
   }
+
+  attachBorealDockBay(group, scale)
+  group.userData.meshVersion = BIG_SHIP_MESH_VERSION
 
   const slots = buildWindowSlots(blocks, scale, paneW, paneH, gap, stableFraction)
   const lightGeo = new THREE.PlaneGeometry(paneW, paneH)

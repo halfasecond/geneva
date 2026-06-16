@@ -8,7 +8,8 @@
  */
 
 import * as THREE from 'three'
-import { COLORS, COCKPIT, RADAR_3D, RETICLE, FUEL, VECH } from '../config'
+import { COLORS, COCKPIT, MIND_RADAR, RADAR_3D, RETICLE, FUEL, VECH } from '../config'
+import { clampHoloRadarPos, isMindContact } from './radarIcons'
 
 // -----------------------------------------------------------------------------
 // Main cockpit shell (the visible ship frame + canopy + interior walls)
@@ -238,14 +239,40 @@ export function createHoloRadarAndReticle(camera: THREE.PerspectiveCamera) {
   // Pre-create blip pool (re-used every frame - no per-frame alloc)
   const blips: THREE.Object3D[] = []
   const blipGeo = new THREE.SphereGeometry(RADAR_3D.blip.r, RADAR_3D.blip.segments, RADAR_3D.blip.segments)
+  const mindBlipGeo = new THREE.BoxGeometry(1, 0.28, 0.55)
+  const mindCoreGeo = new THREE.SphereGeometry(0.14, 6, 6)
+
   for (let i = 0; i < RADAR_3D.blip.count; i++) {
     const blip = new THREE.Mesh(
       blipGeo,
       new THREE.MeshBasicMaterial({ color: 0xffff66 })
     )
     blip.visible = false
+    blip.userData.radarKind = 'ship'
     radarGroup.add(blip)
     blips.push(blip)
+  }
+
+  for (let i = 0; i < 2; i++) {
+    const mind = new THREE.Group()
+    mind.visible = false
+    mind.userData.radarKind = 'mind'
+
+    const hull = new THREE.Mesh(
+      mindBlipGeo,
+      new THREE.MeshBasicMaterial({ color: MIND_RADAR.colors.blip3d }),
+    )
+    mind.add(hull)
+
+    const core = new THREE.Mesh(
+      mindCoreGeo,
+      new THREE.MeshBasicMaterial({ color: MIND_RADAR.colors.core3d }),
+    )
+    core.position.z = 0.32
+    mind.add(core)
+
+    radarGroup.add(mind)
+    blips.push(mind)
   }
 
   return { reticleGroup, radarGroup, blips }
@@ -309,42 +336,73 @@ export function createVechHoloIcon(camera: THREE.PerspectiveCamera) {
 // -----------------------------------------------------------------------------
 export function update3DRadar(
   blips: THREE.Object3D[],
-  contacts: Array<{ x: number; y: number; z: number; dist: number; type: string; role?: string }>
+  contacts: Array<{
+    x: number
+    y: number
+    z: number
+    dist: number
+    type: string
+    role?: string
+    designation?: string
+  }>
 ) {
-  let bidx = 0
+  const mindBlips = blips.filter(b => b.userData.radarKind === 'mind')
+  const shipBlips = blips.filter(b => b.userData.radarKind !== 'mind')
+  let mindIdx = 0
+  let shipIdx = 0
 
-  contacts.forEach((c) => {
-    if (bidx >= blips.length) return
-    const blip = blips[bidx++]
+  const placeBlip = (blip: THREE.Object3D, c: (typeof contacts)[number]) => {
     const size = Math.max(RADAR_3D.sizeFar, RADAR_3D.sizeNear * (1 - Math.min(1, c.dist / RADAR_3D.sizeDistDiv)))
+    const rawX = c.x * RADAR_3D.projX
+    const rawY = c.z * RADAR_3D.projZ + c.y * RADAR_3D.projY
+    const clamped = clampHoloRadarPos(rawX, rawY, RADAR_3D.outer.rx, RADAR_3D.outer.ry)
 
-    const radarX = c.x * RADAR_3D.projX
-    const radarY = c.z * RADAR_3D.projZ + c.y * RADAR_3D.projY
-
-    blip.position.set(radarX, radarY, 0)
+    blip.position.set(clamped.x, clamped.y, 0)
     blip.visible = true
-    blip.scale.setScalar(size)
 
-    const mat = (blip as THREE.Mesh).material as THREE.MeshBasicMaterial
+    if (isMindContact(c)) {
+      const mindScale = size * RADAR_3D.mindSizeMul
+      blip.scale.set(mindScale, mindScale * RADAR_3D.mindYScale, mindScale)
+      return
+    }
+
+    blip.scale.setScalar(size)
+    const mat = (blip as THREE.Mesh).material as THREE.MeshBasicMaterial | undefined
+    if (!mat) {
+      if (c.type === 'ship') {
+        const shipScale = size
+        blip.scale.setScalar(shipScale)
+        blip.scale.y = shipScale * RADAR_3D.shipYScale
+      } else {
+        blip.scale.setScalar(size * RADAR_3D.bodyScale)
+      }
+      return
+    }
 
     if (c.type === 'ship') {
-      const freighter = c.role === 'freighter'
       if (c.role === 'pirate') mat.color.set(COLORS.pirate)
       else if (c.role === 'police' || c.role === 'escort') mat.color.set(COLORS.police)
-      else if (freighter) mat.color.set(0xe8c878)
       else mat.color.set(COLORS.trader)
 
-      const shipScale = freighter ? size * 1.75 : size
-      blip.scale.setScalar(shipScale)
-      blip.scale.y = shipScale * RADAR_3D.shipYScale
+      blip.scale.setScalar(size)
+      blip.scale.y = size * RADAR_3D.shipYScale
     } else {
       mat.color.set(c.type === 'station' ? COLORS.station : COLORS.planet)
       blip.scale.setScalar(size * RADAR_3D.bodyScale)
     }
+  }
+
+  contacts.forEach((c) => {
+    if (isMindContact(c)) {
+      if (mindIdx >= mindBlips.length) return
+      placeBlip(mindBlips[mindIdx++], c)
+      return
+    }
+    if (shipIdx >= shipBlips.length) return
+    placeBlip(shipBlips[shipIdx++], c)
   })
 
-  for (let i = bidx; i < blips.length; i++) {
-    blips[i].visible = false
-  }
+  for (let i = mindIdx; i < mindBlips.length; i++) mindBlips[i].visible = false
+  for (let i = shipIdx; i < shipBlips.length; i++) shipBlips[i].visible = false
 }
 

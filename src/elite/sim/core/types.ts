@@ -36,6 +36,8 @@ export interface NpcAgent {
   pressure: number
   // role for Elite behaviors
   role: 'trader' | 'pirate' | 'police' | 'escort' | 'freighter'
+  /** Capital Mind / GSV designation shown on radar (e.g. BOREAL). */
+  designation?: string
 }
 
 export type FlightMode =
@@ -43,6 +45,7 @@ export type FlightMode =
   | 'supercruise'
   | 'hyperspace'
   | 'docking_in'
+  | 'dock_flyin'
   | 'undocking'
   | 'docked'
 

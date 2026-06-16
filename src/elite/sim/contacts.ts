@@ -12,6 +12,7 @@
 import type { Vec3 } from './core/types'
 import type { NpcAgent } from './core/types'
 import type { CartographyBody } from './cartography'
+import { MIND_RADAR } from '../config'
 import { offsetFromPlayer, worldOffsetToBodyFrame } from './systemSpace'
 
 export interface Contact {
@@ -22,15 +23,18 @@ export interface Contact {
   type: 'ship' | 'planet' | 'moon' | 'station'
   role?: NpcAgent['role'] | 'neutral'
   name?: string
+  designation?: string
 }
 
 export interface ProjectOpts {
   maxShip?: number
   maxBody?: number
+  maxMind?: number
 }
 
 const DEFAULT_MAX_SHIP = 300
 const DEFAULT_MAX_BODY = 500
+const DEFAULT_MAX_MIND = MIND_RADAR.maxRange
 
 /**
  * Project entities into the player's local body frame.
@@ -41,7 +45,7 @@ const DEFAULT_MAX_BODY = 500
  */
 export function projectContacts(
   player: { pos: Vec3; heading: Vec3; up: Vec3 },
-  npcs: Array<{ pos: Vec3; role: NpcAgent['role'] }>,
+  npcs: Array<{ pos: Vec3; role: NpcAgent['role']; designation?: string }>,
   bodies: Array<Pick<CartographyBody, 'pos3d' | 'type' | 'name' | 'id'>>,
   opts: ProjectOpts = {}
 ): Contact[] {
@@ -49,13 +53,15 @@ export function projectContacts(
 
   const maxShip = opts.maxShip ?? DEFAULT_MAX_SHIP
   const maxBody = opts.maxBody ?? DEFAULT_MAX_BODY
+  const maxMind = opts.maxMind ?? DEFAULT_MAX_MIND
 
   const contacts: Contact[] = []
 
   for (const npc of npcs) {
     const offset = offsetFromPlayer(pPos, npc.pos)
     const frame = worldOffsetToBodyFrame(offset, fwd, upv)
-    if (frame.dist > maxShip) continue
+    const range = npc.designation ? maxMind : maxShip
+    if (frame.dist > range) continue
 
     contacts.push({
       x: frame.x,
@@ -64,7 +70,8 @@ export function projectContacts(
       dist: frame.dist,
       type: 'ship',
       role: npc.role,
-      name: npc.role.toUpperCase(),
+      designation: npc.designation,
+      name: npc.designation ?? npc.role.toUpperCase(),
     })
   }
 

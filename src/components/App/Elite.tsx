@@ -50,9 +50,10 @@ import {
 
 // Tightening imports (config + extracted modules)
 import {
-  COLORS, SCANNER_2D, VECH, VIEW, WORLD, HYPERSPACE, NPC, FUEL, Z, DASHBOARD, WAYPOINTS,
+  COLORS, MIND_RADAR, SCANNER_2D, VECH, VIEW, WORLD, HYPERSPACE, NPC, FUEL, Z, DASHBOARD, WAYPOINTS,
   roleCss, roleColor, npcSizeForRole,
 } from '../../elite/config'
+import { drawMindRadarIcon2D, isMindContact, scannerDisplayPos2D } from '../../elite/render/radarIcons'
 import { projectContacts } from '../../elite/sim/contacts'
 import { getCargoUsed } from '../../elite/sim/market'
 import { bodyLocalPos, isInsideBubble, viewBasisFromAttitude } from '../../elite/sim/systemSpace'
@@ -63,10 +64,15 @@ import * as CockpitRender from '../../elite/render/cockpit'
 import * as HyperspaceRender from '../../elite/render/hyperspace'
 import * as StationRender from '../../elite/render/station'
 import {
+  BIG_SHIP_MESH_VERSION,
   createBigShipMesh,
   isBigShipMesh,
   updateBigShipCityLights,
 } from '../../elite/render/bigShip'
+import {
+  hasBorealDockBay,
+  updateBorealDockBay,
+} from '../../elite/render/borealDockBay'
 import {
   CartographyOverlay,
   HyperspacePanel,
@@ -76,6 +82,7 @@ import {
   MarketOverlay,
   VechPreview,
   WaypointOverlay,
+  PositionDebug,
 } from '../../elite/ui'
 
 // Basic AuthProps shape we receive (wallet + controls)
@@ -129,6 +136,8 @@ const Elite: React.FC<EliteProps> = () => {
     dockedAtStationId: null as string | null,
     nearestDock: null as { id: string; name: string; dist: number } | null,
     systemId: 'helios',
+    borealDist: null as number | null,
+    borealDelta: null as { x: number; y: number; z: number } | null,
   })
 
   const [marketOpen, setMarketOpen] = useState(false)
@@ -446,7 +455,7 @@ const Elite: React.FC<EliteProps> = () => {
             type: b.type,
             pos3d: bodyLocalPos(b, systemPos2d),
           })),
-          { maxShip: 300, maxBody: 500 }
+          { maxShip: SCANNER_2D.maxRangeShip, maxBody: SCANNER_2D.maxRangeBody, maxMind: MIND_RADAR.maxRange }
         )
 
         CockpitRender.update3DRadar(radarBlipsRef.current, contacts)
@@ -563,8 +572,19 @@ const Elite: React.FC<EliteProps> = () => {
         // Update existing meshes (or hide extras)
         const playerPos = snap.player.pos
         current.forEach((npc: NpcAgent, i: number) => {
-          const m = npcMeshes[i]
+          let m = npcMeshes[i]
           if (!m) return
+
+          if (
+            npc.role === 'freighter'
+            && (m.userData.meshVersion !== BIG_SHIP_MESH_VERSION || !hasBorealDockBay(m))
+          ) {
+            npcContainer.remove(m)
+            m = createBigShipMesh()
+            npcContainer.add(m)
+            npcMeshes[i] = m
+          }
+
           m.visible = true
           m.position.set(
             npc.pos.x - playerPos.x,
@@ -587,6 +607,7 @@ const Elite: React.FC<EliteProps> = () => {
 
           if (isBigShipMesh(m)) {
             updateBigShipCityLights(m, snap.time, npc.id)
+            updateBorealDockBay(m, snap.time)
           }
 
           // pressure glow dot
@@ -618,6 +639,21 @@ const Elite: React.FC<EliteProps> = () => {
 
       // HUD state (throttled a bit)
       if (Math.random() < 0.6) {
+        const freighter = snap.npcs.find(n => n.designation || n.role === 'freighter')
+        let borealDist: number | null = null
+        let borealDelta: { x: number; y: number; z: number } | null = null
+        if (freighter) {
+          const dx = snap.player.pos.x - freighter.pos.x
+          const dy = snap.player.pos.y - freighter.pos.y
+          const dz = snap.player.pos.z - freighter.pos.z
+          borealDist = Math.round(Math.hypot(dx, dy, dz))
+          borealDelta = {
+            x: Math.round(dx),
+            y: Math.round(dy),
+            z: Math.round(dz),
+          }
+        }
+
         setHud({
           speed: Math.round(snap.player.speed),
           npcs: snap.npcs.length,
@@ -638,6 +674,8 @@ const Elite: React.FC<EliteProps> = () => {
           dockedAtStationId: snap.player.dockedAtStationId,
           nearestDock: snap.nearestDock,
           systemId: snap.player.systemId,
+          borealDist,
+          borealDelta,
         })
         if (snap.player.flightMode === 'docked') setMarketSnap(snap)
       }
@@ -772,14 +810,11 @@ const Elite: React.FC<EliteProps> = () => {
         { pos: p.pos, heading: fwd, up: upv },
         snapRef.current?.npcs || [],
         radarBodies,
-        { maxShip: 300, maxBody: 500 }
+        { maxShip: SCANNER_2D.maxRangeShip, maxBody: SCANNER_2D.maxRangeBody, maxMind: MIND_RADAR.maxRange }
       )
 
       contacts.forEach((c) => {
-        const z = Math.max(0, c.z)
-        const sx = cx + c.x * latFactor
-        const planeY = baseY - z * Math.sin(pitchRad) * depthFactor
-        const sy = planeY - c.y * elevFactor
+        const { sx, sy, planeY, distant } = scannerDisplayPos2D(c, cx, baseY, pitchRad)
 
         const size = Math.max(SCANNER_2D.sizeFar, SCANNER_2D.sizeNear * (1 - Math.min(1, c.dist / SCANNER_2D.sizeDistDiv)))
 
@@ -794,17 +829,23 @@ const Elite: React.FC<EliteProps> = () => {
         }
 
         if (c.type === 'ship') {
-          const shipSize = c.role === 'freighter' ? size * 2.1 : size
-          ctx.fillStyle = roleCss(c.role)
           ctx.save()
           ctx.translate(sx, sy)
-          ctx.beginPath()
-          ctx.moveTo(0, -shipSize)
-          ctx.lineTo(-shipSize * 0.48, shipSize * 0.38)
-          ctx.lineTo(0, shipSize * 0.12)
-          ctx.lineTo(shipSize * 0.48, shipSize * 0.38)
-          ctx.closePath()
-          ctx.fill()
+          if (isMindContact(c)) {
+            if (distant) ctx.globalAlpha = 0.72
+            drawMindRadarIcon2D(ctx, size * MIND_RADAR.sizeMul2d)
+            if (distant) ctx.globalAlpha = 1
+          } else {
+            const shipSize = size
+            ctx.fillStyle = roleCss(c.role)
+            ctx.beginPath()
+            ctx.moveTo(0, -shipSize)
+            ctx.lineTo(-shipSize * 0.48, shipSize * 0.38)
+            ctx.lineTo(0, shipSize * 0.12)
+            ctx.lineTo(shipSize * 0.48, shipSize * 0.38)
+            ctx.closePath()
+            ctx.fill()
+          }
           ctx.restore()
         } else {
           ctx.fillStyle = c.type === 'station' ? '#88ddff' : '#aaccff'
@@ -824,11 +865,21 @@ const Elite: React.FC<EliteProps> = () => {
           }
         }
 
-        // Distance label for closer contacts - now vech blue
+        // Mind designation + distance labels
+        if (isMindContact(c) && c.dist < MIND_RADAR.labelDist) {
+          ctx.fillStyle = MIND_RADAR.colors.ring2d
+          ctx.font = 'bold 9px monospace'
+          ctx.fillText(c.designation ?? c.name ?? 'MIND', sx + size * 2.2, sy - 5)
+        }
         if (c.dist < SCANNER_2D.labelDist) {
           ctx.fillStyle = SCANNER_2D.labelColor
           ctx.font = '8px monospace'
-          ctx.fillText(Math.round(c.dist), sx + size + 6, sy + 3)
+          const mind = isMindContact(c)
+          ctx.fillText(
+            Math.round(c.dist).toString(),
+            mind ? sx + size * 2.2 : sx + size + 6,
+            mind ? sy + 6 : sy + 3,
+          )
         }
       })
 
@@ -883,6 +934,16 @@ const Elite: React.FC<EliteProps> = () => {
           && (mapOpen || marketOpen || isHyperspacing || hyperspaceCountdown !== null)
         }
       />
+
+      {!mapOpen && (
+        <PositionDebug
+          pos={hud.playerPos}
+          speed={hud.speed}
+          flightMode={hud.flightMode}
+          borealDist={hud.borealDist}
+          borealDelta={hud.borealDelta}
+        />
+      )}
 
       <img src={'https://cdn.halfasecond.com/images/vech/vech-logo.png'} alt="Vech" style={{
         width: 72,

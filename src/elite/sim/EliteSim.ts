@@ -14,7 +14,7 @@ import {
   type MarketConfig,
   type MarketState,
 } from './market'
-import { DOCK, FUEL, MARKET } from '../config'
+import { BIG_SHIP, DOCK, FUEL, MARKET } from '../config'
 import {
   hyperspaceArrivalPose,
   stationApproachPose,
@@ -123,6 +123,7 @@ export class EliteSim {
         contagionPressure: 0,
         pressure: 0,
         role,
+        ...(isFreighter ? { designation: BIG_SHIP.nameLabel.text } : {}),
       })
     }
   }
