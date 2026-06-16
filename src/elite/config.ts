@@ -164,11 +164,43 @@ export const SCANNER_2D = {
   nearbyLabelColor: '#66aaff',
 }
 
+/** Docked station services panel (replaces spatial scanner at port). */
+export const DOCKED_RADAR = {
+  bg: '#030508',
+  border: '#66aaff',
+  headerColor: '#66aaff',
+  /** Matches BIG_SHIP.nameLabel hull lettering. */
+  nameColor: '#5a6b78',
+  metaColor: '#4a5662',
+  serviceColor: '#7a8f9e',
+  activeColor: '#c8d4dc',
+  mutedColor: '#3a424a',
+  unavailableColor: '#2e343a',
+  selectedColor: '#c8d4dc',
+  newsColor: '#5a6b78',
+  headerSize: 11,
+  titleSize: 24,
+  metaSize: 11,
+  serviceSize: 15,
+  statusSize: 11,
+  newsSize: 10,
+  letterSpacing: 0.1,
+} as const
+
+export const STATION_NEWS: Record<string, string> = {
+  'boreal-station': 'Outer rim quiet — titanium surplus, medicine scarce. Dock fees waived.',
+  'aster-hub': 'Corporate traffic heavy in Helios Core. Grain futures up 2%.',
+  'cinder-exchange': 'Belt independents report fuel-cell demand spike.',
+  'helio-port': 'Helios Core patrols increased. Shipyard queue: 12 days.',
+}
+
 // =============================================================================
 // FUEL / STATUS (left-side vertical holo bars attached to camera)
 // =============================================================================
 export const FUEL = {
   max: 120,
+  /** Starting tank — below max so refuel is selectable at dock for testing. */
+  starting: 68,
   /** Hyperspace jump cost = base + distance × rate (rounded). Tuned so ~30 AU hops fit one tank. */
   jump: {
     sameSystemBase: 4,
@@ -288,10 +320,26 @@ export const DOCK = {
  * Trigger on approach → spline fly-in → force-field cross → market/interior handoff.
  */
 export const DOCK_LIVE = {
-  approachTrigger: 140,
-  forceFieldCrossZ: -6,
+  /** Auto fly-in when player enters this radius of the starboard force field. */
+  forceFieldTriggerRadius: 70,
   flyInDuration: 4.8,
   handoffToMarket: true,
+} as const
+
+/** Boreal Station — the BOREAL capital hull is the dock; cartography marker is nav-only. */
+export const BOREAL_STATION = {
+  id: 'boreal-station',
+  name: 'Boreal Station',
+  /** Freighter centre offset from the station approach corridor (nav-local). */
+  freighterOffset: { x: 480, y: 0, z: 360 },
+  /** Present starboard/dock face toward the approach path (not the narrow prow). */
+  freighterYaw: Math.PI / 2,
+  /** Distance to starboard force field for [F] dock prompt. */
+  dockRange: 90,
+  maxApproachSpeed: 32,
+  /** Docked pose offset from freighter centre (starboard bay, after freighterYaw). */
+  dockedOffset: { x: 40, y: 0, z: -150 },
+  undockBack: 55,
 } as const
 
 // =============================================================================

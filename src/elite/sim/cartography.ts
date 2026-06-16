@@ -67,7 +67,6 @@ const bodyPresets: BodyPreset[] = [
   { id: 'helio-port', name: 'Helio Port', systemId: 'helios', type: 'station', color: '#fff3c4', radius: 2.5, orbitRadius: 94, angleAtEpoch: 0.18, eccentricity: 0.12, parentId: 'helios', orbitalPeriodSeconds: 0, government: 'Corporate', sector: 'Helios Core' },
   { id: 'boreal', name: 'Boreal', systemId: 'helios', type: 'planet', color: '#6ce6ff', radius: 8, orbitRadius: 320, angleAtEpoch: 4.45, eccentricity: 0.06, parentId: 'helios', orbitalPeriodSeconds: 86400 * 2200, mapOrbitPeriodSeconds: 1800 },
   { id: 'boreal-moon', name: 'Vela', systemId: 'helios', type: 'moon', color: '#cdd7ff', radius: 3, orbitRadius: 38, angleAtEpoch: 0.9, eccentricity: 0.1, parentId: 'boreal', orbitalPeriodSeconds: 86400 * 42, mapOrbitPeriodSeconds: 360 },
-  { id: 'mira-depot', name: 'Mira Depot', systemId: 'helios', type: 'station', color: '#e6e8ff', radius: 2.3, orbitRadius: 47, angleAtEpoch: 2.8, eccentricity: 0.07, parentId: 'boreal', orbitalPeriodSeconds: 0, government: 'Corporate', sector: 'Helios Outer' },
   { id: 'boreal-station', name: 'Boreal Station', systemId: 'helios', type: 'station', color: '#d7fff1', radius: 2.3, orbitRadius: 55, angleAtEpoch: 5.6, eccentricity: 0.03, parentId: 'boreal', orbitalPeriodSeconds: 0, government: 'Anarchy', sector: 'Helios Outer' },
 ]
 

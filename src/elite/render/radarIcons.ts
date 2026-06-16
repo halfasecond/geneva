@@ -12,8 +12,30 @@ export interface ScannerDisplayPos {
   distant: boolean
 }
 
-export function isMindContact(c: Pick<Contact, 'type' | 'designation'>): boolean {
-  return c.type === 'ship' && !!c.designation
+export function isMindContact(c: Pick<Contact, 'type' | 'designation' | 'dockBay'>): boolean {
+  return c.type === 'ship' && !!c.designation && !c.dockBay
+}
+
+/** Dock bay door — wide bar, aim for the force field. */
+export function drawDockRadarIcon2D(
+  ctx: CanvasRenderingContext2D,
+  size: number,
+  color = '#66aaff',
+) {
+  const w = size * 2.5
+  const h = size * 0.58
+  ctx.fillStyle = 'rgba(6, 14, 28, 0.92)'
+  ctx.fillRect(-w * 0.5, -h * 0.5, w, h)
+  ctx.strokeStyle = color
+  ctx.lineWidth = Math.max(1, size * 0.14)
+  ctx.strokeRect(-w * 0.5, -h * 0.5, w, h)
+  ctx.fillStyle = '#ffffff'
+  const lip = Math.max(1.5, size * 0.18)
+  for (let i = 0; i < 4; i++) {
+    const t = (i + 0.5) / 4
+    ctx.fillRect(-w * 0.5 + t * w - lip * 0.5, -h * 0.5 - lip * 0.15, lip, lip)
+    ctx.fillRect(-w * 0.5 + t * w - lip * 0.5, h * 0.5 - lip * 0.85, lip, lip)
+  }
 }
 
 /** Project a contact onto the 2D angled scanner volume (clamp far depth to the top range line). */

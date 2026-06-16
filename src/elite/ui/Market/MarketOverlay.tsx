@@ -242,7 +242,7 @@ const MarketOverlay: React.FC<MarketOverlayProps> = ({
           marginTop: 10,
           pointerEvents: 'auto',
         }}>
-          <DismissBtn label="T — Dismiss" onClick={onClose} />
+          <DismissBtn label="Esc — Back" onClick={onClose} />
           <DismissBtn label="F — Undock" onClick={onUndock} />
         </div>
       </div>

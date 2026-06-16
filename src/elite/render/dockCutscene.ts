@@ -2,7 +2,7 @@
  * Dock / undock pose tweens — short cinematic transitions into docked state.
  *
  * Live bay flow (see DOCK_LIVE):
- *   approach trigger → dock_flyin filmed spline → force-field cross → market handoff
+ *   force-field proximity → dock_flyin filmed spline → market handoff
  * Bay door stays open; approach lights sequence on the hull only.
  */
 

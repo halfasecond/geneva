@@ -64,17 +64,16 @@ const VechPreview: React.FC<VechPreviewProps> = ({ hud, glbUrl }) => {
 
   return (
     <>
-      {/* Model + ring area - reduced height to make ship smaller */}
-      <div style={{ 
+      <div style={{
         position: 'relative',
         width: '100%',
-        height: 110
+        height: 120,
       }}>
         <canvas
           ref={vechRingCanvasRef}
           width={400}
           height={140}
-          style={{ 
+          style={{
             position: 'absolute',
             top: 0,
             left: 0,
@@ -82,7 +81,7 @@ const VechPreview: React.FC<VechPreviewProps> = ({ hud, glbUrl }) => {
             width: '100%',
             height: '100%',
             pointerEvents: 'none',
-            zIndex: 1
+            zIndex: 1,
           }}
         />
         <model-viewer
@@ -99,11 +98,10 @@ const VechPreview: React.FC<VechPreviewProps> = ({ hud, glbUrl }) => {
           cameraOrbit={VECH.cameraOrbit}
           camera-target={VECH.cameraTarget}
           onLoad={setVechCamera}
-          style={{ width: '100%', height: '100%', background: 'transparent', position: 'relative', zIndex: 2, marginTop: '-20px' }}  /* negative margin to pull the ship up into the ring */
+          style={{ width: '100%', height: '100%', background: 'transparent', position: 'relative', zIndex: 2, marginTop: '-20px' }}
         />
       </div>
 
-      {/* Small VECH label */}
       <div style={{
         fontSize: '9px',
         color: COLORS.vechRingCss,
@@ -111,37 +109,33 @@ const VechPreview: React.FC<VechPreviewProps> = ({ hud, glbUrl }) => {
         textShadow: '0 0 2px #000',
         pointerEvents: 'none',
         lineHeight: 1,
-        marginBottom: 8
+        marginBottom: 8,
       }}>
         VECH #5759
       </div>
 
-      {/* Status UI - 3 rows vertical, width matching biggest ring (a bit less), centered */}
       <div style={{
-        width: 200,  /* half the current width to make gauges narrower, centered under the ring/ship */
+        width: 200,
         margin: '0 auto',
         display: 'flex',
         flexDirection: 'column',
         gap: '6px',
         color: COLORS.vechRingCss,
-        fontSize: '12px',  /* 50% larger */
-        paddingBottom: '4px'
+        fontSize: '12px',
+        paddingBottom: '4px',
       }}>
-        {/* Row 1: Speed top */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <div>SPD</div>
           <SpeedGauge speed={hud.speed} barWidth={150} />
           <div style={{ fontSize: '10px' }}>{hud.speed}</div>
         </div>
 
-        {/* Row 2: Fuel middle */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
           <div>FUEL</div>
           <FuelGauge fuel={hud.fuel} barWidth={150} />
           <div style={{ fontSize: '10px' }}>1.10/h</div>
         </div>
 
-        {/* Row 3: System stuff (SYS ENG RST WEP) as 2 rows of 2 (refactored for larger size) */}
         <SystemStatus />
       </div>
     </>

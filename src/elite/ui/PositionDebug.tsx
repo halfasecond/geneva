@@ -1,5 +1,5 @@
 import React from 'react'
-import { COLORS, WINDSCREEN, Z } from '../config'
+import { COLORS, Z } from '../config'
 
 export interface PositionDebugProps {
   pos: { x: number; y: number; z: number }
@@ -37,8 +37,8 @@ const PositionDebug: React.FC<PositionDebugProps> = ({
     <div
       style={{
         position: 'fixed',
-        top: WINDSCREEN.top + 6,
-        left: WINDSCREEN.left + 8,
+        bottom: 8,
+        right: 8,
         zIndex: Z.cockpitWidgets,
         pointerEvents: 'none',
         fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',

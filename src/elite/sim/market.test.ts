@@ -9,9 +9,9 @@ import {
 } from './market'
 
 describe('station markets', () => {
-  it('initialises five station economies with commodities', () => {
+  it('initialises four station economies with commodities', () => {
     const markets = initMarkets()
-    expect(markets).toHaveLength(5)
+    expect(markets).toHaveLength(4)
     expect(markets[0].id).toBe('aster-hub')
     expect(Object.keys(markets[0].commodities)).toHaveLength(6)
     expect(markets[0].commodities.titanium.price).toBeGreaterThan(0)
@@ -36,7 +36,7 @@ describe('station markets', () => {
   it('reports diagnostics after stepping', () => {
     const markets = stepMarkets(initMarkets(), 60, defaultMarketConfig)
     const diag = getMarketDiagnostics(markets)
-    expect(diag.activeListings).toBe(30)
+    expect(diag.activeListings).toBe(24)
     expect(diag.averagePrice).toBeGreaterThan(0)
   })
 

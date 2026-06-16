@@ -13,6 +13,7 @@ import type { Vec3 } from './core/types'
 import type { NpcAgent } from './core/types'
 import type { CartographyBody } from './cartography'
 import { MIND_RADAR } from '../config'
+import { borealForceFieldWorldPos } from './borealDock'
 import { offsetFromPlayer, worldOffsetToBodyFrame } from './systemSpace'
 
 export interface Contact {
@@ -24,6 +25,12 @@ export interface Contact {
   role?: NpcAgent['role'] | 'neutral'
   name?: string
   designation?: string
+  /** BOREAL dock bay — radar aim point at the force-field door. */
+  dockBay?: 'starboard' | 'port'
+}
+
+export function isDockContact(c: Pick<Contact, 'dockBay'>): boolean {
+  return c.dockBay !== undefined
 }
 
 export interface ProjectOpts {
@@ -58,10 +65,31 @@ export function projectContacts(
   const contacts: Contact[] = []
 
   for (const npc of npcs) {
+    if (npc.designation) {
+      for (const side of ['starboard', 'port'] as const) {
+        const doorPos = borealForceFieldWorldPos(npc.pos, side)
+        const offset = offsetFromPlayer(pPos, doorPos)
+        const frame = worldOffsetToBodyFrame(offset, fwd, upv)
+        if (frame.dist > maxMind) continue
+
+        contacts.push({
+          x: frame.x,
+          y: frame.y,
+          z: frame.z,
+          dist: frame.dist,
+          type: 'station',
+          role: 'neutral',
+          dockBay: side,
+          designation: npc.designation,
+          name: side === 'starboard' ? npc.designation : 'DOCK',
+        })
+      }
+      continue
+    }
+
     const offset = offsetFromPlayer(pPos, npc.pos)
     const frame = worldOffsetToBodyFrame(offset, fwd, upv)
-    const range = npc.designation ? maxMind : maxShip
-    if (frame.dist > range) continue
+    if (frame.dist > maxShip) continue
 
     contacts.push({
       x: frame.x,
@@ -70,8 +98,7 @@ export function projectContacts(
       dist: frame.dist,
       type: 'ship',
       role: npc.role,
-      designation: npc.designation,
-      name: npc.designation ?? npc.role.toUpperCase(),
+      name: npc.role.toUpperCase(),
     })
   }
 

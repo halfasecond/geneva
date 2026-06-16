@@ -74,7 +74,6 @@ export const STATION_MARKET_ORDER = [
   'boreal-station',
   'cinder-exchange',
   'helio-port',
-  'mira-depot',
 ] as const
 
 const titaniumId = 'titanium'
@@ -158,18 +157,6 @@ const marketSeeds: MarketSeed[] = [
       'fuel-cells': { consumptionBias: 0.7, demand: 74, productionBias: 1.42, stock: 176 },
       titanium: { consumptionBias: 0.78, demand: 76, productionBias: 1.28, stock: 168 },
       'rare-earths': { consumptionBias: 0.82, demand: 78, productionBias: 1.22, stock: 150 },
-    },
-  },
-  {
-    id: 'mira-depot',
-    name: 'Mira Depot',
-    commodities: {
-      grain: { consumptionBias: 0.86, demand: 88, productionBias: 1.2, stock: 164 },
-      water: { consumptionBias: 0.9, demand: 94, productionBias: 1.18, stock: 156 },
-      medicine: { consumptionBias: 0.96, demand: 98, productionBias: 1.04, stock: 106 },
-      'fuel-cells': { consumptionBias: 1.02, demand: 116, productionBias: 0.98, stock: 110 },
-      titanium: { consumptionBias: 1.02, demand: 118, productionBias: 1.0, stock: 116 },
-      'rare-earths': { consumptionBias: 1.2, demand: 142, productionBias: 0.76, stock: 68 },
     },
   },
 ]
@@ -346,6 +333,8 @@ export function nearestDockableStation(
   let best: { id: string; name: string; dist: number } | null = null
   for (const body of getFrozenCartographyBodies()) {
     if (body.type !== 'station') continue
+    // Boreal docks at the BOREAL hull — not the cartography marker.
+    if (body.id === 'boreal-station') continue
     const offset = bodyLocalPos(body, playerSystemPos2d)
     const dist = Math.hypot(offset.x, offset.y, offset.z)
     if (dist <= dockRange && (!best || dist < best.dist)) {

@@ -9,6 +9,7 @@
 
 import * as THREE from 'three'
 import { COLORS, COCKPIT, MIND_RADAR, RADAR_3D, RETICLE, FUEL, VECH } from '../config'
+import { isDockContact } from '../sim/contacts'
 import { clampHoloRadarPos, isMindContact } from './radarIcons'
 
 // -----------------------------------------------------------------------------
@@ -344,6 +345,7 @@ export function update3DRadar(
     type: string
     role?: string
     designation?: string
+    dockBay?: 'starboard' | 'port'
   }>
 ) {
   const mindBlips = blips.filter(b => b.userData.radarKind === 'mind')
@@ -386,6 +388,9 @@ export function update3DRadar(
 
       blip.scale.setScalar(size)
       blip.scale.y = size * RADAR_3D.shipYScale
+    } else if (isDockContact(c)) {
+      mat.color.set(0x66aaff)
+      blip.scale.set(size * RADAR_3D.bodyScale * 1.35, size * RADAR_3D.bodyScale * 0.55, size * RADAR_3D.bodyScale)
     } else {
       mat.color.set(c.type === 'station' ? COLORS.station : COLORS.planet)
       blip.scale.setScalar(size * RADAR_3D.bodyScale)

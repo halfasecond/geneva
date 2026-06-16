@@ -71,11 +71,13 @@ const CockpitStatusPanel: React.FC<CockpitStatusPanelProps> = ({
 
       {isDocked ? (
         <div style={{ fontSize: '9px', marginBottom: '6px', opacity: 0.75 }}>
-          [F] undock · [T] market
+          [↑↓] services · [↵] select · [F] undock
         </div>
       ) : nearestDock ? (
         <div style={{ fontSize: '9px', marginBottom: '6px', opacity: 0.7 }}>
-          [F] dock {nearestDock.name}
+          {nearestDock.id === 'boreal-station'
+            ? `fly into field · [F] dock (${nearestDock.dist}m)`
+            : `[F] dock ${nearestDock.name}`}
         </div>
       ) : null}
 

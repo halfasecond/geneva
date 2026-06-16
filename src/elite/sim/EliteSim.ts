@@ -14,7 +14,15 @@ import {
   type MarketConfig,
   type MarketState,
 } from './market'
-import { BIG_SHIP, DOCK, FUEL, MARKET } from '../config'
+import { BIG_SHIP, BOREAL_STATION, DOCK, DOCK_LIVE, FUEL, MARKET } from '../config'
+import {
+  borealDockedPose,
+  borealFreighterAnchor,
+  borealUndockPose,
+  distanceToBorealForceField,
+  findBorealFreighter,
+  nearestBorealDock,
+} from './borealDock'
 import {
   hyperspaceArrivalPose,
   stationApproachPose,
@@ -74,7 +82,7 @@ export class EliteSim {
       vel: zero(),
       roll: 0,
       speed: 0,
-      fuel: FUEL.max,
+      fuel: FUEL.starting,
       credits: MARKET.startingCredits,
       cargo: {},
       cargoCapacity: MARKET.cargoCapacity,
@@ -92,6 +100,13 @@ export class EliteSim {
     this.player.systemPos2d = systemPos2dFromLocal(this.player.navReference2d, this.player.pos)
   }
 
+  private syncBorealFreighter() {
+    const freighter = findBorealFreighter(this.npcs)
+    if (!freighter) return
+    freighter.pos = { ...borealFreighterAnchor(this.player.navReference2d) }
+    freighter.vel = { x: 0, y: 0, z: 0 }
+  }
+
   resetNpcs(count: number) {
     this.npcs = []
     const roles: NpcAgent['role'][] = ['freighter', 'trader', 'pirate', 'police', 'escort', 'trader']
@@ -100,21 +115,26 @@ export class EliteSim {
     for (let i = 0; i < count; i++) {
       const role = roles[i % roles.length]
       const isFreighter = role === 'freighter'
-      const angle = isFreighter ? 0.85 : (i / count) * Math.PI * 2
-      const radius = isFreighter ? 1050 : 80 + (i % 5) * 12
-      const speed = isFreighter ? 0.18 + Math.random() * 0.12 : 1.5 + Math.random()
+      const angle = (i / count) * Math.PI * 2
+      const radius = 80 + (i % 5) * 12
+      const speed = 1.5 + Math.random()
+      const freighterPos = borealFreighterAnchor(this.player.navReference2d)
       this.npcs.push({
         id: i,
-        pos: {
-          x: anchor.x + Math.cos(angle) * radius,
-          y: anchor.y + Math.sin(angle) * radius * 0.06 + (i % 3 - 1) * 8,
-          z: anchor.z + (isFreighter ? 420 : (Math.random() - 0.5) * 40),
-        },
-        vel: {
-          x: -Math.sin(angle) * speed,
-          y: Math.cos(angle) * (isFreighter ? 0.15 : 1.2 + Math.random()),
-          z: (Math.random() - 0.5) * (isFreighter ? 0.4 : 2),
-        },
+        pos: isFreighter
+          ? { ...freighterPos }
+          : {
+            x: anchor.x + Math.cos(angle) * radius,
+            y: anchor.y + Math.sin(angle) * radius * 0.06 + (i % 3 - 1) * 8,
+            z: anchor.z + (Math.random() - 0.5) * 40,
+          },
+        vel: isFreighter
+          ? { x: 0, y: 0, z: 0 }
+          : {
+            x: -Math.sin(angle) * speed,
+            y: Math.cos(angle) * (1.2 + Math.random()),
+            z: (Math.random() - 0.5) * 2,
+          },
         mass: isFreighter ? 5.5 : 0.8 + Math.random() * 0.6,
         progress: Math.random(),
         orientation: Math.random() > 0.5 ? 1 : -1,
@@ -146,11 +166,70 @@ export class EliteSim {
     return this.markets.find(m => m.id === id) ?? null
   }
 
+  private getNearestDock() {
+    const p = this.player
+    const freighter = findBorealFreighter(this.npcs)
+    if (freighter) {
+      const boreal = nearestBorealDock(
+        p.pos,
+        freighter.pos,
+        p.speed,
+        BOREAL_STATION.maxApproachSpeed,
+      )
+      if (boreal) return boreal
+    }
+    return nearestDockableStation(p.pos, p.systemPos2d, p.speed, DOCK.range, DOCK.maxApproachSpeed)
+  }
+
+  private startBorealDockFlyIn(freighter: NpcAgent): boolean {
+    const p = this.player
+    const from: FlightPose = {
+      pos: { ...p.pos },
+      heading: { ...p.heading },
+      up: { ...p.up },
+    }
+    const to = borealDockedPose(freighter.pos)
+    this.dockTargetId = BOREAL_STATION.id
+    this.poseTween = createPoseTween(from, to, DOCK_LIVE.flyInDuration)
+    p.flightMode = 'dock_flyin'
+    p.vel = zero()
+    p.speed = 0
+    return true
+  }
+
+  private tryAutoBorealDock() {
+    const p = this.player
+    if (p.flightMode !== 'normal') return
+
+    const freighter = findBorealFreighter(this.npcs)
+    if (!freighter) return
+    if (p.speed > BOREAL_STATION.maxApproachSpeed) return
+
+    const dist = distanceToBorealForceField(p.pos, freighter.pos)
+    if (dist > DOCK_LIVE.forceFieldTriggerRadius) return
+
+    this.startBorealDockFlyIn(freighter)
+  }
+
   /** Begin dock cutscene if in range and slow enough. */
   startDocking(): boolean {
     const p = this.player
-    if (p.flightMode === 'docked' || p.flightMode === 'docking_in' || p.flightMode === 'undocking') {
+    if (
+      p.flightMode === 'docked'
+      || p.flightMode === 'docking_in'
+      || p.flightMode === 'dock_flyin'
+      || p.flightMode === 'undocking'
+    ) {
       return p.flightMode === 'docked'
+    }
+
+    const freighter = findBorealFreighter(this.npcs)
+    const boreal = freighter
+      ? nearestBorealDock(p.pos, freighter.pos, p.speed, BOREAL_STATION.maxApproachSpeed)
+      : null
+
+    if (boreal && freighter) {
+      return this.startBorealDockFlyIn(freighter)
     }
 
     const nearest = nearestDockableStation(p.pos, p.systemPos2d, p.speed, DOCK.range, DOCK.maxApproachSpeed)
@@ -179,15 +258,22 @@ export class EliteSim {
     const p = this.player
     if (p.flightMode !== 'docked' || !p.dockedAtStationId) return false
 
-    const body = getBodyById(p.dockedAtStationId, 'frozen')
-    if (!body) return false
-
     const from: FlightPose = {
       pos: { ...p.pos },
       heading: { ...p.heading },
       up: { ...p.up },
     }
-    const to = undockPose(body)
+
+    let to: FlightPose
+    if (p.dockedAtStationId === BOREAL_STATION.id) {
+      const freighter = findBorealFreighter(this.npcs)
+      if (!freighter) return false
+      to = borealUndockPose(freighter.pos)
+    } else {
+      const body = getBodyById(p.dockedAtStationId, 'frozen')
+      if (!body) return false
+      to = undockPose(body)
+    }
 
     this.dockTargetId = null
     this.poseTween = createPoseTween(from, to)
@@ -212,8 +298,17 @@ export class EliteSim {
     }
 
     p.navReference2d = { ...body.pos2d }
-    const pose = stationDockedPose(body, p.navReference2d)
-    Object.assign(p, poseToPlayerFields(pose))
+    if (stationId === BOREAL_STATION.id) {
+      const freighter = findBorealFreighter(this.npcs)
+      if (!freighter) {
+        p.flightMode = 'normal'
+        return
+      }
+      Object.assign(p, poseToPlayerFields(borealDockedPose(freighter.pos)))
+    } else {
+      const pose = stationDockedPose(body, p.navReference2d)
+      Object.assign(p, poseToPlayerFields(pose))
+    }
     this.syncSystemPos2d()
     p.dockedAtStationId = stationId
     p.flightMode = 'docked'
@@ -247,7 +342,7 @@ export class EliteSim {
 
     if (!done) return
 
-    if (p.flightMode === 'docking_in') this.finishDocking()
+    if (p.flightMode === 'docking_in' || p.flightMode === 'dock_flyin') this.finishDocking()
     else if (p.flightMode === 'undocking') this.finishUndocking()
   }
 
@@ -265,6 +360,13 @@ export class EliteSim {
       return true
     }
     return this.startDocking()
+  }
+
+  refuel(): boolean {
+    const p = this.player
+    if (p.flightMode !== 'docked' || p.fuel >= FUEL.max) return false
+    p.fuel = FUEL.max
+    return true
   }
 
   tradeCommodity(commodityId: string, tons: number, direction: 'buy' | 'sell'): boolean {
@@ -307,7 +409,7 @@ export class EliteSim {
 
     const p = this.player
 
-    if (p.flightMode === 'docking_in' || p.flightMode === 'undocking') {
+    if (p.flightMode === 'docking_in' || p.flightMode === 'dock_flyin' || p.flightMode === 'undocking') {
       this.stepPoseCutscene(deltaSeconds)
       this.stepNpcs(deltaSeconds)
       return
@@ -332,6 +434,8 @@ export class EliteSim {
     p.pos = add(p.pos, scale(p.vel, deltaSeconds))
     p.speed = length(p.vel)
     this.syncSystemPos2d()
+
+    this.tryAutoBorealDock()
 
     this.stepNpcs(deltaSeconds)
   }
@@ -473,7 +577,7 @@ export class EliteSim {
         ),
       })),
       marketDiagnostics: getMarketDiagnostics(this.markets),
-      nearestDock: nearestDockableStation(p.pos, p.systemPos2d, p.speed, DOCK.range, DOCK.maxApproachSpeed),
+      nearestDock: this.getNearestDock(),
     }
   }
 
@@ -500,6 +604,7 @@ export class EliteSim {
     this.player.speed = 0
     this.poseTween = null
     this.dockTargetId = null
+    this.syncBorealFreighter()
     return true
   }
 

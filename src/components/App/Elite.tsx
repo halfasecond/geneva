@@ -51,10 +51,17 @@ import {
 // Tightening imports (config + extracted modules)
 import {
   COLORS, MIND_RADAR, SCANNER_2D, VECH, VIEW, WORLD, HYPERSPACE, NPC, FUEL, Z, DASHBOARD, WAYPOINTS,
-  roleCss, roleColor, npcSizeForRole,
+  roleCss, roleColor, npcSizeForRole, BOREAL_STATION, DOCKED_RADAR,
 } from '../../elite/config'
-import { drawMindRadarIcon2D, isMindContact, scannerDisplayPos2D } from '../../elite/render/radarIcons'
-import { projectContacts } from '../../elite/sim/contacts'
+import {
+  activateDockedService,
+  buildDockedStationServices,
+  drawDockedStationRadar2D,
+  firstSelectableServiceIndex,
+  stepDockedServiceIndex,
+} from '../../elite/render/dockedRadar'
+import { drawDockRadarIcon2D, drawMindRadarIcon2D, isMindContact, scannerDisplayPos2D } from '../../elite/render/radarIcons'
+import { isDockContact, projectContacts } from '../../elite/sim/contacts'
 import { getCargoUsed } from '../../elite/sim/market'
 import { bodyLocalPos, isInsideBubble, viewBasisFromAttitude } from '../../elite/sim/systemSpace'
 import { computeWaypoints, type WaypointIndicator } from '../../elite/sim/waypoints'
@@ -129,7 +136,7 @@ const Elite: React.FC<EliteProps> = () => {
     time: 0,
     playerPos: { x: 0, y: 0, z: 0 },
     systemPos2d: { x: 0, y: 0 },
-    fuel: FUEL.max,
+    fuel: FUEL.starting,
     credits: 12000,
     cargoUsed: 0,
     flightMode: 'normal' as const,
@@ -141,6 +148,9 @@ const Elite: React.FC<EliteProps> = () => {
   })
 
   const [marketOpen, setMarketOpen] = useState(false)
+  const marketOpenRef = useRef(false)
+  marketOpenRef.current = marketOpen
+  const dockedServiceIndexRef = useRef(0)
   const [marketSnap, setMarketSnap] = useState<EliteSnapshot | null>(() => simRef.current.getSnapshot())
 
   // Cartography + hyperspace overlay state
@@ -176,12 +186,42 @@ const Elite: React.FC<EliteProps> = () => {
           simRef.current.startDocking()
         }
       }
-      if (k === 't' && snapRef.current?.player.flightMode === 'docked') setMarketOpen(o => !o)
       if (k === 'escape' && marketOpen && snapRef.current?.player.flightMode === 'docked') setMarketOpen(false)
+
+      const docked = snapRef.current?.player.flightMode === 'docked'
+      if (docked && !e.repeat) {
+        const snap = snapRef.current
+        if (!snap) return
+
+        const dockedServices = () => buildDockedStationServices({
+          fuel: snap.player.fuel ?? FUEL.starting,
+          fuelMax: FUEL.max,
+          marketOpen: marketOpenRef.current,
+        })
+
+        if (k === 'arrowup' || k === 'arrowdown') {
+          e.preventDefault()
+          dockedServiceIndexRef.current = stepDockedServiceIndex(
+            dockedServices(),
+            dockedServiceIndexRef.current,
+            k === 'arrowdown' ? 1 : -1,
+          )
+        }
+
+        if (k === 'enter') {
+          e.preventDefault()
+          const selected = dockedServices()[dockedServiceIndexRef.current]
+          if (!selected?.available) return
+          const result = activateDockedService(selected.id, { marketOpen: marketOpenRef.current })
+          if (result.refuel) simRef.current.refuel()
+          setMarketOpen(result.marketOpen)
+          setMarketSnap(simRef.current.getSnapshot())
+        }
+      }
     }
     window.addEventListener('keydown', handleGlobalKeys)
     return () => window.removeEventListener('keydown', handleGlobalKeys)
-  }, [mapOpen])
+  }, [mapOpen, marketOpen])
 
   // Initialize Three.js scene (inspired by Flocker FlockScene + cartography aesthetic)
   useEffect(() => {
@@ -365,7 +405,10 @@ const Elite: React.FC<EliteProps> = () => {
       lastTimeRef.current = now
 
       const sim = simRef.current
-      const input = getPlayerInput()
+      const rawInput = getPlayerInput()
+      const input = snapRef.current?.player.flightMode === 'docked'
+        ? { ...rawInput, thrust: 0, yaw: 0 }
+        : rawInput
       sim.step(dt, input)
 
       const snap = sim.getSnapshot()
@@ -394,7 +437,8 @@ const Elite: React.FC<EliteProps> = () => {
           if (!body) return
           const local = bodyLocalPos(body, systemPos2d)
           child.position.set(local.x, local.y, local.z)
-          child.visible = isInsideBubble(local)
+          // Boreal Station is the BOREAL hull — hide the cartography torus marker.
+          child.visible = body.id !== 'boreal-station' && isInsideBubble(local)
           if (child.visible) {
             bodiesForContacts.push({
               id: body.id,
@@ -430,7 +474,7 @@ const Elite: React.FC<EliteProps> = () => {
         )
       }
 
-      if (snap.player.flightMode !== 'hyperspace') {
+      if (snap.player.flightMode !== 'hyperspace' && snap.player.flightMode !== 'docked') {
         const p = snap.player
         setWaypoints(computeWaypoints(
           { heading: p.heading, systemPos2d: p.systemPos2d },
@@ -446,17 +490,19 @@ const Elite: React.FC<EliteProps> = () => {
         const fwd = p.heading
         const upv = p.up || { x: 0, y: 1, z: 0 }
 
-        const contacts = projectContacts(
-          { pos: p.pos, heading: fwd, up: upv },
-          snap.npcs,
-          bodiesForContacts.length > 0 ? bodiesForContacts : carto.map(b => ({
-            id: b.id,
-            name: b.name,
-            type: b.type,
-            pos3d: bodyLocalPos(b, systemPos2d),
-          })),
-          { maxShip: SCANNER_2D.maxRangeShip, maxBody: SCANNER_2D.maxRangeBody, maxMind: MIND_RADAR.maxRange }
-        )
+        const contacts = p.flightMode === 'docked'
+          ? []
+          : projectContacts(
+            { pos: p.pos, heading: fwd, up: upv },
+            snap.npcs,
+            bodiesForContacts.length > 0 ? bodiesForContacts : carto.map(b => ({
+              id: b.id,
+              name: b.name,
+              type: b.type,
+              pos3d: bodyLocalPos(b, systemPos2d),
+            })),
+            { maxShip: SCANNER_2D.maxRangeShip, maxBody: SCANNER_2D.maxRangeBody, maxMind: MIND_RADAR.maxRange }
+          )
 
         CockpitRender.update3DRadar(radarBlipsRef.current, contacts)
       }
@@ -592,17 +638,20 @@ const Elite: React.FC<EliteProps> = () => {
             npc.pos.z - playerPos.z,
           )
 
-          // face velocity direction
-          const vlen = length(npc.vel)
-          if (vlen > 0.3) {
-            const vx = npc.vel.x / vlen
-            const vy = npc.vel.y / vlen
-            const vz = npc.vel.z / vlen
-            m.lookAt(
-              m.position.x + vx * NPC.lookAhead,
-              m.position.y + vy * NPC.lookAhead,
-              m.position.z + vz * NPC.lookAhead
-            )
+          if (npc.role === 'freighter' || npc.designation) {
+            m.rotation.set(0, BOREAL_STATION.freighterYaw, 0)
+          } else {
+            const vlen = length(npc.vel)
+            if (vlen > 0.3) {
+              const vx = npc.vel.x / vlen
+              const vy = npc.vel.y / vlen
+              const vz = npc.vel.z / vlen
+              m.lookAt(
+                m.position.x + vx * NPC.lookAhead,
+                m.position.y + vy * NPC.lookAhead,
+                m.position.z + vz * NPC.lookAhead,
+              )
+            }
           }
 
           if (isBigShipMesh(m)) {
@@ -628,12 +677,14 @@ const Elite: React.FC<EliteProps> = () => {
         }
       }
 
-      if (
-        snap.player.flightMode === 'docked'
-        && prevFlightModeRef.current === 'docking_in'
-      ) {
-        setMarketOpen(true)
-        setMarketSnap(snap)
+      if (snap.player.flightMode === 'docked' && prevFlightModeRef.current !== 'docked') {
+        setMarketOpen(false)
+        const services = buildDockedStationServices({
+          fuel: snap.player.fuel ?? FUEL.starting,
+          fuelMax: FUEL.max,
+          marketOpen: marketOpenRef.current,
+        })
+        dockedServiceIndexRef.current = firstSelectableServiceIndex(services)
       }
       prevFlightModeRef.current = snap.player.flightMode
 
@@ -786,9 +837,27 @@ const Elite: React.FC<EliteProps> = () => {
       ctx.lineTo(cx + 6, baseY + 4)
       ctx.stroke()
 
-      // Get contacts via the shared util (deduped the second copy of the projection math)
       const p = snapRef.current?.player
       if (!p) {
+        raf = requestAnimationFrame(drawRadar)
+        return
+      }
+
+      if (p.flightMode === 'docked' && p.dockedAtStationId) {
+        const body = getBodyById(p.dockedAtStationId, 'frozen')
+        const dockedServices = buildDockedStationServices({
+          fuel: p.fuel ?? FUEL.starting,
+          fuelMax: FUEL.max,
+          marketOpen: marketOpenRef.current,
+        })
+        if (!dockedServices[dockedServiceIndexRef.current]?.available) {
+          dockedServiceIndexRef.current = firstSelectableServiceIndex(dockedServices)
+        }
+        drawDockedStationRadar2D(ctx, W, H, {
+          stationName: body?.name ?? 'Station',
+          services: dockedServices,
+          selectedIndex: dockedServiceIndexRef.current,
+        })
         raf = requestAnimationFrame(drawRadar)
         return
       }
@@ -847,6 +916,13 @@ const Elite: React.FC<EliteProps> = () => {
             ctx.fill()
           }
           ctx.restore()
+        } else if (isDockContact(c)) {
+          ctx.save()
+          ctx.translate(sx, sy)
+          if (distant) ctx.globalAlpha = 0.82
+          drawDockRadarIcon2D(ctx, size * 1.15)
+          if (distant) ctx.globalAlpha = 1
+          ctx.restore()
         } else {
           ctx.fillStyle = c.type === 'station' ? '#88ddff' : '#aaccff'
           ctx.beginPath()
@@ -865,20 +941,26 @@ const Elite: React.FC<EliteProps> = () => {
           }
         }
 
-        // Mind designation + distance labels
+        // Mind / dock designation + distance labels
         if (isMindContact(c) && c.dist < MIND_RADAR.labelDist) {
           ctx.fillStyle = MIND_RADAR.colors.ring2d
           ctx.font = 'bold 9px monospace'
           ctx.fillText(c.designation ?? c.name ?? 'MIND', sx + size * 2.2, sy - 5)
         }
+        if (isDockContact(c) && c.dist < MIND_RADAR.labelDist) {
+          ctx.fillStyle = '#66aaff'
+          ctx.font = 'bold 9px monospace'
+          ctx.fillText(c.name ?? 'DOCK', sx + size * 2.4, sy - 5)
+        }
         if (c.dist < SCANNER_2D.labelDist) {
           ctx.fillStyle = SCANNER_2D.labelColor
           ctx.font = '8px monospace'
           const mind = isMindContact(c)
+          const dock = isDockContact(c)
           ctx.fillText(
             Math.round(c.dist).toString(),
-            mind ? sx + size * 2.2 : sx + size + 6,
-            mind ? sy + 6 : sy + 3,
+            mind || dock ? sx + size * 2.2 : sx + size + 6,
+            mind || dock ? sy + 6 : sy + 3,
           )
         }
       })
@@ -931,7 +1013,7 @@ const Elite: React.FC<EliteProps> = () => {
         waypoints={waypoints}
         hidden={
           !WAYPOINTS.debugHardcoded
-          && (mapOpen || marketOpen || isHyperspacing || hyperspaceCountdown !== null)
+          && (mapOpen || marketOpen || isHyperspacing || hyperspaceCountdown !== null || hud.flightMode === 'docked')
         }
       />
 
@@ -945,16 +1027,18 @@ const Elite: React.FC<EliteProps> = () => {
         />
       )}
 
-      <img src={'https://cdn.halfasecond.com/images/vech/vech-logo.png'} alt="Vech" style={{
-        width: 72,
-        opacity: 0.4,
-        position: 'fixed',
-        left: 'calc(50% - 310px)',
-        transform: 'translateX(-50%)',
-        bottom: 164,
-        zIndex: Z.logo,
-        pointerEvents: 'none',
-      }} />
+      {hud.flightMode !== 'docked' && (
+        <img src={'https://cdn.halfasecond.com/images/vech/vech-logo.png'} alt="Vech" style={{
+          width: 72,
+          opacity: 0.4,
+          position: 'fixed',
+          left: 'calc(50% - 310px)',
+          transform: 'translateX(-50%)',
+          bottom: 164,
+          zIndex: Z.logo,
+          pointerEvents: 'none',
+        }} />
+      )}
 
       {hyperspaceCountdown !== null && (
         <HyperspaceCountdown count={hyperspaceCountdown} />
@@ -1081,11 +1165,21 @@ const Elite: React.FC<EliteProps> = () => {
           bottom: DASHBOARD.radar.bottom,
           width: DASHBOARD.radar.width,
           height: DASHBOARD.radar.height,
-          boxShadow: 'inset 0 0 14px rgba(102, 170, 255, .15), 0 0 8px rgba(102, 170, 255, .15)',
-          overflow: 'visible',
+          background: hud.flightMode === 'docked' ? DOCKED_RADAR.bg : undefined,
+          boxShadow: hud.flightMode === 'docked'
+            ? undefined
+            : 'inset 0 0 14px rgba(102, 170, 255, .15), 0 0 8px rgba(102, 170, 255, .15)',
+          overflow: 'hidden',
         }}>
-          <canvas ref={radar2DCanvasRef} width={704} height={190} style={{ position: 'absolute', top: 2, left: 2 }} />
-          <div style={{ position: 'absolute', bottom: 1, width: '100%', textAlign: 'center', fontSize: '8px', letterSpacing: '0.5px', color: SCANNER_2D.nearbyLabelColor }}>NEARBY</div>
+          <canvas
+            ref={radar2DCanvasRef}
+            width={DASHBOARD.radar.width}
+            height={DASHBOARD.radar.height}
+            style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+          />
+          {hud.flightMode !== 'docked' && (
+            <div style={{ position: 'absolute', bottom: 1, width: '100%', textAlign: 'center', fontSize: '8px', letterSpacing: '0.5px', color: SCANNER_2D.nearbyLabelColor }}>NEARBY</div>
+          )}
         </div>
 
         <div style={{
