@@ -28,6 +28,7 @@ export interface DockedServiceActivateResult {
   marketOpen: boolean
   upgradesOpen: boolean
   refuel?: boolean
+  undock?: boolean
 }
 
 /** Enter on the highlighted row — market / upgrades toggle; others close overlays first. */
@@ -44,6 +45,8 @@ export function activateDockedService(
       return { marketOpen: false, upgradesOpen: false, refuel: true }
     case 'news':
       return { marketOpen: false, upgradesOpen: false }
+    case 'undock':
+      return { marketOpen: false, upgradesOpen: false, undock: true }
     default:
       return { marketOpen: false, upgradesOpen: false }
   }
@@ -123,6 +126,12 @@ export function buildDockedStationServices(opts: {
       status: 'FEED',
       available: true,
     },
+    {
+      id: 'undock',
+      label: 'Undock',
+      status: 'READY',
+      available: true,
+    },
   ]
 }
 
@@ -145,16 +154,12 @@ export function drawDockedStationRadar2D(
 
   ctx.textBaseline = 'alphabetic'
 
-  ctx.fillStyle = ui.headerColor
-  ctx.font = font(ui.headerSize)
-  drawTrackedText(ctx, 'STATION SERVICES', pad, 26, track * ui.headerSize)
-
   ctx.fillStyle = ui.nameColor
   ctx.font = font(ui.titleSize)
-  drawTrackedText(ctx, opts.stationName.toUpperCase(), pad, 54, track * ui.titleSize)
+  drawTrackedText(ctx, opts.stationName.toUpperCase(), pad, 34, track * ui.titleSize)
 
   const listX = pad
-  const listStartY = 88
+  const listStartY = 62
   const rowH = 24
 
   opts.services.forEach((svc, i) => {

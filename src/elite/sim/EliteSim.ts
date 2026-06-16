@@ -18,7 +18,8 @@ import { BIG_SHIP, BOREAL_STATION, DOCK, DOCK_LIVE, FUEL, MARKET } from '../conf
 import {
   borealDockedPose,
   borealFlyInStartPose,
-  borealFreighterSpawnPos,
+  borealFreighterWorldPos,
+  isBorealFreighterInBubble,
   borealUndockPose,
   distanceToBorealForceField,
   findBorealFreighter,
@@ -108,7 +109,7 @@ export class EliteSim {
   private syncBorealFreighter() {
     const freighter = findBorealFreighter(this.npcs)
     if (!freighter) return
-    freighter.pos = { ...borealFreighterSpawnPos(this.player.pos) }
+    freighter.pos = { ...borealFreighterWorldPos(this.player.systemPos2d) }
     freighter.vel = { x: 0, y: 0, z: 0 }
   }
 
@@ -123,7 +124,7 @@ export class EliteSim {
       const angle = (i / count) * Math.PI * 2
       const radius = 80 + (i % 5) * 12
       const speed = 1.5 + Math.random()
-      const freighterPos = borealFreighterSpawnPos(anchor)
+      const freighterPos = borealFreighterWorldPos(this.player.systemPos2d)
       this.npcs.push({
         id: i,
         pos: isFreighter
@@ -174,7 +175,7 @@ export class EliteSim {
   private getNearestDock() {
     const p = this.player
     const freighter = findBorealFreighter(this.npcs)
-    if (freighter) {
+    if (freighter && isBorealFreighterInBubble(p.pos, freighter.pos)) {
       const boreal = nearestBorealDock(
         p.pos,
         freighter.pos,
@@ -206,7 +207,7 @@ export class EliteSim {
     if (this.time < this.undockGraceUntil) return
 
     const freighter = findBorealFreighter(this.npcs)
-    if (!freighter) return
+    if (!freighter || !isBorealFreighterInBubble(p.pos, freighter.pos)) return
     if (p.speed > BOREAL_STATION.maxApproachSpeed) return
 
     const dist = distanceToBorealForceField(p.pos, freighter.pos)
@@ -228,7 +229,7 @@ export class EliteSim {
     }
 
     const freighter = findBorealFreighter(this.npcs)
-    const boreal = freighter
+    const boreal = freighter && isBorealFreighterInBubble(p.pos, freighter.pos)
       ? nearestBorealDock(p.pos, freighter.pos, p.speed, BOREAL_STATION.maxApproachSpeed)
       : null
 
@@ -440,6 +441,7 @@ export class EliteSim {
     p.pos = add(p.pos, scale(p.vel, deltaSeconds))
     p.speed = length(p.vel)
     this.syncSystemPos2d()
+    this.syncBorealFreighter()
 
     this.tryAutoBorealDock()
 

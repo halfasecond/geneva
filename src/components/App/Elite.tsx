@@ -50,7 +50,7 @@ import {
 
 // Tightening imports (config + extracted modules)
 import {
-  COLORS, MIND_RADAR, SCANNER_2D, VECH, VIEW, WORLD, HYPERSPACE, NPC, FUEL, Z, DASHBOARD, WAYPOINTS,
+  COLORS, MIND_RADAR, SCANNER_2D, VECH, VIEW, WORLD, HYPERSPACE, NPC, FUEL, MARKET, Z, DASHBOARD, WAYPOINTS,
   roleCss, roleColor, npcSizeForRole, BOREAL_STATION, DOCKED_RADAR,
 } from '../../elite/config'
 import {
@@ -63,6 +63,7 @@ import {
 import { drawDockRadarIcon2D, drawMindRadarIcon2D, isMindContact, scannerDisplayPos2D } from '../../elite/render/radarIcons'
 import { isDockContact, projectContacts } from '../../elite/sim/contacts'
 import { getCargoUsed } from '../../elite/sim/market'
+import { isBorealFreighterInBubble } from '../../elite/sim/borealDock'
 import { bodyLocalPos, isInsideBubble, viewBasisFromAttitude } from '../../elite/sim/systemSpace'
 import { computeWaypoints, type WaypointIndicator } from '../../elite/sim/waypoints'
 import type { CartographyBody } from '../../elite/sim/cartography'
@@ -89,6 +90,7 @@ import {
   MarketOverlay,
   ShipUpgradesOverlay,
   VechPreview,
+  ShipHoldPanel,
   WaypointOverlay,
   PositionDebug,
 } from '../../elite/ui'
@@ -140,9 +142,10 @@ const Elite: React.FC<EliteProps> = () => {
     fuel: FUEL.starting,
     credits: 12000,
     cargoUsed: 0,
+    cargoCapacity: MARKET.cargoCapacity,
     flightMode: 'normal' as const,
     dockedAtStationId: null as string | null,
-    nearestDock: null as { id: string; name: string; dist: number } | null,
+
     systemId: 'helios',
     borealDist: null as number | null,
     borealDelta: null as { x: number; y: number; z: number } | null,
@@ -228,6 +231,13 @@ const Elite: React.FC<EliteProps> = () => {
             marketOpen: marketOpenRef.current,
             upgradesOpen: upgradesOpenRef.current,
           })
+          if (result.undock) {
+            simRef.current.startUndocking()
+            setMarketOpen(false)
+            setUpgradesOpen(false)
+            setMarketSnap(simRef.current.getSnapshot())
+            return
+          }
           if (result.refuel) simRef.current.refuel()
           setMarketOpen(result.marketOpen)
           setUpgradesOpen(result.upgradesOpen)
@@ -647,14 +657,15 @@ const Elite: React.FC<EliteProps> = () => {
             npcMeshes[i] = m
           }
 
-          m.visible = true
+          const isBoreal = npc.role === 'freighter' || !!npc.designation
+          m.visible = !isBoreal || isBorealFreighterInBubble(playerPos, npc.pos)
           m.position.set(
             npc.pos.x - playerPos.x,
             npc.pos.y - playerPos.y,
             npc.pos.z - playerPos.z,
           )
 
-          if (npc.role === 'freighter' || npc.designation) {
+          if (isBoreal) {
             m.rotation.set(0, BOREAL_STATION.freighterYaw, 0)
           } else {
             const vlen = length(npc.vel)
@@ -735,13 +746,14 @@ const Elite: React.FC<EliteProps> = () => {
           fuel: Math.round(snap.player.fuel ?? 0),
           credits: Math.round(snap.player.credits),
           cargoUsed: getCargoUsed(snap.player.cargo),
+          cargoCapacity: snap.player.cargoCapacity,
           systemPos2d: {
             x: Math.round(snap.player.systemPos2d.x),
             y: Math.round(snap.player.systemPos2d.y),
           },
           flightMode: snap.player.flightMode,
           dockedAtStationId: snap.player.dockedAtStationId,
-          nearestDock: snap.nearestDock,
+
           systemId: snap.player.systemId,
           borealDist,
           borealDelta,
@@ -1179,9 +1191,6 @@ const Elite: React.FC<EliteProps> = () => {
             dockedAtStationId={hud.dockedAtStationId}
             destinationId={route.destinationId}
             travelDistance={travelDistance}
-            credits={hud.credits}
-            cargoUsed={hud.cargoUsed}
-            nearestDock={hud.nearestDock}
           />
         )}
 
@@ -1207,6 +1216,21 @@ const Elite: React.FC<EliteProps> = () => {
           {hud.flightMode !== 'docked' && (
             <div style={{ position: 'absolute', bottom: 1, width: '100%', textAlign: 'center', fontSize: '8px', letterSpacing: '0.5px', color: SCANNER_2D.nearbyLabelColor }}>NEARBY</div>
           )}
+        </div>
+
+        <div style={{
+          position: 'absolute',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          bottom: 10,
+          display: 'flex',
+          justifyContent: 'center',
+        }}>
+          <ShipHoldPanel
+            credits={hud.credits}
+            cargoUsed={hud.cargoUsed}
+            cargoCapacity={hud.cargoCapacity}
+          />
         </div>
 
         <div style={{

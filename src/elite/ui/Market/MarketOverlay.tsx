@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react'
-import { MAP, WINDSCREEN, Z } from '../../config'
+import { BIG_SHIP, DOCKED_RADAR, HULL_LABEL_FONTS, MAP, WINDSCREEN, Z } from '../../config'
 import type { MarketState } from '../../sim/market'
 import MarketStarfield from './MarketStarfield'
 import MarketCard from './MarketCard'
@@ -27,6 +27,8 @@ const MarketOverlay: React.FC<MarketOverlayProps> = ({
   const [routeSort, setRouteSort] = useState<RouteSort>('az')
   const [expandedRouteId, setExpandedRouteId] = useState<string | null>(null)
   const ui = MAP.ui
+  const stationTitleFont = HULL_LABEL_FONTS[BIG_SHIP.nameLabel.font]
+  const stationTitleSize = DOCKED_RADAR.titleSize
 
   const homeListings = useMemo(
     () => Object.values(homeMarket.commodities).sort((a, b) => a.name.localeCompare(b.name)),
@@ -84,39 +86,9 @@ const MarketOverlay: React.FC<MarketOverlayProps> = ({
         inset: 0,
         display: 'flex',
         flexDirection: 'column',
-        padding: '14px 18px 16px',
+        padding: '10px 18px 16px',
         pointerEvents: 'none',
       }}>
-        <header style={{
-          display: 'flex',
-          justifyContent: 'flex-end',
-          marginBottom: 12,
-          pointerEvents: 'auto',
-        }}>
-          <div style={{
-            padding: '8px 14px',
-            borderRadius: 8,
-            border: `1px solid ${ui.panelBorder}`,
-            background: ui.panelBg,
-            fontSize: 10,
-            lineHeight: 1.4,
-            whiteSpace: 'nowrap',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-          }}>
-            <span style={{ fontWeight: 700 }}>
-              {activeListing ? `${activeListing.symbol} Market` : 'Market'}
-            </span>
-            <span style={{ color: ui.price, fontWeight: 700 }}>
-              {highestSpread.toLocaleString()} CR max spread
-            </span>
-            <span style={{ opacity: 0.75, textTransform: 'uppercase', fontSize: 9 }}>
-              {tradeVol > 0.1 ? `${tradeVol.toFixed(1)}t moving` : 'route idle'}
-            </span>
-          </div>
-        </header>
-
         <div style={{
           flex: 1,
           minHeight: 0,
@@ -126,28 +98,43 @@ const MarketOverlay: React.FC<MarketOverlayProps> = ({
           pointerEvents: 'auto',
         }}>
           <section style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-            <label style={{
+            <div style={{
+              fontFamily: stationTitleFont,
+              fontWeight: 800,
+              fontSize: stationTitleSize,
+              color: DOCKED_RADAR.nameColor,
+              letterSpacing: DOCKED_RADAR.letterSpacing * stationTitleSize,
+              textTransform: 'uppercase',
+              lineHeight: 1,
+              marginBottom: 12,
+            }}>
+              {homeMarket.name}
+            </div>
+
+            <div style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 8,
-              fontSize: 8,
-              letterSpacing: 1.2,
-              textTransform: 'uppercase',
-              color: ui.muted,
-              marginBottom: 8,
+              justifyContent: 'space-between',
+              gap: 10,
+              marginBottom: 10,
+              padding: '8px 14px',
+              borderRadius: 8,
+              border: `1px solid ${ui.panelBorder}`,
+              background: ui.panelBg,
+              fontSize: 11,
+              lineHeight: 1.4,
+              whiteSpace: 'nowrap',
             }}>
-              <span>Market</span>
-              <span style={{
-                padding: '4px 10px',
-                borderRadius: 4,
-                border: `1px solid ${ui.panelBorder}`,
-                background: ui.panelBg,
-                color: ui.text,
-                fontSize: 9,
-              }}>
-                {homeMarket.name}
+              <span style={{ fontWeight: 700 }}>
+                {activeListing ? `${activeListing.symbol} Market` : 'Market'}
               </span>
-            </label>
+              <span style={{ color: ui.price, fontWeight: 700 }}>
+                {highestSpread.toLocaleString()} CR max spread
+              </span>
+              <span style={{ opacity: 0.8, textTransform: 'uppercase', fontSize: 10 }}>
+                {tradeVol > 0.1 ? `${tradeVol.toFixed(1)}t moving` : 'route idle'}
+              </span>
+            </div>
 
             <div style={{
               flex: 1,

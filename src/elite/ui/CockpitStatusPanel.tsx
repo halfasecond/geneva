@@ -8,9 +8,6 @@ interface CockpitStatusPanelProps {
   dockedAtStationId: string | null
   destinationId: string
   travelDistance: TravelDistance | null
-  credits: number
-  cargoUsed: number
-  nearestDock: { id: string; name: string; dist: number } | null
 }
 
 /** Left cockpit info card — destination when flying, docked station when at port. */
@@ -19,9 +16,6 @@ const CockpitStatusPanel: React.FC<CockpitStatusPanelProps> = ({
   dockedAtStationId,
   destinationId,
   travelDistance,
-  credits,
-  cargoUsed,
-  nearestDock,
 }) => {
   const isDocked = flightMode === 'docked'
   const dockedBody = dockedAtStationId ? getBodyById(dockedAtStationId, 'frozen') : null
@@ -64,22 +58,6 @@ const CockpitStatusPanel: React.FC<CockpitStatusPanelProps> = ({
       }}>
         {flightMode.toUpperCase()}
       </div>
-
-      <div style={{ fontSize: '10px', marginBottom: '4px' }}>
-        {credits.toLocaleString()} cr · {cargoUsed}t cargo
-      </div>
-
-      {isDocked ? (
-        <div style={{ fontSize: '9px', marginBottom: '6px', opacity: 0.75 }}>
-          [↑↓] services · [↵] select · [F] undock
-        </div>
-      ) : nearestDock ? (
-        <div style={{ fontSize: '9px', marginBottom: '6px', opacity: 0.7 }}>
-          {nearestDock.id === 'boreal-station'
-            ? `fly into field · [F] dock (${nearestDock.dist}m)`
-            : `[F] dock ${nearestDock.name}`}
-        </div>
-      ) : null}
 
       <div style={{ fontSize: '10px', marginBottom: isDocked ? 0 : '6px' }}>
         {focusBody?.government ?? '—'}

@@ -4,10 +4,12 @@
  * Undock: reverses along the same axis back to approach standoff.
  */
 
-import { BIG_SHIP, BOREAL_DOCK_BAY, BOREAL_STATION, DOCK_LIVE } from '../config'
+import { BIG_SHIP, BOREAL_DOCK_BAY, BOREAL_STATION, DOCK, DOCK_LIVE } from '../config'
+import { getBodyById } from './cartography'
 import type { NpcAgent, Vec3 } from './core/types'
 import { add, scale, subtract } from './core/vector'
 import type { FlightPose } from './systemSpace'
+import { bodyLocalPos, isInsideBubble } from './systemSpace'
 
 export type BorealDockSide = 'starboard' | 'port'
 
@@ -113,7 +115,7 @@ export function nearestBorealBaySide(playerPos: Vec3, freighterPos: Vec3): Borea
   return sides.sort((a, b) => a.dist - b.dist)[0].side
 }
 
-/** World position for the anchored BOREAL hull (same layout as the first Big Ship pass). */
+/** Skybox offset from the station approach corridor (polar layout from first Big Ship pass). */
 export function borealFreighterSpawnPos(anchor: Vec3): Vec3 {
   const { angle, radius, zOffset, yScale } = BOREAL_STATION.spawn
   return {
@@ -121,6 +123,28 @@ export function borealFreighterSpawnPos(anchor: Vec3): Vec3 {
     y: anchor.y + Math.sin(angle) * radius * yScale,
     z: anchor.z + zOffset,
   }
+}
+
+/** BOREAL hull anchored at Boreal Station — not the player's position. */
+export function borealFreighterWorldPos(systemPos2d: { x: number; y: number }): Vec3 {
+  const station = getBodyById(BOREAL_STATION.id, 'frozen')
+  if (!station) return { x: 0, y: 0, z: 0 }
+
+  const stationLocal = bodyLocalPos(station, systemPos2d)
+  const approach = {
+    x: stationLocal.x,
+    y: 0,
+    z: stationLocal.z - DOCK.approachDistance,
+  }
+  return borealFreighterSpawnPos(approach)
+}
+
+export function isBorealFreighterInBubble(playerPos: Vec3, freighterPos: Vec3): boolean {
+  return isInsideBubble({
+    x: freighterPos.x - playerPos.x,
+    y: freighterPos.y - playerPos.y,
+    z: freighterPos.z - playerPos.z,
+  })
 }
 
 export function findBorealFreighter(npcs: NpcAgent[]): NpcAgent | undefined {

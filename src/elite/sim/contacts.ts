@@ -13,7 +13,7 @@ import type { Vec3 } from './core/types'
 import type { NpcAgent } from './core/types'
 import type { CartographyBody } from './cartography'
 import { MIND_RADAR } from '../config'
-import { borealForceFieldWorldPos } from './borealDock'
+import { borealForceFieldWorldPos, isBorealFreighterInBubble, nearestBorealBaySide } from './borealDock'
 import { offsetFromPlayer, worldOffsetToBodyFrame } from './systemSpace'
 
 export interface Contact {
@@ -65,13 +65,12 @@ export function projectContacts(
   const contacts: Contact[] = []
 
   for (const npc of npcs) {
-    if (npc.designation) {
-      for (const side of ['starboard', 'port'] as const) {
-        const doorPos = borealForceFieldWorldPos(npc.pos, side)
-        const offset = offsetFromPlayer(pPos, doorPos)
-        const frame = worldOffsetToBodyFrame(offset, fwd, upv)
-        if (frame.dist > maxMind) continue
-
+    if (npc.designation && isBorealFreighterInBubble(pPos, npc.pos)) {
+      const side = nearestBorealBaySide(pPos, npc.pos)
+      const doorPos = borealForceFieldWorldPos(npc.pos, side)
+      const offset = offsetFromPlayer(pPos, doorPos)
+      const frame = worldOffsetToBodyFrame(offset, fwd, upv)
+      if (frame.dist <= maxMind) {
         contacts.push({
           x: frame.x,
           y: frame.y,
@@ -81,7 +80,7 @@ export function projectContacts(
           role: 'neutral',
           dockBay: side,
           designation: npc.designation,
-          name: side === 'starboard' ? npc.designation : 'DOCK',
+          name: npc.designation,
         })
       }
       continue
