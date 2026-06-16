@@ -328,11 +328,15 @@ export function update3DRadar(
     const mat = (blip as THREE.Mesh).material as THREE.MeshBasicMaterial
 
     if (c.type === 'ship') {
+      const freighter = c.role === 'freighter'
       if (c.role === 'pirate') mat.color.set(COLORS.pirate)
       else if (c.role === 'police' || c.role === 'escort') mat.color.set(COLORS.police)
+      else if (freighter) mat.color.set(0xe8c878)
       else mat.color.set(COLORS.trader)
 
-      blip.scale.y = size * RADAR_3D.shipYScale
+      const shipScale = freighter ? size * 1.75 : size
+      blip.scale.setScalar(shipScale)
+      blip.scale.y = shipScale * RADAR_3D.shipYScale
     } else {
       mat.color.set(c.type === 'station' ? COLORS.station : COLORS.planet)
       blip.scale.setScalar(size * RADAR_3D.bodyScale)

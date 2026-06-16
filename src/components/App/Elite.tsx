@@ -63,6 +63,11 @@ import * as CockpitRender from '../../elite/render/cockpit'
 import * as HyperspaceRender from '../../elite/render/hyperspace'
 import * as StationRender from '../../elite/render/station'
 import {
+  createBigShipMesh,
+  isBigShipMesh,
+  updateBigShipCityLights,
+} from '../../elite/render/bigShip'
+import {
   CartographyOverlay,
   HyperspacePanel,
   HyperspaceCountdown,
@@ -532,20 +537,24 @@ const Elite: React.FC<EliteProps> = () => {
         while (npcMeshes.length < current.length) {
           const idx = npcMeshes.length
           const npc = current[idx] || current[0]
-          const size = npcSizeForRole(npc.role)
-          const { r, h } = NPC.cone(size)
-
-          const geo = new THREE.ConeGeometry(r, h, 3)
-          const mat = new THREE.MeshBasicMaterial({ color: roleColor(npc.role), wireframe: true })
-          const m = new THREE.Mesh(geo, mat)
-
-          const dot = new THREE.Mesh(
-            new THREE.SphereGeometry(NPC.dot.r, 8, 8),
-            new THREE.MeshBasicMaterial({ color: 0xffee66, transparent: true, opacity: NPC.dot.opacity })
-          )
-          dot.position.y = size * NPC.dot.yOffset
-          dot.visible = false
-          m.add(dot)
+          const m = npc.role === 'freighter'
+            ? createBigShipMesh()
+            : (() => {
+                const size = npcSizeForRole(npc.role)
+                const { r, h } = NPC.cone(size)
+                const cone = new THREE.Mesh(
+                  new THREE.ConeGeometry(r, h, 3),
+                  new THREE.MeshBasicMaterial({ color: roleColor(npc.role), wireframe: true }),
+                )
+                const dot = new THREE.Mesh(
+                  new THREE.SphereGeometry(NPC.dot.r, 8, 8),
+                  new THREE.MeshBasicMaterial({ color: 0xffee66, transparent: true, opacity: NPC.dot.opacity }),
+                )
+                dot.position.y = size * NPC.dot.yOffset
+                dot.visible = false
+                cone.add(dot)
+                return cone
+              })()
 
           npcContainer.add(m)
           npcMeshes.push(m)
@@ -576,11 +585,17 @@ const Elite: React.FC<EliteProps> = () => {
             )
           }
 
+          if (isBigShipMesh(m)) {
+            updateBigShipCityLights(m, snap.time, npc.id)
+          }
+
           // pressure glow dot
-          const dot = m.children[0] as THREE.Mesh | undefined
+          const dot = m.children.find(
+            c => (c as THREE.Mesh).geometry instanceof THREE.SphereGeometry,
+          ) as THREE.Mesh | undefined
           if (dot) {
             dot.visible = npc.pressure > NPC.pressureThreshold
-            if (dot.visible) {
+            if (dot.visible && !isBigShipMesh(m)) {
               dot.position.y = npcSizeForRole(npc.role) * NPC.dot.yOffset
             }
           }
@@ -779,14 +794,15 @@ const Elite: React.FC<EliteProps> = () => {
         }
 
         if (c.type === 'ship') {
+          const shipSize = c.role === 'freighter' ? size * 2.1 : size
           ctx.fillStyle = roleCss(c.role)
           ctx.save()
           ctx.translate(sx, sy)
           ctx.beginPath()
-          ctx.moveTo(0, -size)
-          ctx.lineTo(-size * 0.48, size * 0.38)
-          ctx.lineTo(0, size * 0.12)
-          ctx.lineTo(size * 0.48, size * 0.38)
+          ctx.moveTo(0, -shipSize)
+          ctx.lineTo(-shipSize * 0.48, shipSize * 0.38)
+          ctx.lineTo(0, shipSize * 0.12)
+          ctx.lineTo(shipSize * 0.48, shipSize * 0.38)
           ctx.closePath()
           ctx.fill()
           ctx.restore()

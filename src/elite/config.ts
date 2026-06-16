@@ -317,12 +317,64 @@ export const STATION = {
 }
 
 // =============================================================================
+// BIG CAPITAL FREIGHTER (dark hull + Flocker city-light windows)
+// =============================================================================
+
+/** Hull nameplate font presets — swap `BIG_SHIP.nameLabel.font` to try another. */
+export const HULL_LABEL_FONTS = {
+  /** Bold condensed — default freighter stencil feel. */
+  industrial: 'Impact, "Arial Narrow", "Helvetica Neue Condensed Bold", sans-serif',
+  /** Military stencil cut-out. */
+  stencil: 'Stencil, "Arial Black", Impact, sans-serif',
+  /** Matches holo UI / ship systems readout. */
+  mono: 'ui-monospace, "SF Mono", Menlo, Consolas, monospace',
+  /** Heavy extended capitals. */
+  wide: '"Arial Black", "Helvetica Neue", system-ui, sans-serif',
+  /** Clean sans (previous default). */
+  classic: '"Segoe UI", system-ui, sans-serif',
+} as const
+
+export const BIG_SHIP = {
+  /** Hull + window layout multiplier (base mesh units × scale). */
+  scale: 10,
+  hullColor: 0x05070d,
+  detailHullColor: 0x080a12,
+  pressureDotY: 14 * 10,
+  nameLabel: {
+    text: 'BOREAL',
+    color: '#5a6b78',
+    opacity: 0.74,
+    /** One of HULL_LABEL_FONTS keys: industrial | stencil | mono | wide | classic */
+    font: 'industrial' as keyof typeof HULL_LABEL_FONTS,
+    /** Extra spacing between letters (× font size). */
+    letterSpacing: 0.14,
+    planeWidthMul: 0.98,
+    planeHeightMul: 0.66,
+  },
+  window: {
+    /** Pane size on the scaled hull (smaller = more lights that still fit without overlap). */
+    paneSizeMul: 0.4,
+    w: 0.62 * 10 * 0.4,
+    h: 0.82 * 10 * 0.4,
+    /** Min centre-to-centre spacing as a multiple of pane size. */
+    gap: 2.35,
+    activity: 0.035,
+    flickerHz: 0.014,
+    /** Share of panes with fixed lit/dim; only the rest slowly toggle. */
+    stableFraction: 0.96,
+    litColor: 0xfff0c2,
+    dimColor: { r: 0.05, g: 0.06, b: 0.09 },
+  },
+} as const
+
+// =============================================================================
 // NPC MESHES (in-world 3D cones + pressure dots)
 // =============================================================================
 export const NPC = {
-  size: { pirate: 2.6, police: 2.1, default: 1.7 },
+  size: { freighter: 95, pirate: 2.6, police: 2.1, default: 1.7 },
   cone: (size: number) => ({ r: size * 0.55, h: size * 2.4 }),
   color: {
+    freighter: 0x334455,
     pirate: 0xff6b6b,
     police: 0x6bffa3,
     escort: 0x88ddff,
@@ -438,23 +490,26 @@ export const PANELS = {
 
 // Small helpers kept with config for convenience
 export function roleColor(role: string) {
+  if (role === 'freighter') return NPC.color.freighter
   if (role === 'pirate') return COLORS.pirate
   if (role === 'police' || role === 'escort') return COLORS.police
   return COLORS.trader
 }
 
 export function roleCss(role: string) {
+  if (role === 'freighter') return '#e8c878'
   if (role === 'pirate') return COLORS.pirateCss
   if (role === 'police' || role === 'escort') return COLORS.escortCss
   return COLORS.neutralCss
 }
 
-export type NpcAgentRole = 'trader' | 'pirate' | 'police' | 'escort'
+export type NpcAgentRole = 'trader' | 'pirate' | 'police' | 'escort' | 'freighter'
 
 // (Re-export for convenience in render/ui that only need role strings)
 export type { NpcAgentRole as Role }
 
 export function npcSizeForRole(role: NpcAgentRole) {
+  if (role === 'freighter') return NPC.size.freighter
   if (role === 'pirate') return NPC.size.pirate
   if (role === 'police') return NPC.size.police
   return NPC.size.default

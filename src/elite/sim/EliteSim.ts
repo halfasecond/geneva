@@ -94,32 +94,35 @@ export class EliteSim {
 
   resetNpcs(count: number) {
     this.npcs = []
-    const roles: NpcAgent['role'][] = ['trader', 'trader', 'pirate', 'police', 'escort', 'trader']
+    const roles: NpcAgent['role'][] = ['freighter', 'trader', 'pirate', 'police', 'escort', 'trader']
     const anchor = this.player.pos
 
     for (let i = 0; i < count; i++) {
-      const angle = (i / count) * Math.PI * 2
-      const radius = 80 + (i % 5) * 12
+      const role = roles[i % roles.length]
+      const isFreighter = role === 'freighter'
+      const angle = isFreighter ? 0.85 : (i / count) * Math.PI * 2
+      const radius = isFreighter ? 1050 : 80 + (i % 5) * 12
+      const speed = isFreighter ? 0.18 + Math.random() * 0.12 : 1.5 + Math.random()
       this.npcs.push({
         id: i,
         pos: {
           x: anchor.x + Math.cos(angle) * radius,
           y: anchor.y + Math.sin(angle) * radius * 0.06 + (i % 3 - 1) * 8,
-          z: anchor.z + (Math.random() - 0.5) * 40,
+          z: anchor.z + (isFreighter ? 420 : (Math.random() - 0.5) * 40),
         },
         vel: {
-          x: -Math.sin(angle) * (1.5 + Math.random()),
-          y: Math.cos(angle) * (1.2 + Math.random()),
-          z: (Math.random() - 0.5) * 2,
+          x: -Math.sin(angle) * speed,
+          y: Math.cos(angle) * (isFreighter ? 0.15 : 1.2 + Math.random()),
+          z: (Math.random() - 0.5) * (isFreighter ? 0.4 : 2),
         },
-        mass: 0.8 + Math.random() * 0.6,
+        mass: isFreighter ? 5.5 : 0.8 + Math.random() * 0.6,
         progress: Math.random(),
         orientation: Math.random() > 0.5 ? 1 : -1,
         flips: 0,
         crowdPressure: 0,
         contagionPressure: 0,
         pressure: 0,
-        role: roles[i % roles.length],
+        role,
       })
     }
   }

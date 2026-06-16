@@ -35,7 +35,7 @@ export interface NpcAgent {
   contagionPressure: number
   pressure: number
   // role for Elite behaviors
-  role: 'trader' | 'pirate' | 'police' | 'escort'
+  role: 'trader' | 'pirate' | 'police' | 'escort' | 'freighter'
 }
 
 export type FlightMode =
