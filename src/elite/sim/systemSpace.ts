@@ -85,9 +85,12 @@ export function catalogLocalPos(body: Pick<CartographyBody, 'pos2d' | 'type' | '
   return bodyLocalPos(body, { x: 0, y: 0 })
 }
 
-/** Pre-dock approach pose in local space when nav anchor equals station system pos2d. */
-export function approachPose(station: Pick<CartographyBody, 'pos2d' | 'type' | 'id'>): FlightPose {
-  const stationLocal = bodyLocalPos(station, station.pos2d)
+/** Station pose in the player's current nav-local frame (nav ref may differ from station map pos). */
+export function stationApproachPose(
+  station: Pick<CartographyBody, 'pos2d' | 'type' | 'id'>,
+  navReference2d: Vec2,
+): FlightPose {
+  const stationLocal = bodyLocalPos(station, navReference2d)
   return {
     pos: {
       x: stationLocal.x,
@@ -99,9 +102,11 @@ export function approachPose(station: Pick<CartographyBody, 'pos2d' | 'type' | '
   }
 }
 
-/** Docked pose — inside the approach corridor, facing the station slot. */
-export function dockedPose(station: Pick<CartographyBody, 'pos2d' | 'type' | 'id'>): FlightPose {
-  const stationLocal = bodyLocalPos(station, station.pos2d)
+export function stationDockedPose(
+  station: Pick<CartographyBody, 'pos2d' | 'type' | 'id'>,
+  navReference2d: Vec2,
+): FlightPose {
+  const stationLocal = bodyLocalPos(station, navReference2d)
   return {
     pos: {
       x: stationLocal.x,
@@ -111,6 +116,16 @@ export function dockedPose(station: Pick<CartographyBody, 'pos2d' | 'type' | 'id
     heading: { x: 0, y: 0, z: 1 },
     up: { x: 0, y: 1, z: 0 },
   }
+}
+
+/** Pre-dock approach pose when nav anchor equals station system pos2d. */
+export function approachPose(station: Pick<CartographyBody, 'pos2d' | 'type' | 'id'>): FlightPose {
+  return stationApproachPose(station, station.pos2d)
+}
+
+/** Docked pose — inside the approach corridor, facing the station slot. */
+export function dockedPose(station: Pick<CartographyBody, 'pos2d' | 'type' | 'id'>): FlightPose {
+  return stationDockedPose(station, station.pos2d)
 }
 
 /** Undock departure pose — nudged back along -heading with mild outward velocity implied by caller. */
@@ -125,6 +140,11 @@ export function undockPose(station: Pick<CartographyBody, 'pos2d' | 'type' | 'id
     heading: { x: 0, y: 0, z: -1 },
     up: { x: 0, y: 1, z: 0 },
   }
+}
+
+/** Standoff pose after hyperspace or cold start — always in flight, never docked. */
+export function hyperspaceArrivalPose(body: Pick<CartographyBody, 'pos2d' | 'type' | 'id'>): FlightPose {
+  return body.type === 'station' ? approachPose(body) : arrivalPose(body)
 }
 
 /** Arrival offset when jumping to a non-station body — offset from body along -Z. */

@@ -97,7 +97,7 @@ const Elite: React.FC<EliteProps> = () => {
   const bodiesGroupRef = useRef<THREE.Group | null>(null)
   const hyperspaceStreaksRef = useRef<THREE.Group | null>(null)
   const snapRef = useRef<EliteSnapshot | null>(null)
-  const prevFlightModeRef = useRef<string>('docked')
+  const prevFlightModeRef = useRef<string>('normal')
   const sunMeshRef = useRef<THREE.Mesh | null>(null)
   const [waypoints, setWaypoints] = useState<WaypointIndicator[]>([])
   const hyperspacePhaseRef = useRef<'idle' | 'countdown' | 'jump'>('idle')
@@ -120,13 +120,13 @@ const Elite: React.FC<EliteProps> = () => {
     fuel: FUEL.max,
     credits: 12000,
     cargoUsed: 0,
-    flightMode: 'docked' as const,
-    dockedAtStationId: 'aster-hub' as string | null,
+    flightMode: 'normal' as const,
+    dockedAtStationId: null as string | null,
     nearestDock: null as { id: string; name: string; dist: number } | null,
     systemId: 'helios',
   })
 
-  const [marketOpen, setMarketOpen] = useState(true)
+  const [marketOpen, setMarketOpen] = useState(false)
   const [marketSnap, setMarketSnap] = useState<EliteSnapshot | null>(() => simRef.current.getSnapshot())
 
   // Cartography + hyperspace overlay state

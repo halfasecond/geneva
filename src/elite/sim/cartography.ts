@@ -159,9 +159,6 @@ export function getDistance2D(a: { x: number; y: number }, b: { x: number; y: nu
   return Math.sqrt(dx * dx + dy * dy)
 }
 
-/** Where the player spawns (docked). */
-export const START_BODY_ID = 'aster-hub'
-
 export const DEFAULT_ROUTE = {
   destinationId: 'boreal-station',
 }

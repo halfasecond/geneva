@@ -2,7 +2,7 @@ import type { EliteSnapshot, FlightMode, NpcAgent, PlayerState, SimConfig, Vec3 
 import { add, clampMagnitude, cross, length, normalize, scale, subtract, zero } from './core/vector'
 import { calculateFlocking } from './core/forces'
 import { addProgress, applyRoleFeedback } from './core/progress'
-import { getBodyById, START_BODY_ID } from './cartography'
+import { DEFAULT_ROUTE, getBodyById } from './cartography'
 import {
   applyPlayerTrade,
   defaultMarketConfig,
@@ -16,9 +16,9 @@ import {
 } from './market'
 import { DOCK, FUEL, MARKET } from '../config'
 import {
-  approachPose,
-  arrivalPose,
-  dockedPose,
+  hyperspaceArrivalPose,
+  stationApproachPose,
+  stationDockedPose,
   systemPos2dFromLocal,
   type FlightPose,
   undockPose,
@@ -63,13 +63,11 @@ export class EliteSim {
       timeScale: 1 / MARKET.hourIntervalSeconds,
     }
     this.markets = initMarkets()
-    const origin = getBodyById(START_BODY_ID, 'frozen')
-    const ref2d = { ...(origin?.pos2d ?? { x: 0, y: 0 }) }
-    const spawnPose = origin?.type === 'station'
-      ? dockedPose(origin)
-      : origin
-        ? arrivalPose(origin)
-        : { pos: { x: 0, y: 0, z: -120 }, heading: { x: 0, y: 0, z: 1 }, up: { x: 0, y: 1, z: 0 } }
+    const spawnBody = getBodyById(DEFAULT_ROUTE.destinationId, 'frozen')
+    const ref2d = { ...(spawnBody?.pos2d ?? { x: 0, y: 0 }) }
+    const spawnPose = spawnBody
+      ? hyperspaceArrivalPose(spawnBody)
+      : { pos: { x: 0, y: 0, z: -120 }, heading: { x: 0, y: 0, z: 1 }, up: { x: 0, y: 1, z: 0 } }
 
     this.player = {
       ...poseToPlayerFields(spawnPose),
@@ -80,7 +78,7 @@ export class EliteSim {
       credits: MARKET.startingCredits,
       cargo: {},
       cargoCapacity: MARKET.cargoCapacity,
-      systemId: origin?.systemId ?? 'helios',
+      systemId: spawnBody?.systemId ?? 'helios',
       navReference2d: ref2d,
       systemPos2d: { ...ref2d },
       flightMode: 'normal',
@@ -88,11 +86,6 @@ export class EliteSim {
     }
     this.syncSystemPos2d()
     this.resetNpcs(initialPopulation)
-
-    if (origin?.type === 'station') {
-      this.player.flightMode = 'docked'
-      this.player.dockedAtStationId = origin.id
-    }
   }
 
   private syncSystemPos2d() {
@@ -167,7 +160,7 @@ export class EliteSim {
       heading: { ...p.heading },
       up: { ...p.up },
     }
-    const to = approachPose(body)
+    const to = stationApproachPose(body, p.navReference2d)
 
     this.dockTargetId = body.id
     this.poseTween = createPoseTween(from, to)
@@ -214,10 +207,10 @@ export class EliteSim {
       return
     }
 
-    const pose = dockedPose(body)
-    Object.assign(p, poseToPlayerFields(pose))
     p.navReference2d = { ...body.pos2d }
-    p.systemPos2d = { ...body.pos2d }
+    const pose = stationDockedPose(body, p.navReference2d)
+    Object.assign(p, poseToPlayerFields(pose))
+    this.syncSystemPos2d()
     p.dockedAtStationId = stationId
     p.flightMode = 'docked'
     p.vel = zero()
@@ -492,12 +485,12 @@ export class EliteSim {
     this.player.fuel = Math.max(0, this.player.fuel - fuelCost)
     this.player.systemId = dest.systemId
     this.player.navReference2d = { ...dest.pos2d }
-    this.player.dockedAtStationId = dest.type === 'station' ? dest.id : null
-    this.player.flightMode = dest.type === 'station' ? 'docked' : 'normal'
+    this.player.dockedAtStationId = null
+    this.player.flightMode = 'normal'
 
-    const pose = dest.type === 'station' ? dockedPose(dest) : arrivalPose(dest)
+    const pose = hyperspaceArrivalPose(dest)
     Object.assign(this.player, poseToPlayerFields(pose))
-    this.player.systemPos2d = { ...dest.pos2d }
+    this.syncSystemPos2d()
     this.player.vel = zero()
     this.player.roll = 0
     this.player.speed = 0
