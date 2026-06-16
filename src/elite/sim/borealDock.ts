@@ -1,14 +1,23 @@
 /**
- * Boreal Station docking — live fly-in to the BOREAL hull, not the cartography marker.
+ * Boreal Station docking — poses derived from the same bay frame as borealDockBay.ts.
+ * Fly-in: approach standoff → through force field → hangar interior.
+ * Undock: reverses along the same axis back to approach standoff.
  */
 
-import { BIG_SHIP, BOREAL_DOCK_BAY, BOREAL_STATION } from '../config'
+import { BIG_SHIP, BOREAL_DOCK_BAY, BOREAL_STATION, DOCK_LIVE } from '../config'
 import { getBodyById } from './cartography'
 import type { NpcAgent, Vec3 } from './core/types'
-import { add } from './core/vector'
+import { add, scale, subtract } from './core/vector'
 import { stationApproachPose, type FlightPose } from './systemSpace'
 
+export type BorealDockSide = 'starboard' | 'port'
+
 const LABEL_Y_FRAC = 0.32
+
+const HOST_BLOCKS: Record<BorealDockSide, { x: number; y: number; z: number; w: number; h: number; d: number }> = {
+  starboard: { x: 14.5, y: 0, z: 2, w: 4.5, h: 16, d: 22 },
+  port: { x: -14.5, y: 0, z: 2, w: 4.5, h: 16, d: 22 },
+}
 
 function rotateY(vec: Vec3, yaw: number): Vec3 {
   const c = Math.cos(yaw)
@@ -20,27 +29,66 @@ function rotateY(vec: Vec3, yaw: number): Vec3 {
   }
 }
 
-function borealBayForceFieldOffset(side: 'starboard' | 'port'): Vec3 {
-  const scale = BIG_SHIP.scale
-  const host = { x: 14.5, y: 0, z: 2, w: 4.5, h: 16, d: 22 }
-  const hw = host.w * 0.5 * scale
-  const hh = host.h * 0.5 * scale
-  const hullInset = 0.12 * scale
-  const labelHalfH = host.h * scale * BIG_SHIP.nameLabel.planeHeightMul * 0.5
-  const doorH = host.h * scale * BOREAL_DOCK_BAY.heightMul
-  const yLift = LABEL_Y_FRAC * hh
-  const doorY = host.y * scale + yLift - labelHalfH - BOREAL_DOCK_BAY.gapBelowLabel * scale - doorH * 0.5
-  const attachX = side === 'starboard'
-    ? host.x * scale + hw + hullInset
-    : host.x * scale - hw - hullInset
-  const ffOut = (BOREAL_DOCK_BAY.surfaceOffset + BOREAL_DOCK_BAY.lipDepth * 1.1) * scale
-  const outward = side === 'starboard' ? attachX + ffOut : attachX - ffOut
-  const shipLocal = { x: outward, y: doorY, z: host.z * scale }
-  return rotateY(shipLocal, BOREAL_STATION.freighterYaw)
+function normalize(vec: Vec3): Vec3 {
+  const len = Math.hypot(vec.x, vec.y, vec.z) || 1
+  return { x: vec.x / len, y: vec.y / len, z: vec.z / len }
 }
 
-export function borealForceFieldWorldPos(freighterPos: Vec3, side: 'starboard' | 'port' = 'starboard'): Vec3 {
-  return add(freighterPos, borealBayForceFieldOffset(side))
+function bayAttachmentShipLocal(side: BorealDockSide): Vec3 {
+  const s = BIG_SHIP.scale
+  const host = HOST_BLOCKS[side]
+  const hw = host.w * 0.5 * s
+  const hh = host.h * 0.5 * s
+  const hullInset = 0.12 * s
+  const labelHalfH = host.h * s * BIG_SHIP.nameLabel.planeHeightMul * 0.5
+  const doorH = host.h * s * BOREAL_DOCK_BAY.heightMul
+  const yLift = LABEL_Y_FRAC * hh
+  const doorY = host.y * s + yLift - labelHalfH - BOREAL_DOCK_BAY.gapBelowLabel * s - doorH * 0.5
+  const x = side === 'starboard'
+    ? host.x * s + hw + hullInset
+    : host.x * s - hw - hullInset
+  return { x, y: doorY, z: host.z * s }
+}
+
+function bayLocalToShipLocal(side: BorealDockSide, bayLocal: Vec3): Vec3 {
+  const bayYaw = side === 'starboard' ? Math.PI / 2 : -Math.PI / 2
+  return add(bayAttachmentShipLocal(side), rotateY(bayLocal, bayYaw))
+}
+
+function shipLocalToWorld(freighterPos: Vec3, shipLocal: Vec3): Vec3 {
+  return add(freighterPos, rotateY(shipLocal, BOREAL_STATION.freighterYaw))
+}
+
+/** Bay-local +Z is outward (approach runway); −Z is into the hangar. */
+export function bayLocalToWorld(freighterPos: Vec3, side: BorealDockSide, bayLocal: Vec3): Vec3 {
+  return shipLocalToWorld(freighterPos, bayLocalToShipLocal(side, bayLocal))
+}
+
+function bayAxisWorld(side: BorealDockSide, bayAxis: Vec3): Vec3 {
+  const shipLocal = rotateY(bayAxis, side === 'starboard' ? Math.PI / 2 : -Math.PI / 2)
+  return normalize(rotateY(shipLocal, BOREAL_STATION.freighterYaw))
+}
+
+function forceFieldBayZ(): number {
+  const s = BIG_SHIP.scale
+  return (BOREAL_DOCK_BAY.surfaceOffset + BOREAL_DOCK_BAY.lipDepth * 1.1) * s
+}
+
+function approachStandoffBayZ(side: BorealDockSide): number {
+  const s = BIG_SHIP.scale
+  const host = HOST_BLOCKS[side]
+  const runway = host.d * s * BOREAL_DOCK_BAY.approachGuideRunwayMul
+  return forceFieldBayZ() + runway * 0.5 + DOCK_LIVE.approachStandoff
+}
+
+function dockInteriorBayZ(side: BorealDockSide): number {
+  const s = BIG_SHIP.scale
+  const host = HOST_BLOCKS[side]
+  return forceFieldBayZ() - host.d * s * BOREAL_STATION.dockInteriorMul
+}
+
+export function borealForceFieldWorldPos(freighterPos: Vec3, side: BorealDockSide = 'starboard'): Vec3 {
+  return bayLocalToWorld(freighterPos, side, { x: 0, y: 0, z: forceFieldBayZ() })
 }
 
 export function distanceToBorealForceField(playerPos: Vec3, freighterPos: Vec3): number {
@@ -52,6 +100,18 @@ export function distanceToBorealForceField(playerPos: Vec3, freighterPos: Vec3):
       playerPos.z - field.z,
     )),
   )
+}
+
+export function nearestBorealBaySide(playerPos: Vec3, freighterPos: Vec3): BorealDockSide {
+  const sides = (['starboard', 'port'] as const).map(side => ({
+    side,
+    dist: Math.hypot(
+      playerPos.x - borealForceFieldWorldPos(freighterPos, side).x,
+      playerPos.y - borealForceFieldWorldPos(freighterPos, side).y,
+      playerPos.z - borealForceFieldWorldPos(freighterPos, side).z,
+    ),
+  }))
+  return sides.sort((a, b) => a.dist - b.dist)[0].side
 }
 
 export function borealFreighterAnchor(navReference2d: { x: number; y: number }): Vec3 {
@@ -77,23 +137,61 @@ export function nearestBorealDock(
   return { id: BOREAL_STATION.id, name: BOREAL_STATION.name, dist: Math.round(dist) }
 }
 
-export function borealDockedPose(freighterPos: Vec3): FlightPose {
+/** Outside the force field on the approach runway, facing into the bay. */
+export function borealApproachPose(freighterPos: Vec3, side: BorealDockSide): FlightPose {
+  const inward = bayAxisWorld(side, { x: 0, y: 0, z: -1 })
   return {
-    pos: add(freighterPos, BOREAL_STATION.dockedOffset),
-    heading: { x: 0, y: 0, z: 1 },
+    pos: bayLocalToWorld(freighterPos, side, { x: 0, y: 0, z: approachStandoffBayZ(side) }),
+    heading: inward,
     up: { x: 0, y: 1, z: 0 },
   }
 }
 
-export function borealUndockPose(freighterPos: Vec3): FlightPose {
-  const docked = borealDockedPose(freighterPos)
+/** Inside the hangar on the bay centreline, still facing inward. */
+export function borealDockedPose(freighterPos: Vec3, side: BorealDockSide): FlightPose {
+  const inward = bayAxisWorld(side, { x: 0, y: 0, z: -1 })
   return {
-    pos: {
-      x: docked.pos.x,
-      y: docked.pos.y,
-      z: docked.pos.z - BOREAL_STATION.undockBack,
-    },
-    heading: { x: 0, y: 0, z: -1 },
+    pos: bayLocalToWorld(freighterPos, side, { x: 0, y: 0, z: dockInteriorBayZ(side) }),
+    heading: inward,
+    up: { x: 0, y: 1, z: 0 },
+  }
+}
+
+/**
+ * Fly-in start — project the player onto the bay centreline so entry stays in the corridor.
+ * Falls back to the approach standoff when still outside the tunnel.
+ */
+export function borealFlyInStartPose(
+  playerPos: Vec3,
+  freighterPos: Vec3,
+  side: BorealDockSide,
+): FlightPose {
+  const approach = borealApproachPose(freighterPos, side)
+  const docked = borealDockedPose(freighterPos, side)
+  const corridor = subtract(docked.pos, approach.pos)
+  const axisLen = Math.hypot(corridor.x, corridor.y, corridor.z) || 1
+  const axis = scale(corridor, 1 / axisLen)
+  const along = (playerPos.x - approach.pos.x) * axis.x
+    + (playerPos.y - approach.pos.y) * axis.y
+    + (playerPos.z - approach.pos.z) * axis.z
+
+  if (along >= 0 && along <= axisLen * 0.88) {
+    return {
+      pos: add(approach.pos, scale(axis, along)),
+      heading: approach.heading,
+      up: approach.up,
+    }
+  }
+
+  return approach
+}
+
+/** Same standoff as approach, facing back out along the entry corridor. */
+export function borealUndockPose(freighterPos: Vec3, side: BorealDockSide): FlightPose {
+  const inward = bayAxisWorld(side, { x: 0, y: 0, z: -1 })
+  return {
+    pos: bayLocalToWorld(freighterPos, side, { x: 0, y: 0, z: approachStandoffBayZ(side) }),
+    heading: scale(inward, -1),
     up: { x: 0, y: 1, z: 0 },
   }
 }

@@ -318,7 +318,7 @@ export const DOCK = {
   dockedDistance: 28,
   undockBackDistance: 40,
   cutsceneDuration: 1.4,
-  undockBoost: 4,
+  undockBoost: 8,
 }
 
 /**
@@ -330,6 +330,10 @@ export const DOCK_LIVE = {
   forceFieldTriggerRadius: 70,
   flyInDuration: 4.8,
   handoffToMarket: true,
+  /** Extra metres beyond the painted approach guides (bay-local Z). */
+  approachStandoff: 24,
+  /** Suppress auto fly-in after undock so the exit pose can clear the trigger. */
+  undockGraceSeconds: 10,
 } as const
 
 /** Boreal Station — the BOREAL capital hull is the dock; cartography marker is nav-only. */
@@ -343,9 +347,8 @@ export const BOREAL_STATION = {
   /** Distance to starboard force field for [F] dock prompt. */
   dockRange: 90,
   maxApproachSpeed: 32,
-  /** Docked pose offset from freighter centre (starboard bay, after freighterYaw). */
-  dockedOffset: { x: 40, y: 0, z: -150 },
-  undockBack: 55,
+  /** How far past the force field (fraction of bay depth) the docked hangar pose sits. */
+  dockInteriorMul: 0.26,
 } as const
 
 // =============================================================================
