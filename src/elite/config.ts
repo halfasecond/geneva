@@ -340,10 +340,15 @@ export const DOCK_LIVE = {
 export const BOREAL_STATION = {
   id: 'boreal-station',
   name: 'Boreal Station',
-  /** Freighter centre offset from the station approach corridor (nav-local). */
-  freighterOffset: { x: 480, y: 0, z: 360 },
-  /** Present starboard/dock face toward the approach path (not the narrow prow). */
-  freighterYaw: Math.PI / 2,
+  /** Capital hull skybox placement — polar offset from player spawn / arrival (original Big Ship layout). */
+  spawn: {
+    angle: 0.85,
+    radius: 1050,
+    zOffset: 420,
+    yScale: 0.06,
+  },
+  /** Hull yaw — original Big Ship tangent (π/2 dock-era rotation was 90° CW off). */
+  freighterYaw: 0,
   /** Distance to starboard force field for [F] dock prompt. */
   dockRange: 90,
   maxApproachSpeed: 32,

@@ -5,10 +5,9 @@
  */
 
 import { BIG_SHIP, BOREAL_DOCK_BAY, BOREAL_STATION, DOCK_LIVE } from '../config'
-import { getBodyById } from './cartography'
 import type { NpcAgent, Vec3 } from './core/types'
 import { add, scale, subtract } from './core/vector'
-import { stationApproachPose, type FlightPose } from './systemSpace'
+import type { FlightPose } from './systemSpace'
 
 export type BorealDockSide = 'starboard' | 'port'
 
@@ -114,11 +113,14 @@ export function nearestBorealBaySide(playerPos: Vec3, freighterPos: Vec3): Borea
   return sides.sort((a, b) => a.dist - b.dist)[0].side
 }
 
-export function borealFreighterAnchor(navReference2d: { x: number; y: number }): Vec3 {
-  const station = getBodyById(BOREAL_STATION.id, 'frozen')
-  if (!station) return { ...BOREAL_STATION.freighterOffset }
-  const approach = stationApproachPose(station, navReference2d)
-  return add(approach.pos, BOREAL_STATION.freighterOffset)
+/** World position for the anchored BOREAL hull (same layout as the first Big Ship pass). */
+export function borealFreighterSpawnPos(anchor: Vec3): Vec3 {
+  const { angle, radius, zOffset, yScale } = BOREAL_STATION.spawn
+  return {
+    x: anchor.x + Math.cos(angle) * radius,
+    y: anchor.y + Math.sin(angle) * radius * yScale,
+    z: anchor.z + zOffset,
+  }
 }
 
 export function findBorealFreighter(npcs: NpcAgent[]): NpcAgent | undefined {

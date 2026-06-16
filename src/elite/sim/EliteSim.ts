@@ -18,7 +18,7 @@ import { BIG_SHIP, BOREAL_STATION, DOCK, DOCK_LIVE, FUEL, MARKET } from '../conf
 import {
   borealDockedPose,
   borealFlyInStartPose,
-  borealFreighterAnchor,
+  borealFreighterSpawnPos,
   borealUndockPose,
   distanceToBorealForceField,
   findBorealFreighter,
@@ -108,7 +108,7 @@ export class EliteSim {
   private syncBorealFreighter() {
     const freighter = findBorealFreighter(this.npcs)
     if (!freighter) return
-    freighter.pos = { ...borealFreighterAnchor(this.player.navReference2d) }
+    freighter.pos = { ...borealFreighterSpawnPos(this.player.pos) }
     freighter.vel = { x: 0, y: 0, z: 0 }
   }
 
@@ -123,7 +123,7 @@ export class EliteSim {
       const angle = (i / count) * Math.PI * 2
       const radius = 80 + (i % 5) * 12
       const speed = 1.5 + Math.random()
-      const freighterPos = borealFreighterAnchor(this.player.navReference2d)
+      const freighterPos = borealFreighterSpawnPos(anchor)
       this.npcs.push({
         id: i,
         pos: isFreighter
