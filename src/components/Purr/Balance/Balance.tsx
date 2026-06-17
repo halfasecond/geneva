@@ -1,6 +1,5 @@
-import * as Styled from './Balance.style'
 import { fromWei, toWei } from 'web3-utils'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Contract } from 'web3-eth-contract'
 import { AbiFragment } from 'web3'
 
@@ -17,93 +16,17 @@ const Balance: React.FC<{
     const [transferStatus, setTransferStatus] = useState<string | null>(null)
     const [error, setError] = useState<string | null>(null)
 
-    async function playPurr() {
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const isValidAddress = (addr: string): boolean => /^0x[a-fA-F0-9]{40}$/.test(addr)
 
-        const hz = await randomFrequency();
-
-        // Create the main oscillator for the purring tone
-        const oscillator1 = audioContext.createOscillator();
-        oscillator1.type = "sine"; // Sine wave for smoothness
-        oscillator1.frequency.setValueAtTime(hz, audioContext.currentTime);
-
-        // Create a second oscillator, slightly detuned from the first for richness
-        const oscillator2 = audioContext.createOscillator();
-        oscillator2.type = "sine"; // Sine wave for a natural smooth tone
-        oscillator2.frequency.setValueAtTime(hz * 1.02, audioContext.currentTime); // Slight detuning for harmonic richness
-
-        // Create a low-frequency oscillator (LFO) to modulate the volume for rumble effect
-        const lfo = audioContext.createOscillator();
-        lfo.type = "sine"; // Low-frequency oscillation for modulation
-        lfo.frequency.setValueAtTime(20, audioContext.currentTime); // Fast modulation for rumbling
-        const lfoGain = audioContext.createGain();
-        lfoGain.gain.setValueAtTime(0.2, audioContext.currentTime); // Modulation depth
-
-        // Create a gain node to control the volume
-        const gainNode = audioContext.createGain();
-        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime); // Reduced starting volume (lower than before)
-
-        // Connect oscillators to the gain node
-        oscillator1.connect(gainNode);
-        oscillator2.connect(gainNode);
-
-        // Apply the LFO to modulate the volume
-        lfo.connect(lfoGain);
-        lfoGain.connect(gainNode.gain);
-
-        // Connect everything to the destination (audio output)
-        gainNode.connect(audioContext.destination);
-        lfo.start();
-
-        // Start oscillators
-        oscillator1.start();
-        oscillator2.start();
-
-        // Fade in the volume over 1 second for a smooth start
-        gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 1); // Fade-in to 0.3 volume (instead of 0.4)
-
-        // Increase the rumbling effect (more modulation depth over time)
-        lfoGain.gain.linearRampToValueAtTime(1, audioContext.currentTime + 2); // More rumble after 2 seconds
-
-        // Fade out the volume over 3 seconds to simulate natural purring fade
-        gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 5); // Fade out over 5 seconds instead of 3 seconds
-
-        // Stop the oscillators and LFO after 10 seconds
-        oscillator1.stop(audioContext.currentTime + 10);
-        oscillator2.stop(audioContext.currentTime + 10);
-        lfo.stop(audioContext.currentTime + 10);
-    }
-
-    // Example usage: Get a random frequency between 20 and 150 Hz
-    const randomFrequency = async () => {
-        const hz = await purr.methods.purrs().call();
-        return Number(hz);
-    }
-
-    // useEffect(() => {
-    //     if (open) {
-    //         playPurr();
-    //     }
-    // }, [open]);
-
-    
-    // Validate Ethereum address
-    const isValidAddress = (addr: string): boolean => {
-        return /^0x[a-fA-F0-9]{40}$/.test(addr)
-    }
-
-    // Validate amount
     const isValidAmount = (amt: string): boolean => {
         const num = parseFloat(amt)
         return !isNaN(num) && num > 0
     }
 
-    // Handle transfer
     const handleTransfer = async () => {
         setError(null)
         setTransferStatus(null)
 
-        // Validation
         if (!isValidAddress(address)) {
             setError('Please enter a valid Ethereum address')
             return
@@ -114,7 +37,6 @@ const Balance: React.FC<{
             return
         }
 
-        // Check if user has enough balance
         if (balance) {
             const balanceInEther = parseFloat(fromWei(balance, 'ether'))
             const transferAmount = parseFloat(amount)
@@ -127,32 +49,19 @@ const Balance: React.FC<{
         try {
             setIsTransferring(true)
             setTransferStatus('Initiating transfer...')
-
             const amountInWei = toWei(amount, 'ether')
-
             setTransferStatus('Waiting for transaction confirmation...')
 
-            // Execute transfer
             const result = await purr.methods.transfer(address, amountInWei).send({
                 from: walletAddress
             })
 
             setTransferStatus(`Transfer successful! TX: ${result.transactionHash}`)
-            
-            // Clear form
             setAmount('')
             setAddress('')
-            
-            // Update balance if callback provided
-            if (updateBalance) {
-                updateBalance()
-            }
-            
-            // Auto-hide success message after 5 seconds
-            setTimeout(() => {
-                setTransferStatus(null)
-            }, 5000)
+            updateBalance?.()
 
+            setTimeout(() => setTransferStatus(null), 5000)
         } catch (err: any) {
             console.error('Transfer failed:', err)
             setError(err.message || 'Transfer failed. Please try again.')
@@ -161,68 +70,68 @@ const Balance: React.FC<{
         }
     }
 
-    // Handle form submission
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault()
-        handleTransfer()
-    }
+    const displayBalance = balance === undefined
+        ? '0'
+        : parseFloat(fromWei(balance, 'ether')).toFixed(2)
 
     return (
-        <>
-            <Styled.Div>
-                <span onClick={() => setOpen(prevState => !prevState)}>
-                    {`$PURR: ${balance === undefined ? '0' : parseFloat(fromWei(balance, 'ether')).toFixed(2)}`}
-                </span>
-            </Styled.Div>
+        <div className="fixed top-5 right-5 z-[1000] flex flex-col items-end gap-2">
+            <button
+                type="button"
+                onClick={() => setOpen(prev => !prev)}
+                className="font-display text-sm bg-neutral-200 text-black px-4 py-2 rounded shadow-lg
+                    border border-neutral-400 hover:opacity-80 transition-opacity cursor-pointer"
+            >
+                {`$PURR: ${displayBalance}`}
+            </button>
+
             {open && (
-                <Styled.Div className={'menu'}>
-                    <form onSubmit={handleSubmit}>
-                        <h4>Transfer $PURR</h4>
-                        
+                <div className="w-72 bg-neutral-200 text-black p-4 rounded shadow-lg border border-neutral-400">
+                    <form
+                        onSubmit={(e) => {
+                            e.preventDefault()
+                            handleTransfer()
+                        }}
+                        className="flex flex-col gap-3"
+                    >
+                        <h4 className="font-display text-base">Transfer $PURR</h4>
+
                         <input
-                            type={'text'}
+                            type="text"
                             value={address}
                             onChange={(e) => setAddress(e.target.value)}
-                            placeholder={'Recipient address (0x...)'}
+                            placeholder="Recipient address (0x...)"
                             disabled={isTransferring}
+                            className="font-display text-xs w-full text-center rounded bg-white px-2 py-2
+                                border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-purr-pink"
                         />
-                        
+
                         <input
-                            type={'number'}
+                            type="number"
                             value={amount}
                             onChange={(e) => setAmount(e.target.value)}
-                            placeholder={'Amount in $PURR'}
+                            placeholder="Amount in $PURR"
                             step="0.01"
                             min="0"
                             disabled={isTransferring}
+                            className="font-display text-xs w-full text-center rounded bg-white px-2 py-2
+                                border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-purr-pink"
                         />
 
-                        {error && (
-                            <div style={{ color: 'red', fontSize: '12px', marginBottom: '8px' }}>
-                                {error}
-                            </div>
-                        )}
-
-                        {transferStatus && (
-                            <div style={{ color: 'green', fontSize: '12px', marginBottom: '8px' }}>
-                                {transferStatus}
-                            </div>
-                        )}
+                        {error && <p className="text-red-600 text-xs">{error}</p>}
+                        {transferStatus && <p className="text-green-700 text-xs break-all">{transferStatus}</p>}
 
                         <button
                             type="submit"
                             disabled={isTransferring || !address || !amount}
-                            style={{
-                                opacity: isTransferring ? 0.8 : 1,
-                                cursor: isTransferring ? 'not-allowed' : 'pointer'
-                            }}
+                            className="purr-btn w-full text-xs disabled:opacity-60"
                         >
                             {isTransferring ? 'Transferring...' : 'Transfer'}
                         </button>
                     </form>
-                </Styled.Div>
+                </div>
             )}
-        </>
+        </div>
     )
 }
 

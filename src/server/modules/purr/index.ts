@@ -34,6 +34,12 @@ const processClaimEvent = async (event: any, web3: any): Promise<void> => {
     event.amount = amount
 };
 
+interface Models {
+    Event: any;
+    Balance: any;
+    Claim: any;
+}
+
 const logEvent = async (event: any, Models: Models, web3: any) => {
     try {
         const processor = event.event === 'Transfer' ? processTransferEvent : processClaimEvent;
@@ -41,7 +47,7 @@ const logEvent = async (event: any, Models: Models, web3: any) => {
 
         // Save event
         const newEvent = new Models.Event({
-            contract: event.address,
+            contract: event.address.toLowerCase(),
             event: event.event,
             transactionHash: event.transactionHash,
             blockNumber: Number(event.blockNumber),

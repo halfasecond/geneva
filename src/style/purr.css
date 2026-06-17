@@ -1,0 +1,114 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  .purr-app {
+    @apply font-mono text-sm antialiased;
+  }
+
+  .purr-app h1,
+  .purr-app h2,
+  .purr-app h4 {
+    font-family: bungee, sans-serif;
+  }
+
+  .purr-app h3 {
+    font-family: funkydori, sans-serif;
+  }
+}
+
+@layer components {
+  .purr-link {
+    @apply border-b-2 border-dotted border-neutral-500/60 hover:border-purr-pink transition-colors;
+  }
+
+  .purr-btn {
+    @apply font-display text-sm md:text-base px-6 py-3 rounded bg-purr-pink text-white
+      hover:bg-pink-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .purr-btn-ghost {
+    @apply font-display text-sm px-4 py-2 rounded border border-white/20 text-white
+      hover:bg-white/10 transition-colors;
+  }
+
+  .purr-card {
+    @apply bg-black/80 backdrop-blur-sm border border-white/10 rounded-lg shadow-2xl;
+  }
+
+  .purr-input {
+    @apply font-display text-center text-lg bg-white text-black rounded px-4 py-2 w-full max-w-xs
+      focus:outline-none focus:ring-2 focus:ring-purr-pink;
+  }
+
+  .purr-section {
+    @apply relative w-full px-5 py-16 md:px-10 md:py-24 lg:px-16;
+  }
+
+  .purr-diamond {
+    background-image: url('https://cryptokitties.co/images/cattributes/mewtation-gems/diamond-lg-sprite.svg');
+    background-size: 900% 100%;
+    animation: purr-diamond-spin 3s steps(8) infinite;
+  }
+
+  .purr-bg-layer {
+    @apply fixed inset-0 w-full pointer-events-none;
+    z-index: 0;
+    /* dvh avoids mobile browser chrome shrinking 100vh layers */
+    height: 100vh;
+    height: 100dvh;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  .purr-bg-pattern {
+    background-image: url('https://cdn.halfasecond.com/images/purr/bg.svg');
+    background-attachment: fixed;
+    background-size: 100% auto;
+    background-repeat: no-repeat;
+    background-position: top center;
+    background-color: rgba(0, 0, 0, 0.95);
+  }
+
+  .purr-bg-furlin {
+    background-image: url('https://img.cryptokitties.co/0x06012c8cf97bead5deae237070f9587f8e7a266d/124.png');
+    background-size: auto 140%;
+    background-repeat: no-repeat;
+    background-position: center;
+    opacity: 0.04;
+  }
+
+  /* Portrait mobile: 100% auto leaves the SVG shorter than the viewport, so the
+     lower half is only the dark background-color — looks like a half-screen overlay */
+  @media (max-width: 767px) {
+    .purr-bg-pattern {
+      background-attachment: scroll;
+      background-size: cover;
+      background-position: top center;
+    }
+
+    .purr-bg-furlin {
+      background-size: cover;
+      background-position: center;
+    }
+  }
+
+  .purr-content {
+    @apply relative;
+    z-index: 1;
+  }
+}
+
+@keyframes purr-diamond-spin {
+  0% { background-position: 0 0; }
+  11.11% { background-position: 100% 0; }
+  22.22% { background-position: 200% 0; }
+  33.33% { background-position: 300% 0; }
+  44.44% { background-position: 400% 0; }
+  55.55% { background-position: 500% 0; }
+  66.66% { background-position: 600% 0; }
+  77.77% { background-position: 700% 0; }
+  88.88% { background-position: 800% 0; }
+  100% { background-position: 900% 0; }
+}

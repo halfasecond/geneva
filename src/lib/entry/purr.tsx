@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import App from './components/App'
 const Purr = lazy(() => import('./components/App/Purr'));
 import './style/index.css'
+import './style/purr.css'
 
 createRoot(document.getElementById('root')!).render(
     <StrictMode>
