@@ -20,6 +20,11 @@ const appConfigs = {
     outDir: 'dist/kittyInternational',
     appName: 'kittyInternational'
   },
+  'kittyFamily': {
+    input: resolve(__dirname, 'index.html'),
+    outDir: 'dist/kittyFamily',
+    appName: 'kittyFamily'
+  },
   'barcode': {
     input: resolve(__dirname, 'index.html'),
     outDir: 'dist/barcode',
@@ -79,7 +84,9 @@ export default defineConfig(({ command, mode }) => {
                   ? '$PURR - a new ERC20 by kitty.international'
                   : process.env.VITE_APP === 'kittyInternational'
                     ? 'Kitty.International - Rare Cryptokitties &amp; Siring Emporium'
-                    : process.env.VITE_APP === 'barcode'
+                    : process.env.VITE_APP === 'kittyFamily'
+                      ? 'kitty.family — CryptoKitties ancestry &amp; community'
+                      : process.env.VITE_APP === 'barcode'
                       ? 'Barcode - Mandelbrot Decoded in Natural Maths'
                         : process.env.VITE_APP === 'aquarium'
                             ? 'tank.life - digital fish evolved'

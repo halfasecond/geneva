@@ -71,7 +71,7 @@ const modules: ModuleFunction = (app, io, web3, db) => {
             name: 'cryptokitties',
             prefix: 'ck',
             deployed: 4605346,
-            increment: 100,
+            increment: 10000,
             eventsToWatch: ['Transfer', 'Birth', 'Pregnant'],
             emitter,
         })

@@ -9,6 +9,7 @@
     "dev:paddock": "./switch-app.sh chained-horse dev",
     "dev:aquarium": "./switch-app.sh aquarium dev",
     "dev:elite": "./switch-app.sh elite dev",
+    "dev:kittyFamily": "./switch-app.sh kittyFamily dev",
     "build": "./switch-app.sh geneva build",
     "build:geneva": "./switch-app.sh geneva build",
     "build:purr": "./switch-app.sh purr build",
@@ -31,7 +32,9 @@
     "test:browser": "yarn vitest --workspace=vitest.workspace.ts",
     "test:node": "yarn vitest --workspace=vitest.workspace.node.ts",
     "test:coverage": "yarn vitest --coverage",
-    "test:node:coverage": "yarn vitest --workspace=vitest.workspace.node.ts --coverage --run --coverage.include='src/server/**/*.ts' --coverage.exclude='**/*.test.ts'"
+    "test:node:coverage": "yarn vitest --workspace=vitest.workspace.node.ts --coverage --run --coverage.include='src/server/**/*.ts' --coverage.exclude='**/*.test.ts'",
+    "ck:import": "./scripts/import-cryptokitties-data.sh",
+    "ck:rebuild": "NODE_NO_WARNINGS=1 babel-node -r @babel/register --extensions '.ts' src/server/scripts/rebuild-cryptokitties.ts"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

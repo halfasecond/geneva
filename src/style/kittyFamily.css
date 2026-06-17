@@ -1,0 +1,489 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html:has(.kf-family-tree),
+  html:has(.kf-family-tree) body,
+  html:has(.kf-family-tree) #root {
+    height: auto;
+    min-height: 100%;
+    overflow-y: auto;
+  }
+
+  .kf-app {
+    @apply min-h-screen bg-kf-cream text-kf-ink antialiased;
+  }
+
+  .kf-app h1 {
+    @apply font-sans text-4xl md:text-6xl font-extrabold uppercase tracking-tight text-kf-ink;
+  }
+
+  .kf-app h2 {
+    @apply font-sans text-3xl md:text-5xl font-semibold text-kf-ink;
+  }
+
+  .kf-app h3 {
+    @apply text-xl md:text-2xl font-semibold text-kf-warm;
+  }
+}
+
+@layer components {
+  .kf-link {
+    @apply text-kf-coral underline decoration-dotted decoration-kf-coral/50 underline-offset-4
+      hover:text-kf-pink hover:decoration-kf-pink transition-colors;
+  }
+
+  .kf-nav-link {
+    @apply text-sm font-medium text-kf-warm hover:text-kf-coral transition-colors;
+  }
+
+  .kf-nav-link-active {
+    @apply text-kf-coral font-semibold;
+  }
+
+  .kf-btn {
+    @apply inline-flex items-center justify-center rounded-full bg-kf-coral px-6 py-2.5 text-sm font-semibold text-white
+      shadow-sm hover:bg-kf-pink transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .kf-btn-ghost {
+    @apply inline-flex items-center justify-center rounded-full border border-kf-warm/30 px-5 py-2 text-sm font-medium text-kf-warm
+      hover:border-kf-coral hover:text-kf-coral transition-colors;
+  }
+
+  .kf-input {
+    @apply w-full rounded-xl border border-kf-warm/20 bg-white px-4 py-3 text-kf-ink placeholder:text-kf-warm/50
+      focus:border-kf-coral focus:outline-none focus:ring-2 focus:ring-kf-coral/20;
+  }
+
+  .kf-card {
+    @apply rounded-2xl border border-kf-warm/10 bg-white p-6 shadow-sm;
+  }
+
+  .kf-chat-panel {
+    @apply hidden xl:flex flex-col rounded-2xl border border-kf-warm/10 bg-white/80 backdrop-blur-sm shadow-sm;
+  }
+
+  .kf-tree-section {
+    width: 100%;
+    max-width: 1592px;
+    margin: 0 auto;
+  }
+
+  .kf-tree-row {
+    display: flex;
+    width: 100%;
+    justify-content: space-around;
+    align-items: flex-end;
+  }
+
+  .kf-tree-row-hero {
+    justify-content: center;
+  }
+
+  .kf-tree-top {
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .kf-tree-row-parents {
+    justify-content: center;
+    align-items: flex-start;
+  }
+
+  .kf-tree-logo-slot {
+    flex: 0 0 20%;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    margin-top: 20px;
+    margin-left: 4%;
+    margin-right: 1%;
+  }
+
+  .kf-tree-row-branches {
+    justify-content: center;
+    gap: 0;
+  }
+
+  .kf-tree-branch {
+    flex: 0 0 50%;
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-end;
+  }
+
+  .kf-tree-row-ancestors {
+    margin-bottom: 2rem;
+  }
+
+  .kf-tree-connector-row {
+    display: flex;
+    width: 100%;
+    min-height: 9px;
+    margin-top: -4px;
+  }
+
+  .kf-tree-connector-row--single {
+    justify-content: center;
+  }
+
+  .kf-tree-connector-row--split {
+    justify-content: center;
+    gap: 20%;
+  }
+
+  .kf-tree-row-connectors {
+    align-items: flex-start;
+    min-height: 9px;
+  }
+
+  .kf-tree-connector-slot {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+  }
+
+  .kf-family-tree {
+    @apply transition-colors duration-300;
+  }
+
+  /* styled-components tree — neutralise tailwind img defaults */
+  .kf-family-tree img {
+    border: 0;
+    outline: none;
+    box-shadow: none;
+    background: transparent;
+  }
+
+  .kf-family-tree .kf-tree-image {
+    aspect-ratio: auto;
+    overflow: visible;
+    box-shadow: none;
+    background: transparent;
+  }
+
+  .kf-family-tree .kf-tree-image::before,
+  .kf-family-tree .kf-tree-image::after {
+    display: none;
+  }
+
+  .kf-kitty-image {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+  }
+
+  .kf-kitty-shadow::before {
+    content: '';
+    position: absolute;
+    top: 73%;
+    left: 50%;
+    width: 55%;
+    height: 6.2%;
+    transform: translateX(-52%);
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 50%;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .kf-kitty-shadow-tinybox::before {
+    top: 79.25%;
+  }
+
+  .kf-kitty-slot-hero {
+    width: 50%;
+  }
+
+  .kf-kitty-slot-parent {
+    width: 40%;
+  }
+
+  .kf-kitty-slot-grandparent {
+    width: 40%;
+  }
+
+  .kf-kitty-slot-ancestor {
+    width: 22%;
+  }
+
+  .kf-kitty-image--hero {
+    max-width: 260px;
+    margin: 0 auto;
+  }
+
+  .kf-kitty-image--parent {
+    max-width: 200px;
+    margin: 0 auto;
+  }
+
+  .kf-kitty-image--grandparent {
+    max-width: 160px;
+    margin: 0 auto;
+  }
+
+  .kf-kitty-image--ancestor {
+    max-width: 100px;
+    margin: 0 auto;
+  }
+
+  /* CK sprites sit off-centre — nudge pairs toward the tree midline */
+  .kf-kitty-branch-left.kf-kitty-pair-0 .kf-kitty-image {
+    transform: translateX(4%);
+  }
+
+  .kf-kitty-branch-left.kf-kitty-pair-1 .kf-kitty-image {
+    transform: translateX(8%);
+  }
+
+  .kf-kitty-branch-right.kf-kitty-pair-0 .kf-kitty-image {
+    transform: translateX(-8%);
+  }
+
+  .kf-kitty-branch-right.kf-kitty-pair-1 .kf-kitty-image {
+    transform: translateX(-4%);
+  }
+
+  .kf-kitty-branch-left.kf-kitty-card--parent .kf-kitty-image {
+    transform: translateX(4%);
+  }
+
+  .kf-kitty-branch-right.kf-kitty-card--parent .kf-kitty-image {
+    transform: translateX(-4%);
+  }
+
+  .kf-tree-connector {
+    position: relative;
+    margin: 0 auto;
+    flex-shrink: 0;
+    border-top: 1px solid #000;
+    min-height: 1px;
+  }
+
+  .kf-tree-connector::before,
+  .kf-tree-connector::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    height: 8px;
+  }
+
+  .kf-tree-connector::before {
+    left: 0;
+    border-left: 1px solid #000;
+  }
+
+  .kf-tree-connector::after {
+    right: 0;
+    border-right: 1px solid #000;
+  }
+
+  .kf-tree-connector-hidden {
+    visibility: hidden;
+  }
+
+  .kf-kitty-info {
+    @apply w-full text-center;
+  }
+
+  .kf-kitty-id-row {
+    @apply mb-2 flex items-center justify-center gap-1;
+  }
+
+  .kf-kitty-inspect {
+    @apply ml-1 h-3 w-3 cursor-pointer;
+  }
+
+  .kf-kitty-meta {
+    @apply text-[#777];
+  }
+
+  /* hero row */
+  .kf-kitty-card--hero .kf-kitty-info > :first-child {
+    @apply -mt-8 mb-3;
+  }
+
+  .kf-kitty-card--hero .kf-kitty-id-row a {
+    @apply text-base;
+  }
+
+  .kf-kitty-card--hero .kf-kitty-meta-combined {
+    @apply block;
+  }
+
+  .kf-kitty-card--hero .kf-kitty-meta-gen,
+  .kf-kitty-card--hero .kf-kitty-meta-cd {
+    @apply hidden;
+  }
+
+  .kf-kitty-card--hero .kf-kitty-info > :last-child {
+    @apply mt-4 mb-1;
+  }
+
+  /* parent row */
+  .kf-kitty-card--parent .kf-kitty-info > :first-child {
+    @apply -mt-[30px] mb-3;
+  }
+
+  .kf-kitty-card--parent .kf-kitty-id-row a {
+    @apply text-base;
+  }
+
+  .kf-kitty-card--parent .kf-kitty-meta-combined {
+    @apply block;
+  }
+
+  .kf-kitty-card--parent .kf-kitty-meta-gen,
+  .kf-kitty-card--parent .kf-kitty-meta-cd {
+    @apply hidden;
+  }
+
+  /* grandparent row */
+  .kf-kitty-card--grandparent .kf-kitty-id-row a {
+    @apply text-xs sm:text-sm;
+  }
+
+  .kf-kitty-card--grandparent .kf-kitty-meta-combined {
+    @apply hidden md:block;
+  }
+
+  .kf-kitty-card--grandparent .kf-kitty-meta-gen,
+  .kf-kitty-card--grandparent .kf-kitty-meta-cd {
+    @apply block md:hidden;
+  }
+
+  .kf-kitty-card--grandparent .kf-kitty-info > :nth-child(4),
+  .kf-kitty-card--grandparent .kf-kitty-info > :nth-child(5) {
+    @apply hidden md:block;
+  }
+
+  .kf-kitty-card--grandparent .kf-kitty-info > :nth-child(6) {
+    @apply hidden;
+  }
+
+  .kf-kitty-card--grandparent .kf-kitty-info > :last-child {
+    @apply hidden md:block;
+  }
+
+  /* ancestor row */
+  .kf-kitty-card--ancestor {
+    @apply text-[9px] sm:text-xs;
+  }
+
+  .kf-kitty-card--ancestor .kf-kitty-info > :first-child {
+    @apply -mt-3 mb-1.5;
+  }
+
+  .kf-kitty-card--ancestor .kf-kitty-id-row a {
+    @apply text-[9px] sm:text-xs;
+  }
+
+  .kf-kitty-card--ancestor .kf-kitty-meta-combined,
+  .kf-kitty-card--ancestor .kf-kitty-meta-cd,
+  .kf-kitty-card--ancestor .kf-kitty-info > :last-child {
+    @apply hidden;
+  }
+
+  .kf-kitty-card--ancestor .kf-kitty-meta-gen {
+    @apply block;
+  }
+
+  .kf-kitty-card--ancestor .kf-kitty-inspect {
+    @apply hidden;
+  }
+}
+
+@layer base {
+  .kf-family-tree.thundergrey, .kf-family-tree.ec1 { background-color: #eee9e8; }
+  .kf-family-tree.gold, .kf-family-tree.ec2 { background-color: #faf4cf; }
+  .kf-family-tree.topaz, .kf-family-tree.ec3 { background-color: #d1eeeb; }
+  .kf-family-tree.mintgreen, .kf-family-tree.ec4 { background-color: #cdf5d4; }
+  .kf-family-tree.isotope, .kf-family-tree.ec5 { background-color: #effdca; }
+  .kf-family-tree.sizzurp, .kf-family-tree.ec6 { background-color: #dfdffa; }
+  .kf-family-tree.chestnut, .kf-family-tree.ec7 { background-color: #efe1da; }
+  .kf-family-tree.strawberry, .kf-family-tree.ec8 { background-color: #ffe0e5; }
+  .kf-family-tree.sapphire, .kf-family-tree.ec9 { background-color: #d3e8ff; }
+  .kf-family-tree.forgetmenot, .kf-family-tree.eca { background-color: #dcebfc; }
+  .kf-family-tree.dahlia, .kf-family-tree.ecb { background-color: #e6eafd; }
+  .kf-family-tree.coralsunrise, .kf-family-tree.ecc { background-color: #fde9e4; }
+  .kf-family-tree.olive, .kf-family-tree.ecd { background-color: #ecf4e0; }
+  .kf-family-tree.doridnudibranch, .kf-family-tree.ece { background-color: #faeefa; }
+  .kf-family-tree.parakeet, .kf-family-tree.ecf { background-color: #e5f3e2; }
+  .kf-family-tree.cyan, .kf-family-tree.ecg { background-color: #c5eefa; }
+  .kf-family-tree.pumpkin, .kf-family-tree.ech { background-color: #fae1ca; }
+  .kf-family-tree.limegreen, .kf-family-tree.eci { background-color: #d9f5cb; }
+  .kf-family-tree.bridesmaid, .kf-family-tree.ecj { background-color: #ffd5e5; }
+  .kf-family-tree.bubblegum, .kf-family-tree.eck { background-color: #fadff4; }
+  .kf-family-tree.twilightsparkle, .kf-family-tree.ecm { background-color: #ede2f5; }
+  .kf-family-tree.palejade, .kf-family-tree.ecn { background-color: #e7f1ed; }
+  .kf-family-tree.pinefresh, .kf-family-tree.eco { background-color: #dbf0d0; }
+  .kf-family-tree.eclipse, .kf-family-tree.ecp { background-color: #e5e7ef; }
+  .kf-family-tree.babypuke, .kf-family-tree.ecq { background-color: #eff1e0; }
+  .kf-family-tree.downbythebay, .kf-family-tree.ecr { background-color: #cde5d1; }
+  .kf-family-tree.autumnmoon, .kf-family-tree.ecs { background-color: #fdf3e0; }
+  .kf-family-tree.oasis, .kf-family-tree.ect { background-color: #e6faf3; }
+  .kf-family-tree.gemini, .kf-family-tree.ecu { background-color: #d1eeeb; }
+  .kf-family-tree.dioscuri, .kf-family-tree.ecv { background-color: #d1eeeb; }
+  .kf-family-tree.kaleidoscope, .kf-family-tree.ecw { background-color: #000; }
+}
+
+@media (min-width: 700px) {
+  .kf-tree-top {
+    max-width: 720px;
+  }
+
+  .kf-tree-logo-slot {
+    margin-top: 50px;
+  }
+
+  .kf-kitty-slot-hero {
+    width: auto;
+    flex: 0 1 360px;
+    max-width: 360px;
+  }
+
+  .kf-kitty-slot-parent {
+    width: 25%;
+    max-width: 280px;
+  }
+
+  .kf-kitty-image--hero {
+    max-width: 300px;
+  }
+
+  .kf-kitty-image--parent {
+    max-width: 220px;
+  }
+
+  .kf-kitty-branch-left.kf-kitty-card--parent .kf-kitty-image {
+    transform: translateX(3%);
+  }
+
+  .kf-kitty-branch-right.kf-kitty-card--parent .kf-kitty-image {
+    transform: translateX(-3%);
+  }
+
+  .kf-kitty-image--grandparent {
+    max-width: 180px;
+  }
+
+  .kf-kitty-image--ancestor {
+    max-width: 110px;
+  }
+}
+
+@keyframes kf-kaleidoscope-bg {
+  0% { background-color: #ffe0e5; }
+  20% { background-color: #fae1ca; }
+  40% { background-color: #faf4cf; }
+  60% { background-color: #d9f5cb; }
+  80% { background-color: #c5eefa; }
+  100% { background-color: #ffe0e5; }
+}
+
+.kf-family-tree.kaleidoscope,
+.kf-family-tree.ecw {
+  animation: kf-kaleidoscope-bg 10s linear infinite;
+}

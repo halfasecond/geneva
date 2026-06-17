@@ -16,7 +16,8 @@ select_app() {
   echo "6) Aquarium"
   echo "7) Flowbots"
   echo "8) Elite (three.js web3)"
-  read -p "Enter your choice [1-8]: " choice
+  echo "9) kitty.family"
+  read -p "Enter your choice [1-9]: " choice
   
   case $choice in
     1)
@@ -43,6 +44,9 @@ select_app() {
     8)
       echo "elite"
       ;;
+    9)
+      echo "kittyFamily"
+      ;;
     *)
       echo "geneva"
       ;;
@@ -52,7 +56,7 @@ select_app() {
 # Function to validate app name
 validate_app() {
   local app=$1
-  if [ "$app" != "purr" ] && [ "$app" != "chained-horse" ] && [ "$app" != "geneva" ] && [ "$app" != "kittyInternational" ] && [ "$app" != "barcode" ] && [ "$app" != "aquarium" ] && [ "$app" != "flowbots" ] && [ "$app" != "elite" ]; then
+  if [ "$app" != "purr" ] && [ "$app" != "chained-horse" ] && [ "$app" != "geneva" ] && [ "$app" != "kittyInternational" ] && [ "$app" != "kittyFamily" ] && [ "$app" != "barcode" ] && [ "$app" != "aquarium" ] && [ "$app" != "flowbots" ] && [ "$app" != "elite" ]; then
     echo "Error: Invalid app name. Must be a valid module"
     exit 1
   fi
@@ -120,6 +124,9 @@ elif [ "$APP_NAME" == "flowbots" ]; then
 elif [ "$APP_NAME" == "elite" ]; then
   SOURCE_FILE="src/lib/entry/elite.tsx"
   OUTPUT_DIR="dist/elite"
+elif [ "$APP_NAME" == "kittyFamily" ]; then
+  SOURCE_FILE="src/lib/entry/kittyFamily.tsx"
+  OUTPUT_DIR="dist/kittyFamily"
 else
   SOURCE_FILE="src/lib/entry/geneva.tsx"
   OUTPUT_DIR="dist/geneva"
