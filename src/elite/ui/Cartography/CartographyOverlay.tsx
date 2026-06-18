@@ -7,7 +7,6 @@ import type { CartographyRoute } from '../../render/cartographyMap'
 interface CartographyOverlayProps {
   route: CartographyRoute
   playerPos: { x: number; y: number }
-  systemId: string
   onRouteChange: (route: CartographyRoute) => void
 }
 
@@ -18,7 +17,6 @@ interface CartographyOverlayProps {
 const CartographyOverlay: React.FC<CartographyOverlayProps> = ({
   route,
   playerPos,
-  systemId,
   onRouteChange,
 }) => (
   <div
@@ -41,8 +39,9 @@ const CartographyOverlay: React.FC<CartographyOverlayProps> = ({
     <CartographyMap
       route={route}
       playerPos={{ x: playerPos.x, y: playerPos.y }}
-      systemId={systemId}
-      onDestinationPick={destinationId => onRouteChange({ destinationId })}
+      onDestinationPick={destinationId => onRouteChange({
+        destinationId: route.destinationId === destinationId ? null : destinationId,
+      })}
     />
 
     <div style={{

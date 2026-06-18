@@ -2,7 +2,7 @@ import type { EliteSnapshot, FlightMode, NpcAgent, PlayerState, SimConfig, Vec3 
 import { add, clampMagnitude, cross, length, normalize, scale, subtract, zero } from './core/vector'
 import { calculateFlocking } from './core/forces'
 import { addProgress, applyRoleFeedback } from './core/progress'
-import { DEFAULT_ROUTE, getBodyById } from './cartography'
+import { DEFAULT_SPAWN_DESTINATION, getBodyById } from './cartography'
 import {
   applyPlayerTrade,
   defaultMarketConfig,
@@ -77,7 +77,7 @@ export class EliteSim {
       timeScale: 1 / MARKET.hourIntervalSeconds,
     }
     this.markets = initMarkets()
-    const spawnBody = getBodyById(DEFAULT_ROUTE.destinationId, 'frozen')
+    const spawnBody = getBodyById(DEFAULT_SPAWN_DESTINATION, 'frozen')
     const ref2d = { ...(spawnBody?.pos2d ?? { x: 0, y: 0 }) }
     const spawnPose = spawnBody
       ? hyperspaceArrivalPose(spawnBody)

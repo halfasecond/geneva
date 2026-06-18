@@ -149,7 +149,8 @@ export function getMapCartographyBodies(): CartographyBody[] {
   return getCartographyBodies(getGalaxyElapsedSeconds(), 'map')
 }
 
-export function getBodyById(id: string, mode: CartographyTimeMode = 'frozen') {
+export function getBodyById(id: string | null | undefined, mode: CartographyTimeMode = 'frozen') {
+  if (!id) return undefined
   const elapsed = mode === 'map' ? getGalaxyElapsedSeconds() : 0
   return getCartographyBodies(elapsed, mode).find(b => b.id === id)
 }
@@ -160,11 +161,17 @@ export function getDistance2D(a: { x: number; y: number }, b: { x: number; y: nu
   return Math.sqrt(dx * dx + dy * dy)
 }
 
-export const DEFAULT_ROUTE = {
-  destinationId: 'boreal-station',
+/** Player spawn / sim default — not the cartography UI selection. */
+export const DEFAULT_SPAWN_DESTINATION = 'boreal-station'
+
+export interface RouteSelection {
+  destinationId: string | null
 }
 
-export type RouteSelection = typeof DEFAULT_ROUTE
+export const EMPTY_ROUTE: RouteSelection = { destinationId: null }
+
+/** @deprecated Use DEFAULT_SPAWN_DESTINATION for sim spawn, EMPTY_ROUTE for UI. */
+export const DEFAULT_ROUTE = { destinationId: DEFAULT_SPAWN_DESTINATION }
 
 export interface TravelDistance {
   label: string
@@ -189,7 +196,7 @@ export function getInterSystemDistanceLy(systemAId: string, systemBId: string) {
 export function getTravelDistanceFrom(
   from: { x: number; y: number },
   fromSystemId: string,
-  destId: string,
+  destId: string | null | undefined,
   mode: CartographyTimeMode = 'frozen',
 ): TravelDistance | null {
   const dest = getBodyById(destId, mode)
@@ -232,6 +239,7 @@ export function getRouteJumpCost(
   route: RouteSelection,
   mode: CartographyTimeMode = 'frozen',
 ) {
+  if (!route.destinationId) return Infinity
   const dest = getBodyById(route.destinationId, mode)
   if (!dest) return Infinity
   return getJumpFuelCost(from, dest.pos2d, fromSystemId, dest.systemId)

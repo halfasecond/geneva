@@ -41,11 +41,10 @@ import { EliteSim } from '../../elite/sim/EliteSim'
 import type { EliteSnapshot, NpcAgent } from '../../elite/sim/core/types'
 import { length } from '../../elite/sim/core/vector'
 import {
-  DEFAULT_ROUTE,
+  EMPTY_ROUTE,
   getBodyById,
   getFrozenCartographyBodies,
   getRouteJumpCost,
-  getTravelDistanceFrom,
 } from '../../elite/sim/cartography'
 
 // Tightening imports (config + extracted modules)
@@ -87,7 +86,6 @@ import {
   HyperspacePanel,
   HyperspaceCountdown,
   HyperspaceTunnel,
-  CockpitStatusPanel,
   MarketOverlay,
   ShipUpgradesOverlay,
   VechPreview,
@@ -162,11 +160,10 @@ const Elite: React.FC<EliteProps> = ({ currentShip }) => {
 
   // Cartography + hyperspace overlay state
   const [mapOpen, setMapOpen] = useState(false)
-  const [route, setRoute] = useState(DEFAULT_ROUTE)
+  const [route, setRoute] = useState(EMPTY_ROUTE)
   const routeRef = useRef(route)
   routeRef.current = route
 
-  const travelDistance = getTravelDistanceFrom(hud.systemPos2d, hud.systemId, route.destinationId)
   const destBody = getBodyById(route.destinationId, 'frozen')
   const [isHyperspacing, setIsHyperspacing] = useState(false)
   const [hyperspaceCountdown, setHyperspaceCountdown] = useState<number | null>(null)
@@ -1063,24 +1060,23 @@ const Elite: React.FC<EliteProps> = ({ currentShip }) => {
       )}
 
       {mapOpen && (
-        <>
-          <CartographyOverlay
-            route={route}
-            playerPos={hud.systemPos2d}
-            systemId={hud.systemId}
-            onRouteChange={setRoute}
-          />
-          <HyperspacePanel
-            route={route}
-            fromPos2d={hud.systemPos2d}
-            systemId={hud.systemId}
-            fuel={hud.fuel}
-            flightMode={hud.flightMode}
-            isHyperspacing={isHyperspacing}
-            onInitiateHyperspace={handleInitiateHyperspace}
-          />
-        </>
+        <CartographyOverlay
+          route={route}
+          playerPos={hud.systemPos2d}
+          onRouteChange={setRoute}
+        />
       )}
+
+      <HyperspacePanel
+        route={route}
+        fromPos2d={hud.systemPos2d}
+        systemId={hud.systemId}
+        dockedAtStationId={hud.dockedAtStationId}
+        fuel={hud.fuel}
+        flightMode={hud.flightMode}
+        isHyperspacing={isHyperspacing}
+        onInitiateHyperspace={handleInitiateHyperspace}
+      />
 
       {/* Cockpit bezels — always on top to frame the windscreen */}
       <div style={{
@@ -1143,15 +1139,6 @@ const Elite: React.FC<EliteProps> = ({ currentShip }) => {
         fontFamily: 'ui-monospace, monospace',
         fontSize: '18px',
       }}>
-        {!mapOpen && (
-          <CockpitStatusPanel
-            flightMode={hud.flightMode}
-            dockedAtStationId={hud.dockedAtStationId}
-            destinationId={route.destinationId}
-            travelDistance={travelDistance}
-          />
-        )}
-
         <div style={{
           position: 'absolute',
           left: '50%',

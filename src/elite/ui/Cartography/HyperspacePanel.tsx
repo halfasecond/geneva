@@ -1,12 +1,18 @@
 import React from 'react'
 import { COLORS, DASHBOARD, Z } from '../../config'
-import { getBodyById, getRouteJumpCost, getTravelDistanceFrom } from '../../sim/cartography'
+import {
+  STAR_SYSTEMS,
+  getBodyById,
+  getRouteJumpCost,
+  getTravelDistanceFrom,
+} from '../../sim/cartography'
 import type { CartographyRoute } from '../../render/cartographyMap'
 
 interface HyperspacePanelProps {
   route: CartographyRoute
   fromPos2d: { x: number; y: number }
   systemId: string
+  dockedAtStationId: string | null
   fuel: number
   flightMode: string
   isHyperspacing: boolean
@@ -18,15 +24,32 @@ const HyperspacePanel: React.FC<HyperspacePanelProps> = ({
   route,
   fromPos2d,
   systemId,
+  dockedAtStationId,
   fuel,
   flightMode,
   isHyperspacing,
   onInitiateHyperspace,
 }) => {
   const dest = getBodyById(route.destinationId, 'frozen')
+  const hasTarget = Boolean(dest)
   const cost = getRouteJumpCost(fromPos2d, systemId, route)
   const travel = getTravelDistanceFrom(fromPos2d, systemId, route.destinationId)
-  const canJump = Boolean(dest) && !isHyperspacing && fuel >= cost
+  const insufficientFuel = hasTarget && Number.isFinite(cost) && fuel < cost
+  const canJump = hasTarget && !isHyperspacing && !insufficientFuel
+
+  const currentSystem = STAR_SYSTEMS[systemId]
+  const targetSystem = dest ? STAR_SYSTEMS[dest.systemId] : null
+  const headline = hasTarget
+    ? (targetSystem?.name ?? dest!.systemId)
+    : (currentSystem?.name ?? systemId)
+
+  const dockedBody = dockedAtStationId ? getBodyById(dockedAtStationId, 'frozen') : null
+  const subline = hasTarget
+    ? (travel?.label ?? '—')
+    : flightMode === 'docked'
+      ? (dockedBody?.name ?? '—')
+      : 'In flight'
+  const isInFlight = !hasTarget && flightMode !== 'docked'
 
   return (
     <div
@@ -39,27 +62,46 @@ const HyperspacePanel: React.FC<HyperspacePanelProps> = ({
         zIndex: Z.cockpitWidgets,
         pointerEvents: 'auto',
         ...DASHBOARD.leftPanel,
+        border: hasTarget
+          ? `1px solid ${COLORS.vechRingCss}`
+          : DASHBOARD.leftPanel.border,
+        boxShadow: hasTarget ? '0 0 18px rgba(102, 170, 255, 0.22)' : 'none',
         color: COLORS.vechRingCss,
         fontFamily: 'ui-monospace, monospace',
         fontSize: '18px',
       }}
     >
       <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
-        {dest?.name || 'NO TARGET'}
+        {headline}
       </div>
-      <div style={{ marginBottom: '8px' }}>{travel?.label ?? '—'}</div>
-      <div style={{ fontSize: '10px', marginBottom: '6px', opacity: 0.85 }}>
-        {flightMode.toUpperCase()}
+      <div style={{
+        marginBottom: isInFlight ? '14px' : '8px',
+        fontSize: isInFlight ? '10px' : undefined,
+      }}>
+        {subline}
       </div>
-      <div style={{ fontSize: '10px', marginBottom: '6px' }}>{dest?.government ?? '—'}</div>
-      <div style={{ fontSize: '10px', marginBottom: '14px' }}>{dest?.sector ?? '—'}</div>
 
-      <div style={{ fontSize: '10px', marginBottom: '12px', color: COLORS.textMuted }}>
-        {cost} FUEL · {fuel} AVAILABLE
-        {isHyperspacing && (
-          <span style={{ color: '#ff6644', marginLeft: 8 }}>CHARGING</span>
-        )}
-      </div>
+      {hasTarget && dest && (
+        <>
+          <div style={{ fontSize: '10px', marginBottom: '6px' }}>{dest.name}</div>
+          <div style={{ fontSize: '10px', marginBottom: '14px' }}>{dest.sector ?? '—'}</div>
+          <div style={{ fontSize: '10px', marginBottom: '12px', color: COLORS.textMuted }}>
+            {Number.isFinite(cost) ? `${cost} FUEL` : '—'} ·{' '}
+            <span style={{ color: insufficientFuel ? '#ff6644' : COLORS.textMuted }}>
+              {fuel} AVAILABLE
+            </span>
+            {isHyperspacing && (
+              <span style={{ color: '#ff6644', marginLeft: 8 }}>CHARGING</span>
+            )}
+          </div>
+        </>
+      )}
+
+      {!hasTarget && dockedBody?.sector && (
+        <div style={{ fontSize: '10px', marginBottom: '14px', color: COLORS.textMuted }}>
+          {dockedBody.sector}
+        </div>
+      )}
 
       <button
         type="button"

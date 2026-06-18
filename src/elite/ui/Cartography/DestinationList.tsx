@@ -37,7 +37,7 @@ const DestinationList: React.FC<DestinationListProps> = ({ route, onRouteChange 
           <button
             key={b.id}
             type="button"
-            onClick={() => onRouteChange({ destinationId: b.id })}
+            onClick={() => onRouteChange({ destinationId: active ? null : b.id })}
             style={{
               minWidth: 0,
               display: 'flex',
