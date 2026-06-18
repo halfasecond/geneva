@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import axios from 'axios'
-import Metamask from 'components/Metamask'
+import VechMetamask from '../../elite/ui/VechMetamask'
 import type { AuthProps } from '../../types/auth'
 import type { VechNft } from '../../types/vech'
 import ShipSelectModal from '../../elite/ui/ShipSelectModal'
@@ -83,10 +83,8 @@ const EliteApp: React.FC<AuthProps> = ({
                 right: 12,
                 zIndex: 9000,
             }}>
-                <Metamask
+                <VechMetamask
                     loggedIn={loggedIn}
-                    token={token}
-                    tokenId={currentShip.tokenId}
                     handleSignIn={handleSignIn}
                     handleSignOut={handleSignOut}
                     BASE_URL={BASE_URL}

@@ -1,5 +1,5 @@
 import React from 'react'
-import Metamask from 'components/Metamask'
+import VechMetamask from './VechMetamask'
 import { COLORS } from '../config'
 import type { VechNft } from '../../types/vech'
 
@@ -22,7 +22,8 @@ const overlay: React.CSSProperties = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    background: 'rgba(0, 8, 20, 0.88)',
+    flexDirection: 'column',
+    background: 'rgba(0,0,0,1)',
     backdropFilter: 'blur(4px)',
     fontFamily: 'monospace',
 }
@@ -32,15 +33,14 @@ const panel: React.CSSProperties = {
     maxHeight: '88vh',
     overflow: 'auto',
     padding: '28px 32px',
-    border: `1px solid ${COLORS.vechRingCss}`,
-    background: 'linear-gradient(180deg, rgba(4,12,28,0.96) 0%, rgba(2,6,16,0.98) 100%)',
     color: COLORS.vechRingCss,
-    boxShadow: `0 0 24px ${COLORS.vechRingCss}33`,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
 }
 
 const ShipSelectModal: React.FC<ShipSelectModalProps> = ({
     loggedIn,
-    token,
     handleSignIn,
     handleSignOut,
     BASE_URL,
@@ -56,13 +56,12 @@ const ShipSelectModal: React.FC<ShipSelectModalProps> = ({
     return (
         <div style={overlay}>
             <div style={panel}>
-                <div style={{ fontSize: 22, letterSpacing: 2, marginBottom: 8 }}>VECH COMMAND</div>
-                <p style={{ opacity: 0.85, marginTop: 0 }}>
-                    Connect your wallet and select the ship you want to fly.
-                </p>
-
                 {!loggedIn ? (
-                    <p>Sign in with MetaMask to load your hangar.</p>
+                    <>
+                        <img src="https://cdn.halfasecond.com/images/vech/vech-logo.png" alt="VECH Logo" style={{ width: 280, margin: `0 auto 64px`, boxShadow: `0 0 24px ${COLORS.vechRingCss}33`, }} />
+                        <p style={{ textAlign: 'center' }}>Sign in with MetaMask to load your hangar.</p>
+                    </>
+                    
                 ) : shipsLoading ? (
                     <p>Scanning hangar…</p>
                 ) : ownedShips.length === 0 ? (
@@ -100,9 +99,8 @@ const ShipSelectModal: React.FC<ShipSelectModalProps> = ({
                 )}
 
                 <div style={{ marginTop: 24, display: 'flex', justifyContent: 'center' }}>
-                    <Metamask
+                    <VechMetamask
                         loggedIn={loggedIn}
-                        token={token}
                         handleSignIn={handleSignIn}
                         handleSignOut={handleSignOut}
                         BASE_URL={BASE_URL}
