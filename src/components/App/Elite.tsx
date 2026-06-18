@@ -1057,6 +1057,7 @@ const Elite: React.FC<EliteProps> = ({ currentShip }) => {
       {upgradesOpen && hud.flightMode === 'docked' && !mapOpen && (
         <ShipUpgradesOverlay
           glbUrl={glbUrl}
+          ship={currentShip}
           onClose={() => setUpgradesOpen(false)}
         />
       )}

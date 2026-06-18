@@ -10,6 +10,7 @@ export { default as ShipSelectModal } from './ShipSelectModal'
 export { default as CockpitStatusPanel } from './CockpitStatusPanel'
 export { default as ShipHoldPanel } from './ShipHoldPanel'
 export { default as ShipUpgradesOverlay } from './ShipUpgradesOverlay'
+export { default as ShipAttributesPanel } from './ShipAttributesPanel'
 export { default as WaypointOverlay } from './WaypointOverlay'
 export { default as PositionDebug } from './PositionDebug'
 export {

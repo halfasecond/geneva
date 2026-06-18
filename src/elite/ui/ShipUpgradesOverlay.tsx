@@ -1,13 +1,17 @@
 import React, { useEffect, useRef } from 'react'
 import { MAP, VECH, WINDSCREEN, Z } from '../config'
+import type { VechNft } from '../../types/vech'
+import ShipAttributesPanel from './ShipAttributesPanel'
 
 interface ShipUpgradesOverlayProps {
   glbUrl: string
+  ship: Pick<VechNft, 'name' | 'shipId' | 'tokenId' | 'attributes'>
   onClose: () => void
 }
 
 /** Docked ship upgrades POC — drag to orbit, auto-rotates when idle. */
-const ShipUpgradesOverlay: React.FC<ShipUpgradesOverlayProps> = ({ glbUrl, onClose }) => {
+const ShipUpgradesOverlay: React.FC<ShipUpgradesOverlayProps> = ({ glbUrl, ship, onClose }) => {
+  const shipLabel = ship.name || (ship.shipId ? `VECH #${ship.shipId}` : `Token #${ship.tokenId}`)
   const modelRef = useRef<any>(null)
   const ui = MAP.ui
 
@@ -88,7 +92,7 @@ const ShipUpgradesOverlay: React.FC<ShipUpgradesOverlayProps> = ({ glbUrl, onClo
             textTransform: 'uppercase',
             fontWeight: 700,
           }}>
-            Ship Upgrades · VECH #5759
+            Ship Upgrades · {shipLabel}
           </div>
           <div style={{ fontSize: 9, color: ui.muted, letterSpacing: 1, textTransform: 'uppercase' }}>
             Drag to orbit · scroll to zoom
@@ -98,15 +102,25 @@ const ShipUpgradesOverlay: React.FC<ShipUpgradesOverlayProps> = ({ glbUrl, onClo
         <div style={{
           flex: 1,
           minHeight: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          pointerEvents: 'auto',
+          position: 'relative',
+          pointerEvents: 'none',
         }}>
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: 280,
+            maxHeight: '100%',
+            overflowY: 'auto',
+            zIndex: 2,
+          }}>
+            <ShipAttributesPanel ship={ship} />
+          </div>
+
           <model-viewer
             ref={modelRef}
             src={glbUrl}
-            alt="VECH Founder Edition"
+            alt={shipLabel}
             camera-controls
             auto-rotate
             auto-rotate-delay="0"
@@ -119,11 +133,13 @@ const ShipUpgradesOverlay: React.FC<ShipUpgradesOverlayProps> = ({ glbUrl, onClo
             camera-target={VECH.upgradesPreview.cameraTarget}
             tabIndex={-1}
             style={{
-              width: 'min(92%, 720px)',
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
               height: '100%',
-              maxHeight: '100%',
               background: 'transparent',
               outline: 'none',
+              pointerEvents: 'auto',
             }}
           />
         </div>
