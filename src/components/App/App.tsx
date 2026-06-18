@@ -3,10 +3,12 @@ const { VITE_APP } = import.meta.env;
 
 interface AppProps {
     ViewComponent: React.ComponentType<any>;
+    /** API route prefix for auth endpoints (defaults to VITE_APP) */
+    authAppName?: string;
 }
 
-function App({ ViewComponent }: AppProps) {
-    const data = useAuth({ appName: VITE_APP });
+function App({ ViewComponent, authAppName }: AppProps) {
+    const data = useAuth({ appName: authAppName ?? VITE_APP });
 
     if (data.loading) {
         return null;

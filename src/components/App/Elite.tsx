@@ -36,6 +36,7 @@ declare global {
   }
 }
 import type { AuthProps } from '../../types/auth'
+import type { VechNft } from '../../types/vech'
 import { EliteSim } from '../../elite/sim/EliteSim'
 import type { EliteSnapshot, NpcAgent } from '../../elite/sim/core/types'
 import { length } from '../../elite/sim/core/vector'
@@ -95,14 +96,13 @@ import {
   PositionDebug,
 } from '../../elite/ui'
 
-// Basic AuthProps shape we receive (wallet + controls)
 type EliteProps = AuthProps & {
-  // extra if needed
+  currentShip: VechNft
+  onChangeShip?: () => void
 }
 
-const glbUrl = VECH.defaultGlbUrl
-
-const Elite: React.FC<EliteProps> = () => {
+const Elite: React.FC<EliteProps> = ({ currentShip }) => {
+  const glbUrl = currentShip.animation_url || ''
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const simRef = useRef<EliteSim>(new EliteSim(2))
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null)
@@ -345,7 +345,9 @@ const Elite: React.FC<EliteProps> = () => {
     radarBlipsRef.current = blips
 
     const { shipIcon } = createVechHoloIcon(camera)
-    loadVechShipModel(glbUrl, shipIcon)
+    if (glbUrl) {
+      loadVechShipModel(glbUrl, shipIcon).catch(() => {})
+    }
 
     const { fuelBars } = CockpitRender.createFuelBars(camera)
     fuelBarsRef.current = fuelBars
@@ -1200,7 +1202,7 @@ const Elite: React.FC<EliteProps> = () => {
           flexDirection: 'column',
           alignItems: 'center',
         }}>
-          <VechPreview hud={hud} glbUrl={glbUrl} />
+          <VechPreview hud={hud} glbUrl={glbUrl} ship={currentShip} />
         </div>
       </div>
     </div>

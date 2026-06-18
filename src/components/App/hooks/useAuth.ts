@@ -81,6 +81,7 @@ export function useAuth({ appName }: UseAuthOptions) {
                     Cookies.set(storedToken, data.token);
                     setLoggedIn(accounts[0]);
                     setToken(data.token);
+                    setTokenId(data.tokenId);
                 } else {
                    alert('You are on the wrong chain!');
                 }
