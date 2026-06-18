@@ -962,6 +962,7 @@ const Elite: React.FC<EliteProps> = ({ currentShip }) => {
     const d = getBodyById(route.destinationId, 'frozen')
     if (!d) return
     const snap = simRef.current.getSnapshot()
+    if (snap.player.flightMode === 'docked') return
     const cost = getRouteJumpCost(snap.player.systemPos2d, snap.player.systemId, route)
     if (hud.fuel < cost) return
 

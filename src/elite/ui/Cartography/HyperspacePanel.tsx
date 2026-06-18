@@ -34,8 +34,9 @@ const HyperspacePanel: React.FC<HyperspacePanelProps> = ({
   const hasTarget = Boolean(dest)
   const cost = getRouteJumpCost(fromPos2d, systemId, route)
   const travel = getTravelDistanceFrom(fromPos2d, systemId, route.destinationId)
+  const isDocked = flightMode === 'docked'
   const insufficientFuel = hasTarget && Number.isFinite(cost) && fuel < cost
-  const canJump = hasTarget && !isHyperspacing && !insufficientFuel
+  const canJump = hasTarget && !isHyperspacing && !insufficientFuel && !isDocked
 
   const currentSystem = STAR_SYSTEMS[systemId]
   const targetSystem = dest ? STAR_SYSTEMS[dest.systemId] : null
