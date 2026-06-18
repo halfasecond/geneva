@@ -9,19 +9,27 @@ import type { CartographyRoute } from '../../render/cartographyMap'
 interface CartographyMapProps {
   route: CartographyRoute
   playerPos: { x: number; y: number }
+  systemId: string
   onDestinationPick: (destinationId: string) => void
 }
 
-const CartographyMap: React.FC<CartographyMapProps> = ({ route, playerPos, onDestinationPick }) => {
+const CartographyMap: React.FC<CartographyMapProps> = ({
+  route,
+  playerPos,
+  systemId,
+  onDestinationPick,
+}) => {
   const wrapRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const rafRef = useRef<number | null>(null)
   const sizeRef = useRef({ w: 0, h: 0 })
   const routeRef = useRef(route)
   const playerPosRef = useRef(playerPos)
+  const systemIdRef = useRef(systemId)
 
   routeRef.current = route
   playerPosRef.current = playerPos
+  systemIdRef.current = systemId
 
   useEffect(() => {
     const wrap = wrapRef.current
@@ -49,7 +57,7 @@ const CartographyMap: React.FC<CartographyMapProps> = ({ route, playerPos, onDes
     const draw = () => {
       const { w, h } = sizeRef.current
       if (w && h) {
-        drawCartographyFrame(ctx, w, h, routeRef.current, playerPosRef.current)
+        drawCartographyFrame(ctx, w, h, routeRef.current, playerPosRef.current, systemIdRef.current)
       }
       rafRef.current = requestAnimationFrame(draw)
     }

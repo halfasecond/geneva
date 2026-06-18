@@ -40,6 +40,8 @@ export const STAR_SYSTEMS: Record<string, StarSystem> = {
   vega: { id: 'vega', name: 'Vega Reach', xLy: 6.23, yLy: 1.8, zLy: 0 },
 }
 
+export const GALAXY_SYSTEM_ORDER = Object.keys(STAR_SYSTEMS)
+
 type BodyPreset = {
   id: string
   name: string

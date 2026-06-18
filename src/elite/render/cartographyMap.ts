@@ -4,7 +4,11 @@
  */
 
 import { MAP } from '../config'
-import { getFrozenCartographyBodies, getMapCartographyBodies } from '../sim/cartography'
+import {
+  GALAXY_SYSTEM_ORDER,
+  STAR_SYSTEMS,
+  getFrozenCartographyBodies,
+} from '../sim/cartography'
 import type { CartographyBody } from '../sim/cartography'
 
 export interface CartographyRoute {
@@ -28,6 +32,7 @@ export function drawCartographyFrame(
   height: number,
   route: CartographyRoute,
   playerPos: PlayerMapPos,
+  systemId: string,
 ) {
   const cx = width / 2
   const cy = height / 2
@@ -47,7 +52,7 @@ export function drawCartographyFrame(
     ctx.fill()
   }
 
-  const bodies = getMapCartographyBodies()
+  const bodies = getFrozenCartographyBodies()
   const bodyMap = new Map(bodies.map(b => [b.id, b]))
 
   // Orbit rings — thin, pale (matches flockers.halfasecond.com)
@@ -113,17 +118,66 @@ export function drawCartographyFrame(
   })
 
   drawRouteCurve(ctx, bodyMap, route, playerPos, cx, cy, scale)
+  drawSystemPresenceIndicator(ctx, 16, height - 16, systemId)
+}
 
-  // Player marker
-  const playerX = cx + playerPos.x * scale
-  const playerY = cy + playerPos.y * scale
+function drawShipIcon(ctx: CanvasRenderingContext2D, x: number, y: number) {
+  ctx.save()
   ctx.fillStyle = MAP.playerColor
   ctx.beginPath()
-  ctx.moveTo(playerX, playerY - 7)
-  ctx.lineTo(playerX - 5, playerY + 6)
-  ctx.lineTo(playerX + 5, playerY + 6)
+  ctx.moveTo(x, y - 6)
+  ctx.lineTo(x - 5, y + 4)
+  ctx.lineTo(x + 5, y + 4)
   ctx.closePath()
   ctx.fill()
+  ctx.restore()
+}
+
+/** Ship icon beside the star system the player is currently in. */
+function drawSystemPresenceIndicator(
+  ctx: CanvasRenderingContext2D,
+  left: number,
+  bottom: number,
+  systemId: string,
+) {
+  const rowH = 20
+  const systems = GALAXY_SYSTEM_ORDER.map(id => STAR_SYSTEMS[id]).filter(Boolean)
+  const top = bottom - systems.length * rowH
+
+  ctx.save()
+  ctx.fillStyle = MAP.ui.panelBg
+  ctx.strokeStyle = MAP.ui.panelBorder
+  ctx.lineWidth = 1
+  const panelW = 168
+  const panelH = systems.length * rowH + 12
+  ctx.beginPath()
+  ctx.roundRect(left, top - 8, panelW, panelH, 4)
+  ctx.fill()
+  ctx.stroke()
+
+  systems.forEach((system, i) => {
+    const y = top + i * rowH + 6
+    const active = system.id === systemId
+
+    ctx.fillStyle = active ? '#ffe6a3' : 'rgba(180, 200, 220, 0.45)'
+    ctx.beginPath()
+    ctx.arc(left + 12, y, active ? 3.5 : 2.5, 0, Math.PI * 2)
+    ctx.fill()
+
+    if (active) {
+      drawShipIcon(ctx, left + 28, y)
+    }
+
+    ctx.fillStyle = active ? MAP.ui.text : MAP.ui.muted
+    ctx.font = active
+      ? '850 10px ui-monospace, SFMono-Regular, Menlo, monospace'
+      : '850 9px ui-monospace, SFMono-Regular, Menlo, monospace'
+    ctx.textAlign = 'left'
+    ctx.textBaseline = 'middle'
+    ctx.fillText(system.name.toUpperCase(), left + (active ? 42 : 24), y)
+  })
+
+  ctx.restore()
 }
 
 function drawRouteCurve(

@@ -1067,6 +1067,7 @@ const Elite: React.FC<EliteProps> = ({ currentShip }) => {
           <CartographyOverlay
             route={route}
             playerPos={hud.systemPos2d}
+            systemId={hud.systemId}
             onRouteChange={setRoute}
           />
           <HyperspacePanel
