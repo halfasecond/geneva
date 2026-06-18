@@ -8,7 +8,7 @@
  */
 
 import * as THREE from 'three'
-import { COLORS, COCKPIT, MIND_RADAR, RADAR_3D, RETICLE, FUEL, VECH } from '../config'
+import { COLORS, COCKPIT, MIND_RADAR, RADAR_3D, RETICLE, FUEL } from '../config'
 import { isDockContact } from '../sim/contacts'
 import { clampHoloRadarPos, isMindContact } from './radarIcons'
 
@@ -298,38 +298,6 @@ export function createFuelBars(camera: THREE.PerspectiveCamera) {
     fuelBars.push(bar)
   }
   return { fuelGroup, fuelBars }
-}
-
-// -----------------------------------------------------------------------------
-// VECH ship holo ring + light (the 3D icon that lives in the lower-right of the 3D view)
-// Note: the actual GLB loading + material override still happens in the caller
-// (or will move to a vechLoader helper) because it is async.
-// -----------------------------------------------------------------------------
-export function createVechHoloIcon(camera: THREE.PerspectiveCamera) {
-  const shipIcon = new THREE.Group()
-  camera.add(shipIcon)
-  shipIcon.position.set(VECH.groupPos.x, VECH.groupPos.y, VECH.groupPos.z)
-
-  const iconRing = new THREE.Line(
-    new THREE.BufferGeometry().setFromPoints(
-      Array.from({ length: VECH.ring.segments }, (_, i) => {
-        const a = (i / VECH.ring.segments) * Math.PI * 2
-        return new THREE.Vector3(
-          Math.cos(a) * VECH.ring.r,
-          Math.sin(a) * VECH.ring.ry,
-          0
-        )
-      })
-    ),
-    new THREE.LineBasicMaterial({ color: COLORS.vechRing, transparent: true, opacity: 0.85 })
-  )
-  shipIcon.add(iconRing)
-
-  const shipLight = new THREE.PointLight(VECH.light.color, VECH.light.intensity, VECH.light.distance)
-  shipLight.position.set(VECH.light.pos.x, VECH.light.pos.y, VECH.light.pos.z)
-  shipIcon.add(shipLight)
-
-  return { shipIcon, iconRing }
 }
 
 // -----------------------------------------------------------------------------

@@ -228,6 +228,10 @@ export const RETICLE = {
 // VECH SHIP HOLO ICON (3D GLB inside ring, right of lower radar)
 // =============================================================================
 export const VECH = {
+  contract: '0x02e770a2f79ba4d3740a7273eca7e290d93ecc8a',
+  /** Default Founder Edition GLB (token #5759) from OpenSea CDN. */
+  defaultGlbUrl:
+    'https://raw2.seadn.io/ethereum/0x02e770a2f79ba4d3740a7273eca7e290d93ecc8a/f499a621b66cab834f06546f71875d06.glb',
   groupPos: { x: 2.6, y: -0.9, z: -2.55 },
   ring: { r: 1.55, ry: 1.0, segments: 24 },
 

@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 
 // @google/model-viewer registers the <model-viewer> web component globally (side-effect import required).
 // React/TSX integration notes (addressing the SO link you posted and typical gotchas):
@@ -69,6 +68,7 @@ import { computeWaypoints, type WaypointIndicator } from '../../elite/sim/waypoi
 import type { CartographyBody } from '../../elite/sim/cartography'
 import { useFlightInput } from '../../elite/useFlightInput'
 import * as CockpitRender from '../../elite/render/cockpit'
+import { createVechHoloIcon, loadVechShipModel } from '../../elite/render/vech'
 import * as HyperspaceRender from '../../elite/render/hyperspace'
 import * as StationRender from '../../elite/render/station'
 import {
@@ -100,7 +100,7 @@ type EliteProps = AuthProps & {
   // extra if needed
 }
 
-const glbUrl = 'https://raw2.seadn.io/ethereum/0x02e770a2f79ba4d3740a7273eca7e290d93ecc8a/f499a621b66cab834f06546f71875d06.glb'
+const glbUrl = VECH.defaultGlbUrl
 
 const Elite: React.FC<EliteProps> = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -344,54 +344,8 @@ const Elite: React.FC<EliteProps> = () => {
     radarRef.current = radarGroup
     radarBlipsRef.current = blips
 
-    const { shipIcon } = CockpitRender.createVechHoloIcon(camera)
-    // VECH GLB load (async) - kept inline for now; will move to a render/vech helper in a follow-up
-    const gltfLoader = new GLTFLoader()
-    gltfLoader.load(
-      glbUrl,
-      (gltf: any) => {
-        const model = gltf.scene
-
-        const box = new THREE.Box3().setFromObject(model)
-        const center = box.getCenter(new THREE.Vector3())
-        model.position.sub(center)
-
-        const sizeBox = new THREE.Box3().setFromObject(model)
-        const size = sizeBox.getSize(new THREE.Vector3())
-        const maxDim = Math.max(size.x, size.y, size.z) || 1
-        const autoScale = VECH.targetSize / maxDim
-        model.scale.set(autoScale, autoScale, autoScale)
-
-        model.rotation.set(VECH.modelRot.x, VECH.modelRot.y, VECH.modelRot.z)
-        model.position.z = VECH.modelZ
-
-        model.traverse((child: any) => {
-          if (child.isMesh && child.material) {
-            const mat = child.material.clone()
-            if (mat.emissive !== undefined) {
-              mat.emissive = new THREE.Color(VECH.emissive)
-              mat.emissiveIntensity = VECH.emissiveIntensity
-            }
-            mat.transparent = true
-            mat.opacity = VECH.opacity
-            mat.side = THREE.DoubleSide
-            mat.depthWrite = false
-            child.material = mat
-            child.frustumCulled = false
-          }
-        })
-
-        shipIcon.add(model)
-        model.renderOrder = 10
-        shipIcon.renderOrder = 10
-        model.visible = true
-        shipIcon.visible = true
-      },
-      undefined,
-      (error: any) => {
-        console.error('Failed to load VECH ship GLB model (no fallback):', error)
-      }
-    )
+    const { shipIcon } = createVechHoloIcon(camera)
+    loadVechShipModel(glbUrl, shipIcon)
 
     const { fuelBars } = CockpitRender.createFuelBars(camera)
     fuelBarsRef.current = fuelBars

@@ -200,6 +200,14 @@ export const handleStandardERC721Event = async (
         console.error('Error getting block timestamp:', error);
     }
 
+    const alreadyLogged = await Models.Event.findOne({
+        transactionHash: _event.transactionHash,
+        logIndex: _event.logIndex,
+    }).exec();
+    if (alreadyLogged) {
+        return;
+    }
+
     if (event.event === "Transfer") {
         console.log('Processing Transfer:', {
             from: _event.from,
@@ -213,12 +221,15 @@ export const handleStandardERC721Event = async (
             if (processEvent) {
                 await processEvent(_event, web3);
             }
-            await new Models.NFT(_event).save();
-            await Models.Owner.findOneAndUpdate(
-                { address: _event.to },
-                { $inc: { balance: 1 } },
-                { upsert: true }
-            ).exec();
+            const existing = await Models.NFT.findOne({ tokenId: _event.tokenId }).exec();
+            if (!existing) {
+                await new Models.NFT(_event).save();
+                await Models.Owner.findOneAndUpdate(
+                    { address: _event.to },
+                    { $inc: { balance: 1 } },
+                    { upsert: true }
+                ).exec();
+            }
         } else {
             if (_event.from !== '0x0000000000000000000000000000000000000000') {
                 try {
@@ -245,7 +256,14 @@ export const handleStandardERC721Event = async (
     }
     _event.event = event.event;
     const _Event = new Models.Event(_event);
-    await _Event.save();
+    try {
+        await _Event.save();
+    } catch (error: any) {
+        if (error?.code === 11000) {
+            return;
+        }
+        throw error;
+    }
 };
 
 export const bulkLogEvents = async (events: any[], Models: Models) => {
