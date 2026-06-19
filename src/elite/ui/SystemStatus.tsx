@@ -1,9 +1,26 @@
 import React from 'react'
-import { COLORS } from '../config'
+import { COLORS, FUEL } from '../config'
 
-const SystemStatus: React.FC = () => {
-  const row1 = ['SYS', 'ENG']
-  const row2 = ['RST', 'WEP']
+interface SystemStatusProps {
+  fuel: number
+  flightMode: string
+}
+
+function pct(n: number) {
+  return `${Math.round(Math.max(0, Math.min(100, n)))}%`
+}
+
+const SystemStatus: React.FC<SystemStatusProps> = ({ fuel, flightMode }) => {
+  const fuelPct = (fuel / FUEL.max) * 100
+  const eng = fuelPct
+  const sys = flightMode === 'docked' ? 100 : fuelPct < 15 ? fuelPct * 4 : 100
+  const rst = flightMode === 'hyperspace' ? 72 : 100
+  const wep = flightMode === 'docked' ? 0 : 100
+
+  const rows: [string, number][][] = [
+    [['SYS', sys], ['ENG', eng]],
+    [['RST', rst], ['WEP', wep]],
+  ]
 
   const boxStyle = {
     textAlign: 'center' as const,
@@ -25,20 +42,15 @@ const SystemStatus: React.FC = () => {
       color: COLORS.vechRingCss,
       width: '100%',
     }}>
-      <div style={{ display: 'flex', gap: '6px' }}>
-        {row1.map(sys => (
-          <div key={sys} style={boxStyle}>
-            {sys} 100%
-          </div>
-        ))}
-      </div>
-      <div style={{ display: 'flex', gap: '6px' }}>
-        {row2.map(sys => (
-          <div key={sys} style={boxStyle}>
-            {sys} 100%
-          </div>
-        ))}
-      </div>
+      {rows.map((row, i) => (
+        <div key={i} style={{ display: 'flex', gap: '6px' }}>
+          {row.map(([label, value]) => (
+            <div key={label} style={boxStyle}>
+              {label} {pct(value)}
+            </div>
+          ))}
+        </div>
+      ))}
     </div>
   )
 }

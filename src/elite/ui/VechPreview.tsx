@@ -9,6 +9,7 @@ interface VechPreviewProps {
   hud: {
     speed: number
     fuel: number
+    flightMode: string
   }
   glbUrl: string
   ship?: Pick<VechNft, 'name' | 'shipId' | 'tokenId'>
@@ -145,7 +146,7 @@ const VechPreview: React.FC<VechPreviewProps> = ({ hud, glbUrl, ship }) => {
         </div>
 
         {/* Row 3: System stuff (SYS ENG RST WEP) as 2 rows of 2 (refactored for larger size) */}
-        <SystemStatus />
+        <SystemStatus fuel={hud.fuel} flightMode={hud.flightMode} />
       </div>
     </>
   )

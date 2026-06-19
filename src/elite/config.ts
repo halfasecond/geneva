@@ -143,8 +143,12 @@ export const SCANNER_2D = {
   maxZ: 155,
   sideWallZ: 310,
   halfWidthBase: 272,
+  wallBaseHalfW: 280,
+  wallTopHalfW: 120,
   taper: 0.52,
   brightPlaneHalfW: 296,
+  stationColor: '#88ddff',
+  planetColor: '#aaccff',
   // Glyph sizing
   sizeNear: 23.2,
   sizeFar: 8.8,

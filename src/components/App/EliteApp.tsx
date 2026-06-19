@@ -49,6 +49,12 @@ const EliteApp: React.FC<AuthProps> = ({
         return () => { cancelled = true }
     }, [loggedIn])
 
+    useEffect(() => {
+        if (!loggedIn || !tokenId || currentShip) return
+        const saved = ownedShips.find((s) => s.tokenId === tokenId)
+        if (saved) setCurrentShip(saved)
+    }, [loggedIn, tokenId, ownedShips, currentShip])
+
     const handleSelectShip = useCallback(async (ship: VechNft) => {
         const isOwned = ownedShips.some((s) => s.tokenId === ship.tokenId)
 
@@ -96,7 +102,9 @@ const EliteApp: React.FC<AuthProps> = ({
             </div>
             <Elite
                 currentShip={currentShip}
-                onChangeShip={() => setCurrentShip(null)}
+                ownedShips={ownedShips}
+                shipsLoading={shipsLoading}
+                onSelectShip={handleSelectShip}
                 showPositionDebug={import.meta.env.DEV || isHangarAdmin(loggedIn)}
             />
         </>

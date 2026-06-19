@@ -27,28 +27,29 @@ export function firstSelectableServiceIndex(services: StationServiceRow[]): numb
 export interface DockedServiceActivateResult {
   marketOpen: boolean
   upgradesOpen: boolean
+  hangarOpen: boolean
   refuel?: boolean
   undock?: boolean
 }
 
-/** Enter on the highlighted row — market / upgrades toggle; others close overlays first. */
+/** Enter on the highlighted row — market / upgrades / hangar toggle; others close overlays first. */
 export function activateDockedService(
   serviceId: string,
-  opts: { marketOpen: boolean; upgradesOpen: boolean },
+  opts: { marketOpen: boolean; upgradesOpen: boolean; hangarOpen: boolean },
 ): DockedServiceActivateResult {
   switch (serviceId) {
     case 'market':
-      return { marketOpen: !opts.marketOpen, upgradesOpen: false }
+      return { marketOpen: !opts.marketOpen, upgradesOpen: false, hangarOpen: false }
     case 'upgrades':
-      return { marketOpen: false, upgradesOpen: !opts.upgradesOpen }
+      return { marketOpen: false, upgradesOpen: !opts.upgradesOpen, hangarOpen: false }
+    case 'hangar':
+      return { marketOpen: false, upgradesOpen: false, hangarOpen: !opts.hangarOpen }
     case 'refuel':
-      return { marketOpen: false, upgradesOpen: false, refuel: true }
-    case 'news':
-      return { marketOpen: false, upgradesOpen: false }
+      return { marketOpen: false, upgradesOpen: false, hangarOpen: false, refuel: true }
     case 'undock':
-      return { marketOpen: false, upgradesOpen: false, undock: true }
+      return { marketOpen: false, upgradesOpen: false, hangarOpen: false, undock: true }
     default:
-      return { marketOpen: false, upgradesOpen: false }
+      return { marketOpen: false, upgradesOpen: false, hangarOpen: false }
   }
 }
 
@@ -95,6 +96,7 @@ export function buildDockedStationServices(opts: {
   fuelMax: number
   marketOpen: boolean
   upgradesOpen: boolean
+  hangarOpen: boolean
 }): StationServiceRow[] {
   const fuelPct = Math.round((opts.fuel / Math.max(1, opts.fuelMax)) * 100)
   const needsFuel = opts.fuel < opts.fuelMax
@@ -115,16 +117,17 @@ export function buildDockedStationServices(opts: {
     },
     {
       id: 'market',
-      label: 'Market',
+      label: 'Marketplace',
       status: opts.marketOpen ? 'OPEN' : 'READY',
       available: true,
       active: opts.marketOpen,
     },
     {
-      id: 'news',
-      label: 'News',
-      status: 'FEED',
+      id: 'hangar',
+      label: 'Hangar',
+      status: opts.hangarOpen ? 'OPEN' : 'SWAP',
       available: true,
+      active: opts.hangarOpen,
     },
     {
       id: 'undock',

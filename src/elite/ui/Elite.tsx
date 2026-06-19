@@ -48,23 +48,22 @@ import {
 } from '../sim/cartography'
 import {
   COLORS, MIND_RADAR, SCANNER_2D, VECH, VIEW, WORLD, HYPERSPACE, NPC, FUEL, MARKET, Z, DASHBOARD, WAYPOINTS,
-  roleCss, roleColor, npcSizeForRole, BOREAL_STATION, DOCKED_RADAR,
+  roleColor, npcSizeForRole, BOREAL_STATION, DOCKED_RADAR,
 } from '../config'
 import {
   activateDockedService,
   buildDockedStationServices,
-  drawDockedStationRadar2D,
   firstSelectableServiceIndex,
   stepDockedServiceIndex,
 } from '../render/dockedRadar'
-import { drawDockRadarIcon2D, drawMindRadarIcon2D, isMindContact, scannerDisplayPos2D } from '../render/radarIcons'
-import { isDockContact, projectContacts } from '../sim/contacts'
+import { projectContacts } from '../sim/contacts'
 import { getCargoUsed } from '../sim/market'
 import { isBorealFreighterInBubble } from '../sim/borealDock'
 import { bodyLocalPos, isInsideBubble, viewBasisFromAttitude } from '../sim/systemSpace'
 import { computeWaypoints, type WaypointIndicator } from '../sim/waypoints'
 import type { CartographyBody } from '../sim/cartography'
 import { useFlightInput } from '../useFlightInput'
+import { useRadar2D } from '../useRadar2D'
 import * as CockpitRender from '../render/cockpit'
 import { createVechHoloIcon, loadVechShipModel } from '../render/vech'
 import * as HyperspaceRender from '../render/hyperspace'
@@ -85,6 +84,7 @@ import HyperspaceCountdown from './Cartography/HyperspaceCountdown'
 import HyperspaceTunnel from './Cartography/HyperspaceTunnel'
 import MarketOverlay from './Market/MarketOverlay'
 import ShipUpgradesOverlay from './ShipUpgradesOverlay'
+import HangarOverlay from './Hangar/HangarOverlay'
 import VechPreview from './VechPreview'
 import ShipHoldPanel from './ShipHoldPanel'
 import WaypointOverlay from './WaypointOverlay'
@@ -92,11 +92,19 @@ import PositionDebug from './PositionDebug'
 
 type EliteProps = {
   currentShip: VechNft
-  onChangeShip?: () => void
+  ownedShips: VechNft[]
+  shipsLoading?: boolean
+  onSelectShip: (ship: VechNft) => void
   showPositionDebug?: boolean
 }
 
-const Elite: React.FC<EliteProps> = ({ currentShip, showPositionDebug = false }) => {
+const Elite: React.FC<EliteProps> = ({
+  currentShip,
+  ownedShips,
+  shipsLoading = false,
+  onSelectShip,
+  showPositionDebug = false,
+}) => {
   const glbUrl = currentShip.animation_url || ''
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const simRef = useRef<EliteSim>(new EliteSim(2))
@@ -152,6 +160,9 @@ const Elite: React.FC<EliteProps> = ({ currentShip, showPositionDebug = false })
   const [upgradesOpen, setUpgradesOpen] = useState(false)
   const upgradesOpenRef = useRef(false)
   upgradesOpenRef.current = upgradesOpen
+  const [hangarOpen, setHangarOpen] = useState(false)
+  const hangarOpenRef = useRef(false)
+  hangarOpenRef.current = hangarOpen
   const dockedServiceIndexRef = useRef(0)
   const [marketSnap, setMarketSnap] = useState<EliteSnapshot | null>(() => simRef.current.getSnapshot())
 
@@ -176,6 +187,21 @@ const Elite: React.FC<EliteProps> = ({ currentShip, showPositionDebug = false })
     const handleGlobalKeys = (e: KeyboardEvent) => {
       const k = e.key.toLowerCase()
       if (k === 'm' && hyperspacePhaseRef.current === 'idle') setMapOpen(o => !o)
+      if (
+        k === 'h'
+        && hyperspacePhaseRef.current === 'idle'
+        && !mapOpen
+        && snapRef.current?.player.flightMode === 'docked'
+      ) {
+        const result = activateDockedService('hangar', {
+          marketOpen: marketOpenRef.current,
+          upgradesOpen: upgradesOpenRef.current,
+          hangarOpen: hangarOpenRef.current,
+        })
+        setMarketOpen(result.marketOpen)
+        setUpgradesOpen(result.upgradesOpen)
+        setHangarOpen(result.hangarOpen)
+      }
       if (k === 'escape' && mapOpen && hyperspacePhaseRef.current === 'idle') setMapOpen(false)
       if (k === 'f' && hyperspacePhaseRef.current === 'idle') {
         const mode = snapRef.current?.player.flightMode
@@ -183,6 +209,7 @@ const Elite: React.FC<EliteProps> = ({ currentShip, showPositionDebug = false })
           simRef.current.startUndocking()
           setMarketOpen(false)
           setUpgradesOpen(false)
+          setHangarOpen(false)
         } else if (mode === 'normal' || mode === 'supercruise') {
           simRef.current.startDocking()
         }
@@ -190,6 +217,7 @@ const Elite: React.FC<EliteProps> = ({ currentShip, showPositionDebug = false })
       if (k === 'escape' && snapRef.current?.player.flightMode === 'docked') {
         if (marketOpen) setMarketOpen(false)
         else if (upgradesOpen) setUpgradesOpen(false)
+        else if (hangarOpen) setHangarOpen(false)
       }
 
       const docked = snapRef.current?.player.flightMode === 'docked'
@@ -202,6 +230,7 @@ const Elite: React.FC<EliteProps> = ({ currentShip, showPositionDebug = false })
           fuelMax: FUEL.max,
           marketOpen: marketOpenRef.current,
           upgradesOpen: upgradesOpenRef.current,
+          hangarOpen: hangarOpenRef.current,
         })
 
         if (k === 'arrowup' || k === 'arrowdown') {
@@ -223,24 +252,27 @@ const Elite: React.FC<EliteProps> = ({ currentShip, showPositionDebug = false })
           const result = activateDockedService(selected.id, {
             marketOpen: marketOpenRef.current,
             upgradesOpen: upgradesOpenRef.current,
+            hangarOpen: hangarOpenRef.current,
           })
           if (result.undock) {
             simRef.current.startUndocking()
             setMarketOpen(false)
             setUpgradesOpen(false)
+            setHangarOpen(false)
             setMarketSnap(simRef.current.getSnapshot())
             return
           }
           if (result.refuel) simRef.current.refuel()
           setMarketOpen(result.marketOpen)
           setUpgradesOpen(result.upgradesOpen)
+          setHangarOpen(result.hangarOpen)
           setMarketSnap(simRef.current.getSnapshot())
         }
       }
     }
     window.addEventListener('keydown', handleGlobalKeys, true)
     return () => window.removeEventListener('keydown', handleGlobalKeys, true)
-  }, [mapOpen, marketOpen, upgradesOpen])
+  }, [mapOpen, marketOpen, upgradesOpen, hangarOpen])
 
   // Initialize Three.js scene (inspired by Flocker FlockScene + cartography aesthetic)
   useEffect(() => {
@@ -656,11 +688,13 @@ const Elite: React.FC<EliteProps> = ({ currentShip, showPositionDebug = false })
       if (snap.player.flightMode === 'docked' && prevFlightModeRef.current !== 'docked') {
         setMarketOpen(false)
         setUpgradesOpen(false)
+        setHangarOpen(false)
         const services = buildDockedStationServices({
           fuel: snap.player.fuel ?? FUEL.starting,
           fuelMax: FUEL.max,
           marketOpen: false,
           upgradesOpen: false,
+          hangarOpen: false,
         })
         dockedServiceIndexRef.current = firstSelectableServiceIndex(services)
       }
@@ -731,225 +765,15 @@ const Elite: React.FC<EliteProps> = ({ currentShip, showPositionDebug = false })
 
 
 
-  // 2D side-on ~20deg angled "nearby things" scanner in the bottom dashboard (always visible, center bottom).
-  // Larger rectangular holo panel. Contacts projected so lateral spreads horizontally, elevation is direct vertical offset
-  // from the receding angled depth plane (20deg pitch), range recedes up-screen. Yellow height sticks for vertical clarity.
-  // Real NPCs + carto bodies + persistent demo contacts (for immediate visual of vertical/range/lateral).
-  useEffect(() => {
-    const canvas = radar2DCanvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-
-    let raf: number
-    const drawRadar = () => {
-      // Side-on ~20deg angled "nearby things" scanner (not top-down circular).
-      // Larger for the always-visible center-bottom dashboard radar.
-      // Horizontal = lateral (left/right of heading) + slight depth perspective.
-      // Vertical = elevation (above/below plane) with clear sticks.
-      // Depth/range recedes upward on screen via 20deg pitch projection so you can "see" the 3D volume.
-      // Matches classic Elite scanner spirit but with explicit vertical awareness from a shallow angle.
-      //
-      // All tunables (including the container position for "move the section up") are in SCANNER_2D in src/elite/config.ts
-      // (this was the main place the layout was set before; drawing constants were also duplicated here).
-
-      const W = canvas.width
-      const H = canvas.height
-      const cx = W * 0.5
-
-      // Use centralized values from config (previously many magic numbers here)
-      const baseY = H * SCANNER_2D.baseYFactor
-      const pitchRad = SCANNER_2D.pitchDeg * Math.PI / 180
-      const depthFactor = SCANNER_2D.depthFactor
-
-      // Background
-      ctx.fillStyle = 'rgba(0,0,0,0.78)'
-      ctx.fillRect(0, 0, W, H)
-
-      // Receding range grid lines (angled 20deg plane) - vech blue
-      ctx.strokeStyle = SCANNER_2D.gridColor
-      ctx.lineWidth = 1
-      const numLines = SCANNER_2D.numRangeLines
-      for (let i = 0; i <= numLines; i++) {
-        const t = i / numLines
-        const z = t * SCANNER_2D.maxZ
-        const y = baseY - z * Math.sin(pitchRad) * depthFactor
-        const halfW = SCANNER_2D.halfWidthBase * (1 - t * SCANNER_2D.taper)
-        ctx.beginPath()
-        ctx.moveTo(cx - halfW, y)
-        ctx.lineTo(cx + halfW, y)
-        ctx.stroke()
-      }
-
-      // Side walls of the scan volume (tapered)
-      // Note: wall base width 280 (slightly wider than grid halfWidthBase 272); slant uses sideWallZ
-      ctx.beginPath()
-      ctx.moveTo(cx - 280, baseY)
-      ctx.lineTo(cx - 120, baseY - SCANNER_2D.sideWallZ * Math.sin(pitchRad) * depthFactor)
-      ctx.moveTo(cx + 280, baseY)
-      ctx.lineTo(cx + 120, baseY - SCANNER_2D.sideWallZ * Math.sin(pitchRad) * depthFactor)
-      ctx.stroke()
-
-      // Bright local/base plane line
-      ctx.strokeStyle = SCANNER_2D.brightColor
-      ctx.lineWidth = 1.6
-      ctx.beginPath()
-      ctx.moveTo(cx - SCANNER_2D.brightPlaneHalfW, baseY)
-      ctx.lineTo(cx + SCANNER_2D.brightPlaneHalfW, baseY)
-      ctx.stroke()
-
-      // Player own-ship marker (chevron pointing forward on the local line)
-      ctx.fillStyle = SCANNER_2D.playerColor
-      ctx.lineWidth = 1
-      ctx.beginPath()
-      ctx.moveTo(cx, baseY - SCANNER_2D.chevron.back)
-      ctx.lineTo(cx - SCANNER_2D.chevron.side, baseY + SCANNER_2D.chevron.fwd)
-      ctx.lineTo(cx + SCANNER_2D.chevron.side, baseY + SCANNER_2D.chevron.fwd)
-      ctx.closePath()
-      ctx.fill()
-      ctx.strokeStyle = SCANNER_2D.playerColor
-      ctx.beginPath()
-      ctx.moveTo(cx - 6, baseY + 4)
-      ctx.lineTo(cx, baseY - 4)
-      ctx.lineTo(cx + 6, baseY + 4)
-      ctx.stroke()
-
-      const p = snapRef.current?.player
-      if (!p) {
-        raf = requestAnimationFrame(drawRadar)
-        return
-      }
-
-      if (p.flightMode === 'docked' && p.dockedAtStationId) {
-        const body = getBodyById(p.dockedAtStationId, 'frozen')
-        const dockedServices = buildDockedStationServices({
-          fuel: p.fuel ?? FUEL.starting,
-          fuelMax: FUEL.max,
-          marketOpen: marketOpenRef.current,
-          upgradesOpen: upgradesOpenRef.current,
-        })
-        if (!dockedServices[dockedServiceIndexRef.current]?.available) {
-          dockedServiceIndexRef.current = firstSelectableServiceIndex(dockedServices)
-        }
-        drawDockedStationRadar2D(ctx, W, H, {
-          stationName: body?.name ?? 'Station',
-          services: dockedServices,
-          selectedIndex: dockedServiceIndexRef.current,
-        })
-        raf = requestAnimationFrame(drawRadar)
-        return
-      }
-
-      const fwd = p.heading
-      const upv = p.up || { x: 0, y: 1, z: 0 }
-      const carto = getFrozenCartographyBodies()
-      const sys2d = p.systemPos2d
-      const radarBodies = carto
-        .filter(b => b.type !== 'star')
-        .map(b => ({
-          id: b.id,
-          name: b.name,
-          type: b.type,
-          pos3d: bodyLocalPos(b, sys2d),
-        }))
-
-      const contacts = projectContacts(
-        { pos: p.pos, heading: fwd, up: upv },
-        snapRef.current?.npcs || [],
-        radarBodies,
-        { maxShip: SCANNER_2D.maxRangeShip, maxBody: SCANNER_2D.maxRangeBody, maxMind: MIND_RADAR.maxRange }
-      )
-
-      contacts.forEach((c) => {
-        const { sx, sy, planeY, distant } = scannerDisplayPos2D(c, cx, baseY, pitchRad)
-
-        const size = Math.max(SCANNER_2D.sizeFar, SCANNER_2D.sizeNear * (1 - Math.min(1, c.dist / SCANNER_2D.sizeDistDiv)))
-
-        // Elevation stick (from the angled plane up/down to the contact) - now vech blue
-        if (Math.abs(c.y) > 5) {
-          ctx.strokeStyle = SCANNER_2D.elevationStickColor
-          ctx.lineWidth = 1.2
-          ctx.beginPath()
-          ctx.moveTo(sx, planeY)
-          ctx.lineTo(sx, sy)
-          ctx.stroke()
-        }
-
-        if (c.type === 'ship') {
-          ctx.save()
-          ctx.translate(sx, sy)
-          if (isMindContact(c)) {
-            if (distant) ctx.globalAlpha = 0.72
-            drawMindRadarIcon2D(ctx, size * MIND_RADAR.sizeMul2d)
-            if (distant) ctx.globalAlpha = 1
-          } else {
-            const shipSize = size
-            ctx.fillStyle = roleCss(c.role)
-            ctx.beginPath()
-            ctx.moveTo(0, -shipSize)
-            ctx.lineTo(-shipSize * 0.48, shipSize * 0.38)
-            ctx.lineTo(0, shipSize * 0.12)
-            ctx.lineTo(shipSize * 0.48, shipSize * 0.38)
-            ctx.closePath()
-            ctx.fill()
-          }
-          ctx.restore()
-        } else if (isDockContact(c)) {
-          ctx.save()
-          ctx.translate(sx, sy)
-          if (distant) ctx.globalAlpha = 0.82
-          drawDockRadarIcon2D(ctx, size * 1.15)
-          if (distant) ctx.globalAlpha = 1
-          ctx.restore()
-        } else {
-          ctx.fillStyle = c.type === 'station' ? '#88ddff' : '#aaccff'
-          ctx.beginPath()
-          ctx.arc(sx, sy, size * (c.type === 'station' ? 1.08 : 0.82), 0, Math.PI * 2)
-          ctx.fill()
-          if (c.type === 'station') {
-            ctx.strokeStyle = '#ffffff'
-            ctx.lineWidth = 0.7
-            ctx.beginPath()
-            ctx.moveTo(sx - size * 0.38, sy)
-            ctx.lineTo(sx + size * 0.38, sy)
-            ctx.moveTo(sx, sy - size * 0.38)
-            ctx.lineTo(sx, sy + size * 0.38)
-            ctx.stroke()
-            ctx.lineWidth = 1
-          }
-        }
-
-        // Mind / dock designation + distance labels
-        if (isMindContact(c) && c.dist < MIND_RADAR.labelDist) {
-          ctx.fillStyle = MIND_RADAR.colors.ring2d
-          ctx.font = 'bold 9px monospace'
-          ctx.fillText(c.designation ?? c.name ?? 'MIND', sx + size * 2.2, sy - 5)
-        }
-        if (isDockContact(c) && c.dist < MIND_RADAR.labelDist) {
-          ctx.fillStyle = '#66aaff'
-          ctx.font = 'bold 9px monospace'
-          ctx.fillText(c.name ?? 'DOCK', sx + size * 2.4, sy - 5)
-        }
-        if (c.dist < SCANNER_2D.labelDist) {
-          ctx.fillStyle = SCANNER_2D.labelColor
-          ctx.font = '8px monospace'
-          const mind = isMindContact(c)
-          const dock = isDockContact(c)
-          ctx.fillText(
-            Math.round(c.dist).toString(),
-            mind || dock ? sx + size * 2.2 : sx + size + 6,
-            mind || dock ? sy + 6 : sy + 3,
-          )
-        }
-      })
-
-      raf = requestAnimationFrame(drawRadar)
-    }
-
-    drawRadar()
-
-    return () => { if (raf) cancelAnimationFrame(raf) }
-  }, [mapOpen])  // re-draws on map toggle too, but always runs for ship UI
+  useRadar2D({
+    canvasRef: radar2DCanvasRef,
+    snapRef,
+    marketOpenRef,
+    upgradesOpenRef,
+    hangarOpenRef,
+    dockedServiceIndexRef,
+    mapOpen,
+  })
 
   const handleInitiateHyperspace = () => {
     if (hyperspacePhaseRef.current !== 'idle') return
@@ -1039,6 +863,7 @@ const Elite: React.FC<EliteProps> = ({ currentShip, showPositionDebug = false })
               simRef.current.undock()
               setMarketOpen(false)
               setUpgradesOpen(false)
+              setHangarOpen(false)
               setMarketSnap(simRef.current.getSnapshot())
             }}
             onTrade={(commodityId, tons, direction) => {
@@ -1056,6 +881,22 @@ const Elite: React.FC<EliteProps> = ({ currentShip, showPositionDebug = false })
           onClose={() => setUpgradesOpen(false)}
         />
       )}
+
+      {hangarOpen && hud.flightMode === 'docked' && !mapOpen && (() => {
+        const station = hud.dockedAtStationId
+          ? getBodyById(hud.dockedAtStationId, 'frozen')
+          : null
+        return (
+          <HangarOverlay
+            stationName={station?.name ?? 'Station'}
+            ownedShips={ownedShips}
+            currentShip={currentShip}
+            shipsLoading={shipsLoading}
+            onClose={() => setHangarOpen(false)}
+            onSelectShip={onSelectShip}
+          />
+        )
+      })()}
 
       {mapOpen && (
         <CartographyOverlay
