@@ -538,6 +538,9 @@ export const Z = {
   cockpitWidgets: 17,   // radar, Vech, hyperspace panel
   logo: 18,
   bezel: 20,            // windscreen frame — always over holo effects
+  auth: 9000,           // in-game sign-out control
+  hangar: 10000,        // ship select overlay
+  hangarDebug: 10001,   // admin hangar layout debug bar
 } as const
 
 /** Bottom cockpit dashboard chrome (scanner, Vech preview, left column). */
@@ -589,25 +592,6 @@ export const MAP = {
     activeColor: '#ffffff',
     font: 'ui-monospace, SFMono-Regular, Menlo, monospace',
   },
-}
-
-// =============================================================================
-// DRAGGABLE HOLO PANELS (Minority Report style)
-// =============================================================================
-export const PANELS = {
-  width: 360,
-  mapInitial: { x: 820, y: 60 },
-  controlsInitial: { x: 820, y: 430 },
-  dragBounds: {
-    minX: 10,
-    maxXPad: 480,
-    minY: 10,
-    maxYPadMap: 420,
-    maxYPadControls: 200,
-  },
-  z: 25,
-  headerGradient: 'linear-gradient(to right, rgba(0,120,200,0.25), rgba(0,80,150,0.1))',
-  headerBorder: '#0099dd',
 }
 
 // Small helpers kept with config for convenience

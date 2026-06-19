@@ -245,6 +245,18 @@ export function getRouteJumpCost(
   return getJumpFuelCost(from, dest.pos2d, fromSystemId, dest.systemId)
 }
 
+export function canInitiateHyperspace(opts: {
+  destinationId: string | null
+  flightMode: string
+  fuel: number
+  cost: number
+  isHyperspacing: boolean
+}): boolean {
+  if (!opts.destinationId || opts.isHyperspacing || opts.flightMode === 'docked') return false
+  if (!Number.isFinite(opts.cost) || opts.fuel < opts.cost) return false
+  return Boolean(getBodyById(opts.destinationId, 'frozen'))
+}
+
 /** @deprecated Use systemSpace.approachPose / dockedPose / arrivalPose */
 export function navPos3dFromBody(body: CartographyBody): { x: number; y: number; z: number } {
   return approachPose(body).pos

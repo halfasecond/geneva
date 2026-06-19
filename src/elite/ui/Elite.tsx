@@ -35,71 +35,68 @@ declare global {
     }
   }
 }
-import type { AuthProps } from '../../types/auth'
 import type { VechNft } from '../../types/vech'
-import { EliteSim } from '../../elite/sim/EliteSim'
-import type { EliteSnapshot, NpcAgent } from '../../elite/sim/core/types'
-import { length } from '../../elite/sim/core/vector'
+import { EliteSim } from '../sim/EliteSim'
+import type { EliteSnapshot, NpcAgent } from '../sim/core/types'
+import { length } from '../sim/core/vector'
 import {
   EMPTY_ROUTE,
+  canInitiateHyperspace,
   getBodyById,
   getFrozenCartographyBodies,
   getRouteJumpCost,
-} from '../../elite/sim/cartography'
-
-// Tightening imports (config + extracted modules)
+} from '../sim/cartography'
 import {
   COLORS, MIND_RADAR, SCANNER_2D, VECH, VIEW, WORLD, HYPERSPACE, NPC, FUEL, MARKET, Z, DASHBOARD, WAYPOINTS,
   roleCss, roleColor, npcSizeForRole, BOREAL_STATION, DOCKED_RADAR,
-} from '../../elite/config'
+} from '../config'
 import {
   activateDockedService,
   buildDockedStationServices,
   drawDockedStationRadar2D,
   firstSelectableServiceIndex,
   stepDockedServiceIndex,
-} from '../../elite/render/dockedRadar'
-import { drawDockRadarIcon2D, drawMindRadarIcon2D, isMindContact, scannerDisplayPos2D } from '../../elite/render/radarIcons'
-import { isDockContact, projectContacts } from '../../elite/sim/contacts'
-import { getCargoUsed } from '../../elite/sim/market'
-import { isBorealFreighterInBubble } from '../../elite/sim/borealDock'
-import { bodyLocalPos, isInsideBubble, viewBasisFromAttitude } from '../../elite/sim/systemSpace'
-import { computeWaypoints, type WaypointIndicator } from '../../elite/sim/waypoints'
-import type { CartographyBody } from '../../elite/sim/cartography'
-import { useFlightInput } from '../../elite/useFlightInput'
-import * as CockpitRender from '../../elite/render/cockpit'
-import { createVechHoloIcon, loadVechShipModel } from '../../elite/render/vech'
-import * as HyperspaceRender from '../../elite/render/hyperspace'
-import * as StationRender from '../../elite/render/station'
+} from '../render/dockedRadar'
+import { drawDockRadarIcon2D, drawMindRadarIcon2D, isMindContact, scannerDisplayPos2D } from '../render/radarIcons'
+import { isDockContact, projectContacts } from '../sim/contacts'
+import { getCargoUsed } from '../sim/market'
+import { isBorealFreighterInBubble } from '../sim/borealDock'
+import { bodyLocalPos, isInsideBubble, viewBasisFromAttitude } from '../sim/systemSpace'
+import { computeWaypoints, type WaypointIndicator } from '../sim/waypoints'
+import type { CartographyBody } from '../sim/cartography'
+import { useFlightInput } from '../useFlightInput'
+import * as CockpitRender from '../render/cockpit'
+import { createVechHoloIcon, loadVechShipModel } from '../render/vech'
+import * as HyperspaceRender from '../render/hyperspace'
+import * as StationRender from '../render/station'
 import {
   BIG_SHIP_MESH_VERSION,
   createBigShipMesh,
   isBigShipMesh,
   updateBigShipCityLights,
-} from '../../elite/render/bigShip'
+} from '../render/bigShip'
 import {
   hasBorealDockBay,
   updateBorealDockBay,
-} from '../../elite/render/borealDockBay'
-import {
-  CartographyOverlay,
-  HyperspacePanel,
-  HyperspaceCountdown,
-  HyperspaceTunnel,
-  MarketOverlay,
-  ShipUpgradesOverlay,
-  VechPreview,
-  ShipHoldPanel,
-  WaypointOverlay,
-  PositionDebug,
-} from '../../elite/ui'
+} from '../render/borealDockBay'
+import CartographyOverlay from './Cartography/CartographyOverlay'
+import HyperspacePanel from './Cartography/HyperspacePanel'
+import HyperspaceCountdown from './Cartography/HyperspaceCountdown'
+import HyperspaceTunnel from './Cartography/HyperspaceTunnel'
+import MarketOverlay from './Market/MarketOverlay'
+import ShipUpgradesOverlay from './ShipUpgradesOverlay'
+import VechPreview from './VechPreview'
+import ShipHoldPanel from './ShipHoldPanel'
+import WaypointOverlay from './WaypointOverlay'
+import PositionDebug from './PositionDebug'
 
-type EliteProps = AuthProps & {
+type EliteProps = {
   currentShip: VechNft
   onChangeShip?: () => void
+  showPositionDebug?: boolean
 }
 
-const Elite: React.FC<EliteProps> = ({ currentShip }) => {
+const Elite: React.FC<EliteProps> = ({ currentShip, showPositionDebug = false }) => {
   const glbUrl = currentShip.animation_url || ''
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const simRef = useRef<EliteSim>(new EliteSim(2))
@@ -164,7 +161,6 @@ const Elite: React.FC<EliteProps> = ({ currentShip }) => {
   const routeRef = useRef(route)
   routeRef.current = route
 
-  const destBody = getBodyById(route.destinationId, 'frozen')
   const [isHyperspacing, setIsHyperspacing] = useState(false)
   const [hyperspaceCountdown, setHyperspaceCountdown] = useState<number | null>(null)
   const hyperspaceJumpStartRef = useRef(0)
@@ -765,8 +761,6 @@ const Elite: React.FC<EliteProps> = ({ currentShip }) => {
       const baseY = H * SCANNER_2D.baseYFactor
       const pitchRad = SCANNER_2D.pitchDeg * Math.PI / 180
       const depthFactor = SCANNER_2D.depthFactor
-      const elevFactor = SCANNER_2D.elevFactor
-      const latFactor = SCANNER_2D.latFactor
 
       // Background
       ctx.fillStyle = 'rgba(0,0,0,0.78)'
@@ -959,12 +953,15 @@ const Elite: React.FC<EliteProps> = ({ currentShip }) => {
 
   const handleInitiateHyperspace = () => {
     if (hyperspacePhaseRef.current !== 'idle') return
-    const d = getBodyById(route.destinationId, 'frozen')
-    if (!d) return
     const snap = simRef.current.getSnapshot()
-    if (snap.player.flightMode === 'docked') return
     const cost = getRouteJumpCost(snap.player.systemPos2d, snap.player.systemId, route)
-    if (hud.fuel < cost) return
+    if (!canInitiateHyperspace({
+      destinationId: route.destinationId,
+      flightMode: snap.player.flightMode,
+      fuel: hud.fuel,
+      cost,
+      isHyperspacing: hyperspacePhaseRef.current !== 'idle',
+    })) return
 
     setMapOpen(false)
     hyperspaceDestinationRef.current = route.destinationId
@@ -1002,7 +999,7 @@ const Elite: React.FC<EliteProps> = ({ currentShip }) => {
         }
       />
 
-      {!mapOpen && (
+      {showPositionDebug && !mapOpen && (
         <PositionDebug
           pos={hud.playerPos}
           speed={hud.speed}
