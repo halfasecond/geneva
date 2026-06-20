@@ -486,6 +486,12 @@ const Elite: React.FC<EliteProps> = ({
         fuel={hud.fuel}
         flightMode={hud.flightMode}
         isHyperspacing={isHyperspacing}
+        mapOpen={mapOpen}
+        mapToggleDisabled={isHyperspacing || hyperspaceCountdown !== null}
+        onToggleMap={() => {
+          if (hyperspacePhaseRef.current !== 'idle') return
+          setMapOpen(open => !open)
+        }}
         onInitiateHyperspace={handleInitiateHyperspace}
       />
 

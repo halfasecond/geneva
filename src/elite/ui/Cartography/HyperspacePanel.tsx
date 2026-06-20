@@ -17,7 +17,62 @@ interface HyperspacePanelProps {
   fuel: number
   flightMode: string
   isHyperspacing: boolean
+  mapOpen: boolean
+  mapToggleDisabled?: boolean
+  onToggleMap: () => void
   onInitiateHyperspace: () => void
+}
+
+const MAP_TOGGLE_SIZE = 32
+
+const MAP_TOGGLE_ICON_SIZE = 24
+
+/** Cartography affordance — two orbits, sun, and planets in cockpit blue. */
+function MapToggleIcon({ color = COLORS.vechRingCss }: { color?: string }) {
+  const cx = 7
+  const cy = 7
+  const orbit = (radius: number) => (
+    <circle
+      key={`orbit-${radius}`}
+      cx={cx}
+      cy={cy}
+      r={radius}
+      fill="none"
+      stroke={color}
+      strokeWidth="0.42"
+      opacity={0.82}
+    />
+  )
+  const planet = (orbitRadius: number, degrees: number, size = 0.58) => {
+    const rad = (degrees * Math.PI) / 180
+    return (
+      <circle
+        key={`planet-${orbitRadius}-${degrees}`}
+        cx={cx + orbitRadius * Math.cos(rad)}
+        cy={cy + orbitRadius * Math.sin(rad)}
+        r={size}
+        fill={color}
+      />
+    )
+  }
+
+  return (
+    <svg
+      width={MAP_TOGGLE_ICON_SIZE}
+      height={MAP_TOGGLE_ICON_SIZE}
+      viewBox="0 0 14 14"
+      aria-hidden
+      style={{ display: 'block' }}
+    >
+      {orbit(2.65)}
+      {orbit(4.55)}
+      <circle cx={cx} cy={cy} r={1.2} fill={color} opacity={0.18} />
+      <circle cx={cx} cy={cy} r={0.82} fill={color} />
+      {planet(2.65, -52, 0.52)}
+      {planet(4.55, 128, 0.56)}
+      {planet(4.55, -168, 0.46)}
+    </svg>
+  )
 }
 
 /** Destination intel + jump CTA — matches the left cockpit info card style. */
@@ -29,6 +84,9 @@ const HyperspacePanel: React.FC<HyperspacePanelProps> = ({
   fuel,
   flightMode,
   isHyperspacing,
+  mapOpen,
+  mapToggleDisabled = false,
+  onToggleMap,
   onInitiateHyperspace,
 }) => {
   const dest = getBodyById(route.destinationId, 'frozen')
@@ -58,6 +116,8 @@ const HyperspacePanel: React.FC<HyperspacePanelProps> = ({
       : 'In flight'
   const isInFlight = !hasTarget && flightMode !== 'docked'
 
+  const mapToggleActive = mapOpen && !mapToggleDisabled
+
   return (
     <div
       style={{
@@ -78,7 +138,40 @@ const HyperspacePanel: React.FC<HyperspacePanelProps> = ({
         fontSize: '18px',
       }}
     >
-      <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
+      <button
+        type="button"
+        aria-label={mapOpen ? 'Close cartography map' : 'Open cartography map'}
+        aria-pressed={mapOpen}
+        disabled={mapToggleDisabled}
+        onClick={onToggleMap}
+        style={{
+          position: 'absolute',
+          top: 12,
+          right: 12,
+          width: MAP_TOGGLE_SIZE,
+          height: MAP_TOGGLE_SIZE,
+          padding: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          border: mapToggleActive
+            ? `1px solid ${COLORS.vechRingCss}`
+            : '1px solid rgba(0, 170, 255, 0.22)',
+          borderRadius: 2,
+          background: mapToggleActive
+            ? 'rgba(102, 170, 255, 0.18)'
+            : 'rgba(0, 6, 14, 0.9)',
+          color: mapToggleDisabled ? 'rgba(102, 170, 255, 0.35)' : COLORS.vechRingCss,
+          cursor: mapToggleDisabled ? 'not-allowed' : 'pointer',
+          boxShadow: mapToggleActive ? 'inset 0 0 10px rgba(102, 170, 255, 0.12)' : 'none',
+        }}
+      >
+        <MapToggleIcon
+          color={mapToggleDisabled ? 'rgba(102, 170, 255, 0.35)' : COLORS.vechRingCss}
+        />
+      </button>
+
+      <div style={{ fontWeight: 'bold', marginBottom: '4px', paddingRight: MAP_TOGGLE_SIZE + 8 }}>
         {headline}
       </div>
       <div style={{
