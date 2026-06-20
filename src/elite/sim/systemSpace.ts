@@ -229,3 +229,22 @@ export function distanceLocal(a: Vec3, b: Vec3): number {
 export function isInsideBubble(localPos: Vec3): boolean {
   return distanceLocal(localPos, { x: 0, y: 0, z: 0 }) <= SPACE.bubbleRadius
 }
+
+/** Cartography bodies that match what the 3D bubble actually renders (excludes nav-only markers). */
+export type RadarBodyContact = Pick<CartographyBody, 'id' | 'name' | 'type' | 'navOnly'> & { pos3d: Vec3 }
+
+export function radarVisibleBodies(
+  bodies: CartographyBody[],
+  playerSystemPos2d: Vec2,
+): RadarBodyContact[] {
+  return bodies
+    .filter(b => b.type !== 'star' && !b.navOnly)
+    .map(b => ({
+      id: b.id,
+      name: b.name,
+      type: b.type,
+      navOnly: b.navOnly,
+      pos3d: bodyLocalPos(b, playerSystemPos2d),
+    }))
+    .filter(b => isInsideBubble(b.pos3d))
+}

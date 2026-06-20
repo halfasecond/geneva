@@ -13,6 +13,7 @@ import type { Vec3 } from './core/types'
 import type { NpcAgent } from './core/types'
 import type { CartographyBody } from './cartography'
 import { MIND_RADAR } from '../config'
+
 import type { DockBayIndex } from '../../types/dockBay'
 import { borealForceFieldWorldPos, isBorealFreighterInBubble, nearestBorealBayIndex } from './borealDock'
 import { offsetFromPlayer, worldOffsetToBodyFrame } from './systemSpace'
@@ -54,7 +55,7 @@ const DEFAULT_MAX_MIND = MIND_RADAR.maxRange
 export function projectContacts(
   player: { pos: Vec3; heading: Vec3; up: Vec3 },
   npcs: Array<{ pos: Vec3; role: NpcAgent['role']; designation?: string }>,
-  bodies: Array<Pick<CartographyBody, 'pos3d' | 'type' | 'name' | 'id'>>,
+  bodies: Array<Pick<CartographyBody, 'pos3d' | 'type' | 'name' | 'id' | 'navOnly'>>,
   opts: ProjectOpts = {}
 ): Contact[] {
   const { pos: pPos, heading: fwd, up: upv } = player
@@ -103,7 +104,7 @@ export function projectContacts(
   }
 
   for (const b of bodies) {
-    if (b.type === 'star') continue
+    if (b.type === 'star' || b.navOnly) continue
     const frame = worldOffsetToBodyFrame(b.pos3d, fwd, upv)
     if (frame.dist > maxBody) continue
 

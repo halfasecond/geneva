@@ -59,7 +59,7 @@ import {
 import { projectContacts } from '../sim/contacts'
 import { getCargoUsed } from '../sim/market'
 import { isBorealFreighterInBubble } from '../sim/borealDock'
-import { bodyLocalPos, isInsideBubble, viewBasisFromAttitude } from '../sim/systemSpace'
+import { bodyLocalPos, isInsideBubble, radarVisibleBodies, viewBasisFromAttitude } from '../sim/systemSpace'
 import { computeWaypoints, type WaypointIndicator } from '../sim/waypoints'
 import type { CartographyBody } from '../sim/cartography'
 import { useFlightInput } from '../useFlightInput'
@@ -400,7 +400,7 @@ const Elite: React.FC<EliteProps> = ({
     const bodiesGroup = new THREE.Group()
     const cartoInitial = getFrozenCartographyBodies()
     cartoInitial.forEach((b) => {
-      if (b.type === 'star') return
+      if (b.type === 'star' || b.navOnly) return
       const mesh = b.type === 'station'
         ? StationRender.createStationMesh(b.color, b.radius)
         : StationRender.createPlanetMesh(b.color, b.radius)
@@ -502,8 +502,7 @@ const Elite: React.FC<EliteProps> = ({
           if (!body) return
           const local = bodyLocalPos(body, systemPos2d)
           child.position.set(local.x, local.y, local.z)
-          // Boreal Station is the BOREAL hull — hide the cartography torus marker.
-          child.visible = body.id !== 'boreal-station' && isInsideBubble(local)
+          child.visible = isInsideBubble(local)
           if (child.visible) {
             bodiesForContacts.push({
               id: body.id,
@@ -560,12 +559,7 @@ const Elite: React.FC<EliteProps> = ({
           : projectContacts(
             { pos: p.pos, heading: fwd, up: upv },
             snap.npcs,
-            bodiesForContacts.length > 0 ? bodiesForContacts : carto.map(b => ({
-              id: b.id,
-              name: b.name,
-              type: b.type,
-              pos3d: bodyLocalPos(b, systemPos2d),
-            })),
+            bodiesForContacts.length > 0 ? bodiesForContacts : radarVisibleBodies(carto, systemPos2d),
             { maxShip: SCANNER_2D.maxRangeShip, maxBody: SCANNER_2D.maxRangeBody, maxMind: MIND_RADAR.maxRange }
           )
 

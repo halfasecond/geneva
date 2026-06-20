@@ -14,7 +14,7 @@ import { drawDockRadarIcon2D, drawMindRadarIcon2D, isMindContact, scannerDisplay
 import { isDockContact, projectContacts } from './sim/contacts'
 import type { EliteSnapshot } from './sim/core/types'
 import { getBodyById, getFrozenCartographyBodies } from './sim/cartography'
-import { bodyLocalPos } from './sim/systemSpace'
+import { radarVisibleBodies } from './sim/systemSpace'
 
 interface UseRadar2DOptions {
   canvasRef: RefObject<HTMLCanvasElement | null>
@@ -127,21 +127,13 @@ export function useRadar2D({
       const fwd = p.heading
       const upv = p.up || { x: 0, y: 1, z: 0 }
       const carto = getFrozenCartographyBodies()
-      const sys2d = p.systemPos2d
-      const radarBodies = carto
-        .filter(b => b.type !== 'star')
-        .map(b => ({
-          id: b.id,
-          name: b.name,
-          type: b.type,
-          pos3d: bodyLocalPos(b, sys2d),
-        }))
+      const radarBodies = radarVisibleBodies(carto, p.systemPos2d)
 
       const contacts = projectContacts(
         { pos: p.pos, heading: fwd, up: upv },
         snapRef.current?.npcs || [],
         radarBodies,
-        { maxShip: SCANNER_2D.maxRangeShip, maxBody: SCANNER_2D.maxRangeBody, maxMind: MIND_RADAR.maxRange },
+        { maxShip: SCANNER_2D.maxRangeShip, maxBody: SCANNER_2D.maxRangeBody, maxMind: SCANNER_2D.maxRangeShip },
       )
 
       contacts.forEach((c) => {
