@@ -453,6 +453,8 @@ const Elite: React.FC<EliteProps> = ({
             homeMarket={dockedMarket}
             markets={marketSnap.markets}
             cargo={marketSnap.player.cargo}
+            credits={marketSnap.player.credits}
+            cargoCapacity={marketSnap.player.cargoCapacity}
             onClose={() => setMarketOpen(false)}
             onUndock={() => {
               simRef.current.undock()

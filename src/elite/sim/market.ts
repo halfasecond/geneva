@@ -270,6 +270,35 @@ export function getCargoUsed(cargo: Record<string, number>): number {
   return Object.values(cargo).reduce((sum, tons) => sum + tons, 0)
 }
 
+export interface TradeEligibility {
+  buy1: boolean
+  buy5: boolean
+  sell1: boolean
+  sell5: boolean
+}
+
+export function getTradeEligibility(
+  listing: Pick<MarketCommodityState, 'price' | 'stock'>,
+  opts: {
+    heldTons: number
+    credits: number
+    cargoUsed: number
+    cargoCapacity: number
+  },
+): TradeEligibility {
+  const canBuy = (tons: number) =>
+    opts.credits >= listing.price * tons
+    && opts.cargoUsed + tons <= opts.cargoCapacity
+    && listing.stock >= tons
+
+  return {
+    buy1: canBuy(1),
+    buy5: canBuy(5),
+    sell1: opts.heldTons >= 1,
+    sell5: opts.heldTons >= 5,
+  }
+}
+
 export function findBestArbitrage(
   markets: MarketState[],
   homeId: string,

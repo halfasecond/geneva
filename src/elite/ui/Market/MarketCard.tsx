@@ -1,6 +1,6 @@
 import React from 'react'
 import { MARKET } from '../../config'
-import type { MarketCandle, MarketCommodityState, MarketState } from '../../sim/market'
+import { getTradeEligibility, type MarketCandle, type MarketCommodityState, type MarketState } from '../../sim/market'
 
 const ui = MARKET.ui
 const maxPrice = MARKET.maxChartPrice
@@ -12,6 +12,9 @@ interface MarketCardProps {
   showMarketName?: boolean
   showTrade?: boolean
   heldTons?: number
+  credits?: number
+  cargoUsed?: number
+  cargoCapacity?: number
   onToggle: () => void
   onBuy?: (tons: number) => void
   onSell?: (tons: number) => void
@@ -24,6 +27,9 @@ const MarketCard: React.FC<MarketCardProps> = ({
   showMarketName = true,
   showTrade = false,
   heldTons = 0,
+  credits = 0,
+  cargoUsed = 0,
+  cargoCapacity = 0,
   onToggle,
   onBuy,
   onSell,
@@ -34,6 +40,10 @@ const MarketCard: React.FC<MarketCardProps> = ({
     0.08,
     Math.min(1, 0.16 + Math.max(0, listing.sigma < 0 ? pressure - 1 : 1 - pressure) * 2.4),
   )
+
+  const trade = showTrade
+    ? getTradeEligibility(listing, { heldTons, credits, cargoUsed, cargoCapacity })
+    : null
 
   return (
     <article
@@ -93,12 +103,13 @@ const MarketCard: React.FC<MarketCardProps> = ({
 
           <CandlestickChart candles={listing.candles.slice(-28)} />
 
-          {showTrade && (
+          {showTrade && trade && (
             <div style={{ marginTop: 10, display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
               <span style={{ fontSize: 9, opacity: 0.65, marginRight: 4 }}>Hold {heldTons}t</span>
-              <TradeBtn label="Buy 1t" onClick={() => onBuy?.(1)} />
-              <TradeBtn label="Buy 5t" onClick={() => onBuy?.(5)} />
-              <TradeBtn label="Sell 1t" onClick={() => onSell?.(1)} />
+              <TradeBtn label="Buy 1t" disabled={!trade.buy1} onClick={() => onBuy?.(1)} />
+              <TradeBtn label="Buy 5t" disabled={!trade.buy5} onClick={() => onBuy?.(5)} />
+              <TradeBtn label="Sell 1t" disabled={!trade.sell1} onClick={() => onSell?.(1)} />
+              <TradeBtn label="Sell 5t" disabled={!trade.sell5} onClick={() => onSell?.(5)} />
             </div>
           )}
         </div>
@@ -192,20 +203,31 @@ function CandlestickChart({ candles }: { candles: MarketCandle[] }) {
   )
 }
 
-function TradeBtn({ label, onClick }: { label: string; onClick: () => void }) {
+function TradeBtn({
+  label,
+  disabled = false,
+  onClick,
+}: {
+  label: string
+  disabled?: boolean
+  onClick: () => void
+}) {
   return (
     <button
       type="button"
+      disabled={disabled}
       onClick={onClick}
       style={{
         padding: '4px 8px',
         fontSize: 9,
         letterSpacing: 0.5,
-        border: '1px solid rgba(102, 170, 255, 0.3)',
+        border: disabled
+          ? '1px solid rgba(102, 170, 255, 0.12)'
+          : '1px solid rgba(102, 170, 255, 0.3)',
         borderRadius: 3,
-        background: 'rgba(4, 16, 32, 0.6)',
-        color: '#d8eeff',
-        cursor: 'pointer',
+        background: disabled ? 'rgba(4, 16, 32, 0.35)' : 'rgba(4, 16, 32, 0.6)',
+        color: disabled ? 'rgba(170, 204, 221, 0.35)' : '#d8eeff',
+        cursor: disabled ? 'not-allowed' : 'pointer',
         fontFamily: 'inherit',
       }}
     >

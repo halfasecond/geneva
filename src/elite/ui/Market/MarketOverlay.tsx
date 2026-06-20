@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react'
 import { BIG_SHIP, DOCKED_RADAR, HULL_LABEL_FONTS, MAP, WINDSCREEN, Z } from '../../config'
-import type { MarketState } from '../../sim/market'
+import { getCargoUsed, type MarketState } from '../../sim/market'
 import MarketStarfield from './MarketStarfield'
 import MarketCard from './MarketCard'
 
@@ -10,6 +10,8 @@ interface MarketOverlayProps {
   homeMarket: MarketState
   markets: MarketState[]
   cargo: Record<string, number>
+  credits: number
+  cargoCapacity: number
   onClose: () => void
   onUndock: () => void
   onTrade: (commodityId: string, tons: number, direction: 'buy' | 'sell') => void
@@ -19,6 +21,8 @@ const MarketOverlay: React.FC<MarketOverlayProps> = ({
   homeMarket,
   markets,
   cargo,
+  credits,
+  cargoCapacity,
   onClose,
   onUndock,
   onTrade,
@@ -58,6 +62,8 @@ const MarketOverlay: React.FC<MarketOverlayProps> = ({
   const tradeVol = activeCommodityId
     ? Math.max(...markets.map(m => m.commodities[activeCommodityId]?.lastTrade ?? 0))
     : 0
+
+  const cargoUsed = getCargoUsed(cargo)
 
   return (
     <div
@@ -152,6 +158,9 @@ const MarketOverlay: React.FC<MarketOverlayProps> = ({
                   showMarketName={false}
                   showTrade={activeCommodityId === listing.id}
                   heldTons={cargo[listing.id] ?? 0}
+                  credits={credits}
+                  cargoUsed={cargoUsed}
+                  cargoCapacity={cargoCapacity}
                   isOpen={activeCommodityId === listing.id}
                   onToggle={() => {
                     setSelectedCommodityId(activeCommodityId === listing.id ? null : listing.id)
