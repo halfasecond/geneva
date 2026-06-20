@@ -12,8 +12,8 @@ export interface ScannerDisplayPos {
   distant: boolean
 }
 
-export function isMindContact(c: Pick<Contact, 'type' | 'designation' | 'dockBay'>): boolean {
-  return c.type === 'ship' && !!c.designation && !c.dockBay
+export function isMindContact(c: Pick<Contact, 'type' | 'designation' | 'dockBayIndex'>): boolean {
+  return c.type === 'ship' && !!c.designation && c.dockBayIndex === undefined
 }
 
 /** Dock bay door — wide bar, aim for the force field. */

@@ -313,7 +313,7 @@ export function update3DRadar(
     type: string
     role?: string
     designation?: string
-    dockBay?: 'starboard' | 'port'
+    dockBayIndex?: number
   }>
 ) {
   const mindBlips = blips.filter(b => b.userData.radarKind === 'mind')

@@ -14,6 +14,8 @@ import {
   type MarketConfig,
   type MarketState,
 } from './market'
+import type { PersistedFlightMode, VechSavePlayer } from '../../types/vechSave'
+import { isBorealBayIndex } from '../../types/dockBay'
 import { BIG_SHIP, BOREAL_STATION, DOCK, DOCK_LIVE, FUEL, MARKET } from '../config'
 import {
   borealDockedPose,
@@ -23,10 +25,11 @@ import {
   borealUndockPose,
   distanceToBorealForceField,
   findBorealFreighter,
-  nearestBorealBaySide,
+  nearestBorealBayIndex,
   nearestBorealDock,
-  type BorealDockSide,
+  type DockBayIndex,
 } from './borealDock'
+import { BOREAL_BAY_STARBOARD } from '../../types/dockBay'
 import {
   hyperspaceArrivalPose,
   stationApproachPose,
@@ -67,7 +70,7 @@ export class EliteSim {
   private time = 0
   private poseTween: PoseTween | null = null
   private dockTargetId: string | null = null
-  private dockBaySide: BorealDockSide = 'starboard'
+  private dockBayIndex: DockBayIndex = BOREAL_BAY_STARBOARD
   private undockGraceUntil = 0
 
   constructor(initialPopulation = 2) {
@@ -77,29 +80,103 @@ export class EliteSim {
       timeScale: 1 / MARKET.hourIntervalSeconds,
     }
     this.markets = initMarkets()
+    this.player = {} as PlayerState
+    this.fromSave(EliteSim.defaultSave())
+    this.resetNpcs(initialPopulation)
+  }
+
+  /** Default spawn for a hull with no persisted progress. */
+  static defaultSave(): VechSavePlayer {
     const spawnBody = getBodyById(DEFAULT_SPAWN_DESTINATION, 'frozen')
     const ref2d = { ...(spawnBody?.pos2d ?? { x: 0, y: 0 }) }
     const spawnPose = spawnBody
       ? hyperspaceArrivalPose(spawnBody)
       : { pos: { x: 0, y: 0, z: -120 }, heading: { x: 0, y: 0, z: 1 }, up: { x: 0, y: 1, z: 0 } }
+    const poseFields = poseToPlayerFields(spawnPose)
 
-    this.player = {
-      ...poseToPlayerFields(spawnPose),
+    return {
+      systemId: spawnBody?.systemId ?? 'helios',
+      flightMode: 'normal',
+      dockedAtStationId: null,
+      dockBayIndex: null,
+      navReference2d: ref2d,
+      systemPos2d: { ...ref2d },
+      pos: { ...poseFields.pos },
       vel: zero(),
+      heading: { ...poseFields.heading },
+      up: { ...poseFields.up },
       roll: 0,
       speed: 0,
       fuel: FUEL.starting,
       credits: MARKET.startingCredits,
       cargo: {},
       cargoCapacity: MARKET.cargoCapacity,
-      systemId: spawnBody?.systemId ?? 'helios',
-      navReference2d: ref2d,
-      systemPos2d: { ...ref2d },
-      flightMode: 'normal',
-      dockedAtStationId: null,
     }
+  }
+
+  toSave(): VechSavePlayer {
+    const p = this.player
+    const flightMode: PersistedFlightMode = p.dockedAtStationId
+      ? 'docked'
+      : p.flightMode === 'supercruise'
+        ? 'supercruise'
+        : 'normal'
+
+    return {
+      systemId: p.systemId,
+      flightMode,
+      dockedAtStationId: p.dockedAtStationId,
+      dockBayIndex: p.dockedAtStationId === BOREAL_STATION.id ? this.dockBayIndex : null,
+      navReference2d: { ...p.navReference2d },
+      systemPos2d: { ...p.systemPos2d },
+      pos: { ...p.pos },
+      vel: { ...p.vel },
+      heading: { ...p.heading },
+      up: { ...p.up },
+      roll: p.roll,
+      speed: p.speed,
+      fuel: p.fuel,
+      credits: p.credits,
+      cargo: { ...p.cargo },
+      cargoCapacity: p.cargoCapacity,
+    }
+  }
+
+  fromSave(save: VechSavePlayer): void {
+    const flightMode: FlightMode = save.flightMode === 'docked' ? 'docked' : save.flightMode
+
+    this.player = {
+      systemId: save.systemId,
+      flightMode,
+      dockedAtStationId: save.dockedAtStationId,
+      navReference2d: { ...save.navReference2d },
+      systemPos2d: { ...save.systemPos2d },
+      pos: { ...save.pos },
+      vel: { ...save.vel },
+      heading: { ...save.heading },
+      up: { ...save.up },
+      roll: save.roll,
+      speed: save.speed,
+      fuel: save.fuel,
+      credits: save.credits,
+      cargo: { ...save.cargo },
+      cargoCapacity: save.cargoCapacity,
+    }
+
+    if (save.dockBayIndex != null && isBorealBayIndex(save.dockBayIndex)) {
+      this.dockBayIndex = save.dockBayIndex
+    } else {
+      this.dockBayIndex = BOREAL_BAY_STARBOARD
+    }
+
+    this.poseTween = null
+    this.dockTargetId = null
+    this.undockGraceUntil = 0
+    this.time = 0
+    this.markets = initMarkets()
     this.syncSystemPos2d()
-    this.resetNpcs(initialPopulation)
+    this.syncBorealFreighter()
+    this.resetNpcs(2)
   }
 
   private syncSystemPos2d() {
@@ -189,10 +266,10 @@ export class EliteSim {
 
   private startBorealDockFlyIn(freighter: NpcAgent): boolean {
     const p = this.player
-    const side = nearestBorealBaySide(p.pos, freighter.pos)
-    this.dockBaySide = side
-    const from = borealFlyInStartPose(p.pos, freighter.pos, side)
-    const to = borealDockedPose(freighter.pos, side)
+    const bayIndex = nearestBorealBayIndex(p.pos, freighter.pos)
+    this.dockBayIndex = bayIndex
+    const from = borealFlyInStartPose(p.pos, freighter.pos, bayIndex)
+    const to = borealDockedPose(freighter.pos, bayIndex)
     this.dockTargetId = BOREAL_STATION.id
     this.poseTween = createPoseTween(from, to, DOCK_LIVE.flyInDuration)
     p.flightMode = 'dock_flyin'
@@ -273,8 +350,8 @@ export class EliteSim {
     if (p.dockedAtStationId === BOREAL_STATION.id) {
       const freighter = findBorealFreighter(this.npcs)
       if (!freighter) return false
-      from = borealDockedPose(freighter.pos, this.dockBaySide)
-      to = borealUndockPose(freighter.pos, this.dockBaySide)
+      from = borealDockedPose(freighter.pos, this.dockBayIndex)
+      to = borealUndockPose(freighter.pos, this.dockBayIndex)
     } else {
       const body = getBodyById(p.dockedAtStationId, 'frozen')
       if (!body) return false
@@ -310,7 +387,7 @@ export class EliteSim {
         p.flightMode = 'normal'
         return
       }
-      Object.assign(p, poseToPlayerFields(borealDockedPose(freighter.pos, this.dockBaySide)))
+      Object.assign(p, poseToPlayerFields(borealDockedPose(freighter.pos, this.dockBayIndex)))
     } else {
       const pose = stationDockedPose(body, p.navReference2d)
       Object.assign(p, poseToPlayerFields(pose))

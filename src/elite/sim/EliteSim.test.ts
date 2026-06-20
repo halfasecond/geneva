@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest'
 import { EliteSim } from './EliteSim'
 import { getLocalAxes, length, dot, normalize } from './core/vector'
 import type { Vec3 } from './core/types'
+import { BOREAL_STATION } from '../config'
+import { BOREAL_BAY_PORT } from '../../types/dockBay'
 
 function isFiniteVec(v: Vec3): boolean {
   return Number.isFinite(v.x) && Number.isFinite(v.y) && Number.isFinite(v.z)
@@ -29,6 +31,51 @@ function assertOrthonormal(axes: { forward: Vec3; right: Vec3; up: Vec3 }, label
   const nCross = normalize(crossFR)
   expect(dot(nCross, u)).toBeCloseTo(1, 5)
 }
+
+describe('EliteSim save round-trip', () => {
+  it('toSave → fromSave preserves docked progress and bay index', () => {
+    const sim = new EliteSim(0)
+    sim.fromSave({
+      ...EliteSim.defaultSave(),
+      flightMode: 'docked',
+      dockedAtStationId: BOREAL_STATION.id,
+      dockBayIndex: BOREAL_BAY_PORT,
+      fuel: 42,
+      credits: 9001,
+      cargo: { 'fuel-cells': 3 },
+    })
+
+    const saved = sim.toSave()
+    expect(saved.flightMode).toBe('docked')
+    expect(saved.dockedAtStationId).toBe(BOREAL_STATION.id)
+    expect(saved.dockBayIndex).toBe(BOREAL_BAY_PORT)
+    expect(saved.fuel).toBe(42)
+    expect(saved.credits).toBe(9001)
+    expect(saved.cargo['fuel-cells']).toBe(3)
+
+    const sim2 = new EliteSim(0)
+    sim2.fromSave(saved)
+    const again = sim2.toSave()
+    expect(again.flightMode).toBe('docked')
+    expect(again.dockBayIndex).toBe(BOREAL_BAY_PORT)
+    expect(again.fuel).toBe(42)
+  })
+
+  it('normalizes cutscene flight modes on save', () => {
+    const sim = new EliteSim(0)
+    sim.setFlightMode('dock_flyin')
+    const saved = sim.toSave()
+    expect(saved.flightMode).toBe('normal')
+  })
+
+  it('defaultSave matches fresh constructor spawn', () => {
+    const a = new EliteSim(0).toSave()
+    const b = EliteSim.defaultSave()
+    expect(a.systemId).toBe(b.systemId)
+    expect(a.flightMode).toBe(b.flightMode)
+    expect(a.fuel).toBe(b.fuel)
+  })
+})
 
 describe('Elite rotation (Q/E pitch, A/D yaw, Z/X roll)', () => {
   it('getLocalAxes produces valid orthonormal basis for any heading + roll (including vertical)', () => {

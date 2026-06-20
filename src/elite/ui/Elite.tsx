@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 
 // @google/model-viewer registers the <model-viewer> web component globally (side-effect import required).
@@ -89,12 +89,21 @@ import VechPreview from './VechPreview'
 import ShipHoldPanel from './ShipHoldPanel'
 import WaypointOverlay from './WaypointOverlay'
 import PositionDebug from './PositionDebug'
+import {
+  fetchSave,
+  flushPersistSave,
+  persistSave,
+  persistSaveDebounced,
+} from '../persistence/save'
+import type { VechSavePlayer } from '../../types/vechSave'
 
 type EliteProps = {
   currentShip: VechNft
   ownedShips: VechNft[]
   shipsLoading?: boolean
-  onSelectShip: (ship: VechNft) => void
+  initialSave: VechSavePlayer
+  authToken?: string
+  onSelectShip: (ship: VechNft) => void | Promise<void>
   showPositionDebug?: boolean
 }
 
@@ -102,12 +111,23 @@ const Elite: React.FC<EliteProps> = ({
   currentShip,
   ownedShips,
   shipsLoading = false,
+  initialSave,
+  authToken,
   onSelectShip,
   showPositionDebug = false,
 }) => {
   const glbUrl = currentShip.animation_url || ''
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const simRef = useRef<EliteSim>(new EliteSim(2))
+  const simRef = useRef<EliteSim>(null!)
+  if (!simRef.current) {
+    const sim = new EliteSim(2)
+    sim.fromSave(initialSave)
+    simRef.current = sim
+  }
+  const authTokenRef = useRef(authToken)
+  authTokenRef.current = authToken
+  const hullTokenIdRef = useRef(currentShip.tokenId)
+  hullTokenIdRef.current = currentShip.tokenId
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null)
   const sceneRef = useRef<THREE.Scene | null>(null)
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null)
@@ -180,6 +200,44 @@ const Elite: React.FC<EliteProps> = ({
 
   // Use the extracted flight input hook (replaces the old keysRef + onKeyDown/Up + getPlayerInput)
   const { getInput: getPlayerInput } = useFlightInput()
+
+  const queuePersist = useCallback(() => {
+    const token = authTokenRef.current
+    if (!token) return
+    persistSaveDebounced(hullTokenIdRef.current, token, simRef.current.toSave())
+  }, [])
+  const queuePersistRef = useRef(queuePersist)
+  queuePersistRef.current = queuePersist
+
+  const handleHullSelect = useCallback(async (ship: VechNft) => {
+    if (ship.tokenId === hullTokenIdRef.current) return
+    const token = authTokenRef.current
+    if (token) {
+      await flushPersistSave()
+      await persistSave(hullTokenIdRef.current, token, simRef.current.toSave())
+      const next = await fetchSave(ship.tokenId, token)
+      simRef.current.fromSave(next ?? EliteSim.defaultSave())
+    } else {
+      simRef.current.fromSave(EliteSim.defaultSave())
+    }
+    await onSelectShip(ship)
+  }, [onSelectShip])
+
+  useEffect(() => {
+    const onHide = () => { void flushPersistSave() }
+    document.addEventListener('visibilitychange', onHide)
+    window.addEventListener('beforeunload', onHide)
+    return () => {
+      document.removeEventListener('visibilitychange', onHide)
+      window.removeEventListener('beforeunload', onHide)
+      void flushPersistSave()
+    }
+  }, [])
+
+  useEffect(() => {
+    const interval = window.setInterval(() => queuePersist(), 30000)
+    return () => clearInterval(interval)
+  }, [queuePersist])
 
   // Keyboard "action" keys (m) that affect React state are handled in this dedicated effect.
   // Flight controls (thrust/yaw/pitch/roll) + their preventDefaults are handled inside useFlightInput.
@@ -697,6 +755,7 @@ const Elite: React.FC<EliteProps> = ({
           hangarOpen: false,
         })
         dockedServiceIndexRef.current = firstSelectableServiceIndex(services)
+        queuePersistRef.current()
       }
       prevFlightModeRef.current = snap.player.flightMode
 
@@ -893,7 +952,7 @@ const Elite: React.FC<EliteProps> = ({
             currentShip={currentShip}
             shipsLoading={shipsLoading}
             onClose={() => setHangarOpen(false)}
-            onSelectShip={onSelectShip}
+            onSelectShip={handleHullSelect}
           />
         )
       })()}

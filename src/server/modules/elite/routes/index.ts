@@ -3,6 +3,7 @@ import { Model } from 'mongoose';
 import nfts from './nfts';
 import owners from './owners';
 import auth from './auth';
+import save from './save';
 
 interface Models {
     Event: Model<any>;
@@ -14,6 +15,7 @@ interface Models {
 const routes = (app: Express, urlPrepend: string | undefined, Models: Models, web3: any) => {
     const url = urlPrepend ? `/${urlPrepend}/` : `/`;
     app.use(`${url}auth`, auth(Models));
+    app.use(`${url}save`, save(Models));
     app.use(`${url}nfts`, nfts(Models, web3));
     app.use(`${url}owners`, owners(Models));
 };

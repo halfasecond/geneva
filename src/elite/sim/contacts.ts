@@ -13,7 +13,8 @@ import type { Vec3 } from './core/types'
 import type { NpcAgent } from './core/types'
 import type { CartographyBody } from './cartography'
 import { MIND_RADAR } from '../config'
-import { borealForceFieldWorldPos, isBorealFreighterInBubble, nearestBorealBaySide } from './borealDock'
+import type { DockBayIndex } from '../../types/dockBay'
+import { borealForceFieldWorldPos, isBorealFreighterInBubble, nearestBorealBayIndex } from './borealDock'
 import { offsetFromPlayer, worldOffsetToBodyFrame } from './systemSpace'
 
 export interface Contact {
@@ -25,12 +26,12 @@ export interface Contact {
   role?: NpcAgent['role'] | 'neutral'
   name?: string
   designation?: string
-  /** BOREAL dock bay — radar aim point at the force-field door. */
-  dockBay?: 'starboard' | 'port'
+  /** BOREAL dock bay index — radar aim point at the force-field door. */
+  dockBayIndex?: DockBayIndex
 }
 
-export function isDockContact(c: Pick<Contact, 'dockBay'>): boolean {
-  return c.dockBay !== undefined
+export function isDockContact(c: Pick<Contact, 'dockBayIndex'>): boolean {
+  return c.dockBayIndex !== undefined
 }
 
 export interface ProjectOpts {
@@ -66,8 +67,8 @@ export function projectContacts(
 
   for (const npc of npcs) {
     if (npc.designation && isBorealFreighterInBubble(pPos, npc.pos)) {
-      const side = nearestBorealBaySide(pPos, npc.pos)
-      const doorPos = borealForceFieldWorldPos(npc.pos, side)
+      const bayIndex = nearestBorealBayIndex(pPos, npc.pos)
+      const doorPos = borealForceFieldWorldPos(npc.pos, bayIndex)
       const offset = offsetFromPlayer(pPos, doorPos)
       const frame = worldOffsetToBodyFrame(offset, fwd, upv)
       if (frame.dist <= maxMind) {
@@ -78,7 +79,7 @@ export function projectContacts(
           dist: frame.dist,
           type: 'station',
           role: 'neutral',
-          dockBay: side,
+          dockBayIndex: bayIndex,
           designation: npc.designation,
           name: npc.designation,
         })

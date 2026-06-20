@@ -4,6 +4,7 @@ import createOwnerModel from './owners';
 import createEventModel from './events';
 import createAccountModel from './accounts';
 import createPlayerStateModel from './playerState';
+import createSaveModel from './save';
 
 interface Models {
     Event: Model<any>;
@@ -11,6 +12,7 @@ interface Models {
     Owner: Model<any>;
     Account: Model<any>;
     PlayerState: Model<any>;
+    Save: Model<any>;
     [key: string]: Model<any>;
 }
 
@@ -20,4 +22,5 @@ export default (prefix: string, db: Connection): Models => ({
     Event: createEventModel(prefix, db),
     Account: createAccountModel(prefix, db),
     PlayerState: createPlayerStateModel(prefix, db),
+    Save: createSaveModel(prefix, db),
 });
