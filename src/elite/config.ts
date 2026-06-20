@@ -320,7 +320,8 @@ export const SPACE = {
 } as const
 
 export const DOCK = {
-  range: 80,
+  /** Non-Boreal dock invite + [F] accept radius (local flight metres). */
+  range: 36,
   maxApproachSpeed: 8,
   approachDistance: 55,
   dockedDistance: 28,

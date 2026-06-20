@@ -54,6 +54,7 @@ export interface EliteHudUpdate {
   systemId: string
   borealDist: number | null
   borealDelta: { x: number; y: number; z: number } | null
+  dockInvite: { stationId: string; stationName: string } | null
 }
 
 export interface EliteFrameUpdate {
@@ -478,6 +479,12 @@ export function useEliteScene({
           systemId: snap.player.systemId,
           borealDist,
           borealDelta,
+          dockInvite: (() => {
+            const invite = simRef.current.getDockInvite()
+            return invite
+              ? { stationId: invite.id, stationName: invite.name }
+              : null
+          })(),
         }
         if (snap.player.flightMode === 'docked') frameUpdate.marketSnap = snap
       }

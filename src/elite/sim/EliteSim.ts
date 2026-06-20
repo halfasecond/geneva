@@ -260,6 +260,20 @@ export class EliteSim {
     return this.markets.find(m => m.id === id) ?? null
   }
 
+  /** Non-Boreal stations only — in range and slow enough for [F] dock. */
+  getDockInvite(): { id: string; name: string } | null {
+    const p = this.player
+    if (p.flightMode !== 'normal' && p.flightMode !== 'supercruise') return null
+
+    return nearestDockableStation(
+      p.pos,
+      p.systemPos2d,
+      p.speed,
+      DOCK.range,
+      DOCK.maxApproachSpeed,
+    )
+  }
+
   private getNearestDock() {
     const p = this.player
     const freighter = findBorealFreighter(this.npcs)

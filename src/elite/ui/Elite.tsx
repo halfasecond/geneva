@@ -66,6 +66,7 @@ import HangarOverlay from './Hangar/HangarOverlay'
 import VechPreview from './VechPreview'
 import ShipHoldPanel from './ShipHoldPanel'
 import WaypointOverlay from './WaypointOverlay'
+import DockInvitePrompt from './DockInvitePrompt'
 import PositionDebug from './PositionDebug'
 import {
   fetchSave,
@@ -130,6 +131,7 @@ const Elite: React.FC<EliteProps> = ({
     systemId: 'helios',
     borealDist: null as number | null,
     borealDelta: null as { x: number; y: number; z: number } | null,
+    dockInvite: null as { stationId: string; stationName: string } | null,
   })
 
   const [marketOpen, setMarketOpen] = useState(false)
@@ -157,6 +159,9 @@ const Elite: React.FC<EliteProps> = ({
   const hyperspaceCostRef = useRef(0)
 
   const { getInput: getPlayerInput } = useFlightInput()
+
+  const shipLabel = currentShip.name
+    || (currentShip.shipId ? `VECH #${currentShip.shipId}` : `Token #${currentShip.tokenId}`)
 
   const queuePersist = useCallback(() => {
     const token = authTokenRef.current
@@ -392,6 +397,24 @@ const Elite: React.FC<EliteProps> = ({
         hidden={
           !WAYPOINTS.debugHardcoded
           && (mapOpen || marketOpen || isHyperspacing || hyperspaceCountdown !== null || hud.flightMode === 'docked')
+        }
+      />
+
+      <DockInvitePrompt
+        stationName={hud.dockInvite?.stationName ?? ''}
+        shipLabel={shipLabel}
+        hidden={
+          !hud.dockInvite
+          || mapOpen
+          || marketOpen
+          || upgradesOpen
+          || hangarOpen
+          || isHyperspacing
+          || hyperspaceCountdown !== null
+          || hud.flightMode === 'docked'
+          || hud.flightMode === 'docking_in'
+          || hud.flightMode === 'dock_flyin'
+          || hud.flightMode === 'undocking'
         }
       />
 
