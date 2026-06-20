@@ -497,6 +497,10 @@ export const BOREAL_DOCK_BAY = {
 // NPC MESHES (in-world 3D cones + pressure dots)
 // =============================================================================
 export const NPC = {
+  /** Wireframe cone ships (trader/pirate/etc). Set >0 when ambient traffic returns. */
+  ambientPopulation: 0,
+  /** Boreal capital hull — required for dock fly-in at boreal-station. */
+  spawnBorealFreighter: true,
   size: { freighter: 95, pirate: 2.6, police: 2.1, default: 1.7 },
   cone: (size: number) => ({ r: size * 0.55, h: size * 2.4 }),
   color: {

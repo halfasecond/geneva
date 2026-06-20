@@ -27,7 +27,6 @@ const GameLoadingScreen: React.FC<GameLoadingScreenProps> = ({ state, shipName }
       style={{
         width: 200,
         opacity: 0.85,
-        boxShadow: `0 0 40px ${COLORS.vechRingCss}33`,
       }}
     />
 

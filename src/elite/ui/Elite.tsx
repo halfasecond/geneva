@@ -120,7 +120,7 @@ const Elite: React.FC<EliteProps> = ({
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const simRef = useRef<EliteSim>(null!)
   if (!simRef.current) {
-    const sim = new EliteSim(2)
+    const sim = new EliteSim()
     sim.fromSave(initialSave)
     simRef.current = sim
   }

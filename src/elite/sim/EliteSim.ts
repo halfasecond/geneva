@@ -16,7 +16,7 @@ import {
 } from './market'
 import type { PersistedFlightMode, VechSavePlayer } from '../../types/vechSave'
 import { isBorealBayIndex } from '../../types/dockBay'
-import { BIG_SHIP, BOREAL_STATION, DOCK, DOCK_LIVE, FUEL, MARKET } from '../config'
+import { BIG_SHIP, BOREAL_STATION, DOCK, DOCK_LIVE, FUEL, MARKET, NPC } from '../config'
 import {
   borealDockedPose,
   borealFlyInStartPose,
@@ -73,7 +73,7 @@ export class EliteSim {
   private dockBayIndex: DockBayIndex = BOREAL_BAY_STARBOARD
   private undockGraceUntil = 0
 
-  constructor(initialPopulation = 2) {
+  constructor(ambientPopulation = NPC.ambientPopulation) {
     this.config = { ...DEFAULT_CONFIG }
     this.marketConfig = {
       ...defaultMarketConfig,
@@ -82,7 +82,7 @@ export class EliteSim {
     this.markets = initMarkets()
     this.player = {} as PlayerState
     this.fromSave(EliteSim.defaultSave())
-    this.resetNpcs(initialPopulation)
+    this.resetNpcs(ambientPopulation)
   }
 
   /** Default spawn for a hull with no persisted progress. */
@@ -176,7 +176,7 @@ export class EliteSim {
     this.markets = initMarkets()
     this.syncSystemPos2d()
     this.syncBorealFreighter()
-    this.resetNpcs(2)
+    this.resetNpcs()
   }
 
   private syncSystemPos2d() {
@@ -190,35 +190,47 @@ export class EliteSim {
     freighter.vel = { x: 0, y: 0, z: 0 }
   }
 
-  resetNpcs(count: number) {
+  resetNpcs(ambientCount = NPC.ambientPopulation) {
     this.npcs = []
-    const roles: NpcAgent['role'][] = ['freighter', 'trader', 'pirate', 'police', 'escort', 'trader']
+    let nextId = 0
     const anchor = this.player.pos
 
-    for (let i = 0; i < count; i++) {
+    if (NPC.spawnBorealFreighter) {
+      this.npcs.push({
+        id: nextId++,
+        pos: { ...borealFreighterWorldPos(this.player.systemPos2d) },
+        vel: zero(),
+        mass: 5.5,
+        progress: 0,
+        orientation: 1,
+        flips: 0,
+        crowdPressure: 0,
+        contagionPressure: 0,
+        pressure: 0,
+        role: 'freighter',
+        designation: BIG_SHIP.nameLabel.text,
+      })
+    }
+
+    const roles: NpcAgent['role'][] = ['trader', 'pirate', 'police', 'escort', 'trader']
+    for (let i = 0; i < ambientCount; i++) {
       const role = roles[i % roles.length]
-      const isFreighter = role === 'freighter'
-      const angle = (i / count) * Math.PI * 2
+      const angle = ambientCount > 0 ? (i / ambientCount) * Math.PI * 2 : 0
       const radius = 80 + (i % 5) * 12
       const speed = 1.5 + Math.random()
-      const freighterPos = borealFreighterWorldPos(this.player.systemPos2d)
       this.npcs.push({
-        id: i,
-        pos: isFreighter
-          ? { ...freighterPos }
-          : {
-            x: anchor.x + Math.cos(angle) * radius,
-            y: anchor.y + Math.sin(angle) * radius * 0.06 + (i % 3 - 1) * 8,
-            z: anchor.z + (Math.random() - 0.5) * 40,
-          },
-        vel: isFreighter
-          ? { x: 0, y: 0, z: 0 }
-          : {
-            x: -Math.sin(angle) * speed,
-            y: Math.cos(angle) * (1.2 + Math.random()),
-            z: (Math.random() - 0.5) * 2,
-          },
-        mass: isFreighter ? 5.5 : 0.8 + Math.random() * 0.6,
+        id: nextId++,
+        pos: {
+          x: anchor.x + Math.cos(angle) * radius,
+          y: anchor.y + Math.sin(angle) * radius * 0.06 + (i % 3 - 1) * 8,
+          z: anchor.z + (Math.random() - 0.5) * 40,
+        },
+        vel: {
+          x: -Math.sin(angle) * speed,
+          y: Math.cos(angle) * (1.2 + Math.random()),
+          z: (Math.random() - 0.5) * 2,
+        },
+        mass: 0.8 + Math.random() * 0.6,
         progress: Math.random(),
         orientation: Math.random() > 0.5 ? 1 : -1,
         flips: 0,
@@ -226,7 +238,6 @@ export class EliteSim {
         contagionPressure: 0,
         pressure: 0,
         role,
-        ...(isFreighter ? { designation: BIG_SHIP.nameLabel.text } : {}),
       })
     }
   }
