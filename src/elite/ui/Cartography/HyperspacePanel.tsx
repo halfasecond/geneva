@@ -140,9 +140,12 @@ const HyperspacePanel: React.FC<HyperspacePanelProps> = ({
     >
       <button
         type="button"
+        tabIndex={-1}
         aria-label={mapOpen ? 'Close cartography map' : 'Open cartography map'}
         aria-pressed={mapOpen}
         disabled={mapToggleDisabled}
+        onMouseDown={(e) => e.preventDefault()}
+        onKeyDown={(e) => e.preventDefault()}
         onClick={onToggleMap}
         style={{
           position: 'absolute',
@@ -164,6 +167,7 @@ const HyperspacePanel: React.FC<HyperspacePanelProps> = ({
           color: mapToggleDisabled ? 'rgba(102, 170, 255, 0.35)' : COLORS.vechRingCss,
           cursor: mapToggleDisabled ? 'not-allowed' : 'pointer',
           boxShadow: mapToggleActive ? 'inset 0 0 10px rgba(102, 170, 255, 0.12)' : 'none',
+          outline: 'none',
         }}
       >
         <MapToggleIcon
