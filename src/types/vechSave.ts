@@ -30,6 +30,7 @@ export interface VechSavePlayer {
   roll: number
   speed: number
   fuel: number
+  /** Wallet-wide balance — injected on load, not stored per hull on server. */
   credits: number
   cargo: Record<string, number>
   cargoCapacity: number

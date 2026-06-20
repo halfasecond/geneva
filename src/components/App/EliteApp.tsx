@@ -4,7 +4,7 @@ import VechMetamask from '../../elite/ui/VechMetamask'
 import { isHangarAdmin } from '../../elite/ui/hangarDebug'
 import { Z } from '../../elite/config'
 import { EliteSim } from '../../elite/sim/EliteSim'
-import { fetchSave } from '../../elite/persistence/save'
+import { fetchSave, fetchWalletCredits } from '../../elite/persistence/save'
 import type { AuthProps } from '../../types/auth'
 import type { VechNft } from '../../types/vech'
 import type { VechSavePlayer } from '../../types/vechSave'
@@ -32,8 +32,15 @@ const EliteApp: React.FC<AuthProps> = ({
     const bootLoading = useGameLoading(!!currentShip, async () => {
         if (!currentShip) return
         if (token) {
-            const saved = await fetchSave(currentShip.tokenId, token)
-            setInitialSave(saved ?? EliteSim.defaultSave())
+            const [saved, walletCredits] = await Promise.all([
+                fetchSave(currentShip.tokenId, token),
+                fetchWalletCredits(token),
+            ])
+            const base = saved ?? EliteSim.defaultSave()
+            setInitialSave({
+                ...base,
+                credits: walletCredits ?? base.credits,
+            })
         } else {
             setInitialSave(EliteSim.defaultSave())
         }

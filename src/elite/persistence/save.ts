@@ -7,6 +7,19 @@ const VECH_API = `${VITE_APP_ENDPOINT}vech/`
 let persistTimer: ReturnType<typeof setTimeout> | null = null
 let pendingPersist: { tokenId: number; token: string; player: VechSavePlayer } | null = null
 
+export async function fetchWalletCredits(token: string): Promise<number | null> {
+  try {
+    const res = await axios.get(`${VECH_API}wallet/credits`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    const credits = res.data?.credits
+    return typeof credits === 'number' && Number.isFinite(credits) ? credits : null
+  } catch (err) {
+    console.error('Failed to load wallet credits:', err)
+    return null
+  }
+}
+
 export async function fetchSave(tokenId: number, token: string): Promise<VechSavePlayer | null> {
   try {
     const res = await axios.get(`${VECH_API}save/${tokenId}`, {

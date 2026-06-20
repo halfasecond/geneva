@@ -69,6 +69,7 @@ import WaypointOverlay from './WaypointOverlay'
 import PositionDebug from './PositionDebug'
 import {
   fetchSave,
+  fetchWalletCredits,
   flushPersistSave,
   persistSave,
   persistSaveDebounced,
@@ -209,9 +210,17 @@ const Elite: React.FC<EliteProps> = ({
     const token = authTokenRef.current
     if (token) {
       await flushPersistSave()
+      const walletCredits = simRef.current.player.credits
       await persistSave(hullTokenIdRef.current, token, simRef.current.toSave())
-      const next = await fetchSave(ship.tokenId, token)
-      simRef.current.fromSave(next ?? EliteSim.defaultSave())
+      const [next, resolvedCredits] = await Promise.all([
+        fetchSave(ship.tokenId, token),
+        fetchWalletCredits(token),
+      ])
+      const base = next ?? EliteSim.defaultSave()
+      simRef.current.fromSave({
+        ...base,
+        credits: resolvedCredits ?? walletCredits ?? base.credits,
+      })
     } else {
       simRef.current.fromSave(EliteSim.defaultSave())
     }

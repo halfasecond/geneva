@@ -2,6 +2,7 @@ import express, { Router } from 'express';
 import jwt from 'jsonwebtoken';
 import { Model } from 'mongoose';
 import dotenv from 'dotenv';
+import { resolveWalletCredits, setWalletCredits, stripCreditsFromPlayer } from '../walletCredits';
 
 dotenv.config();
 
@@ -72,6 +73,13 @@ const routes = (Models: Models): Router => {
                 player.cargo = Object.fromEntries(player.cargo);
             }
 
+            const walletCredits = await resolveWalletCredits(
+                Models,
+                address,
+                typeof player?.credits === 'number' ? player.credits : undefined,
+            );
+            player.credits = walletCredits;
+
             res.status(200).json({
                 tokenId: doc.tokenId,
                 player,
@@ -116,11 +124,16 @@ const routes = (Models: Models): Router => {
                 return;
             }
 
+            const { hullPlayer, credits } = stripCreditsFromPlayer(player as Record<string, unknown>);
+            if (credits != null) {
+                await setWalletCredits(Models, address, credits);
+            }
+
             const doc = await Models.Save.findOneAndUpdate(
                 { walletAddress: address, tokenId },
                 {
                     $set: {
-                        player,
+                        player: hullPlayer,
                         version,
                         lastSeen: new Date(),
                     },
