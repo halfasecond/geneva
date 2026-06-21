@@ -18,6 +18,8 @@ EXPOSE 7001
 EXPOSE 7002
 # Aquarium client
 EXPOSE 7003
+# VECH / Elite client
+EXPOSE 7005
 
 # Default command to keep the container running
 CMD ["sh", "-c", "yarn start"]

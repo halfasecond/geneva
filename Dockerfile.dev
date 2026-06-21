@@ -28,6 +28,12 @@ RUN npx playwright install
 # Expose the port that the app will run on (optional)
 EXPOSE 3131
 
+# Static app clients (yarn serve:*)
+EXPOSE 7001
+EXPOSE 7002
+EXPOSE 7003
+EXPOSE 7005
+
 # Hardhat dev chain
 EXPOSE 8545
 

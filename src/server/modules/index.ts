@@ -3,21 +3,21 @@ import EventEmitter from 'events';
 import Web3, { BlockHeaderOutput } from 'web3';
 import createWeb3Connection from '../config/web3';
 // Create an event bus for broadcasting various events
-// import defaultModule from './geneva';
-// import chainedHorseModule from './chained-horse';
-// import chainfacesModule from './chainfaces'
-// import twobitbearsModule from './twobitbears'
-// import purrModule from './purr'
-// import aquariumModule from './aquarium'
+import defaultModule from './geneva';
+import chainedHorseModule from './chained-horse';
+import chainfacesModule from './chainfaces'
+import twobitbearsModule from './twobitbears'
+import purrModule from './purr'
+import aquariumModule from './aquarium'
 // import flowbotsModule from './flowbots'
 // import cryptokittiesModule from './cryptokitties'
 import eliteModule from './elite'
 
 const modules: ModuleFunction = (app, io, web3, db) => {
     const {
-        // WEB3_SOCKET_URL_CHAINFACES,
-        // WEB3_SOCKET_URL_TWOBITBEARS,
-        // WEB3_SOCKET_URL_PURR,
+        WEB3_SOCKET_URL_CHAINFACES,
+        WEB3_SOCKET_URL_TWOBITBEARS,
+        WEB3_SOCKET_URL_PURR,
         // WEB3_SOCKET_URL_FLOWBOTS,
         // WEB3_SOCKET_URL_CK,
         WEB3_SOCKET_URL_ELITE,
@@ -27,36 +27,36 @@ const modules: ModuleFunction = (app, io, web3, db) => {
     const emitter = new Emitter()
 
     // DEBUG: other modules disabled while fixing vech indexer
-    // defaultModule({
-    //     app,
-    //     io,
-    //     web3,
-    //     db,
-    //     name: '',  // no name prefix for default module endpoints
-    //     prefix: '',  // no prefix for db tables
-    //     emitter
-    // });
+    defaultModule({
+        app,
+        io,
+        web3,
+        db,
+        name: '',  // no name prefix for default module endpoints
+        prefix: '',  // no prefix for db tables
+        emitter
+    });
 
-    // chainedHorseModule({
-    //     app,
-    //     io,
-    //     web3,
-    //     db,
-    //     name: 'chained-horse',  // adds name to server project endpoint
-    //     prefix: 'ch',          // changed from 'horse' to 'ch' for db tables
-    //     deployed: 13504887,      // block the contract was deployed
-    //     increment: 10000,        // bumped from 100 to 1000 for low-activity contract
-    //     eventsToWatch: ['Transfer'],  // events to monitor
-    //     emitter
-    // });
+    chainedHorseModule({
+        app,
+        io,
+        web3,
+        db,
+        name: 'chained-horse',  // adds name to server project endpoint
+        prefix: 'ch',          // changed from 'horse' to 'ch' for db tables
+        deployed: 13504887,      // block the contract was deployed
+        increment: 10000,        // bumped from 100 to 1000 for low-activity contract
+        eventsToWatch: ['Transfer'],  // events to monitor
+        emitter
+    });
 
-    // const chainfaceWeb3Connection = createWeb3Connection(WEB3_SOCKET_URL_CHAINFACES || '')
-    // chainfacesModule({ app, io, web3: chainfaceWeb3Connection, db, name: 'chainfaces', prefix: 'cf', deployed: 9314784, increment: 2500, eventsToWatch: ['Transfer'], emitter })
-    // const twobitbearWeb3Connection = createWeb3Connection(WEB3_SOCKET_URL_TWOBITBEARS || '')
-    // twobitbearsModule({ app, io, web3: twobitbearWeb3Connection, db, name: 'twobitbears', prefix: 'tbb', deployed: 13385399, increment: 1000, eventsToWatch: ['Transfer'], emitter })
-    // const purrWeb3Connection = createWeb3Connection(WEB3_SOCKET_URL_PURR || '')
-    // purrModule({ app, io, web3: purrWeb3Connection, db, name: 'purr', prefix: 'purr', deployed: 22755367, increment: 1000, eventsToWatch: ['Transfer'], emitter });
-    // aquariumModule({ app, io, web3, db, name: 'aquarium', prefix: 'aq', deployed: 0, increment: 10000, eventsToWatch: [], emitter })
+    const chainfaceWeb3Connection = createWeb3Connection(WEB3_SOCKET_URL_CHAINFACES || '')
+    chainfacesModule({ app, io, web3: chainfaceWeb3Connection, db, name: 'chainfaces', prefix: 'cf', deployed: 9314784, increment: 2500, eventsToWatch: ['Transfer'], emitter })
+    const twobitbearWeb3Connection = createWeb3Connection(WEB3_SOCKET_URL_TWOBITBEARS || '')
+    twobitbearsModule({ app, io, web3: twobitbearWeb3Connection, db, name: 'twobitbears', prefix: 'tbb', deployed: 13385399, increment: 1000, eventsToWatch: ['Transfer'], emitter })
+    const purrWeb3Connection = createWeb3Connection(WEB3_SOCKET_URL_PURR || '')
+    purrModule({ app, io, web3: purrWeb3Connection, db, name: 'purr', prefix: 'purr', deployed: 22755367, increment: 1000, eventsToWatch: ['Transfer'], emitter });
+    aquariumModule({ app, io, web3, db, name: 'aquarium', prefix: 'aq', deployed: 0, increment: 10000, eventsToWatch: [], emitter })
     // const cryptokittiesSocketUrl = WEB3_SOCKET_URL_CK || WEB3_SOCKET_URL_PURR || ''
     // if (!cryptokittiesSocketUrl) {
     //     console.warn('cryptokitties module skipped — set WEB3_SOCKET_URL_CK or WEB3_SOCKET_URL_PURR')
