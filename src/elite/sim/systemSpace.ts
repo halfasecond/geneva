@@ -22,7 +22,7 @@ import type { CartographyBody } from './cartography'
 import { add, cross, dot, length, normalize, scale, subtract } from './core/vector'
 import type { LocalAxes } from './core/vector'
 import { getLocalAxes } from './core/vector'
-import { DOCK, SPACE, VIEW } from '../config'
+import { DOCK, LAND, SPACE, VIEW } from '../config'
 
 export interface Vec2 {
   x: number
@@ -145,6 +145,40 @@ export function undockPose(station: Pick<CartographyBody, 'pos2d' | 'type' | 'id
 /** Standoff pose after hyperspace or cold start — always in flight, never docked. */
 export function hyperspaceArrivalPose(body: Pick<CartographyBody, 'pos2d' | 'type' | 'id'>): FlightPose {
   return body.type === 'station' ? approachPose(body) : arrivalPose(body)
+}
+
+/** Surface landing pose — tucked in near the body holo, facing inward. */
+export function surfaceLandingPose(
+  body: Pick<CartographyBody, 'pos2d' | 'type' | 'id'>,
+  navReference2d: Vec2,
+): FlightPose {
+  const bodyLocal = bodyLocalPos(body, navReference2d)
+  return {
+    pos: {
+      x: bodyLocal.x,
+      y: 0,
+      z: bodyLocal.z - LAND.surfaceOffset,
+    },
+    heading: { x: 0, y: 0, z: 1 },
+    up: { x: 0, y: 1, z: 0 },
+  }
+}
+
+/** Short hop back from the surface before resuming free flight. */
+export function surfaceTakeoffPose(
+  body: Pick<CartographyBody, 'pos2d' | 'type' | 'id'>,
+  navReference2d: Vec2,
+): FlightPose {
+  const landed = surfaceLandingPose(body, navReference2d)
+  return {
+    pos: {
+      x: landed.pos.x,
+      y: landed.pos.y,
+      z: landed.pos.z - LAND.takeoffBackDistance,
+    },
+    heading: { x: 0, y: 0, z: -1 },
+    up: { x: 0, y: 1, z: 0 },
+  }
 }
 
 /** Arrival offset when jumping to a non-station body — offset from body along -Z. */

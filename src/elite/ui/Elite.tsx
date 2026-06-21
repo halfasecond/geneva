@@ -67,6 +67,7 @@ import VechPreview from './VechPreview'
 import ShipHoldPanel from './ShipHoldPanel'
 import WaypointOverlay from './WaypointOverlay'
 import DockInvitePrompt from './DockInvitePrompt'
+import LandInvitePrompt from './LandInvitePrompt'
 import PositionDebug from './PositionDebug'
 import {
   fetchSave,
@@ -132,6 +133,8 @@ const Elite: React.FC<EliteProps> = ({
     borealDist: null as number | null,
     borealDelta: null as { x: number; y: number; z: number } | null,
     dockInvite: null as { stationId: string; stationName: string } | null,
+    landInvite: null as { bodyId: string; bodyName: string; bodyType: 'planet' | 'moon' } | null,
+    landedAtBodyId: null as string | null,
   })
 
   const [marketOpen, setMarketOpen] = useState(false)
@@ -272,13 +275,19 @@ const Elite: React.FC<EliteProps> = ({
       if (k === 'escape' && mapOpen && hyperspacePhaseRef.current === 'idle') setMapOpen(false)
       if (k === 'f' && hyperspacePhaseRef.current === 'idle') {
         const mode = snapRef.current?.player.flightMode
-        if (mode === 'docked') {
+        if (mode === 'landed') {
+          simRef.current.startTakeoff()
+        } else if (mode === 'docked') {
           simRef.current.startUndocking()
           setMarketOpen(false)
           setUpgradesOpen(false)
           setHangarOpen(false)
         } else if (mode === 'normal' || mode === 'supercruise') {
-          simRef.current.startDocking()
+          if (simRef.current.getDockInvite()) {
+            simRef.current.startDocking()
+          } else {
+            simRef.current.startLanding()
+          }
         }
       }
       if (k === 'escape' && snapRef.current?.player.flightMode === 'docked') {
@@ -415,6 +424,30 @@ const Elite: React.FC<EliteProps> = ({
           || hud.flightMode === 'docking_in'
           || hud.flightMode === 'dock_flyin'
           || hud.flightMode === 'undocking'
+          || hud.flightMode === 'landed'
+          || hud.flightMode === 'landing_in'
+          || hud.flightMode === 'takeoff'
+        }
+      />
+
+      <LandInvitePrompt
+        bodyName={hud.landInvite?.bodyName ?? ''}
+        shipLabel={shipLabel}
+        hidden={
+          !hud.landInvite
+          || mapOpen
+          || marketOpen
+          || upgradesOpen
+          || hangarOpen
+          || isHyperspacing
+          || hyperspaceCountdown !== null
+          || hud.flightMode === 'docked'
+          || hud.flightMode === 'docking_in'
+          || hud.flightMode === 'dock_flyin'
+          || hud.flightMode === 'undocking'
+          || hud.flightMode === 'landed'
+          || hud.flightMode === 'landing_in'
+          || hud.flightMode === 'takeoff'
         }
       />
 
@@ -508,6 +541,7 @@ const Elite: React.FC<EliteProps> = ({
         fromPos2d={hud.systemPos2d}
         systemId={hud.systemId}
         dockedAtStationId={hud.dockedAtStationId}
+        landedAtBodyId={hud.landedAtBodyId}
         fuel={hud.fuel}
         flightMode={hud.flightMode}
         isHyperspacing={isHyperspacing}

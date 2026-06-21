@@ -319,6 +319,19 @@ export const SPACE = {
   arrivalStandoff: 140,
 } as const
 
+export const LAND = {
+  /** Planet / moon landing invite + [F] accept radius (local flight metres). */
+  range: 36,
+  maxApproachSpeed: 8,
+  /** Metres short of body centre along the approach axis — near the surface holo. */
+  surfaceOffset: 58,
+  /** Ground plane extent (local flight metres) while landed. */
+  surfacePlaneSize: 3600,
+  cutsceneDuration: 1.4,
+  takeoffBackDistance: 48,
+  takeoffBoost: 8,
+} as const
+
 export const DOCK = {
   /** Non-Boreal dock invite + [F] accept radius (local flight metres). */
   range: 36,

@@ -48,6 +48,9 @@ export type FlightMode =
   | 'dock_flyin'
   | 'undocking'
   | 'docked'
+  | 'landing_in'
+  | 'takeoff'
+  | 'landed'
 
 export interface PlayerState {
   pos: Vec3
@@ -66,6 +69,7 @@ export interface PlayerState {
   systemPos2d: { x: number; y: number }
   flightMode: FlightMode
   dockedAtStationId: string | null
+  landedAtBodyId: string | null
 }
 
 export interface EliteSnapshot {

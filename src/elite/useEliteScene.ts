@@ -28,6 +28,11 @@ import { createVechHoloIcon, loadVechShipModel } from './render/vech'
 import * as HyperspaceRender from './render/hyperspace'
 import * as StationRender from './render/station'
 import {
+  createLandingSurfaceMesh,
+  positionLandingSurface,
+  updateLandingSurfaceMesh,
+} from './render/landingSurface'
+import {
   BIG_SHIP_MESH_VERSION,
   createBigShipMesh,
   isBigShipMesh,
@@ -55,6 +60,8 @@ export interface EliteHudUpdate {
   borealDist: number | null
   borealDelta: { x: number; y: number; z: number } | null
   dockInvite: { stationId: string; stationName: string } | null
+  landInvite: { bodyId: string; bodyName: string; bodyType: 'planet' | 'moon' } | null
+  landedAtBodyId: string | null
 }
 
 export interface EliteFrameUpdate {
@@ -173,6 +180,10 @@ export function useEliteScene({
     })
     scene.add(bodiesGroup)
 
+    const landingSurface = createLandingSurfaceMesh('#6ce6ff', 'boreal')
+    landingSurface.visible = false
+    scene.add(landingSurface)
+
     const { group: streaksGroup, streaks } = HyperspaceRender.createHyperspaceStreaks(camera)
     ;(streaksGroup as THREE.Group & { _streaks?: THREE.Mesh[] })._streaks = streaks
 
@@ -210,7 +221,8 @@ export function useEliteScene({
 
       const sim = simRef.current
       const rawInput = getPlayerInput()
-      const input = snapRef.current?.player.flightMode === 'docked'
+      const flightMode = snapRef.current?.player.flightMode
+      const input = flightMode === 'docked' || flightMode === 'landed'
         ? { ...rawInput, thrust: 0, yaw: 0 }
         : rawInput
       sim.step(dt, input)
@@ -229,17 +241,31 @@ export function useEliteScene({
         sun.visible = isInsideBubble(local)
       }
 
+      const p = snap.player
+      const onSurface = p.flightMode === 'landed'
+        || p.flightMode === 'landing_in'
+        || p.flightMode === 'takeoff'
+      const surfaceBodyId = p.landedAtBodyId ?? sim.getLandingTargetId()
+      const surfaceBody = surfaceBodyId ? cartoById.get(surfaceBodyId) : undefined
+
       bodiesGroup.children.forEach((child) => {
         const bodyId = child.userData.bodyId as string | undefined
         const body = bodyId ? cartoById.get(bodyId) : undefined
         if (!body) return
         const local = bodyLocalPos(body, systemPos2d)
         child.position.set(local.x, local.y, local.z)
-        child.visible = isInsideBubble(local)
+        const hideForLanding = onSurface && bodyId === surfaceBodyId
+        child.visible = !hideForLanding && isInsideBubble(local)
       })
       StationRender.updateStationAnimations(bodiesGroup, snap.time)
 
-      const p = snap.player
+      if (onSurface && surfaceBody) {
+        updateLandingSurfaceMesh(landingSurface, surfaceBody.color, surfaceBody.id)
+        positionLandingSurface(landingSurface, p.pos)
+        landingSurface.visible = true
+      } else {
+        landingSurface.visible = false
+      }
       const upHint = p.up || { x: 0, y: 1, z: 0 }
       const axes = viewBasisFromAttitude(p.heading, upHint)
       camera.position.set(
@@ -254,7 +280,9 @@ export function useEliteScene({
         camera.position.z + axes.forward.z * VIEW.lookFar,
       )
 
-      const waypoints = snap.player.flightMode !== 'hyperspace' && snap.player.flightMode !== 'docked'
+      const waypoints = snap.player.flightMode !== 'hyperspace'
+        && snap.player.flightMode !== 'docked'
+        && snap.player.flightMode !== 'landed'
         ? computeWaypoints(
           { heading: p.heading, systemPos2d: p.systemPos2d },
           { destinationId: routeRef.current.destinationId, viewport },
@@ -264,7 +292,7 @@ export function useEliteScene({
       if (blips.length > 0) {
         const fwd = p.heading
         const upv = p.up || { x: 0, y: 1, z: 0 }
-        const contacts = p.flightMode === 'docked'
+        const contacts = p.flightMode === 'docked' || p.flightMode === 'landed'
           ? []
           : projectContacts(
             { pos: p.pos, heading: fwd, up: upv },
@@ -485,6 +513,13 @@ export function useEliteScene({
               ? { stationId: invite.id, stationName: invite.name }
               : null
           })(),
+          landInvite: (() => {
+            const invite = simRef.current.getLandInvite()
+            return invite
+              ? { bodyId: invite.id, bodyName: invite.name, bodyType: invite.type }
+              : null
+          })(),
+          landedAtBodyId: snap.player.landedAtBodyId,
         }
         if (snap.player.flightMode === 'docked') frameUpdate.marketSnap = snap
       }

@@ -16,7 +16,8 @@ import {
 } from './market'
 import type { PersistedFlightMode, VechSavePlayer } from '../../types/vechSave'
 import { isBorealBayIndex } from '../../types/dockBay'
-import { BIG_SHIP, BOREAL_STATION, DOCK, DOCK_LIVE, FUEL, MARKET, NPC } from '../config'
+import { BIG_SHIP, BOREAL_STATION, DOCK, DOCK_LIVE, FUEL, LAND, MARKET, NPC } from '../config'
+import { nearestLandableBody } from './landing'
 import {
   borealDockedPose,
   borealFlyInStartPose,
@@ -33,6 +34,8 @@ import { BOREAL_BAY_STARBOARD } from '../../types/dockBay'
 import {
   hyperspaceArrivalPose,
   stationApproachPose,
+  surfaceLandingPose,
+  surfaceTakeoffPose,
   stationDockedPose,
   systemPos2dFromLocal,
   type FlightPose,
@@ -70,6 +73,7 @@ export class EliteSim {
   private time = 0
   private poseTween: PoseTween | null = null
   private dockTargetId: string | null = null
+  private landTargetId: string | null = null
   private dockBayIndex: DockBayIndex = BOREAL_BAY_STARBOARD
   private undockGraceUntil = 0
 
@@ -149,6 +153,7 @@ export class EliteSim {
       systemId: save.systemId,
       flightMode,
       dockedAtStationId: save.dockedAtStationId,
+      landedAtBodyId: null,
       navReference2d: { ...save.navReference2d },
       systemPos2d: { ...save.systemPos2d },
       pos: { ...save.pos },
@@ -171,6 +176,7 @@ export class EliteSim {
 
     this.poseTween = null
     this.dockTargetId = null
+    this.landTargetId = null
     this.undockGraceUntil = 0
     this.time = 0
     this.markets = initMarkets()
@@ -274,6 +280,23 @@ export class EliteSim {
     )
   }
 
+  /** Planets and moons only — in range and slow enough for [F] land. */
+  getLandInvite(): { id: string; name: string; type: 'planet' | 'moon' } | null {
+    const p = this.player
+    if (p.flightMode !== 'normal' && p.flightMode !== 'supercruise') return null
+    if (this.getDockInvite()) return null
+
+    const invite = nearestLandableBody(
+      p.systemPos2d,
+      p.systemId,
+      p.speed,
+      LAND.range,
+      LAND.maxApproachSpeed,
+    )
+    if (!invite) return null
+    return { id: invite.id, name: invite.name, type: invite.type }
+  }
+
   private getNearestDock() {
     const p = this.player
     const freighter = findBorealFreighter(this.npcs)
@@ -318,6 +341,73 @@ export class EliteSim {
     this.startBorealDockFlyIn(freighter)
   }
 
+  /** Begin surface landing cutscene if in range and slow enough. */
+  startLanding(): boolean {
+    const p = this.player
+    if (
+      p.flightMode === 'landed'
+      || p.flightMode === 'landing_in'
+      || p.flightMode === 'takeoff'
+    ) {
+      return p.flightMode === 'landed'
+    }
+    if (p.flightMode !== 'normal' && p.flightMode !== 'supercruise') return false
+
+    const invite = nearestLandableBody(
+      p.systemPos2d,
+      p.systemId,
+      p.speed,
+      LAND.range,
+      LAND.maxApproachSpeed,
+    )
+    if (!invite || this.getDockInvite()) return false
+
+    const body = getBodyById(invite.id, 'frozen')
+    if (!body) return false
+
+    const from: FlightPose = {
+      pos: { ...p.pos },
+      heading: { ...p.heading },
+      up: { ...p.up },
+    }
+    const to = surfaceLandingPose(body, p.navReference2d)
+
+    this.landTargetId = body.id
+    this.poseTween = createPoseTween(from, to, LAND.cutsceneDuration)
+    p.flightMode = 'landing_in'
+    p.vel = zero()
+    p.speed = 0
+    return true
+  }
+
+  /** Body id for in-progress landing / takeoff cutscene (surface holo). */
+  getLandingTargetId(): string | null {
+    return this.landTargetId
+  }
+
+  /** Lift off from a landed body back to free flight. */
+  startTakeoff(): boolean {
+    const p = this.player
+    if (p.flightMode !== 'landed' || !p.landedAtBodyId) return false
+
+    const body = getBodyById(p.landedAtBodyId, 'frozen')
+    if (!body) return false
+
+    const from: FlightPose = {
+      pos: { ...p.pos },
+      heading: { ...p.heading },
+      up: { ...p.up },
+    }
+    const to = surfaceTakeoffPose(body, p.navReference2d)
+
+    this.landTargetId = p.landedAtBodyId
+    this.poseTween = createPoseTween(from, to, LAND.cutsceneDuration)
+    p.flightMode = 'takeoff'
+    p.vel = zero()
+    p.speed = 0
+    return true
+  }
+
   /** Begin dock cutscene if in range and slow enough. */
   startDocking(): boolean {
     const p = this.player
@@ -326,6 +416,9 @@ export class EliteSim {
       || p.flightMode === 'docking_in'
       || p.flightMode === 'dock_flyin'
       || p.flightMode === 'undocking'
+      || p.flightMode === 'landed'
+      || p.flightMode === 'landing_in'
+      || p.flightMode === 'takeoff'
     ) {
       return p.flightMode === 'docked'
     }
@@ -437,6 +530,42 @@ export class EliteSim {
     this.syncSystemPos2d()
   }
 
+  private finishLanding() {
+    const p = this.player
+    const bodyId = this.landTargetId
+    if (!bodyId) {
+      p.flightMode = 'normal'
+      return
+    }
+
+    const body = getBodyById(bodyId, 'frozen')
+    if (!body) {
+      p.flightMode = 'normal'
+      return
+    }
+
+    p.navReference2d = { ...body.pos2d }
+    Object.assign(p, poseToPlayerFields(surfaceLandingPose(body, p.navReference2d)))
+    this.syncSystemPos2d()
+    p.landedAtBodyId = bodyId
+    p.flightMode = 'landed'
+    p.vel = zero()
+    p.speed = 0
+    this.landTargetId = null
+    this.poseTween = null
+  }
+
+  private finishTakeoff() {
+    const p = this.player
+    p.landedAtBodyId = null
+    p.flightMode = 'normal'
+    p.vel = scale(p.heading, LAND.takeoffBoost)
+    p.speed = LAND.takeoffBoost
+    this.landTargetId = null
+    this.poseTween = null
+    this.syncSystemPos2d()
+  }
+
   private stepPoseCutscene(deltaSeconds: number) {
     if (!this.poseTween) return
 
@@ -453,6 +582,8 @@ export class EliteSim {
 
     if (p.flightMode === 'docking_in' || p.flightMode === 'dock_flyin') this.finishDocking()
     else if (p.flightMode === 'undocking') this.finishUndocking()
+    else if (p.flightMode === 'landing_in') this.finishLanding()
+    else if (p.flightMode === 'takeoff') this.finishTakeoff()
   }
 
   tryDock(): boolean {
@@ -464,11 +595,15 @@ export class EliteSim {
   }
 
   toggleDock(): boolean {
+    if (this.player.flightMode === 'landed') {
+      return this.startTakeoff()
+    }
     if (this.player.flightMode === 'docked') {
       this.startUndocking()
       return true
     }
-    return this.startDocking()
+    if (this.getDockInvite()) return this.startDocking()
+    return this.startLanding()
   }
 
   refuel(): boolean {
@@ -518,8 +653,22 @@ export class EliteSim {
 
     const p = this.player
 
-    if (p.flightMode === 'docking_in' || p.flightMode === 'dock_flyin' || p.flightMode === 'undocking') {
+    if (
+      p.flightMode === 'docking_in'
+      || p.flightMode === 'dock_flyin'
+      || p.flightMode === 'undocking'
+      || p.flightMode === 'landing_in'
+      || p.flightMode === 'takeoff'
+    ) {
       this.stepPoseCutscene(deltaSeconds)
+      this.stepNpcs(deltaSeconds)
+      return
+    }
+
+    if (p.flightMode === 'landed') {
+      p.vel = zero()
+      p.speed = 0
+      this.applyAttitudeFromInput(p, playerInput, deltaSeconds)
       this.stepNpcs(deltaSeconds)
       return
     }
@@ -704,6 +853,7 @@ export class EliteSim {
     this.player.systemId = dest.systemId
     this.player.navReference2d = { ...dest.pos2d }
     this.player.dockedAtStationId = null
+    this.player.landedAtBodyId = null
     this.player.flightMode = 'normal'
 
     const pose = hyperspaceArrivalPose(dest)
@@ -714,6 +864,7 @@ export class EliteSim {
     this.player.speed = 0
     this.poseTween = null
     this.dockTargetId = null
+    this.landTargetId = null
     this.syncBorealFreighter()
     return true
   }

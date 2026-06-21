@@ -14,6 +14,7 @@ interface HyperspacePanelProps {
   fromPos2d: { x: number; y: number }
   systemId: string
   dockedAtStationId: string | null
+  landedAtBodyId?: string | null
   fuel: number
   flightMode: string
   isHyperspacing: boolean
@@ -81,6 +82,7 @@ const HyperspacePanel: React.FC<HyperspacePanelProps> = ({
   fromPos2d,
   systemId,
   dockedAtStationId,
+  landedAtBodyId = null,
   fuel,
   flightMode,
   isHyperspacing,
@@ -104,17 +106,22 @@ const HyperspacePanel: React.FC<HyperspacePanelProps> = ({
 
   const currentSystem = STAR_SYSTEMS[systemId]
   const targetSystem = dest ? STAR_SYSTEMS[dest.systemId] : null
+  const landedBody = landedAtBodyId ? getBodyById(landedAtBodyId, 'frozen') : null
   const headline = hasTarget
     ? (targetSystem?.name ?? dest!.systemId)
-    : (currentSystem?.name ?? systemId)
+    : flightMode === 'landed' && landedBody
+      ? landedBody.name
+      : (currentSystem?.name ?? systemId)
 
   const dockedBody = dockedAtStationId ? getBodyById(dockedAtStationId, 'frozen') : null
   const subline = hasTarget
     ? (travel?.label ?? '—')
     : flightMode === 'docked'
       ? (dockedBody?.name ?? '—')
-      : 'In flight'
-  const isInFlight = !hasTarget && flightMode !== 'docked'
+      : flightMode === 'landed'
+        ? 'On surface · Press F to lift off'
+        : 'In flight'
+  const isInFlight = !hasTarget && flightMode !== 'docked' && flightMode !== 'landed'
 
   const mapToggleActive = mapOpen && !mapToggleDisabled
 
