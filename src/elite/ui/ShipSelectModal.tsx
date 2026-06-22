@@ -131,7 +131,6 @@ const SignInView: React.FC = () => (
                 width: 280,
                 margin: '0 auto 48px',
                 display: 'block',
-                boxShadow: `0 0 32px ${COLORS.vechRingCss}44`,
             }}
         />
         <p style={{ ...mutedText, textAlign: 'center', maxWidth: 320 }}>
