@@ -13,6 +13,8 @@ import kittyNewsModule from './kittynews'
 import kittyFamilyModule from './kittyfamily'
 import kittyHatsModule from './kitty-hats'
 import kittyInternationalModule from './kittyinternational'
+import eggModule from './egg'
+import hasModule from './has'
 import flowbotsModule from './flowbots'
 import barcodeModule from './barcode'
 
@@ -51,6 +53,8 @@ const modules: ModuleFunction = (app, io, web3, db) => {
     kittyFamilyModule({ ...shared, name: 'kittyfamily' })
     kittyHatsModule({ app, db })
     kittyInternationalModule({ app, db })
+    eggModule({ app, db })
+    hasModule({ app, db })
 
     // Local/hardhat projects: routes only. Do not watch on the mainnet follower.
     flowbotsModule({ app, io, web3, db, emitter, name: 'flowbots', prefix: 'fbot', deployed: 0, increment: 100, eventsToWatch: ['Transfer'] })
