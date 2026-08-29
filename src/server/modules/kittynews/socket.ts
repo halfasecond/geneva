@@ -66,6 +66,15 @@ export default (io: Server, Models: KittyNewsModels, db: Connection, emitter: an
             }
 
             try {
+                cache.transfers = await q.transfers();
+                news.emit('ckTransfer', cache.transfers);
+            } catch (error) {
+                console.error('[kittynews] transfers snapshot failed', error);
+                cache.transfers = [];
+                news.emit('ckTransfer', cache.transfers);
+            }
+
+            try {
                 setFloor(await q.mongoFloors());
             } catch (error) {
                 console.error('[kittynews] mongo floors snapshot failed', error);
@@ -75,13 +84,6 @@ export default (io: Server, Models: KittyNewsModels, db: Connection, emitter: an
                 setFloor(await q.apiFloors());
             } catch (error) {
                 console.error('[kittynews] ck api floors snapshot failed', error);
-            }
-
-            try {
-                cache.transfers = await q.transfers();
-                news.emit('ckTransfer', cache.transfers);
-            } catch (error) {
-                console.error('[kittynews] transfers snapshot failed', error);
             }
 
             try {
