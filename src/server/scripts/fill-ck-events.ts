@@ -162,7 +162,7 @@ async function getLogs(fromBlock: number, toBlock: number): Promise<any[]> {
         } catch (error) {
             const msg = error instanceof Error ? error.message : String(error);
             attempt += 1;
-            if (/429|rate|too many|timeout/i.test(msg) && attempt < 8) {
+            if (/429|rate|too many|timeout|temporar|internal error|ECONNRESET|socket hang/i.test(msg) && attempt < 8) {
                 const wait = Math.min(30000, 1000 * 2 ** attempt);
                 console.warn(`[ck:fill] ${msg} — retry in ${wait}ms`);
                 await sleep(wait);
