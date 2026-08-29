@@ -36,5 +36,6 @@ schema.index(
 
 export default (prefix: string, db: Connection): Model<Record<string, unknown>> => {
     const modelName = prefix ? `${prefix}_event` : 'event';
-    return db.model<Record<string, unknown>>(modelName, schema);
+    return (db.models[modelName] as Model<Record<string, unknown>>)
+        || db.model<Record<string, unknown>>(modelName, schema);
 };

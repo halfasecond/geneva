@@ -10,8 +10,8 @@ export interface CryptoKittiesModels {
     [key: string]: Model<Record<string, unknown>>;
 }
 
-export default (prefix: string, db: Connection): CryptoKittiesModels => ({
+export default (prefix: string, db: Connection, tableSuffix = ''): CryptoKittiesModels => ({
     Event: createEventModel(prefix, db),
-    NFT: createNFTModel(prefix, db),
-    Owner: createOwnerModel(prefix, db),
+    NFT: createNFTModel(prefix, db, tableSuffix),
+    Owner: createOwnerModel(prefix, db, tableSuffix),
 });

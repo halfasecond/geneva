@@ -41,7 +41,9 @@ const schema = new Schema(
 
 schema.index({ tokenId: 1 }, { unique: true });
 
-export default (prefix: string, db: Connection): Model<Record<string, unknown>> => {
-    const modelName = prefix ? `${prefix}_nft` : 'nft';
-    return db.model<Record<string, unknown>>(modelName, schema);
+export default (prefix: string, db: Connection, tableSuffix = ''): Model<Record<string, unknown>> => {
+    const collection = `${prefix ? `${prefix}_` : ''}nfts${tableSuffix}`;
+    const modelName = `${prefix ? `${prefix}_` : ''}nft${tableSuffix || ''}`;
+    return (db.models[modelName] as Model<Record<string, unknown>>)
+        || db.model<Record<string, unknown>>(modelName, schema, collection);
 };

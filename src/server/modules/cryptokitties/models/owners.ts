@@ -8,7 +8,9 @@ const schema = new Schema({
 
 schema.index({ owner: 1 }, { unique: true });
 
-export default (prefix: string, db: Connection): Model<Record<string, unknown>> => {
-    const modelName = prefix ? `${prefix}_owner` : 'owner';
-    return db.model<Record<string, unknown>>(modelName, schema);
+export default (prefix: string, db: Connection, tableSuffix = ''): Model<Record<string, unknown>> => {
+    const collection = `${prefix ? `${prefix}_` : ''}owners${tableSuffix}`;
+    const modelName = `${prefix ? `${prefix}_` : ''}owner${tableSuffix || ''}`;
+    return (db.models[modelName] as Model<Record<string, unknown>>)
+        || db.model<Record<string, unknown>>(modelName, schema, collection);
 };
