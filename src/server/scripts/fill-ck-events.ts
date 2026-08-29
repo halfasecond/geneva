@@ -162,8 +162,8 @@ async function getLogs(fromBlock: number, toBlock: number): Promise<any[]> {
         } catch (error) {
             const msg = error instanceof Error ? error.message : String(error);
             attempt += 1;
-            if (/429|rate|too many|timeout|temporar|internal error|ECONNRESET|socket hang/i.test(msg) && attempt < 8) {
-                const wait = Math.min(30000, 1000 * 2 ** attempt);
+            if (/429|rate|too many|timeout|temporar|internal error|overloaded|retry later|ECONNRESET|socket hang/i.test(msg) && attempt < 12) {
+                const wait = Math.min(60000, 2000 * 2 ** attempt);
                 console.warn(`[ck:fill] ${msg} — retry in ${wait}ms`);
                 await sleep(wait);
                 continue;
@@ -213,7 +213,7 @@ async function main() {
     console.log(`[ck:fill] ${from} → ${head} on ${rpcUrl} (window ${window}, events only)`);
 
     const writeProgress = async (fillAt: number, extra: Record<string, unknown> = {}) => {
-        const elapsed = Math.round((Date.now() - started) / 1000);
+        const elapsedMs = Date.now() - started;
         const span = Math.max(1, head - fillFrom);
         const done = Math.min(span, Math.max(0, fillAt - fillFrom + 1));
         const pct = Number(((100 * done) / span).toFixed(3));
@@ -230,7 +230,7 @@ async function main() {
             fillHead: head,
             inserted,
             pct,
-            timer: elapsed,
+            timer: elapsedMs,
             note: extra.note || `Filling ck_events only (no owners). ${inserted.toLocaleString()} new logs.`,
             updatedAt: new Date(),
         };
@@ -305,7 +305,7 @@ async function main() {
         if (once) break;
         cursor = to + 1;
         window = rangeArg;
-        await sleep(80);
+        await sleep(200);
     }
 
     console.log(`[ck:fill] done. inserted=${inserted}`);
