@@ -40,18 +40,30 @@ export class BlockFollower {
     constructor(private readonly options: BlockFollowerOptions) {}
 
     async start(): Promise<void> {
-        const latest = await getLatestBlockNumber(this.options.httpUrl);
-        const maxIndexed = await this.options.store.getMaxIndexedBlock();
-        const catchupFrom = maxIndexed !== null ? maxIndexed : Math.max(1, latest - 32);
+        const liveCap = Math.max(1, Number(process.env.INDEXER_LIVE_CATCHUP ?? 8));
+        try {
+            const latest = await getLatestBlockNumber(this.options.httpUrl);
+            const maxIndexed = await this.options.store.getMaxIndexedBlock();
+            const floor = Math.max(1, latest - liveCap);
+            const catchupFrom = maxIndexed !== null ? Math.max(maxIndexed, floor) : floor;
 
-        if (catchupFrom <= latest) {
-            console.log(`[indexer] catch-up ${catchupFrom} → ${latest}`);
-            for (let blockNumber = catchupFrom; blockNumber <= latest; blockNumber += 1) {
-                await this.processBlock(blockNumber);
+            if (catchupFrom <= latest) {
+                console.log(`[indexer] catch-up ${catchupFrom} → ${latest}`);
+                for (let blockNumber = catchupFrom; blockNumber <= latest; blockNumber += 1) {
+                    try {
+                        await this.processBlock(blockNumber);
+                    } catch (error) {
+                        const msg = error instanceof Error ? error.message : String(error);
+                        console.error(`[indexer] catch-up stopped at ${blockNumber}: ${msg} — going live`);
+                        break;
+                    }
+                }
             }
+            this.lastIndexed = Math.max(this.lastIndexed, latest);
+        } catch (error) {
+            const msg = error instanceof Error ? error.message : String(error);
+            console.error(`[indexer] catch-up skipped: ${msg}`);
         }
-
-        this.lastIndexed = latest;
 
         if (this.options.wssUrl) {
             console.log('[indexer] live via wss newHeads (1 connection)');
