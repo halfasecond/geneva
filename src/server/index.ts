@@ -9,7 +9,7 @@ import { Server } from 'socket.io'
 import configureExpress from './config/express'
 import { createHttpWeb3 } from './config/web3'
 import db from './config/db'
-import runModules, { stopBlockIndexer } from './modules'
+import runModules, { stopBlockIndexer, whenWatchersReady } from './modules'
 import { resolveRpcUrl } from './indexer'
 
 const { PORT } = process.env
@@ -65,15 +65,17 @@ process.once('SIGTERM', cleanup)
 db.once("open", () => {
     // Initialize modules
     runModules(app, io, web3, db)
-    // Serve static files from dist directory
     app.use(express.static(path.join(process.cwd(), 'dist/')))
-    // Serve index.html for all routes (SPA fallback)
-    app.get('*', (req, res, next) => { // note this should always be set after running the modules.
-        res.sendFile(path.join(process.cwd(), 'dist/paddock', 'index.html'))
-    })
-  
-    // Start server
     server.listen(PORT, () => {
         console.log(`Server running on port ${PORT}`)
     })
+    // SPA fallback must be last. Sequential modules (CK/purr/paddock) register
+    // after this callback returns, so wait for them before the catch-all.
+    void whenWatchersReady()
+        .catch(() => undefined)
+        .then(() => {
+            app.get('*', (_req, res) => {
+                res.sendFile(path.join(process.cwd(), 'dist/paddock', 'index.html'))
+            })
+        })
 })

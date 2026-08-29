@@ -16,10 +16,15 @@ import flowbotsModule from './flowbots'
 import barcodeModule from './barcode'
 
 let stopIndexer: (() => void) | null = null;
+let watchersReady: Promise<void> = Promise.resolve();
 
 export function stopBlockIndexer(): void {
     stopIndexer?.();
     stopIndexer = null;
+}
+
+export function whenWatchersReady(): Promise<void> {
+    return watchersReady;
 }
 
 const modules: ModuleFunction = (app, io, web3, db) => {
@@ -49,7 +54,7 @@ const modules: ModuleFunction = (app, io, web3, db) => {
     flowbotsModule({ app, io, web3, db, emitter, name: 'flowbots', prefix: 'fbot', deployed: 0, increment: 100, eventsToWatch: ['Transfer'] })
     barcodeModule({ app, io, web3, db, emitter, name: 'barcode', prefix: 'bc', deployed: 0, increment: 1000, eventsToWatch: ['Transfer'] })
 
-    void (async () => {
+    watchersReady = (async () => {
         // Sequential HTTP catch-up so we stay within the 2-connection QuickNode cap.
         await chainedHorseModule({
             ...shared,
@@ -101,7 +106,8 @@ const modules: ModuleFunction = (app, io, web3, db) => {
         })
 
         await indexer.start()
-    })().catch((error) => {
+    })();
+    watchersReady.catch((error) => {
         console.error('[indexer] failed to start:', error);
     })
 };
