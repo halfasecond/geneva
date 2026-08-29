@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { CryptoKittiesModels } from '../models';
 
-const AUDIT_ID = 'ck_events_gap';
+export const AUDIT_ID = 'ck_events_gap';
 
 export async function readCkAudit(Models: CryptoKittiesModels) {
     const col = Models.Event.db.db?.collection('ck_audit');

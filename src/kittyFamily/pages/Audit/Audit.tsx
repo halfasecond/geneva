@@ -146,6 +146,7 @@ const Audit = ({ socket }) => {
             } catch {}
         }
         loadAudit()
+        const poll = setInterval(loadAudit, 5000)
       
         if (socket) {
           socket.on('progress', handleProgress);
@@ -153,6 +154,7 @@ const Audit = ({ socket }) => {
         }
       
         return () => {
+          clearInterval(poll)
           if (socket) {
             socket.off('progress', handleProgress);
           }
@@ -185,7 +187,7 @@ const Audit = ({ socket }) => {
         <>
             {//historicReports.length > 0 && 
                 <Styled.FixedContainer>
-                    <h2>{formatTimestamp(report.timestamp)} - Day: {report.Day} {report.timer && ` - ${formatElapsedTime(report.timer)}`}</h2>
+                    <h2>{formatTimestamp(report.timestamp)} - Day: {report.Day}{report.pct != null && ` — fill ${report.pct}%`}{report.inserted != null && ` — ${Number(report.inserted).toLocaleString()} new`}{report.timer && ` - ${formatElapsedTime(report.timer)}`}</h2>
                     {/* <input
                         type="range"
                         min="0"
