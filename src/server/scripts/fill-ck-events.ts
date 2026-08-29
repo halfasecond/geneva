@@ -42,6 +42,7 @@ const rpcUrl = process.env.CK_FILL_RPC || DEFAULT_RPC;
 const fromBlockArg = Number(arg('--from-block', String(DUMP_END + 1)));
 const rangeArg = Math.max(1, Number(arg('--range', process.env.CK_FILL_RANGE || '2000')));
 const once = process.argv.includes('--once');
+const noResume = process.argv.includes('--no-resume');
 
 const web3 = new Web3Ctor();
 
@@ -202,7 +203,7 @@ async function main() {
 
     const head = hexNum(await rpc('eth_blockNumber', []));
     let from = fromBlockArg;
-    if (existing?.fillAt && Number(existing.fillAt) + 1 > from) {
+    if (!noResume && existing?.fillAt && Number(existing.fillAt) + 1 > from) {
         from = Number(existing.fillAt) + 1;
     }
     let window = rangeArg;
@@ -292,7 +293,9 @@ async function main() {
             }
         }
 
-        await writeProgress(to, { timestamp: docs[docs.length - 1]?.timestamp });
+        if (!noResume) {
+            await writeProgress(to, { timestamp: docs[docs.length - 1]?.timestamp });
+        }
         const elapsed = (Date.now() - started) / 1000;
         const rate = Math.round((to - fillFrom + 1) / Math.max(1, elapsed));
         console.log(
