@@ -5,7 +5,7 @@
  *
  * Usage:
  *   yarn ck:rebuild
- *   yarn ck:rebuild -- --from-block 4605346
+ *   yarn ck:rebuild -- --from-block 25862354 --append
  */
 import fs from 'fs';
 import mongoose from 'mongoose';
@@ -32,6 +32,8 @@ const parseFromBlock = () => {
     return Number(process.argv[idx + 1]) || 0;
 };
 
+const append = process.argv.includes('--append');
+
 const waitForDb = () =>
     new Promise<void>((resolve, reject) => {
         const uri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/geneva';
@@ -42,6 +44,10 @@ const waitForDb = () =>
 
 const main = async () => {
     const fromBlock = parseFromBlock();
+    if (append && fromBlock <= 0) {
+        console.error('--append requires --from-block (events that arrived during the rebuild)');
+        process.exit(1);
+    }
     await waitForDb();
 
     const live = createModels('ck', mongoose.connection);
@@ -61,7 +67,7 @@ const main = async () => {
     const writeProgress = async (processed: number, nftCount: number, extra: Record<string, unknown> = {}) => {
         const pct = Number(((100 * processed) / Math.max(1, total)).toFixed(3));
         const liveCount = await liveNfts.estimatedDocumentCount();
-        const patch = {
+        const patch: Record<string, unknown> = {
             All: processed,
             Total: total,
             pct,
@@ -70,6 +76,7 @@ const main = async () => {
             timer: Date.now() - started,
             updatedAt: new Date(),
         };
+        if (extra.rebuildThroughBlock) patch.rebuildThroughBlock = extra.rebuildThroughBlock;
         await auditCol.updateOne({ _id: AUDIT_ID as any }, { $set: patch }, { upsert: true });
         const row = await auditCol.findOne({ _id: AUDIT_ID as any });
         const json = JSON.stringify(row, null, 2);
@@ -83,11 +90,17 @@ const main = async () => {
         }
     };
 
-    console.log(`Building ck_nfts_next + ck_owners_next from ${total.toLocaleString()} state events...`);
+    console.log(
+        append
+            ? `Appending ck_events from block ${fromBlock} onto existing ck_nfts_next (${total.toLocaleString()} events)...`
+            : `Building ck_nfts_next + ck_owners_next from ${total.toLocaleString()} state events...`,
+    );
     console.log('Live ck_nfts / ck_owners are not modified.');
-    await next.NFT.deleteMany({});
-    await next.Owner.deleteMany({});
-    await writeProgress(0, 0, { note: 'Cleared staging tables only. Replaying into ck_nfts_next.' });
+    if (!append) {
+        await next.NFT.deleteMany({});
+        await next.Owner.deleteMany({});
+        await writeProgress(0, 0, { note: 'Cleared staging tables only. Replaying into ck_nfts_next.' });
+    }
 
     const cursor = live.Event.find(eventFilter)
         .sort({ blockNumber: 1, logIndex: 1 })
@@ -96,6 +109,7 @@ const main = async () => {
 
     let processed = 0;
     let errors = 0;
+    let lastBlock = fromBlock;
 
     for await (const event of cursor) {
         try {
@@ -107,6 +121,7 @@ const main = async () => {
             }
         }
         processed += 1;
+        lastBlock = Math.max(lastBlock, Number(event.blockNumber) || 0);
         if (processed % BATCH === 0 || processed === total) {
             const elapsed = (Date.now() - started) / 1000;
             const rate = Math.round(processed / elapsed);
@@ -115,7 +130,7 @@ const main = async () => {
             console.log(
                 `${pct}% — ${processed.toLocaleString()}/${total.toLocaleString()} events (${rate}/s), ${nftCount.toLocaleString()} kitties in _next`,
             );
-            await writeProgress(processed, nftCount);
+            await writeProgress(processed, nftCount, { rebuildThroughBlock: lastBlock });
         }
     }
 
