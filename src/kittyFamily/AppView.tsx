@@ -8,6 +8,7 @@ import FamilyTree from 'kittyFamily/pages/FamilyTree'
 import Profile from 'kittyFamily/pages/Profile'
 import KittyHats from 'kittyFamily/pages/KittyHats'
 import Report from 'kittyFamily/pages/Report'
+import Audit from 'kittyFamily/pages/Audit'
 import Total from 'kittyFamily/components/Total'
 import ScrollTop from 'kittyFamily/components/ScrollTop'
 import Chat from 'kittyFamily/components/Chat'
@@ -140,6 +141,7 @@ const AppView = ({ loggedIn, handleSignIn, handleSignOut, web3, user, token, che
                     <Route path="/kitty-hats" element={<KittyHats {...{ hats, allHatEvents, loggedIn, searchables, web3, handleHatPurchase, handleHatPurchaseAndApply, handleSignIn }} />} />
                     <Route path="/search" element={searchables ? <Search {...{ searchables, handlePurchase }} account={{ wallet: loggedIn }} /> : null} />
                     <Route path="/report" element={<Report {...{ socket }} />} />
+                    <Route path="/audit" element={<Audit {...{ socket }} />} />
                 </Routes>
                 <Chat {...{ loggedIn, socket, user, catsWithHats, token }} />
                 <Connect {...{ loggedIn, handleSignIn, handleSignOut }} />

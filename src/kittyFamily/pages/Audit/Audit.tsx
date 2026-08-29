@@ -132,14 +132,25 @@ const Audit = ({ socket }) => {
 
     useEffect(() => {
         const handleProgress = progress => {
-            setReport(progress)
+            setReport((prev) => ({ ...prev, ...progress }))
         }
+
+        const loadAudit = async () => {
+            try {
+                const { data } = await axios.get(`${API}/cryptokitties/audit`)
+                if (data?.years) return handleProgress(data)
+            } catch {}
+            try {
+                const { data } = await axios.get('/ck-audit.json')
+                if (data) handleProgress(data)
+            } catch {}
+        }
+        loadAudit()
       
         if (socket) {
           socket.on('progress', handleProgress);
+          socket.emit('getProgress')
         }
-
-        socket && socket.emit('getProgress')
       
         return () => {
           if (socket) {
@@ -205,11 +216,38 @@ const Audit = ({ socket }) => {
                 </div>
                 <hr />
                 <div>
-                    <div>All: {report.All} ({parseFloat((100 / report.Total) * report.All).toFixed(2)}%)</div>
+                    <div>All: {report.All} ({report.Total ? parseFloat((100 / report.Total) * report.All).toFixed(2) : '0'}%)</div>
                     <div>Total: {report.Total}</div>
                     <div>Birth: {report.Birth} ({parseFloat((100 / 4294967295) * report.Birth).toFixed(5)}%)</div>
                     <div>Transfer {report.Transfer}</div>
+                    {report.holeFrom && <div>ck_events last complete block: {report.holeFrom}</div>}
                 </div>
+                {Array.isArray(report.years) && report.years.length > 0 && (
+                    <div style={{ overflowX: 'auto', margin: '12px 0' }}>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Year</th>
+                                    <th>ck_events</th>
+                                    <th>Births (mongo)</th>
+                                    <th>Births (chain)</th>
+                                    <th>Match</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {report.years.map((y) => (
+                                    <tr key={y.year}>
+                                        <td>{y.year}</td>
+                                        <td>{y.events}</td>
+                                        <td>{y.births}</td>
+                                        <td>{y.chainBirths}</td>
+                                        <td>{y.match}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
                 <div>
                     <div>New Owners Daily: {report.OwnersDaily}</div>
                     <div>FI & GTFO: {report.flooredItAndGTFO}</div>

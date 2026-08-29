@@ -1,0 +1,33 @@
+{
+  "holeFrom": "2021-12-17T06:39:36Z block 13821086",
+  "All": 2009948,
+  "Total": 2025803,
+  "Birth": 2009948,
+  "Transfer": 5542293,
+  "Pregnant": 1971949,
+  "AuctionCreated": 1515513,
+  "AuctionSuccessful": 910436,
+  "AuctionCancelled": 354219,
+  "SaleCreated": 1515513,
+  "SaleSuccessful": 910436,
+  "SaleCancelled": 354219,
+  "timestamp": 1639723176,
+  "Day": 1486,
+  "blockNumber": 13821086,
+  "eventsEstimated": 12490461,
+  "nftsEstimated": 2025787,
+  "chainSupply": 2025803,
+  "note": "ck_events is complete through 17 Dec 2021. 2018-2020 birth totals match chain totalSupply deltas exactly. 2022-now is a hole (follower only wrote 21 tip events in 2026).",
+  "years": [
+    { "year": 2017, "events": 3138925, "births": 438355, "chainBirths": 438354, "match": "+1 genesis" },
+    { "year": 2018, "events": 4785027, "births": 878743, "chainBirths": 878743, "match": "exact" },
+    { "year": 2019, "events": 2977833, "births": 476236, "chainBirths": 476236, "match": "exact" },
+    { "year": 2020, "events": 1335940, "births": 200651, "chainBirths": 200651, "match": "exact" },
+    { "year": 2021, "events": 252715, "births": 15963, "chainBirths": 16404, "match": "stops 17 Dec; 441 births short" },
+    { "year": 2022, "events": 0, "births": 0, "chainBirths": 11161, "match": "missing" },
+    { "year": 2023, "events": 0, "births": 0, "chainBirths": 1957, "match": "missing" },
+    { "year": 2024, "events": 0, "births": 0, "chainBirths": 817, "match": "missing" },
+    { "year": 2025, "events": 0, "births": 0, "chainBirths": 1415, "match": "missing" },
+    { "year": 2026, "events": 21, "births": 0, "chainBirths": 65, "match": "21 live tip events only" }
+  ]
+}

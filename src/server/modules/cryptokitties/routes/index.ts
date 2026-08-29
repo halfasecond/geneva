@@ -5,6 +5,7 @@ import eventsRoutes from './events';
 import familyRoutes from './family';
 import nftsRoutes from './nfts';
 import ownersRoutes from './owners';
+import auditRoute from './audit';
 
 const routes = (app: Express, urlPrepend: string | undefined, Models: CryptoKittiesModels) => {
     const url = urlPrepend ? `/${urlPrepend}` : '';
@@ -14,6 +15,7 @@ const routes = (app: Express, urlPrepend: string | undefined, Models: CryptoKitt
     app.use(`${url}/family`, familyRoutes(Models));
     app.use(`${url}/cattributes`, cattributesRoutes());
     app.use(`${url}/events`, eventsRoutes(Models));
+    app.get(`${url}/audit`, auditRoute(Models));
 };
 
 export default routes;

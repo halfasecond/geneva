@@ -4,6 +4,8 @@ import { KittyFamilyModels } from './models';
 import { familyService } from './service';
 import { newsQueries } from '../kittynews/queries';
 import { KittyNewsModels } from '../kittynews/models';
+import { readCkAudit } from '../cryptokitties/routes/audit';
+import createCkModels from '../cryptokitties/models';
 
 type Head = { blocknumber: number; timestamp: number };
 
@@ -17,8 +19,14 @@ export default (
     const familyNs = io.of('/kittyfamily');
     const family = familyService(Models, db);
     const news = newsQueries(newsModels, db);
+    const ck = createCkModels('ck', db);
     let sockets = 0;
     let latest: Head = { blocknumber: 0, timestamp: 0 };
+
+    const emitProgress = async (socket: { emit: (event: string, payload: unknown) => void }) => {
+        const row = await readCkAudit(ck);
+        if (row) socket.emit('progress', row);
+    };
 
     emitter.on('newEthBlock', ({ number, timestamp }: { number: number; timestamp: number }) => {
         latest = { blocknumber: Number(number), timestamp: Number(timestamp) };
@@ -33,6 +41,14 @@ export default (
         socket.on('ckReport', async () => {
             socket.emit('ckReport', await news.latestReport());
         });
+        socket.on('getProgress', async () => {
+            try {
+                await emitProgress(socket);
+            } catch (error) {
+                console.error('[kittyfamily] getProgress', error);
+            }
+        });
+        void emitProgress(socket);
         socket.on('getMessages', async () => {
             socket.emit('messages', await family.messages());
         });
