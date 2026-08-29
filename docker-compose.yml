@@ -13,6 +13,7 @@ services:
       - 7002:7002
       - 7003:7003
       - 7005:7005
+      - 8001:8001
     stdin_open: true
     tty: true
     networks:
