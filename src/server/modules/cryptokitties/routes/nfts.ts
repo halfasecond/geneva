@@ -8,9 +8,9 @@ interface Cattribute {
     gene: number;
 }
 
-const routes = (Models: CryptoKittiesModels): Router => {
+const routes = (Models: CryptoKittiesModels, defaultLimit = 20): Router => {
     const router = express.Router();
-    const limit = 20;
+    const maxLimit = 2000;
     let cattributes: Cattribute[] = [];
     let searchables: string[] = [];
 
@@ -29,9 +29,10 @@ const routes = (Models: CryptoKittiesModels): Router => {
             searchQueryItems(searchParams, query, cattributes, searchables);
         }
 
-        const owner = req.query.owner_wallet_address;
-        if (owner && typeof owner === 'string') {
-            query.owner = { $eq: owner.toLowerCase() };
+        const ownerRaw = req.query.owner_wallet_address || req.query.wallet;
+        if (ownerRaw && typeof ownerRaw === 'string') {
+            const owner = ownerRaw.replace(/[[\]]/g, '').trim().toLowerCase();
+            if (owner.startsWith('0x')) query.owner = { $eq: owner };
         }
 
         const sort: Record<string, 1 | -1> = {};
@@ -53,6 +54,10 @@ const routes = (Models: CryptoKittiesModels): Router => {
             if (or.length > 0) query.$or = or;
         }
 
+        const parsedLimit = parseInt(String(req.query.limit), 10);
+        const limit = Number.isFinite(parsedLimit) && parsedLimit > 0
+            ? Math.min(parsedLimit, maxLimit)
+            : defaultLimit;
         const page = parseInt(String(req.query.page), 10) || 1;
         const skip = (page - 1) * limit;
 
@@ -102,6 +107,9 @@ function searchQueryItems(
                 }
                 case 'hatchedBy':
                     query.hatchedBy = value.toString();
+                    break;
+                case 'wallet':
+                    query.owner = { $eq: value.replace(/[[\]]/g, '').toLowerCase() };
                     break;
                 case 'm1':
                     query.sl0m1 = value === 'any' ? { $gt: 0 } : { $eq: Number(value) };

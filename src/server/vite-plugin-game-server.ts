@@ -1,13 +1,13 @@
 import { Plugin } from 'vite';
 import { Server as SocketServer } from 'socket.io';
-import { EventEmitter } from 'events';
 import cors from 'cors';
 import express from 'express';
 import dotenv from 'dotenv';
 import path from 'path';
 import mongoose from 'mongoose';
-import modules from './modules';
-import createWeb3Connection from './config/web3';
+import modules, { stopBlockIndexer } from './modules';
+import { createHttpWeb3 } from './config/web3';
+import { resolveRpcUrl } from './indexer';
 
 // Track active connections for cleanup
 let io: SocketServer | null = null;
@@ -17,7 +17,9 @@ let web3: any = null;
 const cleanup = () => {
     console.log('\n🐎 Shutting down game server...');
     
-    if (web3?.currentProvider) {
+    stopBlockIndexer();
+
+    if (web3?.currentProvider?.disconnect) {
         console.log('Closing Web3 connections...');
         web3.currentProvider.disconnect();
     }
@@ -47,10 +49,10 @@ export function gameServer(): Plugin {
             });
         },
         async configureServer(server) {
-            const { MONGODB_URI, WEB3_SOCKET_URL, CORS_ORIGINS, VITE_ENABLE_INDEXER } = process.env;
+            const { MONGODB_URI, CORS_ORIGINS, VITE_ENABLE_INDEXER } = process.env;
 
-            if (!MONGODB_URI || !WEB3_SOCKET_URL) {
-                throw new Error('Missing required environment variables');
+            if (!MONGODB_URI || !(process.env.RPC_URL || process.env.WEB3_SOCKET_URL)) {
+                throw new Error('Missing required environment variables (MONGODB_URI and RPC_URL or WEB3_SOCKET_URL)');
             }
 
             try {
@@ -62,9 +64,6 @@ export function gameServer(): Plugin {
                     }
                 });
 
-                // Create event emitter
-                const emitter = new EventEmitter();
-
                 // Create Express app
                 const app = express();
                 app.use(express.json());
@@ -75,8 +74,9 @@ export function gameServer(): Plugin {
                 db = await mongoose.createConnection(MONGODB_URI);
                 console.log('Successfully connected to MongoDB');
 
-                // Initialize Web3
-                web3 = createWeb3Connection(WEB3_SOCKET_URL);
+                const { http } = resolveRpcUrl();
+                web3 = createHttpWeb3(http);
+                console.log(`Web3 HTTP provider ready (${http.replace(/\/[^/]+$/, '/…')})`);
 
                 // Initialize modules with prefixed routes
                 modules(app, io, web3, db);

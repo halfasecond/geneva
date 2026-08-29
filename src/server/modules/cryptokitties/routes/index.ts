@@ -9,6 +9,7 @@ import ownersRoutes from './owners';
 const routes = (app: Express, urlPrepend: string | undefined, Models: CryptoKittiesModels) => {
     const url = urlPrepend ? `/${urlPrepend}` : '';
     app.use(`${url}/nfts`, nftsRoutes(Models));
+    app.use(`${url}/kitties`, nftsRoutes(Models, 2000));
     app.use(`${url}/owners`, ownersRoutes(Models));
     app.use(`${url}/family`, familyRoutes(Models));
     app.use(`${url}/cattributes`, cattributesRoutes());

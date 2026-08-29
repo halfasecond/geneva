@@ -18,7 +18,7 @@ const routes = (Models: CryptoKittiesModels): Router => {
                     if (idRange.length === 2) {
                         query.tokenId = { $gte: Number(idRange[0]), $lte: Number(idRange[1]) };
                     } else {
-                        query.tokenId = { $in: value.split(',') };
+                        query.tokenId = { $in: value.split(',').map(Number) };
                     }
                 }
             });

@@ -99,6 +99,7 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
             const bestTime = await Models.Race.findOne({ owner: actor.walletAddress.toLowerCase() }).sort({ time: 1 });
             actor.race = bestTime?.time;
             addPlayer(namespace, '', actor.position as Position, actor.tokenId, actor.walletAddress.toLowerCase(), actor.race, actor.hay)
+            setPlayerDisconnected(namespace, actor.tokenId)
         }
         return actors
     }
@@ -283,12 +284,13 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
 
     const startSaveLoop = () => {
         saveInterval = setInterval(async () => {
-            const connectedPlayers = getConnectedPlayers(namespace);
+            const connectedPlayers = getConnectedPlayers(namespace).filter((player) => player.socketId);
             for (const player of connectedPlayers) {
                 await Models.GameState.findOneAndUpdate(
-                    { tokenId: player.id, walletAddress: player.walletAddress?.toLowerCase() },
+                    { walletAddress: player.walletAddress?.toLowerCase() },
                     {
                         $set: {
+                            tokenId: player.id,
                             position: player.position,
                             hay: player.hay,
                             race: player.race,
@@ -335,11 +337,32 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
                     socket.emit('error', { message: 'Not authenticated' });
                     return;
                 }
-                try { // Verify 🐎 ownership...
+                const wallet = walletAddress.toLowerCase();
+
+                // Hay + game state first — ownerOf is a slow RPC and the world tick
+                // would otherwise broadcast this horse with hay 0, then persist it.
+                const existingPlayer = await Models.GameState.findOne({ walletAddress: wallet });
+                const [haySum] = await Models.Hay.aggregate([
+                    { $match: { address: wallet } },
+                    { $group: { _id: null, hay: { $sum: '$amount' } } },
+                ]);
+                const storedHay = typeof existingPlayer?.hay === 'number' ? existingPlayer.hay : 0;
+                const hay = Math.max(storedHay, Number(haySum?.hay ?? 0));
+                const position = (existingPlayer?.position && existingPlayer?.race)
+                    ? existingPlayer?.position
+                    : { x: 100, y: 150, direction: 'right' as const };
+                const game = (existingPlayer?.game)
+                    ? existingPlayer.game
+                    : { level: 0, greaterTractor: null, stable: 0 };
+
+                const player = addPlayer(namespace, socket.id, position, tokenId, wallet, existingPlayer?.race, hay, game);
+                player.hay = hay;
+                setPlayerDisconnected(namespace, player.id);
+
+                try {
                     const contract = new web3.eth.Contract(Contracts.Core.abi, Contracts.Core.addr);
                     const owner = await contract.methods.ownerOf(tokenId).call();
-                    const isOwner = owner.toLowerCase() === walletAddress.toLowerCase();
-                    if (!isOwner) {
+                    if (owner.toLowerCase() !== wallet) {
                         socket.emit('error', { message: 'You do not own this horse' });
                         return;
                     }
@@ -348,43 +371,34 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
                     return;
                 }
 
-                console.log(`🐎 Horse #${tokenId} joined the paddock 🐎`);
-                const existingPlayer = await Models.GameState.findOne({ tokenId, walletAddress: walletAddress.toLowerCase() })
-                const position = (existingPlayer?.position && existingPlayer?.race)
-                    ? existingPlayer?.position
-                    : { x: 100, y: 150, direction: 'right' as const } // Default spawn position for new players and players or haven't finished the race
-                const game = (existingPlayer?.game)
-                    ? existingPlayer.game
-                    : { level: 0, greaterTractor: null, stable: 0 }
-
-                const player = addPlayer(namespace, socket.id, position, tokenId, walletAddress, existingPlayer?.race, 0, game);
                 setPlayerConnected(namespace, player.id);
-                socket.emit('newEthBlock', latestEthBlock)
-                // Save to GameState collection
+                socket.emit('newEthBlock', latestEthBlock);
+                console.log(`🐎 Horse #${tokenId} joined the paddock with $HAY ${hay}`);
                 await Models.GameState.findOneAndUpdate(
-                    { walletAddress: walletAddress.toLowerCase() },
+                    { walletAddress: wallet },
                     {
                         $set: {
                             tokenId,
                             position,
                             connected: true,
                             lastSeen: new Date(),
-                            race: undefined
+                            race: existingPlayer?.race,
+                            hay,
+                            game,
                         }
                     },
                     { upsert: true, new: true }
                 );
+
+                socket.emit('player:joined');
+                socket.emit('game:settings', gameSettings);
+                socket.emit('static:actors', getStaticActors(namespace));
+                namespace.emit('world:state', getWorldState(namespace));
+                getMessages(namespace, Models.Message)
             } catch (error) {
                 console.error('Join error:', error);
                 socket.emit('error', { message: 'Failed to join game' });
             }
-            
-            // Send join confirmation, game settings, static actors, and initial state
-            socket.emit('player:joined');
-            socket.emit('game:settings', gameSettings);  // Send game settings
-            socket.emit('static:actors', getStaticActors(namespace));  // Send static actors once
-            namespace.emit('world:state', getWorldState(namespace));  // Broadcast dynamic actors
-            getMessages(namespace, Models.Message)
         });
 
         socket.on('player:move', async ({ x, y, direction }: Position) => {

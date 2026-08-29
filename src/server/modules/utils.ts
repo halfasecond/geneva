@@ -95,6 +95,11 @@ export const subscribeToContractEvents = async (
     }
 };
 
+const isLogRangeError = (error: unknown): boolean => {
+    const msg = error instanceof Error ? error.message : String(error);
+    return /limited to a \d+ range|eth_getLogs is limited|too many|query returned more/i.test(msg);
+};
+
 const getPastEvents = async (abi: any[], address: string, fromBlock: number, toBlock: number, eventIncludes: string[], web3: any) => {
     const contract = new web3.eth.Contract(abi, address);
     const pastEvents: any[] = [];
@@ -110,6 +115,7 @@ const getPastEvents = async (abi: any[], address: string, fromBlock: number, toB
                 pastEvents.push({ ...event, event: eventName });
             });
         } catch (error) {
+            if (isLogRangeError(error)) throw error;
             console.error('Error querying events:', error);
         }
     }
@@ -130,12 +136,25 @@ export const getPastContractEvents = async (
     query: Record<string, any> = {}
 ) => {
     const { Event } = Models;
+    const maxRange = Math.max(1, Number(process.env.GETLOGS_MAX_RANGE ?? 5));
+    let window = Math.min(increment, maxRange);
     let latestEvent = await Event.findOne(query, {}, { sort: { 'blockNumber': -1 } });
     let fromBlockNumber = latestEvent ? latestEvent.blockNumber + 1 : fromBlock;
-    let currentBlockHeight = await web3.eth.getBlockNumber();
-    let toBlockNumber = Math.min(fromBlockNumber + (increment - 1), Number(currentBlockHeight));
+    let currentBlockHeight = Number(await web3.eth.getBlockNumber());
     while (fromBlockNumber <= currentBlockHeight) {
-        let pastEvents = await getPastEvents(abi, addr, fromBlockNumber, toBlockNumber, eventIncludes, web3);
+        const toBlockNumber = Math.min(fromBlockNumber + window - 1, currentBlockHeight);
+        let pastEvents: any[] = [];
+        try {
+            pastEvents = await getPastEvents(abi, addr, fromBlockNumber, toBlockNumber, eventIncludes, web3);
+        } catch (error) {
+            if (window > 1 && isLogRangeError(error)) {
+                window = Math.max(1, Math.floor(window / 2));
+                console.warn(`[indexer] ${name} shrinking getLogs window to ${window}`);
+                continue;
+            }
+            console.error('Error querying events:', error);
+            throw error;
+        }
         pastEvents.sort((a, b) => {
             const aBlockNumber = Number(a.blockNumber);
             const bBlockNumber = Number(b.blockNumber);
@@ -157,12 +176,11 @@ export const getPastContractEvents = async (
                 console.error(`Error processing event:`, error);
             }
         }
-        const currentBlockNumber = await web3.eth.getBlockNumber();
-        const perc = ((100 / (Number(currentBlockNumber) - fromBlock)) * (toBlockNumber - fromBlock)).toFixed(3);
-        console.log(`Retrieved ${pastEvents.length} ${name} events from block ${fromBlockNumber} - ${toBlockNumber}: ${perc}%`);
+        currentBlockHeight = Number(await web3.eth.getBlockNumber());
+        console.log(`Retrieved ${pastEvents.length} ${name} events from block ${fromBlockNumber} - ${toBlockNumber}`);
         fromBlockNumber = toBlockNumber + 1;
-        toBlockNumber = Math.min(toBlockNumber + increment, Number(currentBlockHeight));
-        await new Promise(resolve => setTimeout(resolve, 500)); // Don't spam the socket...
+        window = Math.min(increment, maxRange);
+        await new Promise(resolve => setTimeout(resolve, 500));
     }
     return `${name} events up to date`;
 };

@@ -4,7 +4,8 @@ import { Connection } from 'mongoose';
 import _Models from './models';
 import Routes from './routes';
 import Contracts from './contracts';
-import { getContractHistory } from '../utils';
+import { followContracts, type WatchContractFn } from '../../indexer';
+
 
 interface ModuleConfig {
     app: Express;
@@ -17,6 +18,7 @@ interface ModuleConfig {
     increment?: number;
     eventsToWatch?: string[];
     emitter: any;
+    watchContract?: WatchContractFn;
 }
 
 const processTransferEvent = async (event: any, web3: any): Promise<void> => {
@@ -103,23 +105,21 @@ const logEvent = async (event: any, Models: Models, web3: any) => {
 };
 
 const runModule = (config: ModuleConfig) => {
-    const { app, io, web3, db, name, prefix, deployed, increment = 1000, eventsToWatch = ['Transfer'], emitter } = config;
+    const { app, web3, db, name, prefix, deployed = 22755367, increment = 1000, eventsToWatch = ['Transfer'], watchContract } = config;
     const Models = _Models(prefix, db);
 
     Routes(app, name, Models);
-    if (Object.keys(Contracts).length) {
-        const module = { 
-            Contracts, 
-            Models, 
-            deployed, 
-            increment, 
-            eventsToWatch, 
-            logEvent: (event: any) => logEvent(event, Models, web3),
-        };
-        getContractHistory(name || 'default module', module, eventsToWatch, web3);
-    } else {
-        console.log('no contract found to observe');
-    }
+
+    return followContracts({
+        name: name || 'purr',
+        watchContract,
+        contracts: [
+            { label: 'Core', abi: Contracts.Core.abi, addr: Contracts.Core.addr, events: eventsToWatch },
+            { label: 'Claim', abi: Contracts.PurrClaim.abi, addr: Contracts.PurrClaim.addr, events: ['Claim'] },
+        ],
+        handle: (event) => logEvent(event, Models, web3),
+        backfill: { web3, Models, deployed, increment },
+    });
 };
 
 export default runModule;

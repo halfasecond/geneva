@@ -4,7 +4,7 @@ import { Express } from 'express'
 
 const configureExpress = (app: Express): void => {
     const corsOptions: cors.CorsOptions = {
-        origin: ['https://paddock.chainedhorse.com/', 'https://paddock.chainedhorse.com', 'https://tank.life/', 'https://tank.life', 'https://purr.international/', 'https://purr.international', 'https://kitty.news', 'https://kitty.news/', 'https://vech.halfasecond.com', 'https://vech.halfasecond.com/'],
+        origin: true,
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
         allowedHeaders: [
             'Content-Type',

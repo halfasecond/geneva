@@ -28,10 +28,14 @@ export const addPlayer = (namespace: Namespace, socketId: string, position: Posi
 
     if (existingPlayer) {
         existingPlayer.game = game
-        // Only update connection state and sprite, preserve position
         existingPlayer.connected = true;
         existingPlayer.lastSeen = new Date();
-        existingPlayer.socketId = socketId;  // Update socket mapping
+        existingPlayer.socketId = socketId;
+        existingPlayer.walletAddress = walletAddress;
+        existingPlayer.race = race;
+        if (typeof hay === 'number') {
+            existingPlayer.hay = hay;
+        }
         return existingPlayer;
     }
 
@@ -126,7 +130,7 @@ export const completePlayerTutorial = (namespace: Namespace, id: number, race: a
 
 export const getConnectedPlayers = (namespace: Namespace): Actor[] => {
     return namespace.worldState.actors.filter(
-        actor => actor.type === 'player' && actor.connected
+        actor => actor.type === 'player' && actor.connected && actor.socketId
     );
 };
 

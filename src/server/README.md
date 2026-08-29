@@ -118,8 +118,9 @@ HOST=0.0.0.0
 # MongoDB
 MONGODB_URI=mongodb://localhost:27017/geneva
 
-# Web3
-WEB3_SOCKET_URL=your-web3-websocket-url
+# Web3 — one HTTP + one WSS (this account allows 2 connections)
+RPC_URL=https://your-endpoint.quiknode.pro/.../
+WEB3_SOCKET_URL=wss://your-endpoint.quiknode.pro/.../
 CHAIN_ID=1
 
 # GitHub (optional)

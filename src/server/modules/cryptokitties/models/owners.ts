@@ -4,7 +4,7 @@ const schema = new Schema({
     owner: String,
     balance: { type: Number, default: 0 },
     birthed: { type: Number, default: 0 },
-});
+}, { strict: false, strictQuery: false });
 
 schema.index({ owner: 1 }, { unique: true });
 

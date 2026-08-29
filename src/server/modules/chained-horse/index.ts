@@ -6,7 +6,8 @@ import _Models from './models';
 import Routes from './routes';
 import Contracts from './contracts';
 import Socket from './socket';
-import { getContractHistory, handleStandardERC721Event } from '../utils';
+import { handleStandardERC721Event } from '../utils';
+import { followContracts } from '../../indexer';
 
 interface ModuleConfig {
     app: Express;
@@ -19,6 +20,13 @@ interface ModuleConfig {
     increment?: number;
     eventsToWatch?: string[];
     emitter: any;
+    watchContract?: (contract: {
+        name: string;
+        address: string;
+        abi: any[];
+        events: string[];
+        handle: (event: any) => Promise<void>;
+    }) => void;
 }
 
 interface Models {
@@ -87,25 +95,19 @@ const logEvent = async (event: any, Models: Models, web3: any) =>
     handleStandardERC721Event(event, processEvent, Models, web3);
 
 const runModule = (config: ModuleConfig) => {
-    const { app, io, web3, db, name, prefix, deployed = 0, increment = 1000, eventsToWatch = ['Transfer'], emitter } = config;
+    const { app, io, web3, db, name, prefix, deployed = 0, increment = 1000, eventsToWatch = ['Transfer'], emitter, watchContract } = config;
     const Models = _Models(prefix, db);
 
     Routes(app, name, Models);
     Socket(io, web3, name || '', Models, Contracts, emitter);
 
-    if (Object.keys(Contracts).length) {
-        const module = { 
-            Contracts, 
-            Models, 
-            deployed, 
-            increment, 
-            eventsToWatch, 
-            logEvent: (event: any) => logEvent(event, Models, web3) 
-        };
-        getContractHistory(name || 'default module', module, eventsToWatch, web3);
-    } else {
-        console.log('no contract found to observe');
-    }
+    return followContracts({
+        name: name || 'chained-horse',
+        watchContract,
+        contracts: [{ abi: Contracts.Core.abi, addr: Contracts.Core.addr, events: eventsToWatch }],
+        handle: (event) => logEvent(event, Models, web3),
+        backfill: { web3, Models, deployed, increment },
+    });
 };
 
 export default runModule;

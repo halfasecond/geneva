@@ -25,7 +25,7 @@ export const calculateCurrentPrice = (startP: string, endP: string, startT: stri
     return currentPriceBN.toString().padStart(pad, '0');
 };
 
-const updateFloor = async (name: string, Models: CryptoKittiesModels, query: Record<string, unknown>) => {
+export const updateFloor = async (name: string, Models: CryptoKittiesModels, query: Record<string, unknown>) => {
     const now = Math.floor(Date.now() / 1000);
     const cursor = Models.NFT.find(query).cursor();
     for (let nft = await cursor.next(); nft != null; nft = await cursor.next()) {

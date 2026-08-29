@@ -13,6 +13,13 @@ export interface ModuleConfig {
     increment?: number;
     eventsToWatch?: string[];
     emitter: any;
+    watchContract?: (contract: {
+        name: string;
+        address: string;
+        abi: any[];
+        events: string[];
+        handle: (event: any) => Promise<void>;
+    }) => void;
 }
 
 export interface Models {

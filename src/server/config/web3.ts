@@ -1,5 +1,8 @@
 import Web3 from 'web3';
 
+/** HTTP JSON-RPC only — share this across modules. WSS is owned by the block follower. */
+export const createHttpWeb3 = (httpUrl: string): any => new (Web3 as any)(httpUrl);
+
 const createWeb3Connection = (wsProvider: string): any => {
   const web3: any = new (Web3 as any)(
     new (Web3 as any).providers.WebsocketProvider(wsProvider, {
