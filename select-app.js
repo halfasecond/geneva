@@ -18,8 +18,9 @@ console.log('6) Aquarium')
 console.log('7) Flowbots')
 console.log('8) Elite (three.js web3)')
 console.log('9) kitty.family')
+console.log('10) kitty.news')
 
-rl.question('Enter your choice [1-9]: ', (choice) => {
+rl.question('Enter your choice [1-10]: ', (choice) => {
   let app;
   
   switch (choice) {
@@ -49,6 +50,9 @@ rl.question('Enter your choice [1-9]: ', (choice) => {
       break;
     case '9':
       app = 'kittyFamily';
+      break;
+    case '10':
+      app = 'kittyNews';
       break;
     default:
       app = 'geneva';

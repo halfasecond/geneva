@@ -45,6 +45,11 @@ const appConfigs = {
     outDir: 'dist/elite',
     appName: 'elite'
   },
+  'kittyNews': {
+    input: resolve(__dirname, 'index.html'),
+    outDir: 'dist/kittyNews',
+    appName: 'kittyNews'
+  },
   'default': {
     input: resolve(__dirname, 'index.html'),
     outDir: 'dist/geneva',
@@ -73,7 +78,7 @@ export default defineConfig(({ command, mode }) => {
     plugins: [
       react(),
       // Only include game server in development
-      command === 'serve' ? gameServer() : null,
+      command === 'serve' && appName !== 'kittyNews' ? gameServer() : null,
       {
         name: 'html-transform',
         transformIndexHtml(html) {
@@ -94,6 +99,8 @@ export default defineConfig(({ command, mode }) => {
                                 ? 'Galactic Flowbots from the futures...'
                                 : process.env.VITE_APP === 'elite'
                                   ? 'ELITE — web3 three.js space combat & trade'
+                                  : process.env.VITE_APP === 'kittyNews'
+                                    ? 'kitty.news'
                                   : 'Geneva Agentic A.I.'
             );
         }
@@ -101,8 +108,9 @@ export default defineConfig(({ command, mode }) => {
     ].filter(Boolean),
     server: {
       host: true,
-      port: 3131,
+      port: appName === 'kittyNews' ? 8001 : 3131,
     },
+    publicDir: appName === 'kittyNews' ? 'public/kittyNews' : 'public',
     resolve: {
       alias: {
         src: "/src",
@@ -110,7 +118,8 @@ export default defineConfig(({ command, mode }) => {
         components: "/src/components",
         pages: "/src/pages",
         style: "/src/style",
-        utils: "/src/utils"
+        utils: "/src/utils",
+        kittyNews: "/src/kittyNews",
       },
     },
     build: {

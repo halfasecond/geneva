@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="100%" height="100%" viewBox="0 0 3000 3000" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:bevel;stroke-miterlimit:1.5;">
+    <g id="Angel-Halo--silver-" serif:id="Angel Halo (silver)" transform="matrix(1,0,0,0.955776,21,-78.5372)">
+        <g transform="matrix(1.19657,-0.0107006,0.0108703,1.09822,-295.919,-53.3747)">
+            <ellipse cx="1405.43" cy="536.164" rx="304" ry="79.333" style="fill:none;stroke:white;stroke-opacity:0.482353;stroke-width:150.9px;"/>
+        </g>
+        <g transform="matrix(1.13428,-0.0101436,0.012523,1.26519,-202.104,-127.875)">
+            <ellipse cx="1405.43" cy="536.164" rx="304" ry="79.333" style="fill:none;stroke:rgb(49,50,61);stroke-width:59.65px;"/>
+        </g>
+        <g transform="matrix(1.01403,-0.00906824,0.0174603,1.76401,-22.0046,-440.567)">
+            <ellipse cx="1391" cy="557.164" rx="339" ry="57.333" style="fill:none;stroke:rgb(202,210,210);stroke-width:28.73px;"/>
+        </g>
+        <g transform="matrix(1.02615,-0.00917663,0.0173315,1.75099,-38.4012,-428.314)">
+            <ellipse cx="1391" cy="557.164" rx="339" ry="57.333" style="fill:none;stroke:white;stroke-width:28.79px;"/>
+        </g>
+        <g transform="matrix(1.02615,-0.00917663,0.017197,1.73741,-38.2521,-413.251)">
+            <ellipse cx="1391" cy="557.164" rx="339" ry="57.333" style="fill:none;stroke:rgb(202,210,210);stroke-width:28.95px;"/>
+        </g>
+        <g transform="matrix(1.00999,-0.00903212,0.0172026,1.73797,-15.7088,-403.764)">
+            <ellipse cx="1391" cy="557.164" rx="339" ry="57.333" style="fill:none;stroke:rgb(133,130,138);stroke-width:15.99px;"/>
+        </g>
+        <g transform="matrix(-0.984307,-0.176463,-0.187362,1.0451,2893.7,145.677)">
+            <path d="M1088.56,580.439C1087.19,579.073 1076.29,570.834 1076.75,565.23C1077.13,560.487 1089.96,552.53 1093.43,550.873" style="fill:none;stroke:rgb(49,50,61);stroke-width:7.88px;stroke-linejoin:round;"/>
+        </g>
+        <g transform="matrix(1.141,-0.204554,0.197206,1.10001,-270.021,149.475)">
+            <path d="M1088.56,580.439C1087.19,579.073 1076.29,570.834 1076.75,565.23C1077.13,560.487 1089.96,552.53 1093.43,550.873" style="fill:none;stroke:rgb(49,50,61);stroke-width:7.12px;stroke-linejoin:round;"/>
+        </g>
+    </g>
+    <g transform="matrix(3.17959,0,0,3.25941,-618.367,-539.749)">
+        <g id="Final-Product-Setup--Rec-" serif:id="Final Product Setup (Rec)">
+            <rect x="194.48" y="165.597" width="943.517" height="920.411" style="fill:none;"/>
+        </g>
+    </g>
+</svg>
