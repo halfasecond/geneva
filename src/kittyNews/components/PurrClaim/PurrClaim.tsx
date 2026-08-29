@@ -6,8 +6,8 @@ import { useClaimLogic } from './useClaimLogic'
 import { diamonds } from './diamonds'
 import exclusives from './exclusives'
 import * as Styled from './PurrClaim.style'
+import { CDN } from 'kittyNews/api'
 
-const { VITE_CDN_URL } = import.meta.env
 
 const PurrClaim: React.FC<{
     walletAddress: string | undefined,
@@ -47,9 +47,9 @@ const PurrClaim: React.FC<{
     
     return (
         <Styled.Div>
-            <img src={`${VITE_CDN_URL}/images/purr/ether-diamond.gif`} />
+            <img src={`${CDN}/images/purr/ether-diamond.gif`} />
             <h2>$PURR CLAIM</h2>
-            <p>Available: <b>{'$PURR '}{!(purrClaimBalance === undefined) ? fromWei(purrClaimBalance, 'ether') : <img src={`${VITE_CDN_URL}/images/purr/loading.png`} alt={''} />}</b></p>
+            <p>Available: <b>{'$PURR '}{!(purrClaimBalance === undefined) ? fromWei(purrClaimBalance, 'ether') : <img src={`${CDN}/images/purr/loading.png`} alt={''} />}</b></p>
             <ol>
                 <li>{`Day1 CryptoKitties`} - <b>$PURR 10</b></li>
                 <li>{`Diamond CryptoKitties`} - <b>$PURR 100</b></li>
@@ -71,7 +71,7 @@ const PurrClaim: React.FC<{
                     />
                 </div>
                 {state.loading ? (
-                    <img src={`${VITE_CDN_URL}/images/purr/loading.png`} alt={''} />
+                    <img src={`${CDN}/images/purr/loading.png`} alt={''} />
                 ) : (
                     state.kittyEligible ? (
                         <>

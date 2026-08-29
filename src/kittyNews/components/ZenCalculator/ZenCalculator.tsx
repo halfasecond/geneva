@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import BN from 'big.js'
 import * as Styled from './ZenCalculator.style'
+import { CDN } from 'kittyNews/api'
 
-const { VITE_CDN_URL } = import.meta.env
 
 const createMultiplierOptions = (options: Array<string>) => options.map((name: string, index: number) => ({ label: name, value: '1' + '0'.repeat((index + 1) * 3) }))
 
@@ -137,7 +137,7 @@ const ZenCalculator: React.FC = () => {
     
     return (
         <Styled.Div>
-            <img src={`${VITE_CDN_URL}/images/kittynews/atz-256x256.png`} />
+            <img src={`${CDN}/images/kittynews/atz-256x256.png`} />
             <h2>Zen Calculator</h2>
             <div>
                 <div>

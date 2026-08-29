@@ -12,8 +12,8 @@ import { formatPublishedDate } from 'kittyNews/utils'
 import * as Styled from './Article.style'
 import { settings } from './config'
 import { ReportType } from 'kittyNews/types/report'
+import { CDN, MEDIA } from 'kittyNews/api'
 
-const { VITE_MEDIA_SERVER, VITE_CDN_URL } = import.meta.env
 
 const videoJsOptions = {
   autoplay: false,
@@ -73,14 +73,14 @@ const Article: React.FC<{ endpoint: string, report: ReportType | undefined, admi
             <h2>{article.title}</h2>
           )}
           <h3>written by <Link to={`https://x.com/KittyIntl`} target={`_blank`}>@kittyIntl</Link> - {formatPublishedDate(article.publishedDate)}</h3>
-          <img src={VITE_CDN_URL + article.thumbnail.src} alt={article.thumbnail.alt} />
+          <img src={CDN + article.thumbnail.src} alt={article.thumbnail.alt} />
           {article.content.map((copy, i) => {
             const Element = Object.keys(copy)[0] as keyof CopyElement;
             switch (Element) {
               case 'img':
                 return (
                   <img
-                    src={VITE_CDN_URL + (copy as ImageElement).img.src}
+                    src={CDN + (copy as ImageElement).img.src}
                     key={i}
                     alt={(copy as ImageElement).img.alt}
                   />
@@ -98,7 +98,7 @@ const Article: React.FC<{ endpoint: string, report: ReportType | undefined, admi
                   <Styled.Grid key={i}>
                     {(copy as GridElement).grid.map(({ img: { src, alt }, h3 }, q) => (
                       <div key={q}>
-                        <img src={VITE_CDN_URL + src} alt={alt} />
+                        <img src={CDN + src} alt={alt} />
                         <h3>{h3}</h3>
                       </div>
                     ))}
@@ -147,8 +147,8 @@ const Article: React.FC<{ endpoint: string, report: ReportType | undefined, admi
                     key={i}
                     options={{
                       ...videoJsOptions,
-                      sources: [{ src: VITE_MEDIA_SERVER + (copy as VideoElement).video.src }],
-                      poster: VITE_CDN_URL + (copy as VideoElement).video.poster,
+                      sources: [{ src: MEDIA + (copy as VideoElement).video.src }],
+                      poster: CDN + (copy as VideoElement).video.poster,
                     }}
                   />
                 );

@@ -13,8 +13,9 @@ import Textarea from 'kittyNews/components/Textarea'
 import VideoPlayer from 'kittyNews/components/VideoPlayer'
 import { formatPublishedDate } from 'kittyNews/utils';
 import * as Styled from './Cms.style'
+import { CDN, MEDIA } from 'kittyNews/api'
 
-const { VITE_CDN_URL, VITE_MEDIA_SERVER, VITE_APP_TOKEN_NAME } = import.meta.env
+const { VITE_APP_TOKEN_NAME } = import.meta.env
 
 const copyTypes = ['p', 'h2', 'h3', 'blockquote', 'code', 'ul', 'img', 'grid', 'video']
 const contentTypes = ['article', 'copy', 'news', 'post', 'review', 'tutorial']
@@ -462,7 +463,7 @@ const Cms = ({ module, wallet, endpoint }: { module: string | undefined, wallet:
                             <input type="text" value={copy.thumbnail.alt} onChange={e => handleInputTextChange(e, 'thumbnail', 'alt')} disabled={saving} />
                         </div>
                         <img
-                            src={VITE_CDN_URL + copy.thumbnail.src}
+                            src={CDN + copy.thumbnail.src}
                             alt={copy.thumbnail.alt}
                         />
                         <div>
@@ -591,7 +592,7 @@ const Cms = ({ module, wallet, endpoint }: { module: string | undefined, wallet:
                                             />
                                         </div>
                                         <img
-                                            src={VITE_CDN_URL + (blob as ImageElement).img.src}
+                                            src={CDN + (blob as ImageElement).img.src}
                                             alt={(blob as ImageElement).img.alt}
                                         />
                                     </Fragment>
@@ -651,7 +652,7 @@ const Cms = ({ module, wallet, endpoint }: { module: string | undefined, wallet:
                                                             value={alt}
                                                             onChange={e => editCopy({ src, alt: e.target.value }, i, q)}
                                                         />
-                                                        <img src={`${VITE_CDN_URL}${src}`} alt={alt} />
+                                                        <img src={`${CDN}${src}`} alt={alt} />
                                                     </section>
                                                 ))}
                                             </div>
@@ -690,8 +691,8 @@ const Cms = ({ module, wallet, endpoint }: { module: string | undefined, wallet:
                                             <VideoPlayer
                                                 options={{
                                                     ...videoJsOptions,
-                                                    sources: [{ src: VITE_MEDIA_SERVER + (blob as VideoElement).video.src }],
-                                                    poster: VITE_CDN_URL + (blob as VideoElement).video.poster,
+                                                    sources: [{ src: MEDIA + (blob as VideoElement).video.src }],
+                                                    poster: CDN + (blob as VideoElement).video.poster,
                                                 }}
                                             />
                                         </div>

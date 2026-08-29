@@ -11,9 +11,9 @@ import {
 import { formatPublishedDate } from 'kittyNews/utils'
 import { settings } from './config'
 import * as Styled from './News.style'
+import { CDN, MEDIA } from 'kittyNews/api'
 
 
-const { VITE_MEDIA_SERVER, VITE_CDN_URL } = import.meta.env
 
 const videoJsOptions = {
     autoplay: false,
@@ -72,14 +72,14 @@ const News: React.FC<{ endpoint: string, admin: boolean }> = ({ endpoint, admin 
                         <h2>{story.title}</h2>
                     )}
                     <h3>written by <Link to={`https://x.com/KittyIntl`} target={`_blank`}>@kittyIntl</Link> - {formatPublishedDate(story.publishedDate)}</h3>
-                    <img src={VITE_CDN_URL + story.thumbnail.src} alt={story.thumbnail.alt} />
+                    <img src={CDN + story.thumbnail.src} alt={story.thumbnail.alt} />
                     {story.content.map((copy, i) => {
                         const Element = Object.keys(copy)[0] as keyof CopyElement;
                         switch (Element) {
                             case 'img':
                                 return (
                                     <img
-                                        src={VITE_CDN_URL + (copy as ImageElement).img.src}
+                                        src={CDN + (copy as ImageElement).img.src}
                                         key={i}
                                         alt={(copy as ImageElement).img.alt}
                                     />
@@ -97,7 +97,7 @@ const News: React.FC<{ endpoint: string, admin: boolean }> = ({ endpoint, admin 
                                     <Styled.Grid key={i}>
                                         {(copy as GridElement).grid.map(({ img: { src, alt }, h3 }, q) => (
                                             <div key={q}>
-                                                <img src={VITE_CDN_URL + src} alt={alt} />
+                                                <img src={CDN + src} alt={alt} />
                                                 <h3>{h3}</h3>
                                             </div>
                                         ))}
@@ -146,8 +146,8 @@ const News: React.FC<{ endpoint: string, admin: boolean }> = ({ endpoint, admin 
                                         key={i}
                                         options={{
                                             ...videoJsOptions,
-                                            sources: [{ src: VITE_MEDIA_SERVER + (copy as VideoElement).video.src }],
-                                            poster: VITE_CDN_URL + (copy as VideoElement).video.poster,
+                                            sources: [{ src: MEDIA + (copy as VideoElement).video.src }],
+                                            poster: CDN + (copy as VideoElement).video.poster,
                                         }}
                                     />
                                 );
