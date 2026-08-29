@@ -2,13 +2,17 @@ import BN from 'bn.js';
 import Contracts from './contracts';
 import { createGenesObject } from './genes';
 import { calculateCurrentPrice } from './indexer';
+import { padValue, valuesForTx } from './marketplaceValue';
 import { CryptoKittiesModels } from './models';
 
 const cooldowns = [60, 120, 300, 600, 1800, 3600, 7200, 14400, 28800, 57600, 86400, 172800, 345600, 604800];
 const blocksPerSecond = 15;
 
 export type CryptoKittiesWeb3 = {
-    eth: { getTransaction: (hash: string) => Promise<{ value: bigint }> };
+    eth: {
+        getTransaction: (hash: string) => Promise<{ value: bigint }>;
+        getTransactionReceipt?: (hash: string) => Promise<{ logs?: Array<{ address: string; topics: string[]; data: string }> } | null>;
+    };
 };
 
 export type CryptoKittiesEmitter = { emit: (name: string) => void };
@@ -88,13 +92,21 @@ const handleTransferOrAuctionEnd = async (
     if (isSaleEnd || isSireEnd) {
         await handleAuctionEnd(event, Models, isSaleEnd, emitter);
     } else {
-        const tx = await web3.eth.getTransaction(event.transactionHash as string);
-        if (tx.value !== 0n) {
-            await Models.Event.updateOne(
-                { tokenId: event.tokenId, blockNumber: event.blockNumber, logIndex: event.logIndex },
-                { $set: { value: tx.value.toString().padStart(35, '0') } },
-            );
-            emitter.emit('ckSale');
+        if (web3.eth.getTransactionReceipt) {
+            const priced = await valuesForTx(web3, event.transactionHash as string);
+            const wei = priced.get(tokenId);
+            if (wei !== undefined && wei > 0n) {
+                await Models.Event.updateOne(
+                    { tokenId: event.tokenId, blockNumber: event.blockNumber, logIndex: event.logIndex },
+                    { $set: { value: padValue(wei) } },
+                );
+                emitter.emit('ckSale');
+            } else {
+                await Models.Event.updateOne(
+                    { tokenId: event.tokenId, blockNumber: event.blockNumber, logIndex: event.logIndex },
+                    { $unset: { value: '' } },
+                );
+            }
         }
         await Models.NFT.findOneAndUpdate(
             { tokenId },

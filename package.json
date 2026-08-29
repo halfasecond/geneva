@@ -48,6 +48,7 @@
     "ck:rollback": "NODE_NO_WARNINGS=1 babel-node -r @babel/register --extensions '.ts' src/server/scripts/promote-ck-index.ts --rollback",
     "ck:daily": "NODE_NO_WARNINGS=1 babel-node -r @babel/register --extensions '.ts' src/server/scripts/ck-daily.ts",
     "ck:stamp-auctions": "NODE_NO_WARNINGS=1 babel-node -r @babel/register --extensions '.ts' src/server/scripts/stamp-ck-auctions.ts",
+    "ck:fix-values": "NODE_NO_WARNINGS=1 babel-node -r @babel/register --extensions '.ts' src/server/scripts/fix-ck-transfer-values.ts",
     "ck:fill": "NODE_NO_WARNINGS=1 babel-node -r @babel/register --extensions '.ts' src/server/scripts/fill-ck-events.ts"
   },
   "dependencies": {
