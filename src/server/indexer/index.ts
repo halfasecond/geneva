@@ -5,11 +5,13 @@ import { resolveRpcUrl } from './rpc-url';
 import { IndexerStore } from './store';
 import { ContractRegistry } from './registry';
 import { BlockFollower } from './follower';
+import { isFollowEnabled } from './flags';
 import { mountIndexerRoutes } from './routes';
 
 export type { WatchedContract } from './registry';
 export { ContractRegistry } from './registry';
 export { followContracts, type FollowedContract, type WatchContractFn } from './follow';
+export { isCatchupEnabled, isFollowEnabled } from './flags';
 export { parseRpcUrl, resolveRpcUrl } from './rpc-url';
 export { erc20BalanceOf } from './rpc';
 
@@ -28,14 +30,24 @@ export function createIndexer(app: Express, db: Connection, web3: any, emitter: 
     const registry = new ContractRegistry();
     const follower = new BlockFollower({ httpUrl, wssUrl, web3, store, registry, emitter });
 
-    mountIndexerRoutes(app, httpUrl, store, db);
+    mountIndexerRoutes(app, httpUrl, store, db, registry);
 
     return {
         registry,
         store,
         httpUrl,
         wssUrl,
-        start: () => follower.start(),
+        start: async () => {
+            if (!isFollowEnabled()) {
+                console.log('[indexer] follow off — serving mongo dumps only (no WSS, no watch, no catch-up)');
+                return;
+            }
+            if (registry.list().length === 0) {
+                console.log('[indexer] no contracts registered — not starting follower');
+                return;
+            }
+            await follower.start();
+        },
         stop: () => follower.stop(),
     };
 }

@@ -10,8 +10,8 @@
 #   ./scripts/import-cryptokitties-data.sh --owners        # owner balances
 #   ./scripts/import-cryptokitties-data.sh --all           # everything
 #
-# After import, set VITE_ENABLE_INDEXER=false in src/server/.env and restart the server.
-# The live subscription will pick up new blocks from max(ck_events.blockNumber).
+# After import, keep INDEXER_FOLLOW=false until ck_events is a complete audited record
+# and owners[] has been rebuilt (yarn ck:rebuild). Do not watch over a hole.
 
 set -euo pipefail
 
@@ -103,8 +103,8 @@ docker exec "$MONGO_CONTAINER" mongosh "$MONGO_DB" --quiet --eval '
 
 echo ""
 echo "Next steps:"
-echo "  1. Set VITE_ENABLE_INDEXER=false in src/server/.env"
-echo "  2. Restart the server (subscription-only for new blocks)"
+echo "  1. Keep INDEXER_FOLLOW=false until ck_events is complete, then yarn ck:rebuild"
+echo "  2. Restart the server with INDEXER_FOLLOW=false (dump APIs only)"
 if $IMPORT_EVENTS && ! $IMPORT_BIRTHS; then
   echo "  3. Rebuild state: yarn ck:rebuild"
 fi

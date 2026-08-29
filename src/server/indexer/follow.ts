@@ -1,4 +1,5 @@
 import { getPastContractEvents } from '../modules/utils';
+import { isCatchupEnabled, isFollowEnabled } from './flags';
 import type { WatchedContract } from './registry';
 
 export type WatchContractFn = (contract: WatchedContract) => void;
@@ -13,9 +14,9 @@ export interface FollowedContract {
 /**
  * Live-watch a module's contracts on the shared block follower.
  *
- * Historic genesis scans are a separate server import (dumps / project APIs).
- * If VITE_ENABLE_INDEXER is on and the module already has events in Mongo,
- * we only catch up from the last stored block to head.
+ * Off by default (INDEXER_FOLLOW). Historic genesis scans and ck_events
+ * dumps are a separate import — do not watch while that history has a hole.
+ * HTTP catch-up (INDEXER_CATCHUP / VITE_ENABLE_INDEXER) only runs in follow mode.
  */
 export async function followContracts(opts: {
     name: string;
@@ -31,7 +32,7 @@ export async function followContracts(opts: {
 }): Promise<void> {
     const { name, watchContract, contracts, handle, backfill } = opts;
 
-    if (!watchContract) {
+    if (!isFollowEnabled() || !watchContract) {
         console.log(`${name}: API only — not on block follower`);
         return;
     }
@@ -52,7 +53,7 @@ export async function followContracts(opts: {
         });
     }
 
-    if (process.env.VITE_ENABLE_INDEXER !== 'true' || !backfill) {
+    if (!isCatchupEnabled() || !backfill) {
         return;
     }
 

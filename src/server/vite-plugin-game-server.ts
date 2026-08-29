@@ -7,7 +7,7 @@ import path from 'path';
 import mongoose from 'mongoose';
 import modules, { stopBlockIndexer } from './modules';
 import { createHttpWeb3 } from './config/web3';
-import { resolveRpcUrl } from './indexer';
+import { isFollowEnabled, resolveRpcUrl } from './indexer';
 
 // Track active connections for cleanup
 let io: SocketServer | null = null;
@@ -49,7 +49,7 @@ export function gameServer(): Plugin {
             });
         },
         async configureServer(server) {
-            const { MONGODB_URI, CORS_ORIGINS, VITE_ENABLE_INDEXER } = process.env;
+            const { MONGODB_URI, CORS_ORIGINS } = process.env;
 
             if (!MONGODB_URI || !(process.env.RPC_URL || process.env.WEB3_SOCKET_URL)) {
                 throw new Error('Missing required environment variables (MONGODB_URI and RPC_URL or WEB3_SOCKET_URL)');
@@ -95,10 +95,10 @@ export function gameServer(): Plugin {
                         console.log(`🐎 Game server running on port ${address.port}`);
                         console.log('🐎 API endpoints available at /api');
                         console.log('🐎 Socket.io namespaces ready');
-                        if (VITE_ENABLE_INDEXER === 'true') {
-                            console.log('🐎 Event indexer enabled');
+                        if (isFollowEnabled()) {
+                            console.log('🐎 Block follower enabled (INDEXER_FOLLOW)');
                         } else {
-                            console.log('🐎 Event indexer disabled');
+                            console.log('🐎 Block follower off — dump APIs only');
                         }
                     }
                 });

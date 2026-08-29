@@ -1,13 +1,23 @@
 import { Express, Request, Response } from 'express';
 import type { Connection } from 'mongoose';
+import { isFollowEnabled } from './flags';
+import type { ContractRegistry } from './registry';
 import type { IndexerStore } from './store';
 import { screenAddress, screeningResultToCsv } from './screening';
 
-export function mountIndexerRoutes(app: Express, httpUrl: string, store: IndexerStore, db: Connection): void {
+export function mountIndexerRoutes(
+    app: Express,
+    httpUrl: string,
+    store: IndexerStore,
+    db: Connection,
+    registry: ContractRegistry,
+): void {
     const health = (_req: Request, res: Response) => {
         res.json({
             status: db.readyState === 1 ? 'ok' : 'degraded',
             mongo: db.readyState === 1,
+            follow: isFollowEnabled(),
+            watching: registry.list().map((w) => w.name),
         });
     };
 

@@ -1,6 +1,6 @@
 import { ModuleFunction } from '../types/shared';
 import EventEmitter from 'events';
-import { createIndexer, type WatchContractFn } from '../indexer';
+import { createIndexer, isFollowEnabled, type WatchContractFn } from '../indexer';
 import defaultModule from './geneva';
 import chainedHorseModule from './chained-horse';
 import chainfacesModule from './chainfaces'
@@ -36,7 +36,10 @@ const modules: ModuleFunction = (app, io, web3, db) => {
 
     const indexer = createIndexer(app, db, web3, emitter)
     stopIndexer = indexer.stop
-    const watchContract: WatchContractFn = (contract) => indexer.registry.watch(contract)
+    const follow = isFollowEnabled()
+    const watchContract: WatchContractFn | undefined = follow
+        ? (contract) => indexer.registry.watch(contract)
+        : undefined
 
     const shared = { app, io, web3, db, emitter, watchContract }
 
@@ -61,7 +64,8 @@ const modules: ModuleFunction = (app, io, web3, db) => {
     barcodeModule({ app, io, web3, db, emitter, name: 'barcode', prefix: 'bc', deployed: 0, increment: 1000, eventsToWatch: ['Transfer'] })
 
     watchersReady = (async () => {
-        // Sequential HTTP catch-up so we stay within the 2-connection QuickNode cap.
+        // Mount project APIs. Watches + WSS only if INDEXER_FOLLOW=true.
+        // When follow is on, sequential catch-up stays within the 2-connection QuickNode cap.
         await chainedHorseModule({
             ...shared,
             name: 'chained-horse',
@@ -111,7 +115,11 @@ const modules: ModuleFunction = (app, io, web3, db) => {
             eventsToWatch: ['Transfer', 'Birth', 'Pregnant'],
         })
 
-        await indexer.start()
+        if (follow) {
+            await indexer.start()
+        } else {
+            console.log('[indexer] follow off — serving mongo dumps only (no WSS, no watch, no catch-up)')
+        }
     })();
     watchersReady.catch((error) => {
         console.error('[indexer] failed to start:', error);
