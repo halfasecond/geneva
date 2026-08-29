@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200pt" height="1200pt" version="1.1" viewBox="0 0 1200 1200" xmlns="http://www.w3.org/2000/svg">
+ <g fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3">
+  <path transform="scale(12)" d="m71.78 72h-42.81"/>
+  <path transform="scale(12)" d="m45.62 38.7h9.5101v23.78h-9.5101z"/>
+  <path transform="scale(12)" d="m28.97 48.22h9.5101v14.27h-9.5101z"/>
+  <path transform="scale(12)" d="m62.27 28h9.5101v34.49h-9.5101z"/>
+ </g>
+</svg>

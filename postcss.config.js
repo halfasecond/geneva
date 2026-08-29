@@ -1,6 +1,6 @@
 // Only load Tailwind for the $PURR app — other Geneva clients don't use it.
 // This also avoids breaking non-Purr dev sessions when node_modules is stale.
-const isTailwindApp = ['purr', 'kittyFamily'].includes(process.env.VITE_APP)
+const isTailwindApp = ['purr'].includes(process.env.VITE_APP)
 
 const plugins = {}
 

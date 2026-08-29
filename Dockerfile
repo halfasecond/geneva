@@ -24,6 +24,8 @@ EXPOSE 7005
 EXPOSE 8001
 # kitty.international client
 EXPOSE 2017
+# kitty.family client
+EXPOSE 3101
 
 # Default command to keep the container running
 CMD ["sh", "-c", "yarn start"]

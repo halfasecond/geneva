@@ -31,6 +31,8 @@
       "kittyNews/*": ["./src/kittyNews/*"],
       "kittyInternational": ["./src/kittyInternational"],
       "kittyInternational/*": ["./src/kittyInternational/*"],
+      "kittyFamily": ["./src/kittyFamily"],
+      "kittyFamily/*": ["./src/kittyFamily/*"],
     }
   },
   "include": ["src/**/*"],
