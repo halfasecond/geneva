@@ -43,8 +43,13 @@ const IntroModal: React.FC<IntroModalProps> = ({
     currentHorse
 }) => {
 
-    // If we have a current horse, show it
-    const selectedNft = currentHorse ? nfts.find(nft => nft.tokenId === currentHorse) : undefined;
+    const wallet = loggedIn?.toLowerCase();
+    const owned = Array.isArray(nfts)
+        ? nfts.filter((nft: { owner?: string }) => nft.owner?.toLowerCase() === wallet)
+        : [];
+    const lastPlayed = currentHorse && currentHorse > 0
+        ? owned.find((nft: { tokenId: number }) => nft.tokenId === currentHorse)
+        : undefined;
 
     return (
         <Styled.Overlay>
@@ -60,25 +65,17 @@ const IntroModal: React.FC<IntroModalProps> = ({
                     <>
                         <p>Connect your wallet to join the paddock!</p>
                     </>
-                ) : nfts.filter(nft => nft.owner === loggedIn.toLowerCase()).length > 0 ? (
+                ) : owned.length > 0 ? (
                     <>
-                        {selectedNft ? (
-                            <>
-                                <p>Welcome back!</p>
-                                <img src={selectedNft.svg} alt={`Horse #${selectedNft.tokenId}`} style={{ width: 200 }} />
-                                <Styled.Button onClick={() => onSelectHorse(selectedNft.tokenId)}>
-                                    Continue with Horse #{selectedNft.tokenId}?
-                                </Styled.Button>
-                            </>
+                        {lastPlayed ? (
+                            <p>Welcome back — last time you rode #{lastPlayed.tokenId}. Pick a horse to enter:</p>
                         ) : (
-                            <>
-                                <p>Select your horse to enter the paddock:</p>
-                                <HorseSelect
-                                    nfts={nfts.filter(nft => nft.owner === loggedIn.toLowerCase())}
-                                    onSelect={(horse) => onSelectHorse(horse)}
-                                />
-                            </>
+                            <p>Select your horse to enter the paddock:</p>
                         )}
+                        <HorseSelect
+                            nfts={owned}
+                            onSelect={(horse) => onSelectHorse(horse)}
+                        />
                     </>
                 ) : (
                     <Styled.MintCTA>

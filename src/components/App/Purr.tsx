@@ -47,15 +47,8 @@ const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn, t
 
     const getPurrClaimBalance = async () => {
         try {
-            if (loggedIn) {
-                const balanceOf = await purr.methods.balanceOf(Contracts.PurrClaim.addr).call()
-                if (balanceOf !== undefined && balanceOf !== null) {
-                    setPurrClaimBalance(balanceOf.toString())
-                }
-            } else {
-                const { data: { balance } } = await axios.get(`${VITE_APP_ENDPOINT}purr/balances/${Contracts.PurrClaim.addr}`)
-                setPurrClaimBalance(balance.toString())
-            }
+            const { data: { balance } } = await axios.get(`${VITE_APP_ENDPOINT}purr/balances/${Contracts.PurrClaim.addr}`)
+            setPurrClaimBalance(balance.toString())
         } catch (e) {
             console.log(e)
             setPurrClaimBalance('0')

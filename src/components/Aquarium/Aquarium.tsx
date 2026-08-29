@@ -249,9 +249,6 @@ const Aquarium: React.FC<{
                     onClose={() => setModalOpen(prevState => ({ ...prevState, census: false }))}
                 />
             </Modal>
-            <div style={{ position: 'fixed', right: 20, bottom: 20 }}>
-                 <iframe style={{ border: 0, width: '100%', height: '120px' }} src="https://bandcamp.com/EmbeddedPlayer/album=2967812985/size=large/bgcol=333333/linkcol=9a64ff/tracklist=false/artwork=small/transparent=true/" seamless><a href="https://hiddenhideout.bandcamp.com/album/steam-of-sleepy-hallucinations-ii-ep">Steam Of Sleepy Hallucinations II EP by HïdeѲut</a></iframe>
-            </div>
            
         </Styled.Div>
     )
