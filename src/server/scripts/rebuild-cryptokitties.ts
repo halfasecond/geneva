@@ -13,6 +13,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import createModels from '../modules/cryptokitties/models';
 import { mockWeb3, noopEmitter, processCryptoKittiesEvent } from '../modules/cryptokitties/processEvent';
+import { stampAuctionsFromOwners } from '../modules/cryptokitties/stampAuctions';
 import { AUDIT_ID } from '../modules/cryptokitties/routes/audit';
 
 dotenv.config({ path: path.resolve(process.cwd(), 'src/server/.env') });
@@ -121,8 +122,11 @@ const main = async () => {
     const nftCount = await next.NFT.estimatedDocumentCount();
     const ownerCount = await next.Owner.estimatedDocumentCount();
     const birthCount = await live.Event.countDocuments({ event: 'Birth' });
+    console.log('Stamping sale/sire from auction-contract owners on ck_nfts_next...');
+    const auctions = await stampAuctionsFromOwners(mongoose.connection.db!, 'ck_nfts_next');
+    console.log('Auction stamp', auctions);
     await writeProgress(total, nftCount, {
-        note: `_next ready. ${nftCount.toLocaleString()} kitties / ${ownerCount.toLocaleString()} owners / ${errors} errors. Births in events: ${birthCount.toLocaleString()}. yarn ck:promote when happy.`,
+        note: `_next ready. ${nftCount.toLocaleString()} kitties / ${ownerCount.toLocaleString()} owners / ${errors} errors. Births ${birthCount.toLocaleString()}. sale ${auctions.onSale} sire ${auctions.onSire}. yarn ck:promote when happy.`,
     });
     console.log(
         `Done staging. ${nftCount.toLocaleString()} kitties, ${ownerCount.toLocaleString()} owners, ${errors} errors. Promote with: yarn ck:promote`,
