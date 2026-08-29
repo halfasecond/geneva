@@ -75,12 +75,22 @@ const waitForDb = () =>
 const main = async () => {
     await waitForDb();
     const events = mongoose.connection.db!.collection('ck_events');
-    const hashes = await events.distinct('transactionHash', {
-        event: 'Transfer',
-        value: { $exists: true, $nin: [null, ''] },
-    });
+    const stamped = await events
+        .find(
+            { event: 'Transfer', value: { $exists: true, $nin: [null, ''] } },
+            { projection: { transactionHash: 1, tokenId: 1, logIndex: 1, blockNumber: 1, value: 1 } },
+        )
+        .toArray();
+    const byHash = new Map<string, typeof stamped>();
+    for (const row of stamped) {
+        const hash = String(row.transactionHash);
+        const list = byHash.get(hash) || [];
+        list.push(row);
+        byHash.set(hash, list);
+    }
+    const hashes = [...byHash.keys()];
     const list = limit > 0 ? hashes.slice(0, limit) : hashes;
-    console.log(`[ck:fix-values] ${list.length}/${hashes.length} txs (dryRun=${dryRun})`);
+    console.log(`[ck:fix-values] ${list.length}/${hashes.length} txs, ${stamped.length} stamped transfers (dryRun=${dryRun})`);
 
     let set = 0;
     let cleared = 0;
@@ -91,9 +101,7 @@ const main = async () => {
             const receipt = await rpc('eth_getTransactionReceipt', [hash]);
             const logs = (receipt?.logs || []) as RpcLog[];
             const priced = valuesFromLogs(logs);
-            const rows = await events
-                .find({ event: 'Transfer', transactionHash: hash }, { projection: { tokenId: 1, logIndex: 1, blockNumber: 1, value: 1 } })
-                .toArray();
+            const rows = byHash.get(hash) || [];
             for (const row of rows) {
                 const wei = priced.get(Number(row.tokenId));
                 if (wei !== undefined && wei > 0n) {
