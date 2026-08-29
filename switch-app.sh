@@ -143,16 +143,18 @@ echo "Switching to $APP_NAME app"
 cp $SOURCE_FILE src/main.tsx
 echo "Copied $SOURCE_FILE to src/main.tsx"
 
-# Run the command
+status=0
 if [ "$COMMAND" == "dev" ]; then
   echo "Starting development server for $APP_NAME"
-  VITE_APP=$APP_NAME yarn vite
+  VITE_APP=$APP_NAME yarn vite || status=$?
 elif [ "$COMMAND" == "build" ]; then
   echo "Building $APP_NAME"
   rm -rf $OUTPUT_DIR
-  VITE_APP=$APP_NAME VITE_APP_NODE_ENV=production yarn vite build --outDir $OUTPUT_DIR
+  VITE_APP=$APP_NAME VITE_APP_NODE_ENV=production yarn vite build --outDir $OUTPUT_DIR || status=$?
 fi
 
-# Restore the original main.tsx
 echo "Restoring original main.tsx"
-cp src/main.tsx.orig src/main.tsx
+if [ -f src/main.tsx.orig ]; then
+  cp src/main.tsx.orig src/main.tsx
+fi
+exit $status
