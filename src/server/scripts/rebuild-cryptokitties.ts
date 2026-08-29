@@ -12,6 +12,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import createModels from '../modules/cryptokitties/models';
 import { mockWeb3, noopEmitter, processCryptoKittiesEvent } from '../modules/cryptokitties/processEvent';
+import { AUDIT_ID } from '../modules/cryptokitties/routes/audit';
 
 dotenv.config({ path: path.resolve(process.cwd(), 'src/server/.env') });
 
@@ -46,10 +47,32 @@ const main = async () => {
         process.exit(1);
     }
 
+    const started = Date.now();
+    const auditCol = mongoose.connection.db!.collection('ck_audit');
+    const writeProgress = async (processed: number, nftCount: number, extra: Record<string, unknown> = {}) => {
+        const pct = Number(((100 * processed) / Math.max(1, total)).toFixed(3));
+        await auditCol.updateOne(
+            { _id: AUDIT_ID as any },
+            {
+                $set: {
+                    All: processed,
+                    Total: total,
+                    pct,
+                    holeFrom: `rebuild ${processed}/${total} state events, ${nftCount} kitties`,
+                    note: extra.note || `Full index rebuild from ck_events (${pct}%).`,
+                    timer: Date.now() - started,
+                    updatedAt: new Date(),
+                },
+            },
+            { upsert: true },
+        );
+    };
+
     console.log(`Rebuilding ck_nfts + ck_owners from ${total.toLocaleString()} state events...`);
     console.log('Clearing ck_nfts and ck_owners...');
     await Models.NFT.deleteMany({});
     await Models.Owner.deleteMany({});
+    await writeProgress(0, 0, { note: 'Cleared ck_nfts + ck_owners; replaying events.' });
 
     const cursor = Models.Event.find(eventFilter)
         .sort({ blockNumber: 1, logIndex: 1 })
@@ -58,7 +81,6 @@ const main = async () => {
 
     let processed = 0;
     let errors = 0;
-    const started = Date.now();
 
     for await (const event of cursor) {
         try {
@@ -78,11 +100,15 @@ const main = async () => {
             console.log(
                 `${pct}% — ${processed.toLocaleString()}/${total.toLocaleString()} events (${rate}/s), ${nftCount.toLocaleString()} kitties`,
             );
+            await writeProgress(processed, nftCount);
         }
     }
 
     const nftCount = await Models.NFT.estimatedDocumentCount();
     const ownerCount = await Models.Owner.estimatedDocumentCount();
+    await writeProgress(total, nftCount, {
+        note: `Rebuild done. ${nftCount.toLocaleString()} kitties, ${ownerCount.toLocaleString()} owners, ${errors} errors.`,
+    });
     console.log(`Done. ${nftCount.toLocaleString()} kitties, ${ownerCount.toLocaleString()} owners, ${errors} errors.`);
     await mongoose.disconnect();
 };
