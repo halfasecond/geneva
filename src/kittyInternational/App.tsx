@@ -15,8 +15,8 @@ interface CheckTokenResponse {
     address: string
 }
 
-const { VITE_APP_CHAIN_ID, VITE_APP_TOKEN_NAME } = import.meta.env
-const TOKEN_NAME = VITE_APP_TOKEN_NAME || 'kitty-international'
+const { VITE_APP_CHAIN_ID } = import.meta.env
+const TOKEN_NAME = 'kitty-international'
 
 const chainOk = (chainId: string) =>
     String(VITE_APP_CHAIN_ID || '0x1').includes(chainId)
