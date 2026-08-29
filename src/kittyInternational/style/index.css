@@ -1,0 +1,139 @@
+@import url("./reset.css");
+@import url("./typography.css");
+
+html,body{
+  margin: 0;
+  padding: 0;
+  font-family: "source-code-pro", monospace;
+  font-size: 10px;
+}
+
+html, body, #root {
+  height: 100%;
+  min-width: 320px;
+}
+
+.modal-open {
+  overflow: hidden; /* Prevent scrolling */
+}
+
+input, button {
+  font-family: "source-code-pro",monospace;
+}
+
+h1,h2,h3,h4 {
+  font-family: "bungee",sans-serif;
+  font-style: normal;
+  font-weight: 400;
+  margin: 0;
+  padding: 0;
+  cursor: default;
+}
+
+h2 {
+  font-size: 14px;
+  color: #333;
+}
+
+h3 {
+  font-size: 16px;
+  color: #666;
+}
+
+h4 {
+  font-size: 16px;
+  color: #444;
+}
+
+h5 {
+  position: fixed;
+  background-color: #FFF;
+  padding: 6px 20px;
+  font-size: 12px !important;
+  line-height: 12px;
+  border-radius: 10px;
+  top: 17px;
+  left: 20px;
+  text-align: left;
+  font-size: 16px;
+  cursor: default;
+  vertical-align: baseline;
+  margin: 4px 0 0 0;
+  z-index: 100;
+}
+
+p {
+  font-size: 16px;
+  font-family: "source-code-pro", monospace;
+  line-height: 24px;
+}
+
+b {
+  font-weight: bold;
+}
+
+.thundergrey, .ec1 { background-color: #eee9e8; }
+.gold, .ec2 { background-color: #faf4cf; }
+.topaz, .ec3 { background-color: #d1eeeb; }
+.mintgreen, .ec4 { background-color: #cdf5d4; }
+.isotope, .ec5 { background-color: #effdca; }
+.sizzurp, .ec6 { background-color: #dfdffa; }
+.chestnut, .ec7 { background-color: #efe1da; }
+.strawberry, .ec8 { background-color: #ffe0e5; }
+.sapphire, .ec9 { background-color: #d3e8ff; }
+
+.forgetmenot, .eca { background-color: #dcebfc; }
+.dahlia, .ecb { background-color: #e6eafd; }
+.coralsunrise, .ecc { background-color: #fde9e4; }
+.olive, .ecd { background-color: #ecf4e0; }
+.doridnudibranch, .ece { background-color: #faeefa; }
+.parakeet, .ecf { background-color: #e5f3e2; }
+.cyan, .ecg { background-color: #c5eefa; }
+.pumpkin, .ech { background-color: #fae1ca; }
+.limegreen, .eci { background-color: #d9f5cb; }
+.bridesmaid, .ecj { background-color: #ffd5e5; }
+.bubblegum, .eck { background-color: #fadff4; }
+.twilightsparkle, .ecm { background-color: #ede2f5; }
+.palejade, .ecn { background-color: #e7f1ed; }
+.pinefresh, .eco { background-color: #dbf0d0; }
+.eclipse, .ecp { background-color: #e5e7ef; }
+.babypuke, .ecq { background-color: #eff1e0; }
+.downbythebay, .ecr { background-color: #cde5d1; }
+.autumnmoon, .ecs { background-color: #fdf3e0; }
+.oasis, .ect { background-color: #e6faf3; }
+.gemini, .ecu { background-color: #d1eeeb; }
+.dioscuri, .ecv { background-color: #d1eeeb; }
+.kaleidoscope, .ecw { background-color: #000; }
+
+.grey {
+  background-color: #EEE;
+  opacity: 0.5;
+}
+@keyframes kaleidoscopeBg {
+  0% {
+    background-color: #ffe0e5;
+  }
+  20% {
+      background-color: #fae1ca;
+  }
+  40% {
+      background-color: #faf4cf;
+  }
+  60% {
+      background-color: #d9f5cb;
+  }
+  80% {
+      background-color: #c5eefa;
+  }
+  100% {
+      background-color: #ffe0e5;
+  }
+}
+.kaleidoscope, .ecw {
+  --cardStackDelay: 0.05s;
+  --kaleidoscopeLoopDuration: 4s;
+  --kaleidoscopeDelay: 0.1s;
+  animation: kaleidoscopeBg 10s linear infinite;
+  will-change: background-color;
+  animation-duration: 10s;
+}

@@ -1,0 +1,76 @@
+export const breaks = {
+    xs: '320px',
+    sm: '480px',
+    ms: '540px',
+    md: '760px',
+    lg: '960px',
+    xlg: '1080px',
+    xl: '1200px',
+    xxl: '1360px',
+    xxxl: '2160px',
+}
+
+export const gutters: Record<string, string> = {
+    0: '0rem',
+    2: '0.2rem',
+    3: '0.3rem',
+    4: '0.4rem',
+    5: '0.5rem',
+    8: '0.8rem',
+    10: '1rem',
+    12: '1.2rem',
+    14: '1.4rem',
+    15: '1.5rem',
+    16: '1.6rem',
+    20: '2rem',
+    24: '2.4rem',
+    30: '3rem',
+    32: '3.2rem',
+    42: '4.2rem',
+    45: '4.5rem',
+    56: '5.6rem',
+    64: '6.4rem',
+    85: '8.5rem',
+    120: '12rem',
+    xxs: '0.4rem',
+    xs: '0.8rem',
+    sm: '1.5rem',
+    md: '2.4rem',
+    lg: '3.2rem',
+    xlg: '4.8rem',
+    xl: '6.4rem',
+    xxl: '8.5rem',
+    xxxl: '12rem',
+}
+
+export const fontSize: Record<string, string> = {
+    xxxs: '0.8rem',
+    xxs: '1rem',
+    xs: '1.2rem',
+    sm: '1.4rem',
+    md: '1.6rem',
+    ml: '1.8rem',
+    lg: '2rem',
+    xl: '2.4rem',
+    xxl: '2.8rem',
+}
+
+export const grey: Record<number, string> = {
+    0: '#ffffff',
+    50: '#fcfbfa',
+    100: '#f9f8f6',
+    200: '#f3f1ee',
+    300: '#e7e6e4',
+    400: '#c4c3c0',
+    500: '#9c9c9b',
+    600: '#82817d',
+    700: '#575553',
+    900: '#2a2825',
+    1000: '#000000',
+}
+
+export const colors = {
+    primary: '#ff9b6a',
+    secondary: '#E96BD4',
+    bubblegum: '#ef52d1',
+}

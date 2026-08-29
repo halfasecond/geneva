@@ -31,7 +31,7 @@ select_app() {
       echo "chained-horse"
       ;;
     4)
-      echo "kitty.international"
+      echo "kittyInternational"
       ;;
     5)
       echo "barcode"

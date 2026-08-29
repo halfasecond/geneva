@@ -1,0 +1,19 @@
+<svg id="Deal_with_it" data-name="Deal with it" xmlns="http://www.w3.org/2000/svg" width="3000" height="3000" viewBox="0 0 3000 3000">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #31323d;
+      }
+
+      .cls-1, .cls-2 {
+        fill-rule: evenodd;
+      }
+
+      .cls-2 {
+        fill: #fff;
+      }
+    </style>
+  </defs>
+  <path id="glasses" class="cls-1" d="M913,1077H1961v81h-40v40h-40v40h-40v40H1569c-2.88-7.82-1.05-30.51-1-41h-40v-40h-40v-79c19.85,0.02-59.71,0-119,0v80h-40v40h-40v40H1033v-40H993v-40H953v-40H913v-81Zm81,41v39h39v-39H994Zm81,0v39h39v-39h-39Zm488,0v39h40v-39h-40Zm81,0v39h39v-39h-39Zm-610,40v39h40v-39h-40Zm81,0v39h39v-39h-39Zm489,0v39h39v-39h-39Zm80,0v39h40v-39h-40Zm-609,40v39h39v-39h-39Zm80,0v39h40v-39h-40Zm489,0v39h39v-39h-39Zm81,0v39h39v-39h-39Z"/>
+  <path id="reflections" class="cls-2" d="M994,1118h39v39H994v-39Zm81,0h39v39h-39v-39Zm488,0h40v39h-40v-39Zm81,0h39v39h-39v-39Zm-610,40h40v39h-40v-39Zm81,0h39v39h-39v-39Zm489,0h39v39h-39v-39Zm80,0h40v39h-40v-39Zm-609,40h39v39h-39v-39Zm80,0h40v39h-40v-39Zm489,0h39v39h-39v-39Zm81,0h39v39h-39v-39Z"/>
+</svg>

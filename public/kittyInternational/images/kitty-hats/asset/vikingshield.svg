@@ -1,0 +1,159 @@
+<svg id="viking_shield_fore" data-name="viking shield fore" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="3000" height="3000" viewBox="0 0 3000 3000" shape-rendering="geometricPrecision">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: url(#linear-gradient);
+      }
+
+      .cls-2 {
+        fill: #31323d;
+      }
+
+      .cls-10, .cls-11, .cls-12, .cls-13, .cls-14, .cls-15, .cls-2, .cls-3, .cls-4, .cls-5, .cls-6, .cls-7, .cls-8, .cls-9 {
+        fill-rule: evenodd;
+      }
+
+      .cls-3 {
+        fill: #d1dadf;
+      }
+
+      .cls-4 {
+        fill: #9192a1;
+      }
+
+      .cls-5 {
+        fill: #9091a1;
+      }
+
+      .cls-6 {
+        fill: #dedede;
+      }
+
+      .cls-7 {
+        fill: #d2d2d2;
+      }
+
+      .cls-8 {
+        fill: #f4f4f4;
+      }
+
+      .cls-9 {
+        fill: #e8d7c7;
+      }
+
+      .cls-10 {
+        fill: #d8cbc5;
+      }
+
+      .cls-11 {
+        fill: #d3ab8a;
+      }
+
+      .cls-12 {
+        fill: #cdb49c;
+      }
+
+      .cls-13 {
+        fill: #b9a49c;
+      }
+
+      .cls-14 {
+        fill: #b68d6c;
+      }
+
+      .cls-15 {
+        fill: #eee9e8;
+      }
+    </style>
+    <linearGradient id="linear-gradient" x1="950" y1="2604" x2="950" y2="2532" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-opacity="0.2"/>
+      <stop offset="1" stop-color="#31323d" stop-opacity="0.2"/>
+    </linearGradient>
+  </defs>
+  <ellipse class="cls-1" cx="950" cy="2568" rx="398" ry="36"/>
+  <path id="sheild_border_base" data-name="sheild border base" class="cls-2" d="M1061.35,1188C538.46,1188,317,1575.21,317,1857.94S446.185,2491,950.621,2491,1615,2048.47,1615,1827.21C1615,1556.46,1512.74,1188,1061.35,1188Z"/>
+  <path id="sheild_border_base_color" data-name="sheild border base color" class="cls-3" d="M1059.48,1200.78c-512.6,0-729.7,379.62-729.7,656.8s126.642,620.65,621.149,620.65,651.3-433.85,651.3-650.78C1602.23,1562.02,1501.98,1200.78,1059.48,1200.78Z"/>
+  <g id="shield_border_stud" data-name="shield border stud">
+    <path id="Color_Fill_12" data-name="Color Fill 12" class="cls-4" d="M1419.4,1351.97s-29.16,22.62-17.66,39.01,35.42,14.48,37.36,4.99-24.3-14.57-21.19-21.5S1419.4,1351.97,1419.4,1351.97Z"/>
+    <path id="center_brim_circle_base_copy" data-name="center brim circle base copy" class="cls-5" d="M1449.91,1361.22c11.46,15.89,2.57,30.01-5.15,35.96s-25.61,9.56-34.38-2.59-5.73-30.49,3.81-37.84S1438.45,1345.33,1449.91,1361.22Z"/>
+    <path id="center_brim_circle_color_copy" data-name="center brim circle color copy" class="cls-6" d="M1447.19,1363.32c11.45,15.89,3.27,25.11-4.45,31.06s-20.87,10.26-29.63-1.89-6.43-25.58,3.1-32.93S1435.73,1347.43,1447.19,1363.32Z"/>
+    <path id="center_brim_circle_shadow_copy" data-name="center brim circle shadow copy" class="cls-7" d="M1440.61,1395.87c-7.84,5.08-19.5,7.72-27.5-3.38a26.582,26.582,0,0,1-5.43-16.47l1.13-6.22a21.812,21.812,0,0,1,7.4-10.24c0.61-.47,1.22-0.93,1.83-1.37-2.42,5.57-3.05,17.83.7,26.85C1422.49,1394.08,1436.42,1395.61,1440.61,1395.87Z"/>
+    <path id="center_brim_circle_color_highlight_2_copy" data-name="center brim circle color highlight 2 copy" class="cls-8" d="M1421.33,1360.51s12.72-6.36,18.01.58,8.29,17.95,7.94,25.38c0,0-2.35-12.86-10.37-19.91S1429.86,1362.2,1421.33,1360.51Z"/>
+  </g>
+  <g id="shield_border_stud_copy_2" data-name="shield border stud copy 2">
+    <path id="Color_Fill_12-2" data-name="Color Fill 12" class="cls-4" d="M1557.1,1724.25s-29.16,22.63-17.66,39.02,35.43,14.48,37.37,4.98-24.3-14.57-21.2-21.49S1557.1,1724.25,1557.1,1724.25Z"/>
+    <path id="center_brim_circle_base_copy-2" data-name="center brim circle base copy" class="cls-5" d="M1587.62,1733.51c11.45,15.89,2.56,30.01-5.16,35.96s-25.61,9.55-34.37-2.6-5.73-30.48,3.81-37.83S1576.16,1717.62,1587.62,1733.51Z"/>
+    <path id="center_brim_circle_color_copy-2" data-name="center brim circle color copy" class="cls-6" d="M1584.89,1735.61c11.46,15.89,3.27,25.11-4.45,31.06s-20.86,10.25-29.62-1.9-6.44-25.58,3.1-32.93S1573.43,1719.72,1584.89,1735.61Z"/>
+    <path id="center_brim_circle_shadow_copy-2" data-name="center brim circle shadow copy" class="cls-7" d="M1578.32,1768.16c-7.84,5.07-19.5,7.71-27.5-3.39a26.55,26.55,0,0,1-5.44-16.46l1.13-6.23a21.833,21.833,0,0,1,7.41-10.24c0.6-.46,1.21-0.92,1.82-1.36-2.41,5.57-3.04,17.83.7,26.84C1560.2,1766.36,1574.12,1767.9,1578.32,1768.16Z"/>
+    <path id="center_brim_circle_color_highlight_2_copy-2" data-name="center brim circle color highlight 2 copy" class="cls-8" d="M1559.03,1732.8s12.73-6.36,18.02.57,8.28,17.95,7.94,25.38c0,0-2.36-12.86-10.38-19.9S1567.57,1734.48,1559.03,1732.8Z"/>
+  </g>
+  <g id="shield_border_stud_copy_6" data-name="shield border stud copy 6">
+    <path id="Color_Fill_12-3" data-name="Color Fill 12" class="cls-4" d="M1489.3,2087.39s-29.16,22.63-17.66,39.02,35.43,14.48,37.37,4.98-24.3-14.56-21.2-21.49S1489.3,2087.39,1489.3,2087.39Z"/>
+    <path id="center_brim_circle_base_copy-3" data-name="center brim circle base copy" class="cls-5" d="M1519.82,2096.65c11.45,15.89,2.56,30.01-5.16,35.96s-25.61,9.55-34.37-2.6-5.73-30.48,3.81-37.83S1508.36,2080.76,1519.82,2096.65Z"/>
+    <path id="center_brim_circle_color_copy-3" data-name="center brim circle color copy" class="cls-6" d="M1517.09,2098.75c11.46,15.89,3.27,25.11-4.45,31.06s-20.86,10.25-29.62-1.9-6.44-25.58,3.1-32.92S1505.63,2082.86,1517.09,2098.75Z"/>
+    <path id="center_brim_circle_shadow_copy-3" data-name="center brim circle shadow copy" class="cls-7" d="M1510.52,2131.3c-7.84,5.08-19.5,7.71-27.5-3.39a26.55,26.55,0,0,1-5.44-16.46l1.13-6.23a21.757,21.757,0,0,1,7.41-10.23c0.61-.47,1.21-0.93,1.82-1.37-2.41,5.57-3.04,17.83.7,26.84C1492.4,2129.5,1506.33,2131.04,1510.52,2131.3Z"/>
+    <path id="center_brim_circle_color_highlight_2_copy-3" data-name="center brim circle color highlight 2 copy" class="cls-8" d="M1491.23,2095.94s12.73-6.36,18.02.57,8.28,17.95,7.94,25.39c0,0-2.36-12.86-10.38-19.91S1499.77,2097.62,1491.23,2095.94Z"/>
+  </g>
+  <g id="shield_border_stud_copy_8" data-name="shield border stud copy 8">
+    <path id="Color_Fill_12-4" data-name="Color Fill 12" class="cls-4" d="M356.005,1910.4s-29.16,22.62-17.66,39.01,35.427,14.48,37.365,4.99-24.3-14.57-21.194-21.5S356.005,1910.4,356.005,1910.4Z"/>
+    <path id="center_brim_circle_base_copy-4" data-name="center brim circle base copy" class="cls-5" d="M386.519,1919.65c11.459,15.89,2.568,30.01-5.153,35.96s-25.609,9.56-34.372-2.6-5.732-30.48,3.8-37.83S375.06,1903.76,386.519,1919.65Z"/>
+    <path id="center_brim_circle_color_copy-4" data-name="center brim circle color copy" class="cls-6" d="M383.794,1921.75c11.46,15.89,3.271,25.11-4.45,31.06s-20.862,10.26-29.625-1.9-6.435-25.57,3.1-32.92S372.335,1905.86,383.794,1921.75Z"/>
+    <path id="center_brim_circle_shadow_copy-4" data-name="center brim circle shadow copy" class="cls-7" d="M377.223,1954.3c-7.843,5.08-19.5,7.72-27.5-3.39a26.55,26.55,0,0,1-5.431-16.46l1.129-6.22a21.751,21.751,0,0,1,7.4-10.24c0.607-.47,1.216-0.93,1.827-1.37-2.418,5.57-3.046,17.83.7,26.85S373.029,1954.04,377.223,1954.3Z"/>
+    <path id="center_brim_circle_color_highlight_2_copy-4" data-name="center brim circle color highlight 2 copy" class="cls-8" d="M357.937,1918.94s12.726-6.36,18.017.58,8.284,17.95,7.937,25.38c0,0-2.357-12.86-10.374-19.91S366.473,1920.62,357.937,1918.94Z"/>
+  </g>
+  <g id="shield_border_stud_copy_21" data-name="shield border stud copy 21">
+    <path id="Color_Fill_12-5" data-name="Color Fill 12" class="cls-4" d="M1083.82,1205.73s-29.16,22.63-17.66,39.02,35.43,14.47,37.37,4.98-24.3-14.57-21.2-21.49S1083.82,1205.73,1083.82,1205.73Z"/>
+    <path id="center_brim_circle_base_copy-5" data-name="center brim circle base copy" class="cls-5" d="M1114.34,1214.99c11.46,15.89,2.56,30.01-5.16,35.96s-25.61,9.55-34.37-2.6-5.73-30.48,3.81-37.83S1102.88,1199.09,1114.34,1214.99Z"/>
+    <path id="center_brim_circle_color_copy-5" data-name="center brim circle color copy" class="cls-6" d="M1111.61,1217.08c11.46,15.9,3.27,25.11-4.45,31.06s-20.86,10.26-29.62-1.89-6.44-25.58,3.1-32.93S1100.15,1201.19,1111.61,1217.08Z"/>
+    <path id="center_brim_circle_shadow_copy-5" data-name="center brim circle shadow copy" class="cls-7" d="M1105.04,1249.64c-7.84,5.07-19.5,7.71-27.5-3.39a26.577,26.577,0,0,1-5.44-16.47l1.13-6.22a21.833,21.833,0,0,1,7.41-10.24c0.61-.47,1.21-0.92,1.83-1.36-2.42,5.57-3.05,17.82.69,26.84C1086.92,1247.84,1100.85,1249.38,1105.04,1249.64Z"/>
+    <path id="center_brim_circle_color_highlight_2_copy-5" data-name="center brim circle color highlight 2 copy" class="cls-8" d="M1085.75,1214.28s12.73-6.37,18.02.57,8.28,17.95,7.94,25.38c0,0-2.36-12.86-10.38-19.91S1094.29,1215.96,1085.75,1214.28Z"/>
+  </g>
+  <g id="shield_border_stud_copy_22" data-name="shield border stud copy 22">
+    <path id="Color_Fill_12-6" data-name="Color Fill 12" class="cls-4" d="M896.463,2425.83s-29.16,22.63-17.66,39.01,35.427,14.48,37.365,4.99-24.3-14.57-21.194-21.5S896.463,2425.83,896.463,2425.83Z"/>
+    <path id="center_brim_circle_base_copy-6" data-name="center brim circle base copy" class="cls-5" d="M926.977,2435.08c11.459,15.89,2.568,30.02-5.153,35.96s-25.609,9.56-34.372-2.59-5.732-30.49,3.8-37.83S915.518,2419.19,926.977,2435.08Z"/>
+    <path id="center_brim_circle_color_copy-6" data-name="center brim circle color copy" class="cls-6" d="M924.252,2437.18c11.46,15.89,3.271,25.11-4.45,31.06s-20.862,10.26-29.625-1.89-6.435-25.58,3.1-32.93S912.793,2421.29,924.252,2437.18Z"/>
+    <path id="center_brim_circle_shadow_copy-6" data-name="center brim circle shadow copy" class="cls-7" d="M917.681,2469.74c-7.843,5.07-19.5,7.71-27.5-3.39a26.576,26.576,0,0,1-5.431-16.47l1.129-6.22a21.8,21.8,0,0,1,7.4-10.24c0.607-.47,1.216-0.92,1.827-1.37-2.418,5.57-3.046,17.83.7,26.85C899.561,2467.94,913.487,2469.48,917.681,2469.74Z"/>
+    <path id="center_brim_circle_color_highlight_2_copy-6" data-name="center brim circle color highlight 2 copy" class="cls-8" d="M898.4,2434.38s12.726-6.37,18.017.57,8.284,17.95,7.937,25.38c0,0-2.357-12.86-10.374-19.91S906.931,2436.06,898.4,2434.38Z"/>
+  </g>
+  <g id="shield_border_stud_copy_23" data-name="shield border stud copy 23">
+    <path id="Color_Fill_12-7" data-name="Color Fill 12" class="cls-4" d="M1271.18,2341.12s-29.16,22.63-17.66,39.02,35.43,14.48,37.37,4.98-24.3-14.56-21.2-21.49S1271.18,2341.12,1271.18,2341.12Z"/>
+    <path id="center_brim_circle_base_copy-7" data-name="center brim circle base copy" class="cls-5" d="M1301.69,2350.38c11.46,15.89,2.57,30.01-5.15,35.96s-25.61,9.55-34.37-2.6-5.73-30.48,3.8-37.83S1290.24,2334.49,1301.69,2350.38Z"/>
+    <path id="center_brim_circle_color_copy-7" data-name="center brim circle color copy" class="cls-6" d="M1298.97,2352.48c11.46,15.89,3.27,25.11-4.45,31.06s-20.86,10.25-29.63-1.9-6.43-25.57,3.11-32.92S1287.51,2336.59,1298.97,2352.48Z"/>
+    <path id="center_brim_circle_shadow_copy-7" data-name="center brim circle shadow copy" class="cls-7" d="M1292.4,2385.03c-7.84,5.08-19.5,7.71-27.51-3.39a26.6,26.6,0,0,1-5.43-16.46l1.13-6.22a21.716,21.716,0,0,1,7.41-10.24c0.6-.47,1.21-0.93,1.82-1.37-2.41,5.57-3.04,17.83.7,26.84C1274.28,2383.23,1288.2,2384.77,1292.4,2385.03Z"/>
+    <path id="center_brim_circle_color_highlight_2_copy-7" data-name="center brim circle color highlight 2 copy" class="cls-8" d="M1273.11,2349.67s12.73-6.36,18.02.57,8.28,17.95,7.94,25.39c0,0-2.36-12.86-10.38-19.91S1281.65,2351.35,1273.11,2349.67Z"/>
+  </g>
+  <g id="shield_border_stud_copy_24" data-name="shield border stud copy 24">
+    <path id="Color_Fill_12-8" data-name="Color Fill 12" class="cls-4" d="M523.547,2287.06s-29.16,22.62-17.66,39.01,35.427,14.48,37.365,4.99-24.3-14.57-21.194-21.5S523.547,2287.06,523.547,2287.06Z"/>
+    <path id="center_brim_circle_base_copy-8" data-name="center brim circle base copy" class="cls-5" d="M554.061,2296.31c11.459,15.89,2.568,30.02-5.153,35.96s-25.609,9.56-34.372-2.59-5.732-30.49,3.805-37.83S542.6,2280.42,554.061,2296.31Z"/>
+    <path id="center_brim_circle_color_copy-8" data-name="center brim circle color copy" class="cls-6" d="M551.336,2298.41c11.46,15.89,3.271,25.11-4.45,31.06s-20.862,10.26-29.625-1.89-6.435-25.58,3.1-32.93S539.877,2282.52,551.336,2298.41Z"/>
+    <path id="center_brim_circle_shadow_copy-8" data-name="center brim circle shadow copy" class="cls-7" d="M544.765,2330.97c-7.843,5.07-19.5,7.71-27.5-3.39a26.6,26.6,0,0,1-5.431-16.47l1.129-6.22a21.8,21.8,0,0,1,7.4-10.24c0.607-.47,1.216-0.92,1.827-1.37-2.418,5.57-3.046,17.83.7,26.85C526.645,2329.17,540.57,2330.71,544.765,2330.97Z"/>
+    <path id="center_brim_circle_color_highlight_2_copy-8" data-name="center brim circle color highlight 2 copy" class="cls-8" d="M525.479,2295.61s12.726-6.37,18.017.57,8.284,17.95,7.937,25.38c0,0-2.357-12.86-10.374-19.91S534.015,2297.29,525.479,2295.61Z"/>
+  </g>
+  <g id="shield_border_stud_copy_9" data-name="shield border stud copy 9">
+    <path id="Color_Fill_12-9" data-name="Color Fill 12" class="cls-4" d="M427.408,1540.66s-29.16,22.63-17.66,39.02,35.426,14.47,37.364,4.98-24.3-14.57-21.194-21.49S427.408,1540.66,427.408,1540.66Z"/>
+    <path id="center_brim_circle_base_copy-9" data-name="center brim circle base copy" class="cls-5" d="M457.922,1549.91c11.459,15.9,2.567,30.02-5.153,35.97s-25.609,9.55-34.372-2.6-5.732-30.48,3.805-37.83S446.463,1534.02,457.922,1549.91Z"/>
+    <path id="center_brim_circle_color_copy-9" data-name="center brim circle color copy" class="cls-6" d="M455.2,1552.01c11.459,15.9,3.27,25.11-4.45,31.06s-20.862,10.26-29.625-1.89-6.435-25.58,3.1-32.93S443.738,1536.12,455.2,1552.01Z"/>
+    <path id="center_brim_circle_shadow_copy-9" data-name="center brim circle shadow copy" class="cls-7" d="M448.626,1584.57c-7.843,5.07-19.5,7.71-27.5-3.39a26.57,26.57,0,0,1-5.431-16.47l1.129-6.22a21.793,21.793,0,0,1,7.4-10.24c0.607-.47,1.216-0.92,1.827-1.37-2.418,5.57-3.046,17.83.7,26.85C430.506,1582.77,444.431,1584.31,448.626,1584.57Z"/>
+    <path id="center_brim_circle_color_highlight_2_copy-9" data-name="center brim circle color highlight 2 copy" class="cls-8" d="M429.34,1549.21s12.726-6.37,18.016.57,8.285,17.95,7.938,25.38c0,0-2.357-12.86-10.374-19.91S437.876,1550.89,429.34,1549.21Z"/>
+  </g>
+  <g id="shield_border_stud_copy_10" data-name="shield border stud copy 10">
+    <path id="Color_Fill_12-10" data-name="Color Fill 12" class="cls-4" d="M690.067,1285.67s-29.159,22.63-17.659,39.02,35.427,14.47,37.365,4.98-24.3-14.57-21.2-21.49S690.067,1285.67,690.067,1285.67Z"/>
+    <path id="center_brim_circle_base_copy-10" data-name="center brim circle base copy" class="cls-5" d="M720.582,1294.92c11.459,15.9,2.568,30.02-5.153,35.97s-25.609,9.55-34.372-2.6-5.732-30.48,3.8-37.83S709.123,1279.03,720.582,1294.92Z"/>
+    <path id="center_brim_circle_color_copy-10" data-name="center brim circle color copy" class="cls-6" d="M717.857,1297.02c11.459,15.9,3.27,25.11-4.45,31.06s-20.862,10.26-29.625-1.89-6.435-25.58,3.1-32.93S706.4,1281.13,717.857,1297.02Z"/>
+    <path id="center_brim_circle_shadow_copy-10" data-name="center brim circle shadow copy" class="cls-7" d="M711.286,1329.58c-7.843,5.07-19.5,7.71-27.5-3.39a26.57,26.57,0,0,1-5.431-16.47l1.129-6.22a21.8,21.8,0,0,1,7.4-10.24c0.607-.47,1.216-0.92,1.827-1.37-2.418,5.57-3.046,17.83.7,26.85C693.166,1327.78,707.091,1329.32,711.286,1329.58Z"/>
+    <path id="center_brim_circle_color_highlight_2_copy-10" data-name="center brim circle color highlight 2 copy" class="cls-8" d="M692,1294.22s12.726-6.37,18.017.57,8.284,17.95,7.937,25.38c0,0-2.357-12.86-10.374-19.91S700.536,1295.9,692,1294.22Z"/>
+  </g>
+  <path id="shield_base" data-name="shield base" class="cls-2" d="M1050.86,1262.04c-465.336,0-657.066,342.12-657.066,593.88s109.612,563.72,558.523,563.72,583.223-394.05,583.223-591.08C1535.54,1587.47,1452.56,1262.04,1050.86,1262.04Z"/>
+  <path id="shield_color" data-name="shield color" class="cls-9" d="M1050.17,1279.14c-468.322,0-642.039,322.32-642.039,575.65S499.2,2397.4,950.994,2397.4s570.416-371.89,570.416-570.15C1521.41,1584.66,1454.45,1279.14,1050.17,1279.14Z"/>
+  <path id="shield_detail_color_1" data-name="shield detail color 1" class="cls-10" d="M482.669,2180.1c-7.039-11.97-13.448-24.26-19.322-36.8,303.6-121.66,779.3-317.9,1049.083-457.62,3.98,28.89,6.42,57.85,7.73,86.36Zm-70.41-236.11c-2.878-29.88-4.128-59.78-4.128-89.2,0-.08,0-0.16,0-0.24,273.022-103.54,730-281.79,1011.387-418.25,1.17,1.56,2.34,3.12,3.48,4.69C1219.1,1577.77,887.179,1771.53,412.259,1943.99Z"/>
+  <path id="shield_detail_color_2" data-name="shield detail color 2" class="cls-11" d="M1489.5,2020.42c-191.83,91.48-525.917,254.97-723.238,357.4a560.025,560.025,0,0,1-68.2-20.59c258.163-141.75,575.328-317.34,816.1-440.16A662.54,662.54,0,0,1,1489.5,2020.42Zm-278.43-238.8C960.936,1887.31,655.4,2020.72,461.99,2140.4a504.627,504.627,0,0,1-22.024-56.86c187.682-140.21,472.215-332.67,427.842-296.36-54.186,44.34,98.511-40.32,156.072-59.75,154.91-52.29,312.84-118.27,453.49-184.19a586.985,586.985,0,0,1,23.14,77C1404.2,1683.88,1303.5,1742.56,1211.07,1781.62Zm-719.2,44.33c-27.54,9.18-55.686,19.68-83.729,31.15,0-.77-0.013-1.54-0.013-2.31a577.673,577.673,0,0,1,7.662-93c84.879-41.02,184.719-94.62,268.194-152.59,136.562-94.84,398.713-201.36,595.293-285.83a370.339,370.339,0,0,1,75.8,46.43C1051.73,1541.98,613.874,1785.28,491.873,1825.95Zm558.3-546.81c23.93,0,46.64,1.1,68.27,3.17-129.811,88.67-332.806,195.21-620.5,262.53a536.967,536.967,0,0,1,84.575-102.37c145.7-46.26,323.448-105.96,464.094-163.3C1047.8,1279.17,1048.97,1279.14,1050.17,1279.14Z"/>
+  <path id="shield_color_copy" data-name="shield color copy" class="cls-12" d="M820.913,1906.26c-67.861-96.8,93.455-203.81,93.455-203.81s9.518,67.53-8.788,108.44,136.5,70.89,125.07,126.96S888.774,2003.06,820.913,1906.26Z"/>
+  <path id="shield_detail_color_1_copy" data-name="shield detail color 1 copy" class="cls-13" d="M844.558,1765.22c31.442-37.31,69.81-62.77,69.81-62.77s1.648,11.71,2.253,28.32Q881.455,1747.945,844.558,1765.22Zm49.671,201.24c43.111-18.17,86.451-36.62,129.481-55.14,6.01,8.21,8.88,16.99,6.94,26.53C1022.65,1977.04,956.5,1993.3,894.229,1966.46Z"/>
+  <path id="shield_detail_color_2_copy" data-name="shield detail color 2 copy" class="cls-14" d="M867.808,1787.18c-29.548,24.18,2.426,9.99,46.943-11.05-1.672,12.28-4.524,24.38-9.171,34.76-10.78,24.09,38.46,44.39,78.443,68.46-44.476,19.62-89.138,39.66-133.23,59.95a178.09,178.09,0,0,1-29.88-33.04c-19.735-28.15-20.084-57.16-10.659-84.16C858.033,1790.13,883.506,1774.34,867.808,1787.18Z"/>
+  <g id="shield_border_stud_copy_11" data-name="shield border stud copy 11">
+    <path id="center_brim_circle_color_copy_2" data-name="center brim circle color copy 2" class="cls-2" d="M1088.27,1738c73.97,102.45,21.11,161.87-28.73,200.22s-134.666,66.14-191.231-12.2-41.537-164.9,20.026-212.27S1014.3,1635.56,1088.27,1738Z"/>
+    <path id="center_brim_circle_color_copy-11" data-name="center brim circle color copy" class="cls-15" d="M1078.36,1745.03c67.62,93.86,19.29,148.31-26.27,183.44s-123.106,60.59-174.815-11.18-37.972-151.08,18.307-194.48S1010.73,1651.18,1078.36,1745.03Z"/>
+    <path id="center_brim_circle_shadow_copy-11" data-name="center brim circle shadow copy" class="cls-7" d="M1039.58,1937.31c-46.282,29.96-115.068,45.54-162.3-20.02-23.211-32.22-33.14-65.93-32.048-97.25l6.661-36.75a128.651,128.651,0,0,1,43.694-60.48q5.373-4.14,10.781-8.07c-14.268,32.89-17.973,105.3,4.13,158.55C932.65,1926.68,1014.83,1935.77,1039.58,1937.31Z"/>
+    <path id="center_brim_circle_color_highlight_2_copy-11" data-name="center brim circle color highlight 2 copy" class="cls-8" d="M925.772,1728.45s75.1-37.58,106.318,3.38,48.88,106.02,46.84,149.92c0,0-13.91-75.96-61.22-117.58S976.142,1738.38,925.772,1728.45Z"/>
+  </g>
+</svg>

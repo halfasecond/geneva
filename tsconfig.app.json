@@ -29,6 +29,8 @@
       "utils/*": ["./src/utils/*"],
       "kittyNews": ["./src/kittyNews"],
       "kittyNews/*": ["./src/kittyNews/*"],
+      "kittyInternational": ["./src/kittyInternational"],
+      "kittyInternational/*": ["./src/kittyInternational/*"],
     }
   },
   "include": ["src/**/*"],

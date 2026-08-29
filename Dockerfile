@@ -20,6 +20,10 @@ EXPOSE 7002
 EXPOSE 7003
 # VECH / Elite client
 EXPOSE 7005
+# kitty.news client
+EXPOSE 8001
+# kitty.international client
+EXPOSE 2017
 
 # Default command to keep the container running
 CMD ["sh", "-c", "yarn start"]

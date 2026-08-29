@@ -78,7 +78,7 @@ export default defineConfig(({ command, mode }) => {
     plugins: [
       react(),
       // Only include game server in development
-      command === 'serve' && appName !== 'kittyNews' ? gameServer() : null,
+      command === 'serve' && appName !== 'kittyNews' && appName !== 'kittyInternational' ? gameServer() : null,
       {
         name: 'html-transform',
         transformIndexHtml(html) {
@@ -108,9 +108,13 @@ export default defineConfig(({ command, mode }) => {
     ].filter(Boolean),
     server: {
       host: true,
-      port: appName === 'kittyNews' ? 8001 : 3131,
+      port: appName === 'kittyNews' ? 8001 : appName === 'kittyInternational' ? 2017 : 3131,
     },
-    publicDir: appName === 'kittyNews' ? 'public/kittyNews' : 'public',
+    publicDir: appName === 'kittyNews'
+      ? 'public/kittyNews'
+      : appName === 'kittyInternational'
+        ? 'public/kittyInternational'
+        : 'public',
     resolve: {
       alias: {
         src: "/src",
@@ -120,6 +124,7 @@ export default defineConfig(({ command, mode }) => {
         style: "/src/style",
         utils: "/src/utils",
         kittyNews: "/src/kittyNews",
+        kittyInternational: "/src/kittyInternational",
       },
     },
     build: {

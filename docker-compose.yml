@@ -14,6 +14,7 @@ services:
       - 7003:7003
       - 7005:7005
       - 8001:8001
+      - 2017:2017
     stdin_open: true
     tty: true
     networks:
