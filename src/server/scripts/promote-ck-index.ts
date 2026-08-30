@@ -17,6 +17,7 @@ dotenv.config({ path: path.resolve(process.cwd(), 'src/server/.env') });
 const PAIRS = [
     { live: 'ck_nfts', next: 'ck_nfts_next', prev: 'ck_nfts_prev' },
     { live: 'ck_owners', next: 'ck_owners_next', prev: 'ck_owners_prev' },
+    { live: 'kn_dailies', next: 'kn_dailies_next', prev: 'kn_dailies_prev' },
 ] as const;
 
 const waitForDb = () =>
@@ -60,7 +61,7 @@ const promote = async () => {
         await rename(pair.next, pair.live);
         console.log(`${pair.next} → ${pair.live} (old ${pair.live} kept as ${pair.prev})`);
     }
-    await note('Promoted ck_nfts_next / ck_owners_next to live. Previous tables are *_prev.');
+    await note('Promoted ck_nfts / ck_owners / kn_dailies from *_next. Previous tables are *_prev.');
 };
 
 const rollback = async () => {
@@ -75,7 +76,7 @@ const rollback = async () => {
         await rename(pair.prev, pair.live);
         console.log(`${pair.prev} → ${pair.live} (staging moved back to ${pair.next})`);
     }
-    await note('Rolled back to ck_nfts_prev / ck_owners_prev. Staging returned to *_next.');
+    await note('Rolled back nfts/owners/dailies from *_prev. Staging returned to *_next.');
 };
 
 const main = async () => {

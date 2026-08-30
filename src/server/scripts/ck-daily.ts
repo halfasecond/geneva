@@ -127,7 +127,7 @@ const main = async () => {
         SireVolumeDaily: sireVolumeDaily,
         TotalVolume: add(saleVolume, sireVolume),
         TotalVolumeDaily: add(saleVolumeDaily, sireVolumeDaily),
-        ethPrice: prev?.ethPrice ?? 0,
+        ethPrice: (await db.collection('kn_ethprices').findOne({ timestamp: start }))?.ethprice ?? prev?.ethPrice ?? 0,
         auditedAt: new Date(),
         source: 'ck_events',
     };
