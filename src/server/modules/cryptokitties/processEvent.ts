@@ -90,7 +90,7 @@ const handleTransferOrAuctionEnd = async (
     const isSaleEnd = from === Contracts.Sale.addr;
     const isSireEnd = from === Contracts.Sire.addr;
     if (isSaleEnd || isSireEnd) {
-        await handleAuctionEnd(event, Models, isSaleEnd, emitter);
+        await handleAuctionEnd(event, Models, isSaleEnd, to, emitter);
     } else {
         if (web3.eth.getTransactionReceipt) {
             const priced = await valuesForTx(web3, event.transactionHash as string);
@@ -121,6 +121,7 @@ const handleAuctionEnd = async (
     event: Record<string, unknown>,
     Models: CryptoKittiesModels,
     isSaleEnd: boolean,
+    to: string,
     emitter: CryptoKittiesEmitter,
 ) => {
     try {
@@ -130,11 +131,14 @@ const handleAuctionEnd = async (
             transactionHash: event.transactionHash,
         }).exec();
         const currentDoc = await Models.NFT.findOne({ tokenId: event.tokenId }).exec();
-        if (!auctionEndEvent || !currentDoc) return;
+        if (!currentDoc) return;
 
+        const prev = (currentDoc.owner as string).toLowerCase();
         const unset: Record<string, unknown> = {
+            owner: to,
             sale: false,
             sire: false,
+            $addToSet: { owners: to },
             $unset: {
                 currentPrice: '',
                 startingPrice: '',
@@ -144,12 +148,10 @@ const handleAuctionEnd = async (
                 auctionEnd: '',
             },
         };
-        if (auctionEndEvent.winner && isSaleEnd) {
-            const from = (currentDoc.owner as string).toLowerCase();
-            const to = (auctionEndEvent.winner as string).toLowerCase();
-            unset.owner = to;
-            unset.$addToSet = { owners: to };
-            await updateOwnerBalances(from, to, Models);
+        if (prev && prev !== to) {
+            await updateOwnerBalances(prev, to, Models);
+        }
+        if (auctionEndEvent?.winner && isSaleEnd) {
             await Models.Event.updateOne(
                 { tokenId: event.tokenId, blockNumber: event.blockNumber, logIndex: event.logIndex },
                 { $set: { value: (auctionEndEvent.totalPrice as string).toString().padStart(35, '0') } },

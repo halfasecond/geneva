@@ -24,16 +24,24 @@ const waitForDb = () =>
 
 const main = async () => {
     const live = process.argv.includes('--live');
+    const skipAssign = process.argv.includes('--prices-only');
+    const skipPrices = process.argv.includes('--owners-only');
     const nftsName = live ? 'ck_nfts' : 'ck_nfts_next';
     await waitForDb();
-    console.log(`Stamping sale/sire on ${nftsName} from auction-contract owners...`);
-    const result = await stampAuctionsFromOwners(mongoose.connection.db!, nftsName);
+    console.log(
+        skipPrices
+            ? `Restoring listers on ${nftsName} (keep prices/flags)...`
+            : skipAssign
+              ? `Pricing open auctions on ${nftsName} (owners already assigned)...`
+              : `Stamping sale/sire on ${nftsName}; display owner is the lister...`,
+    );
+    const result = await stampAuctionsFromOwners(mongoose.connection.db!, nftsName, { skipAssign, skipPrices });
     console.log(result);
     await mongoose.connection.db!.collection('ck_audit').updateOne(
         { _id: AUDIT_ID as any },
         {
             $set: {
-                note: `Auction stamp on ${nftsName}: sale ${result.onSale}, sire ${result.onSire}, priced ${result.priced}, cleared ${result.cleared}.`,
+                note: `Auction stamp on ${nftsName}: listed ${result.listed}, moved ${result.moved}, sale ${result.onSale}, sire ${result.onSire}, priced ${result.priced}, skipped ${result.skipped}, cleared ${result.cleared}.`,
                 updatedAt: new Date(),
             },
         },

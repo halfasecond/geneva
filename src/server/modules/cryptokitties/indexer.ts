@@ -30,15 +30,20 @@ export const updateFloor = async (name: string, Models: CryptoKittiesModels, que
     const cursor = Models.NFT.find(query).cursor();
     for (let nft = await cursor.next(); nft != null; nft = await cursor.next()) {
         const { startingPrice, endingPrice, auctionStart, auctionEnd } = nft;
-        const currentPrice = calculateCurrentPrice(
-            startingPrice as string,
-            endingPrice as string,
-            auctionStart!.toString(),
-            auctionEnd!.toString(),
-            now
-        );
-        if (currentPrice !== nft.currentPrice) {
-            await Models.NFT.updateOne({ _id: nft._id }, { currentPrice });
+        if (startingPrice == null || endingPrice == null || auctionStart == null || auctionEnd == null) continue;
+        try {
+            const currentPrice = calculateCurrentPrice(
+                String(startingPrice),
+                String(endingPrice),
+                String(auctionStart),
+                String(auctionEnd),
+                now
+            );
+            if (currentPrice !== nft.currentPrice) {
+                await Models.NFT.updateOne({ _id: nft._id }, { currentPrice });
+            }
+        } catch {
+            continue;
         }
     }
     const nextQuery = {
