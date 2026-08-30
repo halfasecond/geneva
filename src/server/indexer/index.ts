@@ -7,6 +7,7 @@ import { ContractRegistry } from './registry';
 import { BlockFollower } from './follower';
 import { isFollowEnabled } from './flags';
 import { mountIndexerRoutes } from './routes';
+import { startBlockPulse } from './pulse';
 
 export type { WatchedContract } from './registry';
 export { ContractRegistry } from './registry';
@@ -29,6 +30,7 @@ export function createIndexer(app: Express, db: Connection, web3: any, emitter: 
     const store = new IndexerStore(db);
     const registry = new ContractRegistry();
     const follower = new BlockFollower({ httpUrl, wssUrl, web3, store, registry, emitter });
+    let stopPulse: (() => void) | null = null;
 
     mountIndexerRoutes(app, httpUrl, store, db, registry);
 
@@ -39,7 +41,8 @@ export function createIndexer(app: Express, db: Connection, web3: any, emitter: 
         wssUrl,
         start: async () => {
             if (!isFollowEnabled()) {
-                console.log('[indexer] follow off — serving mongo dumps only (no WSS, no watch, no catch-up)');
+                console.log('[indexer] follow off — HTTP block pulse only (no WSS, no watches)');
+                stopPulse = startBlockPulse(httpUrl, emitter);
                 return;
             }
             if (registry.list().length === 0) {
@@ -48,6 +51,10 @@ export function createIndexer(app: Express, db: Connection, web3: any, emitter: 
             }
             await follower.start();
         },
-        stop: () => follower.stop(),
+        stop: () => {
+            stopPulse?.();
+            stopPulse = null;
+            follower.stop();
+        },
     };
 }

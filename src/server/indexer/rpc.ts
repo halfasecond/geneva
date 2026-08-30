@@ -29,9 +29,9 @@ export interface RpcBlock {
     transactions: RpcBlockTx[];
 }
 
-export async function fetchBlock(httpUrl: string, blockRef: string | number): Promise<RpcBlock> {
+export async function fetchBlock(httpUrl: string, blockRef: string | number, withTxs = true): Promise<RpcBlock> {
     const param = typeof blockRef === 'number' ? `0x${blockRef.toString(16)}` : blockRef;
-    return postJsonRpc<RpcBlock>(httpUrl, 'eth_getBlockByNumber', [param, true]);
+    return postJsonRpc<RpcBlock>(httpUrl, 'eth_getBlockByNumber', [param, withTxs]);
 }
 
 export async function getLatestBlockNumber(httpUrl: string): Promise<number> {

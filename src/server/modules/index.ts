@@ -115,11 +115,7 @@ const modules: ModuleFunction = (app, io, web3, db) => {
             eventsToWatch: ['Transfer', 'Birth', 'Pregnant'],
         })
 
-        if (follow) {
-            await indexer.start()
-        } else {
-            console.log('[indexer] follow off — serving mongo dumps only (no WSS, no watch, no catch-up)')
-        }
+        await indexer.start()
     })();
     watchersReady.catch((error) => {
         console.error('[indexer] failed to start:', error);
