@@ -253,3 +253,135 @@ export const stampAuctionsFromOwners = async (
         skipped,
     };
 };
+
+const PRICE_UNSET = {
+    currentPrice: '',
+    startingPrice: '',
+    endingPrice: '',
+    duration: '',
+    auctionStart: '',
+    auctionEnd: '',
+};
+
+/**
+ * Apply Sale/Sire AuctionCreated/Successful/Cancelled and clock Transfers
+ * since fromBlock onto live nfts. Pulse-sized — not a full owner rebuild.
+ */
+export const stampRecentAuctions = async (db: Db, nftsName: string, fromBlock: number) => {
+    const events = db.collection('ck_events');
+    const nfts = db.collection(nftsName);
+    const ownersCol = db.collection(nftsName.replace('ck_nfts', 'ck_owners'));
+    const now = Math.floor(Date.now() / 1000);
+    const deltas = new Map<string, number>();
+    const bump = (addr: string, delta: number) => {
+        if (!addr || AUCTION.includes(addr)) return;
+        deltas.set(addr, (deltas.get(addr) || 0) + delta);
+    };
+    const setOwner = async (tokenId: number, next: string) => {
+        if (!next || AUCTION.includes(next)) return;
+        const doc = await nfts.findOne({ tokenId }, { projection: { owner: 1 } });
+        const prev = lower(doc?.owner);
+        if (prev && prev !== next) {
+            bump(prev, -1);
+            bump(next, 1);
+        }
+    };
+
+    const rows = await events
+        .find({
+            blockNumber: { $gte: fromBlock },
+            $or: [
+                { event: { $in: ['AuctionCreated', 'AuctionSuccessful', 'AuctionCancelled'] } },
+                { event: 'Transfer', $or: [{ to: { $in: AUCTION_MATCH } }, { from: { $in: AUCTION_MATCH } }] },
+            ],
+        })
+        .sort({ blockNumber: 1, logIndex: 1 })
+        .toArray();
+
+    let applied = 0;
+    let lastBlock = fromBlock - 1;
+    for (const ev of rows) {
+        const tokenId = Number(ev.tokenId);
+        const blockNumber = Number(ev.blockNumber || 0);
+        lastBlock = Math.max(lastBlock, blockNumber);
+        if (!tokenId) continue;
+        const event = String(ev.event);
+        const address = lower(ev.address);
+        const from = lower(ev.from);
+        const to = lower(ev.to);
+
+        if (event === 'AuctionCreated') {
+            const isSale = address === SALE;
+            const isSire = address === SIRE;
+            if (!isSale && !isSire) continue;
+            const auctionStart = Number(ev.timestamp);
+            const duration = Number(ev.duration);
+            if (!Number.isFinite(auctionStart) || !Number.isFinite(duration)) continue;
+            const auctionEnd = auctionStart + duration;
+            const currentPrice = calculateCurrentPrice(
+                String(ev.startingPrice ?? '0'),
+                String(ev.endingPrice ?? '0'),
+                String(Math.floor(auctionStart)),
+                String(Math.floor(auctionEnd)),
+                now,
+            );
+            await nfts.updateOne(
+                { tokenId },
+                {
+                    $set: {
+                        sale: isSale,
+                        sire: isSire,
+                        startingPrice: String(ev.startingPrice ?? '0'),
+                        endingPrice: String(ev.endingPrice ?? '0'),
+                        duration,
+                        auctionStart,
+                        auctionEnd,
+                        currentPrice,
+                    },
+                },
+            );
+            applied += 1;
+        } else if (event === 'AuctionSuccessful' || event === 'AuctionCancelled') {
+            // Owner comes from the clock Transfer (sale → buyer, sire → lister).
+            // Sire AuctionSuccessful.winner is Core, not the kitty owner.
+            await nfts.updateOne({ tokenId }, { $set: { sale: false, sire: false }, $unset: PRICE_UNSET });
+            applied += 1;
+        } else if (event === 'Transfer') {
+            if (AUCTION.includes(to)) {
+                const isSale = to === SALE;
+                const lister = AUCTION.includes(from) ? '' : from;
+                const $set: Record<string, unknown> = { sale: isSale, sire: to === SIRE };
+                if (lister) {
+                    await setOwner(tokenId, lister);
+                    $set.owner = lister;
+                }
+                await nfts.updateOne({ tokenId }, { $set, $pull: { owners: { $in: AUCTION } } });
+                applied += 1;
+            } else if (AUCTION.includes(from)) {
+                await setOwner(tokenId, to);
+                await nfts.updateOne(
+                    { tokenId },
+                    {
+                        $set: { owner: to, sale: false, sire: false },
+                        $unset: PRICE_UNSET,
+                        $addToSet: { owners: to },
+                    },
+                );
+                applied += 1;
+            }
+        }
+    }
+
+    for (const [owner, delta] of deltas) {
+        if (!delta) continue;
+        await ownersCol.updateOne({ owner }, { $inc: { balance: delta } }, { upsert: true });
+    }
+
+    await db.collection('ck_audit').updateOne(
+        { _id: AUDIT_ID as any },
+        { $set: { nftStampAt: lastBlock, updatedAt: new Date() } },
+        { upsert: true },
+    );
+
+    return { applied, events: rows.length, fromBlock, lastBlock };
+};

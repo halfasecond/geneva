@@ -1,13 +1,26 @@
 // @ts-nocheck
 import * as Styled from './PriceC2A.style'
-import { fromWei } from 'web3-utils'
 import loadingSrc from 'kittyFamily/svg/loading.svg'
 
 const unPad = (str) => String(str || '0').replace(/^0+/, '') || '0'
 
+/** Display only. Purchase still uses unpadded wei. */
 const formatEth = (price) => {
 	try {
-		return fromWei(unPad(price), 'ether')
+		const wei = unPad(price)
+		if (!/^\d+$/.test(wei)) return ''
+		const padded = wei.padStart(18, '0')
+		let whole = padded.slice(0, -18).replace(/^0+/, '') || '0'
+		const frac18 = padded.slice(-18)
+		const head = frac18.slice(0, 8)
+		const roundUp = frac18[8] >= '5'
+		let fracInt = BigInt(head) + (roundUp ? 1n : 0n)
+		if (fracInt === 100000000n) {
+			whole = String(BigInt(whole) + 1n)
+			fracInt = 0n
+		}
+		const frac = fracInt.toString().padStart(8, '0').replace(/0+$/, '')
+		return frac ? `${whole}.${frac}` : whole
 	} catch {
 		return ''
 	}

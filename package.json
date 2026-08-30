@@ -55,7 +55,9 @@
     "ck:pulse": "NODE_NO_WARNINGS=1 babel-node -r @babel/register --extensions '.ts' src/server/scripts/ck-pulse.ts",
     "ck:stamp-auctions": "NODE_NO_WARNINGS=1 babel-node -r @babel/register --extensions '.ts' src/server/scripts/stamp-ck-auctions.ts",
     "ck:fix-values": "NODE_NO_WARNINGS=1 babel-node -r @babel/register --extensions '.ts' src/server/scripts/fix-ck-transfer-values.ts",
-    "ck:fill": "NODE_NO_WARNINGS=1 babel-node -r @babel/register --extensions '.ts' src/server/scripts/fill-ck-events.ts"
+    "ck:fill": "NODE_NO_WARNINGS=1 babel-node -r @babel/register --extensions '.ts' src/server/scripts/fill-ck-events.ts",
+    "kh:fill": "NODE_NO_WARNINGS=1 babel-node -r @babel/register --extensions '.ts' src/server/scripts/fill-kh-events.ts",
+    "kh:stamp": "NODE_NO_WARNINGS=1 babel-node -r @babel/register --extensions '.ts' src/server/scripts/stamp-ck-hats.ts"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

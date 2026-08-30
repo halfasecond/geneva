@@ -66,15 +66,19 @@ async function onTipBlock(blockNumber: number, db: Connection) {
     if (Date.now() - lastTip < TIP_GAP_MS) return;
     const audit = db.db?.collection('ck_audit');
     if (!audit) return;
-    const row = await audit.findOne({ _id: AUDIT_ID as any }, { projection: { fillAt: 1 } });
+    const row = await audit.findOne({ _id: AUDIT_ID as any }, { projection: { fillAt: 1, khFillAt: 1 } });
     const fillAt = Number(row?.fillAt || 0);
-    if (fillAt >= blockNumber) return;
+    const khFillAt = Number(row?.khFillAt || 0);
+    if (fillAt >= blockNumber && khFillAt >= blockNumber) return;
     job = true;
     lastTip = Date.now();
-    console.log(`[ck:tip] fill ${fillAt + 1} → ${blockNumber}`);
+    console.log(`[ck:tip] fill ck ${fillAt + 1} kh ${khFillAt + 1} → ${blockNumber}`);
     try {
         await yarn(['ck:fill', '--', '--range', '5']);
+        await yarn(['ck:stamp-auctions', '--', '--live', '--recent']);
+        await yarn(['kh:fill', '--', '--range', '5']);
         await yarn(['ck:fix-values', '--', '--unstamped', '--days', '1']);
+        await yarn(['kh:stamp']);
     } catch (error) {
         console.error('[ck:tip]', error);
     } finally {

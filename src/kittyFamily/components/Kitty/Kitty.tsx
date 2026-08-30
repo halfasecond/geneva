@@ -23,7 +23,8 @@ const Kitty = ({ kitty, getInfo, handlePurchase, hats=[], showMewts=false, showI
 	const [modal, setModal] = useState(false)
 
 
-	const uniqueHats = kitty && kitty.hats && kitty.hats.length > 0 ? Object.values(kitty.hats.reduce((uniqueItems, hat) => ((uniqueItems[hat.itemName] = hat), uniqueItems), {})) : []
+	const worn = Array.isArray(kitty?.hats) ? kitty.hats : []
+	const uniqueHats = worn.length > 0 ? Object.values(worn.reduce((uniqueItems, hat) => ((uniqueItems[hat.itemName] = hat), uniqueItems), {})) : []
     if (hats && hats.length) {
         uniqueHats.push(hats[0]) // this will be a preview hat
     }
@@ -77,12 +78,12 @@ const Kitty = ({ kitty, getInfo, handlePurchase, hats=[], showMewts=false, showI
 				<Portal>
 					<Styled.Modal>
 						<div>
-							<img src={closeSrc} alt="" onClick={() => setModal(false)} style={{ cursor: 'pointer' }} />
+							<img className={'close'} src={closeSrc} alt="" onClick={() => setModal(false)} />
 							<h2>{'Congratulations'}</h2>
 							<p>Your new kitty has arrived! If you would like a hat for your kitty you can <Link to={'/kitty-hats'}>find one here</Link></p>
 							<Styled.Container>
 								<Styled.ImageContainer className={kitty.color} style={{ cursor: getInfo ? 'pointer' : 'default' }}>
-									<img src={kitty.image_url_cdn} alt={'Cryptokitty ' + kitty.id} onClick={() => getInfo(kitty.id)}
+									<img src={kittyArt(kitty)} alt={'Cryptokitty ' + (kitty.tokenId || kitty.id)} onClick={() => getInfo(kitty.id || kitty.tokenId)}
 										onError={({ currentTarget }) => {
 											currentTarget.onerror = null
 											currentTarget.src = `https://img.cn.cryptokitties.co/0x06012c8cf97bead5deae237070f9587f8e7a266d/103.png`
@@ -159,7 +160,7 @@ const Kitty = ({ kitty, getInfo, handlePurchase, hats=[], showMewts=false, showI
 												<Link to={`/kitty/${kitty.id}`}>#{kitty.id}</Link>
 											</div>
 											<div>
-												<img src={inspect} alt={''} onClick={() => getInfo(kitty.id)} />
+												<img src={inspect} alt={''} onClick={(e) => { e.stopPropagation(); getInfo(kitty.id || kitty.tokenId) }} />
 											</div>
 										</div>
 										<div>Gen{kitty.gen} - {handleGetCoolDown(kitty.cooldownIndex)}</div>

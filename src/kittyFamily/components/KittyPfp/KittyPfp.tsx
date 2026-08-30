@@ -11,6 +11,12 @@ import Portal from 'kittyFamily/components/Portal'
 import closeSrc from 'kittyFamily/svg/close.svg'
 import { handleGetCoolDown, handleGetBirthday, handleGetAbbrBirthday, isTinyBoxCattribute } from 'kittyFamily/utils'
 
+const CK_IMG = 'https://img.cryptokitties.co/0x06012c8cf97bead5deae237070f9587f8e7a266d/'
+const kittyArt = (kitty) =>
+	kitty?.image_url ||
+	kitty?.image_url_cdn ||
+	`${CK_IMG}${kitty?.tokenId === 0 ? '--' : kitty?.tokenId}.png`
+
 const Kitty = ({ kitty, getInfo, handlePurchase, showMewts=false, showInfo = true, c2aPosition = 'top', showName = false, showBirthday, handleClick = undefined, bgColor = undefined, size ='80px' }) => {
 	const [purchasing, setPurchasing] = useState(false)
 	const [purchased, setPurchased] = useState(false)
@@ -61,12 +67,12 @@ const Kitty = ({ kitty, getInfo, handlePurchase, showMewts=false, showInfo = tru
 				<Portal>
 					<Styled.Modal>
 						<div>
-							<img src={closeSrc} alt="" onClick={() => setModal(false)} style={{ cursor: 'pointer' }} />
+							<img className={'close'} src={closeSrc} alt="" onClick={() => setModal(false)} />
 							<h2>{'Congratulations'}</h2>
 							<p>Your new kitty has arrived! If you would like a hat for your kitty you can <Link to={'/kitty-hats-marketplace'}>find one here</Link></p>
 							<Styled.Container>
 								<Styled.ImageContainer className={kitty.color} style={{ cursor: getInfo ? 'pointer' : 'default' }}>
-									<img src={kitty.image_url_cdn} alt={'Cryptokitty ' + kitty.id} onClick={() => getInfo(kitty.id)}
+									<img src={kittyArt(kitty)} alt={'Cryptokitty ' + (kitty.tokenId || kitty.id)} onClick={() => getInfo(kitty.id || kitty.tokenId)}
 										onError={({ currentTarget }) => {
 											currentTarget.onerror = null
 											currentTarget.src = `https://img.cn.cryptokitties.co/0x06012c8cf97bead5deae237070f9587f8e7a266d/103.png`

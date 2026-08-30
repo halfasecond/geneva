@@ -16,7 +16,7 @@ export const Div = styled.div`
     padding: 60px 20px;
     box-sizing: border-box;
     border-right: 1px solid #666;
-    z-index: 10000;
+    z-index: 50000;
     overflow-y: auto;
     height: 100vh;
     display: flex;

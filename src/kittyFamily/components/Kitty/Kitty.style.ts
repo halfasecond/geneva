@@ -71,6 +71,7 @@ export const ImageContainer = styled.div`
     width: 100%;
     aspect-ratio: 1/1;
     position: relative;
+    isolation: isolate;
     border-radius: ${gutters['xs']};
     &.shadow {
       &:before {
@@ -201,13 +202,6 @@ export const Modal = styled.div`
     
     > div {
         position: relative;
-        > svg {
-            width: 30px;
-            height: 30px;
-            position: absolute;
-            top: ${gutters['sm']};
-            right: ${gutters['sm']};
-        }
         padding: ${gutters['lg']};
         width: 90%;
         max-width: 600px;
@@ -220,6 +214,16 @@ export const Modal = styled.div`
         > img {
             width: 50%;
             margin-bottom: ${gutters['md']};
+        }
+        > svg,
+        > img.close {
+            width: 30px;
+            height: 30px;
+            position: absolute;
+            top: ${gutters['sm']};
+            right: ${gutters['sm']};
+            margin: 0;
+            cursor: pointer;
         }
         h2 {
             margin-bottom: ${gutters['md']};

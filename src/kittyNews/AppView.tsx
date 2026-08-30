@@ -107,8 +107,8 @@ const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn, t
     useEffect(() => {
         if (loggedIn) {
             getUserBalance()
-            getClaims()
         }
+        getClaims()
         getPurrClaimBalance()
     }, [loggedIn])
 

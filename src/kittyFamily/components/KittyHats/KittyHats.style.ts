@@ -279,13 +279,6 @@ export const Modal2 = styled.div`
     > div {
         position: relative;
         margin: 0 2%;
-        > svg {
-            width: 30px;
-            height: 30px;
-            position: absolute;
-            top: ${gutters['sm']};
-            right: ${gutters['sm']};
-        }
         padding: ${gutters['xl']} ${gutters['lg']} ${gutters['lg']};
         width: 90%;
         max-width: 600px;
@@ -298,6 +291,16 @@ export const Modal2 = styled.div`
         > img {
             width: 50%;
             margin-bottom: ${gutters['md']};
+        }
+        > svg,
+        > img.close {
+            width: 30px;
+            height: 30px;
+            position: absolute;
+            top: ${gutters['sm']};
+            right: ${gutters['sm']};
+            margin: 0;
+            cursor: pointer;
         }
         h2 {
             margin-bottom: ${gutters['md']};
@@ -330,13 +333,6 @@ export const Modal3 = styled.div`
     > div {
         position: relative;
         margin: 0 2%;
-        > svg {
-            width: 30px;
-            height: 30px;
-            position: absolute;
-            top: ${gutters['sm']};
-            right: ${gutters['sm']};
-        }
         padding: ${gutters['xl']} ${gutters['lg']} ${gutters['lg']};
         width: 90%;
         max-width: 600px;
@@ -346,6 +342,16 @@ export const Modal3 = styled.div`
         align-items: center;
         justify-content: center;
         flex-direction: column;
+        > svg,
+        > img.close {
+            width: 30px;
+            height: 30px;
+            position: absolute;
+            top: ${gutters['sm']};
+            right: ${gutters['sm']};
+            margin: 0;
+            cursor: pointer;
+        }
         > div {
             &:first-of-type {
                 width: 100%;

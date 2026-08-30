@@ -337,8 +337,8 @@ const Modal = ({ searchables, loggedIn, onClose, token, displayName }) => {
     return (
         <Styled.Modal ref={modalOverlayRef} wider={!selectedKitty}>
             <div>
-                <img src={closeSrc} alt="" onClick={onClose} />
-                <img src={backSrc} alt="" onClick={() => setSelectedKitty(false)} />
+                <img className={'close'} src={closeSrc} alt="" onClick={onClose} />
+                <img className={'back'} src={backSrc} alt="" onClick={() => setSelectedKitty(false)} />
                 {selectedKitty ?
                     (
                         <Styled.SelectedKitty>

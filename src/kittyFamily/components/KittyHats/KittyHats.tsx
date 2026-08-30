@@ -78,7 +78,7 @@ const KittyHats = ({ hats, loggedIn, searchables, handlePurchase: _purchase, han
             {hat && (
                 <Styled.Modal3 ref={modalOverlayRef}>
                     <div>
-                        <img src={closeSrc} alt="" onClick={() => setHat(undefined)} style={{ cursor: 'pointer' }} />
+                        <img className={'close'} src={closeSrc} alt="" onClick={() => setHat(undefined)} />
                         <h2>{'Congratulations'}</h2>
                         <p>Your new hat looks great!</p>
                         <div
@@ -105,7 +105,7 @@ const KittyHats = ({ hats, loggedIn, searchables, handlePurchase: _purchase, han
             {kitty && (
                 <Styled.Modal2 ref={modalOverlayRef}>
                     <div>
-                        <img src={closeSrc} alt="" onClick={() => setKitty(false)} style={{ cursor: 'pointer' }} />
+                        <img className={'close'} src={closeSrc} alt="" onClick={() => setKitty(false)} />
                         <h2>{'Congratulations'}</h2>
                         <p>Your kitty's new hat looks great!</p>
                         <Kitty kitty={kitty.kitty} showMewts={true} hats={kitty.hats} bgColor={kitty.kitty.color} showInfo={false} showName={true} />

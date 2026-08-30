@@ -30,22 +30,26 @@ export const Modal = styled.div`
         overflow: auto;
         box-sizing: border-box;
         position: relative;
-        > svg {
+        > svg,
+        > img.close,
+        > img.back {
             position: absolute;
             z-index: 100000000;
             top: ${gutters['lg']};
-            &:first-of-type {
-                right: ${gutters['lg']};
-            }
-            &:nth-of-type(2) {
-                left: ${gutters['lg']};
-            }
             width: 40px;
             height: 40px;
             cursor: pointer;
             &:hover {
                 opacity: 0.6;
             }
+        }
+        > svg:first-of-type,
+        > img.close {
+            right: ${gutters['lg']};
+        }
+        > svg:nth-of-type(2),
+        > img.back {
+            left: ${gutters['lg']};
         }
     }
 `;

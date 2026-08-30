@@ -7,12 +7,17 @@ import dna from 'kittyFamily/svg/dna.svg'
 const decToBinary = { decimal: (n) => BigInt(n).toString(2) }
 
 const KittyGenes = ({ kitty, showBinaryGenes, defaultOpen }) => {
+  if (kitty?.genes === undefined || kitty?.genes === null || kitty?.genes === '') {
+    return null
+  }
   let geneToBinary = decToBinary.decimal(kitty.genes).toString()
   const addZeros = 240 - geneToBinary.length
   for (let i = 0; i < addZeros; i ++) {
     geneToBinary = "0"+geneToBinary
   }
-  const geneBlocks = [...geneToBinary.match(/.{1,5}/g).reverse()]
+  const matched = geneToBinary.match(/.{1,5}/g)
+  if (!matched) return null
+  const geneBlocks = [...matched].reverse()
   return (
     <Styled.Div>
       <div>
