@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { Connection, Model } from 'mongoose';
 import { KittyNewsModels } from './models';
+import { isMarketplaceSale } from '../cryptokitties/marketplaceValue';
 
 export interface CkModels {
     Event: Model<any>;
@@ -17,6 +18,8 @@ export function ckModels(db: Connection): CkModels | null {
 }
 
 const FEED_LIMIT = 20;
+const FEED_LOOKBACK = 80;
+const MARKET_LOOKBACK_BLOCKS = 200_000;
 const QUERY_MS = 8000;
 const FLOOR_TTL_MS = 60_000;
 const NO_ID = { projection: { _id: 0, __v: 0 } as const, maxTimeMS: QUERY_MS };
@@ -41,6 +44,10 @@ const DAILY_PROJECTION = {
     SireCreatedDaily: 1,
     SireVolume: 1,
     SireVolumeDaily: 1,
+    MarketplaceSuccessful: 1,
+    MarketplaceSuccessfulDaily: 1,
+    MarketplaceVolume: 1,
+    MarketplaceVolumeDaily: 1,
     TotalVolumeDaily: 1,
     TotalVolume: 1,
     timestamp: 1,
@@ -116,22 +123,51 @@ export function newsQueries(Models: KittyNewsModels, db: Connection) {
             const eventCol = events();
             const nftCol = nfts();
             if (!eventCol || !nftCol) return [];
-            const rows = await eventCol
-                .find({ event: 'AuctionSuccessful' }, NO_ID)
-                .sort({ blockNumber: -1, logIndex: -1 })
-                .limit(FEED_LIMIT)
-                .toArray();
+            const head = await eventCol.findOne(
+                {},
+                { projection: { blockNumber: 1 }, sort: { blockNumber: -1 }, maxTimeMS: QUERY_MS },
+            );
+            const minBlock = Math.max(0, Number(head?.blockNumber || 0) - MARKET_LOOKBACK_BLOCKS);
+            // Clock AuctionSuccessful + OpenSea/Wyvern Transfer.value.
+            // Bound Transfer scan by block so a missing value index cannot walk ck_events.
+            const [clock, xfers] = await Promise.all([
+                eventCol
+                    .find({ event: 'AuctionSuccessful' }, NO_ID)
+                    .sort({ blockNumber: -1, logIndex: -1 })
+                    .limit(FEED_LIMIT)
+                    .toArray(),
+                eventCol
+                    .find(
+                        {
+                            event: 'Transfer',
+                            blockNumber: { $gte: minBlock },
+                            value: { $exists: true, $nin: [null, ''] },
+                        },
+                        NO_ID,
+                    )
+                    .sort({ blockNumber: -1, logIndex: -1 })
+                    .limit(FEED_LOOKBACK)
+                    .toArray(),
+            ]);
+            const market = xfers.filter(isMarketplaceSale);
+            const rows = [...clock, ...market]
+                .sort((a, b) => {
+                    const blocks = Number(b.blockNumber || 0) - Number(a.blockNumber || 0);
+                    if (blocks) return blocks;
+                    return Number(b.logIndex || 0) - Number(a.logIndex || 0);
+                })
+                .slice(0, FEED_LIMIT);
             return Promise.all(
-                rows.map(async (auction) => {
+                rows.map(async (row) => {
                     const kitty = await nftCol.findOne(
-                        { tokenId: Number(auction.tokenId) },
+                        { tokenId: Number(row.tokenId) },
                         { projection: { _id: 0, __v: 0 }, maxTimeMS: QUERY_MS },
                     );
                     return {
-                        ...auction,
-                        value: auction.totalPrice,
+                        ...row,
+                        value: row.value || row.totalPrice,
                         kitty,
-                        auction,
+                        auction: row,
                     };
                 }),
             );
@@ -168,19 +204,29 @@ export function newsQueries(Models: KittyNewsModels, db: Connection) {
     ): Promise<FloorRow | undefined> => {
         const col = nfts();
         if (!col) return undefined;
+        const q = { ...filter, currentPrice: { $exists: true, $nin: [null, ''] } };
+        const opts = (useHint: boolean) => ({
+            projection: { tokenId: 1, currentPrice: 1 },
+            sort: { currentPrice: 1 as const },
+            maxTimeMS: QUERY_MS,
+            ...(useHint && hint ? { hint } : {}),
+        });
         try {
-            const row = await col.findOne(
-                { ...filter, currentPrice: { $exists: true, $nin: [null, ''] } },
-                {
-                    projection: { tokenId: 1, currentPrice: 1 },
-                    sort: { currentPrice: 1 },
-                    maxTimeMS: QUERY_MS,
-                    ...(hint ? { hint } : {}),
-                },
-            );
+            const row = await col.findOne(q, opts(true));
             if (row?.tokenId == null || row.currentPrice == null) return undefined;
             return { tokenId: Number(row.tokenId), price: unPadAndFormatPrice(String(row.currentPrice)) };
         } catch (error) {
+            const msg = error instanceof Error ? error.message : String(error);
+            if (hint && /hint provided does not correspond/i.test(msg)) {
+                try {
+                    const row = await col.findOne(q, opts(false));
+                    if (row?.tokenId == null || row.currentPrice == null) return undefined;
+                    return { tokenId: Number(row.tokenId), price: unPadAndFormatPrice(String(row.currentPrice)) };
+                } catch (retryError) {
+                    console.error('[kittynews] cheapest sale', JSON.stringify(filter), retryError);
+                    return undefined;
+                }
+            }
             console.error('[kittynews] cheapest sale', JSON.stringify(filter), error);
             return undefined;
         }

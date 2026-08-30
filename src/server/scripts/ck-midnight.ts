@@ -1,6 +1,6 @@
 /**
- * After UTC midnight: fill ck_events to tip, finalize yesterday's ETH close,
- * append that day's kn_dailies row. Idempotent (upserts).
+ * After UTC midnight: fill ck_events to tip, stamp marketplace Transfer.value,
+ * finalize yesterday's ETH close, append that day's kn_dailies row. Idempotent.
  *
  * Usage:
  *   yarn ck:midnight
@@ -30,7 +30,8 @@ const main = () => {
     const y = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 1));
     const day = arg('--day') || y.toISOString().slice(0, 10);
     console.log(`[ck:midnight] ${now.toISOString()} building ${day} (block-closed)`);
-    yarn(['ck:fill']);
+    yarn(['ck:fill', '--', '--range', '5']);
+    yarn(['ck:fix-values', '--', '--unstamped', '--days', '2']);
     yarn(['ck:ethprices', '--finalize']);
     yarn(['ck:daily', '--day', day, '--commit']);
     console.log(`[ck:midnight] done ${day}`);

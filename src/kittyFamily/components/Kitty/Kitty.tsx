@@ -11,6 +11,12 @@ import Portal from 'kittyFamily/components/Portal'
 import closeSrc from 'kittyFamily/svg/close.svg'
 import { handleGetCoolDown, handleGetBirthday, handleGetAbbrBirthday, isTinyBoxCattribute } from 'kittyFamily/utils'
 
+const CK_IMG = 'https://img.cryptokitties.co/0x06012c8cf97bead5deae237070f9587f8e7a266d/'
+const kittyArt = (kitty) =>
+	kitty?.image_url ||
+	kitty?.image_url_cdn ||
+	`${CK_IMG}${kitty?.tokenId === 0 ? '--' : kitty?.tokenId}.png`
+
 const Kitty = ({ kitty, getInfo, handlePurchase, hats=[], showMewts=false, showInfo = true, c2aPosition = 'top', showName = false, showBirthday, handleClick = undefined, bgColor = undefined, showMenuMewts = true, showPrice=false }) => {
 	const [purchasing, setPurchasing] = useState(false)
 	const [purchased, setPurchased] = useState(false)
@@ -101,10 +107,10 @@ const Kitty = ({ kitty, getInfo, handlePurchase, hats=[], showMewts=false, showI
 				</Portal>
 			}
 			<Styled.Container style={{ opacity: purchased ? '0.6' : 1 }}>
-				{kitty && kitty.image_url && (
+				{kitty && (
 					<>
 						<Styled.ImageContainer className={`${bgColor}${(kitty.is_exclusive || kitty.is_fancy || kitty.is_special_edition) ? `` : ' shadow'}${isTinyBoxCattribute(kitty) ? ' tinybox' : ''}`} style={{ cursor: getInfo ? 'pointer' : 'default' }}>
-							<img src={kitty.image_url} alt={'Cryptokitty ' + kitty.id} onClick={() => getInfo(kitty.id)}
+							<img src={kittyArt(kitty)} alt={'Cryptokitty ' + (kitty.tokenId || kitty.id)} onClick={() => getInfo(kitty.id || kitty.tokenId)}
 								onError={({ currentTarget }) => {
 									currentTarget.onerror = null
 									currentTarget.src = `https://img.cn.cryptokitties.co/0x06012c8cf97bead5deae237070f9587f8e7a266d/103.png`
@@ -119,9 +125,9 @@ const Kitty = ({ kitty, getInfo, handlePurchase, hats=[], showMewts=false, showI
 										<img src={`/images/kitty-hats/asset/${_meta.assetUrl}.png`} alt={hat.itemName} onClick={() => getInfo(kitty.id)} className={'kitty-hat dada'} />
 									</Fragment>
 							})}
-							{!purchased && (kitty.sale || kitty.sire) && showPrice && (
+							{!purchased && showPrice && (kitty.sale || kitty.sire) && (kitty.currentPrice || kitty.auction?.current_price) && (
 								<div className={c2aPosition}>
-									<PriceC2A price={kitty.currentPrice} handleClick={price => _handlePurchase(kitty.tokenId, price)} loading={purchasing} sale={kitty.sale} />
+									<PriceC2A price={kitty.currentPrice || kitty.auction?.current_price} handleClick={price => _handlePurchase(kitty.tokenId, price)} loading={purchasing} sale={kitty.sale} />
 								</div>
 							)}
 							{showMewts && kitty.enhanced_cattributes &&

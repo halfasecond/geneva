@@ -157,9 +157,13 @@ async function getLogs(fromBlock: number, toBlock: number): Promise<any[]> {
     let attempt = 0;
     for (;;) {
         try {
-            return await rpc('eth_getLogs', [
+            const result = await rpc('eth_getLogs', [
                 { address: addresses, fromBlock: hex(fromBlock), toBlock: hex(toBlock) },
             ]);
+            if (!Array.isArray(result)) {
+                throw new Error(`eth_getLogs returned ${result == null ? 'null' : typeof result}`);
+            }
+            return result;
         } catch (error) {
             const msg = error instanceof Error ? error.message : String(error);
             attempt += 1;
@@ -211,7 +215,13 @@ async function main() {
     const started = Date.now();
     const fillFrom = from;
 
-    console.log(`[ck:fill] ${from} → ${head} on ${rpcUrl} (window ${window}, events only)`);
+    let rpcHost = 'rpc';
+    try {
+        rpcHost = new URL(rpcUrl).host;
+    } catch {
+        /* ignore */
+    }
+    console.log(`[ck:fill] ${from} → ${head} on ${rpcHost} (window ${window}, events only)`);
 
     const writeProgress = async (fillAt: number, extra: Record<string, unknown> = {}) => {
         const elapsedMs = Date.now() - started;
@@ -255,9 +265,12 @@ async function main() {
             logs = await getLogs(cursor, to);
         } catch (error) {
             const msg = error instanceof Error ? error.message : String(error);
+            const limited = msg.match(/limited to a (\d+) range/i);
             if (window > 1 && /range|too large|413|limited/i.test(msg)) {
-                window = Math.max(1, Math.floor(window / 2));
-                console.warn(`[ck:fill] shrink window to ${window}: ${msg}`);
+                const cap = limited ? Math.max(1, Number(limited[1])) : Math.max(1, Math.floor(window / 2));
+                window = Math.min(window - 1, cap);
+                if (window < 1) window = 1;
+                console.warn(`[ck:fill] shrink window to ${window}: ${msg.split('\n')[0].slice(0, 80)}`);
                 continue;
             }
             throw error;

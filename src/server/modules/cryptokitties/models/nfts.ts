@@ -40,6 +40,10 @@ const schema = new Schema(
 );
 
 schema.index({ tokenId: 1 }, { unique: true });
+schema.index({ sale: 1, currentPrice: 1 });
+schema.index({ sire: 1, currentPrice: 1 });
+schema.index({ owner: 1 });
+schema.index({ currentPrice: 1 });
 
 export default (prefix: string, db: Connection, tableSuffix = ''): Model<Record<string, unknown>> => {
     const collection = `${prefix ? `${prefix}_` : ''}nfts${tableSuffix}`;

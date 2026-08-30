@@ -180,7 +180,26 @@ export const stampAuctionsFromOwners = async (
         try {
             const address = kitty.sale ? SALE : SIRE;
             const created = await openAuction(events, Number(kitty.tokenId), address);
-            if (!created?.startingPrice) continue;
+            // Last Transfer can still sit on Sale/Sire after AuctionCancelled
+            // (cancel Transfer missing, or clock already ended). Not a 0-ETH sale.
+            if (!created) {
+                skipped += 1;
+                await nfts.updateOne(
+                    { tokenId: kitty.tokenId },
+                    {
+                        $set: { sale: false, sire: false },
+                        $unset: {
+                            currentPrice: '',
+                            startingPrice: '',
+                            endingPrice: '',
+                            duration: '',
+                            auctionStart: '',
+                            auctionEnd: '',
+                        },
+                    },
+                );
+                continue;
+            }
             const auctionStart = Number(created.timestamp);
             const duration = Number(created.duration);
             if (!Number.isFinite(auctionStart) || !Number.isFinite(duration)) {
@@ -189,8 +208,8 @@ export const stampAuctionsFromOwners = async (
             }
             const auctionEnd = auctionStart + duration;
             const currentPrice = calculateCurrentPrice(
-                String(created.startingPrice),
-                String(created.endingPrice),
+                String(created.startingPrice ?? '0'),
+                String(created.endingPrice ?? '0'),
                 String(Math.floor(auctionStart)),
                 String(Math.floor(auctionEnd)),
                 now,
@@ -199,8 +218,8 @@ export const stampAuctionsFromOwners = async (
                 { tokenId: kitty.tokenId },
                 {
                     $set: {
-                        startingPrice: String(created.startingPrice),
-                        endingPrice: String(created.endingPrice),
+                        startingPrice: String(created.startingPrice ?? '0'),
+                        endingPrice: String(created.endingPrice ?? '0'),
                         duration,
                         auctionStart,
                         auctionEnd,

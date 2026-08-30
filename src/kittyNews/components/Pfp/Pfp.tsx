@@ -11,6 +11,7 @@ import { utils } from 'web3'
 import * as Styled from './Pfp.style'
 
 const IMG_CDN = 'https://img.cryptokitties.co/0x06012c8cf97bead5deae237070f9587f8e7a266d/'
+const imgId = (tokenId: number) => (tokenId === 0 ? '--' : tokenId)
 
 interface Props {
     kitty: any
@@ -89,12 +90,12 @@ const Pfp: React.FC<Props> = ({ kitty: _kitty, value, eventType }) => {
                                     className={`kitty-image ${showShadow()}${isTinyBoxCattribute() ? ' tinybox' : ''}`}
                                 >
                                     <img
-                                        src={`${IMG_CDN}${kitty.tokenId}.png`}
+                                        src={`${IMG_CDN}${imgId(kitty.tokenId)}.png`}
                                         alt={`CryptoKitty #${kitty.tokenId}`}
                                         onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
                                             const target = e.currentTarget;
                                             target.onerror = null; // Reset the onerror to prevent looping
-                                            target.src = `${IMG_CDN}${kitty.tokenId}.svg`;
+                                            target.src = `${IMG_CDN}${imgId(kitty.tokenId)}.svg`;
                                         }}
                                     />
                                 </Styled.ImageContainer>
@@ -192,12 +193,12 @@ const Pfp: React.FC<Props> = ({ kitty: _kitty, value, eventType }) => {
             <Styled.Div className={'kitty-pfp'}>
                 <div {...{ className }}>
                     <img
-                        src={`${IMG_CDN}${_kitty.tokenId}.png`}
+                        src={`${IMG_CDN}${imgId(_kitty.tokenId)}.png`}
                         alt={`CryptoKitty #${_kitty.tokenId}`}
                         onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
                             const target = e.currentTarget;
                             target.onerror = null; // Reset the onerror to prevent looping
-                            target.src = `${IMG_CDN}${_kitty.tokenId}.svg`;
+                            target.src = `${IMG_CDN}${imgId(_kitty.tokenId)}.svg`;
                         }}
                         onClick={() => setModal(true)}
                         role={'button'}

@@ -98,9 +98,19 @@ export default (io: Server, Models: KittyNewsModels, db: Connection, emitter: an
     };
 
     let lastFloorRefresh = 0;
+    let lastFeedRefresh = 0;
     emitter.on('newEthBlock', ({ number, timestamp }: { number: number; timestamp: number }) => {
         setHead({ blocknumber: Number(number), timestamp: Number(timestamp) });
         news.emit('newEthBlock', latest);
+        if (Date.now() - lastFeedRefresh >= 60_000) {
+            lastFeedRefresh = Date.now();
+            void q.transfers()
+                .then((rows) => {
+                    cache.transfers = rows;
+                    news.emit('ckTransfer', cache.transfers);
+                })
+                .catch((error) => console.error('[kittynews] transfers refresh failed', error));
+        }
         if (Date.now() - lastFloorRefresh < 60_000) return;
         lastFloorRefresh = Date.now();
         void q.mongoFloors()

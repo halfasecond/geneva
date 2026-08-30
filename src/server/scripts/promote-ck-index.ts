@@ -5,6 +5,7 @@
  *
  * Usage:
  *   yarn ck:promote
+ *   yarn ck:promote -- --dailies
  *   yarn ck:rollback
  */
 import mongoose from 'mongoose';
@@ -50,33 +51,45 @@ const note = async (text: string) => {
 };
 
 const promote = async () => {
-    for (const pair of PAIRS) {
+    const dailiesOnly = process.argv.includes('--dailies');
+    const pairs = dailiesOnly ? PAIRS.filter((pair) => pair.live === 'kn_dailies') : [...PAIRS];
+    for (const pair of pairs) {
         if (!(await exists(pair.next))) {
-            throw new Error(`Missing ${pair.next} — run yarn ck:rebuild first`);
+            throw new Error(`Missing ${pair.next} — run yarn ck:dailies or yarn ck:rebuild first`);
         }
     }
-    for (const pair of PAIRS) {
+    for (const pair of pairs) {
         await dropIf(pair.prev);
         await rename(pair.live, pair.prev);
         await rename(pair.next, pair.live);
         console.log(`${pair.next} → ${pair.live} (old ${pair.live} kept as ${pair.prev})`);
     }
-    await note('Promoted ck_nfts / ck_owners / kn_dailies from *_next. Previous tables are *_prev.');
+    await note(
+        dailiesOnly
+            ? 'Promoted kn_dailies from kn_dailies_next. Previous table is kn_dailies_prev.'
+            : 'Promoted ck_nfts / ck_owners / kn_dailies from *_next. Previous tables are *_prev.',
+    );
 };
 
 const rollback = async () => {
-    for (const pair of PAIRS) {
+    const dailiesOnly = process.argv.includes('--dailies');
+    const pairs = dailiesOnly ? PAIRS.filter((pair) => pair.live === 'kn_dailies') : [...PAIRS];
+    for (const pair of pairs) {
         if (!(await exists(pair.prev))) {
             throw new Error(`Missing ${pair.prev} — nothing to roll back`);
         }
     }
-    for (const pair of PAIRS) {
+    for (const pair of pairs) {
         await dropIf(pair.next);
         await rename(pair.live, pair.next);
         await rename(pair.prev, pair.live);
         console.log(`${pair.prev} → ${pair.live} (staging moved back to ${pair.next})`);
     }
-    await note('Rolled back nfts/owners/dailies from *_prev. Staging returned to *_next.');
+    await note(
+        dailiesOnly
+            ? 'Rolled back kn_dailies from kn_dailies_prev. Staging returned to kn_dailies_next.'
+            : 'Rolled back nfts/owners/dailies from *_prev. Staging returned to *_next.',
+    );
 };
 
 const main = async () => {

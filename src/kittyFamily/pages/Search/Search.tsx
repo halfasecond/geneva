@@ -359,7 +359,10 @@ const Search = ({ account, searchables, handlePurchase, profile, defaultInclude 
             const ckResult = await axios.get(`https://api.cryptokitties.co/v3/kitties?search=id:${ids}&limit=20`)
             const { data: { kitties: ckData } } = ckResult
     
-            const _kitties = kitties.map(kitty => ({ ...ckData.find(ck => ck.id === kitty.tokenId), ...kitty }))
+            const _kitties = kitties.map(kitty => ({
+                ...ckData.find(ck => Number(ck.id) === Number(kitty.tokenId)),
+                ...kitty,
+            }))
             setResults(_kitties)
             setTotal(total)
           }
@@ -466,7 +469,12 @@ const Search = ({ account, searchables, handlePurchase, profile, defaultInclude 
 									onChange={(isChecked) => {
 										const _search = { ...search }
 										if (isChecked) {
-											addSearch({ ..._search, account: account.wallet })
+											addSearch({
+												..._search,
+												account: account.wallet,
+												include: { sale: true, sire: true, other: true },
+												orderBy: 'age',
+											})
 										} else {
 											delete _search.account
 											addSearch({..._search })

@@ -5,13 +5,22 @@
  * Usage:
  *   yarn ck:fix-values
  *   yarn ck:fix-values -- --dry-run --limit 20
+ *   yarn ck:fix-values -- --unstamped --days 2
  */
 import https from 'https';
 import http from 'http';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import path from 'path';
-import { padValue, valuesFromLogs, type RpcLog } from '../modules/cryptokitties/marketplaceValue';
+import {
+    SALE,
+    SIRE,
+    ZERO,
+    isMarketplaceParty,
+    padValue,
+    valuesFromLogs,
+    type RpcLog,
+} from '../modules/cryptokitties/marketplaceValue';
 import { AUDIT_ID } from '../modules/cryptokitties/routes/audit';
 
 dotenv.config({ path: path.resolve(process.cwd(), 'src/server/.env') });
@@ -24,7 +33,14 @@ const arg = (name: string, fallback?: string) => {
 };
 
 const dryRun = process.argv.includes('--dry-run');
+const unstamped = process.argv.includes('--unstamped');
 const limit = Number(arg('--limit', '0')) || 0;
+const sinceBlock = Number(arg('--since-block', '0')) || 0;
+let days = Number(arg('--days', '0')) || 0;
+if (unstamped && days <= 0 && sinceBlock <= 0) {
+    days = 2;
+    console.warn('[ck:fix-values] --unstamped with no window; defaulting to --days 2');
+}
 
 const rpc = (method: string, params: unknown[]): Promise<any> =>
     new Promise((resolve, reject) => {
@@ -75,14 +91,26 @@ const waitForDb = () =>
 const main = async () => {
     await waitForDb();
     const events = mongoose.connection.db!.collection('ck_events');
+    const filter: Record<string, unknown> = { event: 'Transfer' };
+    if (unstamped) {
+        filter.from = { $nin: [SALE, SIRE, ZERO] };
+        filter.to = { $nin: [SALE, SIRE] };
+    } else {
+        filter.value = { $exists: true, $nin: [null, ''] };
+    }
+    if (sinceBlock > 0) filter.blockNumber = { $gte: sinceBlock };
+    if (days > 0) filter.timestamp = { $gte: Math.floor(Date.now() / 1000) - days * 86400 };
+
     const stamped = await events
-        .find(
-            { event: 'Transfer', value: { $exists: true, $nin: [null, ''] } },
-            { projection: { transactionHash: 1, tokenId: 1, logIndex: 1, blockNumber: 1, value: 1 } },
-        )
+        .find(filter, {
+            projection: { transactionHash: 1, tokenId: 1, logIndex: 1, blockNumber: 1, value: 1, from: 1, to: 1 },
+        })
         .toArray();
-    const byHash = new Map<string, typeof stamped>();
-    for (const row of stamped) {
+    const rows = unstamped
+        ? stamped.filter((row) => isMarketplaceParty(row.from, row.to))
+        : stamped;
+    const byHash = new Map<string, typeof rows>();
+    for (const row of rows) {
         const hash = String(row.transactionHash);
         const list = byHash.get(hash) || [];
         list.push(row);
@@ -90,7 +118,7 @@ const main = async () => {
     }
     const hashes = [...byHash.keys()];
     const list = limit > 0 ? hashes.slice(0, limit) : hashes;
-    console.log(`[ck:fix-values] ${list.length}/${hashes.length} txs, ${stamped.length} stamped transfers (dryRun=${dryRun})`);
+    console.log(`[ck:fix-values] ${list.length}/${hashes.length} txs, ${rows.length} transfers unstamped=${unstamped} days=${days} (dryRun=${dryRun})`);
 
     let set = 0;
     let cleared = 0;

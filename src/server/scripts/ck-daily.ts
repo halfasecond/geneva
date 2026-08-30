@@ -1,6 +1,8 @@
 /**
  * Build one UTC day from ck_events into kn_dailies_next, audit it, then
  * append to kn_dailies only with --commit. Live dailies are not rewritten.
+ * Clock volume stays Sale/Sire AuctionSuccessful. Marketplace volume is
+ * Transfer.value (Seaport/Wyvern per kitty) and is included in TotalVolume.
  *
  * Usage:
  *   yarn ck:daily
@@ -10,12 +12,14 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import path from 'path';
-import Contracts from '../modules/cryptokitties/contracts';
+import {
+    SALE,
+    SIRE,
+    marketplaceSaleQuery,
+    weiFromPadded,
+} from '../modules/cryptokitties/marketplaceValue';
 
 dotenv.config({ path: path.resolve(process.cwd(), 'src/server/.env') });
-
-const SALE = Contracts.Sale.addr.toLowerCase();
-const SIRE = Contracts.Sire.addr.toLowerCase();
 
 const arg = (name: string, fallback?: string) => {
     const idx = process.argv.indexOf(name);
@@ -61,6 +65,15 @@ const main = async () => {
             .toArray();
         return rows.reduce((sum, row) => add(sum, String(row.totalPrice || '0')), '0');
     };
+    const marketplace = async () => {
+        const rows = await events
+            .find(marketplaceSaleQuery(inDay), { projection: { value: 1 } })
+            .toArray();
+        return {
+            n: rows.length,
+            vol: rows.reduce((sum, row) => add(sum, weiFromPadded(row.value).toString()), '0'),
+        };
+    };
 
     const [
         birthDaily,
@@ -79,10 +92,11 @@ const main = async () => {
         sireCancelled,
         saleVolumeDaily,
         sireVolumeDaily,
+        marketDaily,
         prev,
     ] = await Promise.all([
-        count({ ...inDay, event: 'Birth' }),
-        count({ ...through, event: 'Birth' }),
+        count({ ...inDay, event: 'Birth', tokenId: { $ne: 0 } }),
+        count({ ...through, event: 'Birth', tokenId: { $ne: 0 } }),
         count({ ...inDay, event: 'AuctionCreated', address: SALE }),
         count({ ...inDay, event: 'AuctionSuccessful', address: SALE }),
         count({ ...inDay, event: 'AuctionCancelled', address: SALE }),
@@ -97,6 +111,7 @@ const main = async () => {
         count({ ...through, event: 'AuctionCancelled', address: SIRE }),
         volume(SALE),
         volume(SIRE),
+        marketplace(),
         dailies.find({ timestamp: { $lt: start } }).sort({ timestamp: -1 }).limit(1).next(),
     ]);
 
@@ -104,6 +119,9 @@ const main = async () => {
     const dayNum = Math.floor((start - genesis) / 86400) + 1;
     const saleVolume = add(String(prev?.SaleVolume || '0'), saleVolumeDaily);
     const sireVolume = add(String(prev?.SireVolume || '0'), sireVolumeDaily);
+    const marketplaceSuccessful = Number(prev?.MarketplaceSuccessful || 0) + marketDaily.n;
+    const marketplaceVolume = add(String(prev?.MarketplaceVolume || '0'), marketDaily.vol);
+    const totalVolumeDaily = add(add(saleVolumeDaily, sireVolumeDaily), marketDaily.vol);
     const doc = {
         timestamp: start,
         Day: dayNum,
@@ -125,8 +143,12 @@ const main = async () => {
         SireCancelledDaily: sireCancelledDaily,
         SireVolume: sireVolume,
         SireVolumeDaily: sireVolumeDaily,
-        TotalVolume: add(saleVolume, sireVolume),
-        TotalVolumeDaily: add(saleVolumeDaily, sireVolumeDaily),
+        MarketplaceSuccessful: marketplaceSuccessful,
+        MarketplaceSuccessfulDaily: marketDaily.n,
+        MarketplaceVolume: marketplaceVolume,
+        MarketplaceVolumeDaily: marketDaily.vol,
+        TotalVolume: add(add(saleVolume, sireVolume), marketplaceVolume),
+        TotalVolumeDaily: totalVolumeDaily,
         ethPrice: (await db.collection('kn_ethprices').findOne({ timestamp: start }))?.ethprice ?? prev?.ethPrice ?? 0,
         auditedAt: new Date(),
         source: 'ck_events',

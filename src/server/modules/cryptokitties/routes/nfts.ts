@@ -30,9 +30,20 @@ const routes = (Models: CryptoKittiesModels, defaultLimit = 20): Router => {
         }
 
         const ownerRaw = req.query.owner_wallet_address || req.query.wallet;
+        let owner = '';
         if (ownerRaw && typeof ownerRaw === 'string') {
-            const owner = ownerRaw.replace(/[[\]]/g, '').trim().toLowerCase();
+            owner = ownerRaw.replace(/[[\]]/g, '').trim().toLowerCase();
             if (owner.startsWith('0x')) query.owner = { $eq: owner };
+        }
+
+        const includeParams = typeof req.query.include === 'string' ? req.query.include : '';
+        const includeQueryItems = includeParams.split(',').filter(Boolean);
+        if (includeQueryItems.length) {
+            const or: Record<string, unknown>[] = [];
+            if (includeQueryItems.includes('sale')) or.push({ sale: true });
+            if (includeQueryItems.includes('sire')) or.push({ sire: true });
+            if (includeQueryItems.includes('other')) or.push({ sale: false, sire: false });
+            if (or.length > 0) query.$or = or;
         }
 
         const sort: Record<string, 1 | -1> = {};
@@ -40,18 +51,17 @@ const routes = (Models: CryptoKittiesModels, defaultLimit = 20): Router => {
         const orderDirection = req.query.orderDirection === 'desc' ? -1 : 1;
         if (orderBy === 'current_price') {
             sort.currentPrice = orderDirection;
+            // Market browse only: missing currentPrice sorts first and looks
+            // like a broken floor. Wallet / "other" views must keep unpriced kitties.
+            const marketOnly =
+                !owner &&
+                (includeQueryItems.includes('sale') || includeQueryItems.includes('sire')) &&
+                !includeQueryItems.includes('other');
+            if (marketOnly) {
+                query.currentPrice = { $exists: true, $nin: [null, ''] };
+            }
         } else {
             sort.tokenId = orderDirection;
-        }
-
-        const includeParams = req.query.include;
-        if (includeParams && typeof includeParams === 'string') {
-            const includeQueryItems = includeParams.split(',');
-            const or: Record<string, unknown>[] = [];
-            if (includeQueryItems.includes('sale')) or.push({ sale: true });
-            if (includeQueryItems.includes('sire')) or.push({ sire: true });
-            if (includeQueryItems.includes('other')) or.push({ sale: false, sire: false });
-            if (or.length > 0) query.$or = or;
         }
 
         const parsedLimit = parseInt(String(req.query.limit), 10);
@@ -106,11 +116,14 @@ function searchQueryItems(
                     break;
                 }
                 case 'hatchedBy':
-                    query.hatchedBy = value.toString();
+                    query.hatchedBy = value.toLowerCase();
                     break;
-                case 'wallet':
-                    query.owner = { $eq: value.replace(/[[\]]/g, '').toLowerCase() };
+                case 'account':
+                case 'wallet': {
+                    const addr = value.replace(/[[\]]/g, '').toLowerCase();
+                    if (addr.startsWith('0x')) query.owner = { $eq: addr };
                     break;
+                }
                 case 'm1':
                     query.sl0m1 = value === 'any' ? { $gt: 0 } : { $eq: Number(value) };
                     break;

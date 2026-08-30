@@ -6,7 +6,10 @@ const web3 = new Web3Ctor();
 
 const CK = Contracts.Core.addr.toLowerCase();
 const WETH = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2';
-const ZERO = '0x0000000000000000000000000000000000000000';
+export const ZERO = '0x0000000000000000000000000000000000000000';
+export const SALE = Contracts.Sale.addr.toLowerCase();
+export const SIRE = Contracts.Sire.addr.toLowerCase();
+const AUCTION = new Set([SALE, SIRE]);
 
 export const ORDER_FULFILLED_TOPIC =
     '0x9d9af8e38d66c62e2c12f0225249fd9d721c54b83f48d9352c97c6cacdcb6f31';
@@ -84,6 +87,44 @@ const paymentWei = (items: any[] | undefined): bigint => {
 };
 
 export const padValue = (wei: bigint | string) => BigInt(wei).toString().padStart(35, '0');
+
+export const weiFromPadded = (value: unknown): bigint => {
+    const raw = String(value ?? '')
+        .split('.')[0]
+        .replace(/^0+/, '') || '0';
+    try {
+        return BigInt(raw);
+    } catch {
+        return 0n;
+    }
+};
+
+/** User-to-user transfer, not a clock listing / delist / mint. */
+export const isMarketplaceParty = (from: unknown, to: unknown) => {
+    const f = String(from || '').toLowerCase();
+    const t = String(to || '').toLowerCase();
+    if (!f || !t || f === ZERO) return false;
+    return !AUCTION.has(f) && !AUCTION.has(t);
+};
+
+/** Paid OpenSea/Wyvern/Seaport sale: Transfer with decoded per-kitty value. */
+export const isMarketplaceSale = (row: {
+    event?: unknown;
+    from?: unknown;
+    to?: unknown;
+    value?: unknown;
+}) =>
+    (!row.event || String(row.event) === 'Transfer') &&
+    isMarketplaceParty(row.from, row.to) &&
+    weiFromPadded(row.value) > 0n;
+
+export const marketplaceSaleQuery = (extra: Record<string, unknown> = {}) => ({
+    event: 'Transfer',
+    value: { $exists: true, $nin: [null, ''] },
+    from: { $nin: [SALE, SIRE, ZERO] },
+    to: { $nin: [SALE, SIRE] },
+    ...extra,
+});
 
 /** Per-kitty ETH/WETH from marketplace logs. Never uses tx.value. */
 export const valuesFromLogs = (logs: RpcLog[]): Map<number, bigint> => {

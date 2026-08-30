@@ -152,6 +152,7 @@ export const ImageContainer = styled.div`
       top: ${gutters['sm']};
       left: ${gutters['sm']};
       bottom: unset;
+      z-index: 10002;
     }
 `
 
