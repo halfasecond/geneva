@@ -99,7 +99,8 @@ const Report: React.FC<{ report: ReportType }> = ({ report }) => {
     useEffect(() => {
         const getDailies = async () => {
             const { data } = await axios.get(`${API}/kittynews/dailies`)
-            const reports = [reportObject, ...data.reverse(), report]
+            const days = [...data].sort((a, b) => Number(a.timestamp) - Number(b.timestamp))
+            const reports = [reportObject, ...days]
             const sliderValues = [2, reports.length]
             setReports(reports)
             setSliderValues(sliderValues)

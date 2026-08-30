@@ -113,7 +113,10 @@ export default (io: Server, Models: KittyNewsModels, db: Connection, emitter: an
     news.on('connection', (socket) => {
         emitCached(socket);
         socket.on('ckReport', async () => {
-            try { socket.emit('ckReport', cache.report ?? await q.latestReport()); }
+            try {
+                cache.report = await q.latestReport();
+                socket.emit('ckReport', cache.report);
+            }
             catch (error) { console.error('[kittynews] ckReport', error); }
         });
         socket.on('ckFloor', async () => {

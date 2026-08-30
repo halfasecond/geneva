@@ -33,8 +33,6 @@ const Menu = ({ handleClick, total, loggedIn, catsWithHats/* , socket */ }) => {
       </div>
         */}
       <div><Link to={'/search'}><img src={bagSrc} alt="" /></Link></div>
-      <div><Link to={'/audit'}>Audit</Link></div>
-      <div><Link to={'/report'}>Report</Link></div>
     </Styled.Div>
   )
 }
