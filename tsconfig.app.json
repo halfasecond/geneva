@@ -33,6 +33,8 @@
       "kittyInternational/*": ["./src/kittyInternational/*"],
       "kittyFamily": ["./src/kittyFamily"],
       "kittyFamily/*": ["./src/kittyFamily/*"],
+      "kittyUi": ["./src/kittyUi"],
+      "kittyUi/*": ["./src/kittyUi/*"],
     }
   },
   "include": ["src/**/*"],

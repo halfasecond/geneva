@@ -1,8 +1,6 @@
 // @ts-nocheck
 import styled, { keyframes } from 'styled-components'
-import { gutters } from 'kittyFamily/style/config'
-import { colors, fontSize, grey } from 'kittyFamily/style/config'
-import { breaks } from 'kittyFamily/style/config'
+import { gutters, colors, fontSize, grey, breaks, colorsAlternate2 } from 'kittyFamily/style/config'
 
 export const Container = styled.div`
   position: relative;
@@ -76,13 +74,13 @@ export const ImageContainer = styled.div`
     &.shadow {
       &:before {
         position: absolute;
-        top: 73%;
-        left: -2%;
+        top: 72.5%;
+        left: -3%;
         right: 0;
-        width: 55%;
-        height: 6.2%;
+        width: 60%;
+        height: 7%;
         margin: auto;
-        background-color: rgba(0,0,0,0.2);
+        background-color: rgba(0, 0, 0, 0.18);
         border-radius: 50%;
         content: "";
         z-index: 0;
@@ -90,9 +88,13 @@ export const ImageContainer = styled.div`
     }
     &.tinybox {
       &:before {
-        top: 79.25%;
+        top: 78.5%;
       }
     }
+    ${Object.entries(colorsAlternate2).map(([name, hex]) => `
+    &.${name}.shadow:before {
+      background-color: ${hex};
+    }`)}
     > img {
       width: 100%;
       z-index: 1;

@@ -128,6 +128,7 @@ export default defineConfig(({ command, mode }) => {
         kittyNews: "/src/kittyNews",
         kittyInternational: "/src/kittyInternational",
         kittyFamily: "/src/kittyFamily",
+        kittyUi: "/src/kittyUi",
       },
     },
     build: {

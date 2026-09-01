@@ -110,7 +110,7 @@ const Kitty = ({ kitty, getInfo, handlePurchase, hats=[], showMewts=false, showI
 			<Styled.Container style={{ opacity: purchased ? '0.6' : 1 }}>
 				{kitty && (
 					<>
-						<Styled.ImageContainer className={`${bgColor}${(kitty.is_exclusive || kitty.is_fancy || kitty.is_special_edition) ? `` : ' shadow'}${isTinyBoxCattribute(kitty) ? ' tinybox' : ''}`} style={{ cursor: getInfo ? 'pointer' : 'default' }}>
+						<Styled.ImageContainer className={`${bgColor || ''}${(kitty.is_exclusive || kitty.is_fancy || kitty.is_special_edition) ? `` : ' shadow'}${isTinyBoxCattribute(kitty) ? ' tinybox' : ''}`} style={{ cursor: getInfo ? 'pointer' : 'default' }}>
 							<img src={kittyArt(kitty)} alt={'Cryptokitty ' + (kitty.tokenId || kitty.id)} onClick={() => getInfo(kitty.id || kitty.tokenId)}
 								onError={({ currentTarget }) => {
 									currentTarget.onerror = null

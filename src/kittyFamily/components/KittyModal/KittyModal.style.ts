@@ -1,13 +1,14 @@
 // @ts-nocheck
 import styled from 'styled-components'
 import * as Styled from 'kittyFamily/style'
-import { breaks, fontSize, grey, gutters } from 'kittyFamily/style/config'
+import { breaks } from 'kittyFamily/style/config'
+import { color, fonts, space, typeCss } from 'kittyUi/tokens'
 
 export const Modal = styled(Styled.Modal)`
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: ${gutters['md']};
+  padding: ${space.md};
   box-sizing: border-box;
   > div.kitty-detail {
     display: flex;
@@ -19,14 +20,27 @@ export const Modal = styled(Styled.Modal)`
     margin: 0;
     padding: 0;
     overflow: hidden;
-    background: #fff;
+    box-sizing: border-box;
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+    background: ${color.paper};
     border-radius: 18px;
     box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
     align-items: stretch;
+    ${typeCss('body')}
+    h1, h2, h3, h4, h5, p, a, li, ul, code, button, span, label, b, strong {
+      font-weight: 400;
+    }
+    p, a, li, ul, code, span, label, b, strong {
+      ${typeCss('body')}
+    }
     @media (min-width: ${breaks['md']}) {
       flex-direction: row;
       width: min(94vw, 840px);
       max-width: 840px;
+      height: min(86vh, 640px);
+      min-height: min(86vh, 520px);
       max-height: 86vh;
       align-items: stretch;
     }
@@ -37,7 +51,7 @@ export const Modal = styled(Styled.Modal)`
       height: 32px;
       padding: 4px;
       box-sizing: border-box;
-      background: #fff;
+      background: ${color.paper};
       border-radius: 8px;
       box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
     }
@@ -47,24 +61,27 @@ export const Modal = styled(Styled.Modal)`
       flex-shrink: 0;
       overflow: hidden;
       box-sizing: border-box;
-      padding: 12%;
+      padding: 0;
+      position: relative;
       @media (min-width: ${breaks['md']}) {
         width: 50%;
+        flex: 0 0 50%;
         max-width: none;
         aspect-ratio: auto;
+        height: 100%;
         min-height: 0;
         align-self: stretch;
         display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 6%;
+        align-items: stretch;
+        justify-content: stretch;
+        padding: 0;
       }
       > div {
         width: 100%;
-        height: auto;
-        > div {
-          border-radius: 0;
-        }
+        height: 100%;
+      }
+      span {
+        font-weight: 700;
       }
     }
     > .card-body {
@@ -72,19 +89,19 @@ export const Modal = styled(Styled.Modal)`
       flex-direction: column;
       align-items: stretch;
       width: 100%;
-      padding: ${gutters['md']};
-      background: #fff;
-      overflow: auto;
+      padding: ${space.md};
+      background: ${color.paper};
+      overflow: hidden;
+      min-height: 0;
       @media (min-width: ${breaks['md']}) {
         flex: 1;
-        padding: ${gutters['lg']} ${gutters['lg']} ${gutters['md']};
-      }
-      > .mewtations {
-        margin: 0 0 ${gutters['xxs']};
+        min-height: 0;
+        padding: ${space.lg} ${space.lg} ${space.md};
       }
       > h2,
       > h3,
       > h4 {
+        font-family: ${fonts.display};
         font-weight: 400;
       }
       > h2 {
@@ -92,133 +109,153 @@ export const Modal = styled(Styled.Modal)`
         flex-direction: column;
         align-items: flex-start;
         gap: 2px;
-        font-size: ${fontSize['lg']};
-        font-weight: 400;
-        line-height: 1.15;
+        ${typeCss('displayLg')}
         margin: 0 0 2px;
         max-width: 100%;
         white-space: normal;
         overflow: visible;
         text-overflow: unset;
         > span {
-          font-size: ${fontSize['sm']};
-          font-weight: 400;
+          ${typeCss('displayMd')}
           letter-spacing: 0.04em;
-          color: ${grey[600]};
+          color: ${color.muted};
         }
       }
       > h3 {
-        font-size: ${fontSize['sm']};
-        color: ${grey[700]};
-        font-weight: 400;
+        ${typeCss('displayMd')}
+        color: ${color.ink};
         letter-spacing: 0.06em;
         text-transform: uppercase;
-        margin: 0;
+        margin: 0 0 ${space.md};
+        padding-bottom: ${space.sm};
         max-width: 100%;
         text-align: left;
         white-space: normal;
       }
       > .tabs {
         display: flex;
-        gap: ${gutters['lg']};
-        margin: ${gutters['sm']} 0 ${gutters['sm']};
-        border-bottom: 1px solid ${grey[200]};
+        gap: ${space.lg};
+        margin: 0 0 ${space.sm};
+        border-bottom: 1px solid ${color.line};
         > button {
           appearance: none;
           background: none;
           border: 0;
-          padding: 0 0 ${gutters['xs']};
+          padding: 0 0 ${space.xs};
           margin: 0 0 -1px;
-          font-family: bungee, sans-serif;
-          font-weight: 400;
-          font-size: ${fontSize['sm']};
+          ${typeCss('displayMd')}
           letter-spacing: 0.04em;
           text-transform: uppercase;
-          color: ${grey[500]};
+          color: ${color.faint};
           cursor: pointer;
           border-bottom: 2px solid transparent;
           &.on {
-            color: ${grey[800]};
-            border-bottom-color: ${grey[800]};
+            color: ${color.ink};
+            border-bottom-color: ${color.ink};
           }
         }
       }
       > .panel {
+        flex: 1;
         min-height: 0;
-        > p.bio {
-          background: ${grey[50]};
-          padding: ${gutters['xs']} ${gutters['sm']};
+        overflow-x: hidden;
+        overflow-y: auto;
+        p, a, li, code, span, b, strong {
+          ${typeCss('body')}
+        }
+        > .bio {
+          background: ${color.wash};
+          padding: ${space.xs} ${space.sm};
           margin: 0;
+          max-width: 100%;
           border-radius: 8px;
-          font-size: ${fontSize['sm']};
-          font-weight: 400;
-          line-height: 1.4;
-          b {
-            font-weight: 400;
+          overflow-wrap: break-word;
+          word-break: break-word;
+          ${typeCss('body')}
+          p, div, span {
+            max-width: 100%;
+            overflow-wrap: break-word;
+            word-break: break-word;
           }
         }
         > .genes {
           display: flex;
           align-items: flex-start;
-          margin: 0 0 ${gutters['sm']};
+          margin: 0 0 ${space.sm};
           width: 100%;
+          max-width: 100%;
           > code {
             display: block;
-            background: ${grey[50]};
-            padding: ${gutters['xs']} ${gutters['sm']};
-            font-size: 10px;
-            font-weight: 400;
-            letter-spacing: 0.02em;
+            background: ${color.wash};
+            padding: ${space.xs} ${space.sm};
+            font-family: ${fonts.body};
+            font-size: 16px;
+            font-weight: 700;
+            line-height: 1.35;
+            letter-spacing: 0;
             border-radius: 8px;
             flex: 1;
             white-space: pre-wrap;
             word-break: break-all;
-            line-height: 1.35;
-            color: ${grey[800]};
+            color: ${color.ink};
+          }
+        }
+        .kitty-genes {
+          label, span {
+            font-weight: unset;
+          }
+          b, strong {
+            font-weight: 700;
           }
         }
         > p.stats,
         > p.owner,
-        > p.offspring {
-          font-size: ${fontSize['sm']};
-          font-weight: 400;
+        > p.born {
+          ${typeCss('body')}
           margin: 0 0 4px;
-          line-height: 1.4;
-          color: ${grey[800]};
+          color: ${color.ink};
           word-break: break-word;
-        }
-        > p.owner {
-          color: ${grey[600]};
-          > a {
-            font-weight: 400;
-            word-break: break-all;
+          > b {
+            font-weight: 700;
           }
+        }
+        > p.owner,
+        > p.born {
+          ${typeCss('body')}
+          color: ${color.ink};
+          margin-top: ${space.sm};
+          > a {
+            ${typeCss('body')}
+            font-weight: 700;
+            color: ${color.ink};
+            word-break: break-all;
+            > b {
+              font-weight: 700;
+            }
+          }
+        }
+        > p.born {
+          margin-top: 2px;
         }
         > p.offspring {
           display: flex;
           flex-wrap: wrap;
           gap: 6px 10px;
-          > a {
-            font-weight: 400;
-          }
         }
         > ul.history {
           list-style: none;
-          margin: ${gutters['sm']} 0 0;
+          margin: ${space.sm} 0 0;
           padding: 0;
           > li {
-            font-size: ${fontSize['sm']};
-            font-weight: 400;
-            line-height: 1.35;
-            margin: 0 0 ${gutters['sm']};
-            color: ${grey[800]};
-            > a {
-              font-weight: 400;
-            }
+            list-style: none;
+            margin: 0 0 ${space.sm};
+            padding: 0;
+            ${typeCss('body')}
+            color: ${color.ink};
             > span {
               display: block;
-              color: ${grey[600]};
-              font-size: ${fontSize['xs']};
+              ${typeCss('caption')}
+              color: ${color.muted};
             }
           }
         }

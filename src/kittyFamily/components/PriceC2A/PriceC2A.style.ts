@@ -12,7 +12,12 @@ export const Span = styled.span`
 	background-color: rgba(255, 255, 255, 0.5);
 	border-radius: 10px;
 	text-align: center;
-	font-weight: 900;
+	&&& {
+		font-weight: 700;
+	}
+	&&& > span {
+		font-weight: 700;
+	}
 	font-size: ${fontSize['md']};
 	cursor: ${({ disabled }) => (disabled ? 'default' : 'pointer')};
 	border: 1px solid ${grey[200]};

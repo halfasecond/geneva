@@ -2,11 +2,10 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import axios from 'axios'
-import Kitty from 'kittyFamily/components/Kitty'
+import KittyModalArt from './KittyModalArt'
 import closeSrc from 'kittyFamily/svg/close.svg'
 import KittyGenes from 'kittyFamily/components/KittyGenes'
-import Jewels from 'kittyFamily/components/Jewels2'
-import { cooldowns } from 'kittyFamily/utils'
+import { cooldowns, handleGetBirthday } from 'kittyFamily/utils'
 import { API } from 'kittyFamily/api'
 import { EYE_COLORS } from 'kittyFamily/style/config'
 import * as Styled from './KittyModal.style'
@@ -15,12 +14,24 @@ const SIRE = '0xc7af99fe5513eb6710e6d5f44f9989da40f27f26'
 const TABS = ['bio', 'genes', 'activity']
 
 const formatEth = (price) => {
-    const wei = String(price || '0').replace(/^0+/, '') || '0'
-    if (!/^\d+$/.test(wei)) return ''
-    const padded = wei.padStart(18, '0')
-    const whole = padded.slice(0, -18).replace(/^0+/, '') || '0'
-    const frac = padded.slice(-18).replace(/0+$/, '')
-    return frac ? `${whole}.${frac}` : whole
+    try {
+        const wei = String(price || '0').replace(/^0+/, '') || '0'
+        if (!/^\d+$/.test(wei)) return ''
+        const padded = wei.padStart(18, '0')
+        let whole = padded.slice(0, -18).replace(/^0+/, '') || '0'
+        const frac18 = padded.slice(-18)
+        const head = frac18.slice(0, 8)
+        const roundUp = frac18[8] >= '5'
+        let fracInt = BigInt(head) + (roundUp ? 1n : 0n)
+        if (fracInt === 100000000n) {
+            whole = String(BigInt(whole) + 1n)
+            fracInt = 0n
+        }
+        const frac = fracInt.toString().padStart(8, '0').replace(/0+$/, '')
+        return frac ? `${whole}.${frac}` : whole
+    } catch {
+        return ''
+    }
 }
 
 const formatWhen = (ts) => {
@@ -94,8 +105,6 @@ const Modal = ({ kitty, hats, handlePurchase, onClose, currentKittyId, priceSymb
         return pb
     }
 
-    const getMewtationsAmount = (_kitty, slot, level) => _kitty[`sl${slot}m${level}`]
-
     const cooldown = cooldowns[kitty.status?.cooldown_index] || cooldowns[kitty.cooldownIndex]
     const wash = EYE_COLORS[kitty.color] || EYE_COLORS[profile?.color] || '#f3f1ee'
     const addr = ownerAddr(kitty, profile)
@@ -111,6 +120,22 @@ const Modal = ({ kitty, hats, handlePurchase, onClose, currentKittyId, priceSymb
     }
     const history = events.filter((event) => !['AuctionSuccessful', 'AuctionCreated'].includes(event.event))
     const fancy = profile?.is_fancy || kitty.is_fancy
+    const bornAt = profile?.birthday || profile?.created_at || kitty.created_at || kitty.birthday
+    const born = bornAt ? handleGetBirthday(bornAt) : ''
+    const geneKitty = {
+        ...kitty,
+        ...(profile || {}),
+        genes: profile?.genes || kitty.genes,
+        enhanced_cattributes: profile?.enhanced_cattributes || kitty.enhanced_cattributes || [],
+        id: profile?.id || kitty.tokenId || kitty.id,
+        tokenId: kitty.tokenId ?? profile?.id,
+        is_fancy: profile?.is_fancy ?? kitty.is_fancy,
+        is_exclusive: profile?.is_exclusive ?? kitty.is_exclusive,
+        is_special_edition: profile?.is_special_edition ?? kitty.is_special_edition,
+        is_prestige: profile?.is_prestige ?? kitty.is_prestige,
+        fancy_type: profile?.fancy_type || kitty.fancy_type,
+        prestige_type: profile?.prestige_type || kitty.prestige_type,
+    }
 
     return (
         <Styled.Modal
@@ -120,16 +145,21 @@ const Modal = ({ kitty, hats, handlePurchase, onClose, currentKittyId, priceSymb
             <div className={'kitty-detail'}>
                 <img className={'close'} src={closeSrc} alt="" onClick={onClose} />
                 <div className={`card-art ${kitty.color || ''}`} style={{ backgroundColor: wash }}>
-                    <Kitty
-                        {...{ kitty, hats, handlePurchase }}
-                        showInfo={false}
+                    <KittyModalArt
+                        kitty={{
+                            ...kitty,
+                            tokenId: kitty.tokenId ?? kitty.id,
+                            id: kitty.tokenId ?? kitty.id,
+                            enhanced_cattributes: kitty.enhanced_cattributes?.length
+                                ? kitty.enhanced_cattributes
+                                : (geneKitty.enhanced_cattributes || []),
+                        }}
+                        hats={hats}
+                        handlePurchase={handlePurchase}
                         showPrice={Boolean(handlePurchase)}
-                        c2aPosition={'top'}
-                        getInfo={() => undefined}
                     />
                 </div>
                 <div className={'card-body'}>
-                    <Jewels {...{ kitty }} displayType={'mewtations'} />
                     <h2>
                         <span>#{kitty.tokenId}</span>
                         {kitty.name ? kitty.name : profile?.name || ''}
@@ -163,50 +193,36 @@ const Modal = ({ kitty, hats, handlePurchase, onClose, currentKittyId, priceSymb
                                 </p>
                             )}
                             {bio
-                                ? <p className={'bio'} dangerouslySetInnerHTML={{ __html: bio }} />
+                                ? <div className={'bio'} dangerouslySetInnerHTML={{ __html: bio }} />
                                 : <p className={'stats'}>No bio yet.</p>}
                             {addr && (
                                 <p className={'owner'}>
-                                    <Link to={`/profile/${addr}`}>{ownerLabel(kitty, profile) || addr}</Link>
+                                    owner: <Link to={`/profile/${addr}`}><b>{ownerLabel(kitty, profile) || addr}</b></Link>
                                 </p>
                             )}
-                        </div>
-                    )}
-                    {tab === 'genes' && (
-                        <div className={'panel'}>
-                            <div className={'genes'}>
-                                <code>{kitty.genes}</code>
-                            </div>
-                            <KittyGenes {...{ kitty }} showBinaryGenes={true} defaultOpen={false} />
-                        </div>
-                    )}
-                    {tab === 'activity' && (
-                        <div className={'panel'}>
-                            <Jewels {...{ kitty }} displayType={'family-jewels'} />
-                            {(getMewtationsAmount(kitty, '0', '0') > 0 || getMewtationsAmount(kitty, '0', '1') > 0) && (
-                                <p className={'stats'}>
-                                    {getMewtationsAmount(kitty, '0', '0') > 0 && `Base ${getMewtationsAmount(kitty, '0', '0')}`}
-                                    {getMewtationsAmount(kitty, '0', '1') > 0 && ` · M1 ${getMewtationsAmount(kitty, '0', '1')}`}
-                                    {getMewtationsAmount(kitty, '0', '2') > 0 && ` · M2 ${getMewtationsAmount(kitty, '0', '2')}`}
-                                    {getMewtationsAmount(kitty, '0', '3') > 0 && ` · M3 ${getMewtationsAmount(kitty, '0', '3')}`}
-                                    {getMewtationsAmount(kitty, '0', '4') > 0 && ` · M4 ${getMewtationsAmount(kitty, '0', '4')}`}
-                                </p>
+                            {born && born !== 'Invalid date' && (
+                                <p className={'born'}>born: {born}</p>
                             )}
                             <p className={'stats'}>
                                 Owners {kitty.owners?.length || 0}
                                 {kitty.offspring ? ` · Offspring ${kitty.offspring}` : ''}
                                 {kitty.partners ? ` · Partners ${kitty.partners}` : ''}
                             </p>
-                            <p className={'stats'}>Average {avg}</p>
-                            {kitty.offspring > 0 && kitty.offspringIds && (
-                                <p className={'offspring'}>
-                                    {kitty.offspringIds.map((k, i) => (
-                                        k.toString() === currentKittyId
-                                            ? <Link key={i} to={''} onClick={(e) => { e.preventDefault(); onClose(); }}>#{k}</Link>
-                                            : <Link key={i} to={`/kitty/${k}`}>#{k}</Link>
-                                    ))}
-                                </p>
+                            <p className={'stats'}>Average <b>{avg}</b></p>
+                        </div>
+                    )}
+                    {tab === 'genes' && (
+                        <div className={'panel'}>
+                            {geneKitty.genes && (
+                                <div className={'genes'}>
+                                    <code>{geneKitty.genes}</code>
+                                </div>
                             )}
+                            <KittyGenes kitty={geneKitty} />
+                        </div>
+                    )}
+                    {tab === 'activity' && (
+                        <div className={'panel'}>
                             <ul className={'history'}>
                                 {history.map((event, i) => (
                                     <li key={`${event.transactionHash}-${event.logIndex}-${i}`}>
