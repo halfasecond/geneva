@@ -164,9 +164,16 @@ const Modal = ({
     const modalOverlayRef = useRef(null)
 
     useEffect(() => {
+        if (loggedIn && search.account !== loggedIn) {
+            setSearch((s) => ({ ...s, account: loggedIn }))
+        }
+    }, [loggedIn])
+
+    useEffect(() => {
         const getKitties = async () => {
             modalOverlayRef.current && modalOverlayRef.current.firstChild.scrollTo({ top: 0, left: 0, behavior: 'smooth' })
-            const { data: { kitties, total } } = await axios.get(`${API}/cryptokitties/nfts?${makeApiUrl(search)}`)
+            const query = { ...search, account: search.account || loggedIn }
+            const { data: { kitties, total } } = await axios.get(`${API}/cryptokitties/nfts?${makeApiUrl(query)}`)
             const ids = kitties.map(({ tokenId }) => tokenId).join(',')
             axios.get(`https://api.cryptokitties.co/v3/kitties?search=id:${ids}&limit=20`).then(async ckResult => {
                 const { data: { kitties: ckData } } = ckResult
@@ -177,7 +184,7 @@ const Modal = ({
                 setTotal(total)
             })
         }
-        if (selectKitties && loggedIn) {
+        if (selectKitties && (search.account || loggedIn)) {
             getKitties()
         }
     }, [selectKitties, loggedIn, search])
@@ -314,11 +321,19 @@ const Modal = ({
         };
     }, [onClose])
 
+    useEffect(() => {
+        const prev = document.body.style.overflow
+        document.body.style.overflow = 'hidden'
+        return () => {
+            document.body.style.overflow = prev
+        }
+    }, [])
+
     return (
         <Styled.Modal ref={modalOverlayRef} wider={selectKitties && !selectedKitty}>
             <div>
-                <img src={closeSrc} alt="" onClick={onClose} />
-                {selectKitties && <img src={backSrc} alt="" onClick={() => (setSelectKitties(false), setSelectedKitty(false))} />}
+                <img className={'close'} src={closeSrc} alt="" onClick={onClose} />
+                {selectKitties && <img className={'back'} src={backSrc} alt="" onClick={() => (setSelectKitties(false), setSelectedKitty(false))} />}
                 {selectKitties ? selectedKitty ?
                     (
                         <Styled.KittyWithHatPreview>
@@ -390,7 +405,17 @@ const Modal = ({
                                 </div>
                                 <div>
                                     <img src={'/images/kitty-hats/logo.png'} alt={'Kitty Hats'} />
-                                    <button disabled={purchasing} onClick={() => loggedIn ? setSelectKitties(true) : handleSignIn()}>Buy Item and Apply Ξ{fromWei(price, 'ether')}</button>
+                                    <button
+                                        disabled={purchasing}
+                                        onClick={async () => {
+                                            if (!loggedIn) {
+                                                const address = await handleSignIn()
+                                                if (!address) return
+                                                setSearch((s) => ({ ...s, account: address }))
+                                            }
+                                            setSelectKitties(true)
+                                        }}
+                                    >Buy Item and Apply Ξ{fromWei(price, 'ether')}</button>
                                 </div>
                             </div>
                             <p>There are 2 options for buying a Kitty Hat:</p>

@@ -62,6 +62,9 @@ export const Grid = styled.div`
     align-items: flex-start;
     position: relative;
     width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
     > header {
         width: 100%;
         margin-bottom: ${gutters['md']};
@@ -72,6 +75,8 @@ export const Grid = styled.div`
 
     > div {
         margin-bottom: ${gutters['md']};
+        min-width: 0;
+        box-sizing: border-box;
         @media (min-width: ${breaks['sm']}) {
             width: 48%;
             margin-right: 4%;

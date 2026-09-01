@@ -7,8 +7,11 @@ import lapis from 'kittyFamily/svg/lapis.svg'
 
 export const Div = styled.div`
   display: flex;
-  justify-content: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: 100%;
   min-height: 20px;
+  box-sizing: border-box;
 `
 
 export const Jewel = styled.div`

@@ -101,8 +101,8 @@ export const makeUrl = (_search, searchables) => {
 			} else {
 				if (term === 'terms') {
 					const cleanTerms = _search[term].map(
-						(t) => searchables.find(({ description }) => description === t).description
-					)
+						(t) => searchables.find(({ description }) => description.toLowerCase() === String(t).toLowerCase())?.description
+					).filter(Boolean)
 					if (cleanTerms.length) {
 						searchStrings.push(cleanTerms.join('+'))
 					}
@@ -121,7 +121,7 @@ export const makeApiUrl = (searchObject, profile, pureBred) => {
 	const includes = Object.keys(searchObject.include).filter((key) => searchObject.include[key])
 
 	const searches = Object.keys(searchObject).reduce((acc, s) => {
-		const ignoredTerms = ['account', 'include', 'orderDirection', 'orderBy', 'page']
+		const ignoredTerms = ['account', 'include', 'orderDirection', 'orderBy', 'page', 'terms']
 		if (!ignoredTerms.includes(s)) {
 			// account is added via &owner_wallet_address=
 			const value = Array.isArray(searchObject[s]) ? searchObject[s].join(',') : searchObject[s]
@@ -160,7 +160,7 @@ export const makeCSApiUrl = (searchObject) => {
 	const includes = Object.keys(searchObject.include).filter((key) => searchObject.include[key])
 
 	const searches = Object.keys(searchObject).reduce((acc, s) => {
-		const ignoredTerms = ['account', 'include', 'orderDirection', 'orderBy', 'page']
+		const ignoredTerms = ['account', 'include', 'orderDirection', 'orderBy', 'page', 'terms']
 		if (!ignoredTerms.includes(s)) {
 			// account is added via &owner_wallet_address=
 			const value = Array.isArray(searchObject[s]) ? searchObject[s].join(',') : searchObject[s]

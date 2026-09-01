@@ -79,9 +79,11 @@ function App() {
                 message,
             })
             Cookies.set(TOKEN_NAME, data.token)
-            setLoggedIn((data.address || accounts[0]).toLowerCase())
+            const address = (data.address || accounts[0]).toLowerCase()
+            setLoggedIn(address)
             setToken(data.token)
             setUser(data)
+            return address
         } catch (error) {
             console.error('Error:', error)
         }

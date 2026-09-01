@@ -82,6 +82,11 @@ export default defineConfig(({ command, mode }) => {
       {
         name: 'html-transform',
         transformIndexHtml(html) {
+            // Dev can run two apps at once: news keeps src/main.tsx, family
+            // loads its entry directly so we do not overwrite the news copy.
+            if (process.env.VITE_APP === 'kittyFamily') {
+                html = html.replace('src="/src/main.tsx"', 'src="/src/lib/entry/kittyFamily.tsx"');
+            }
             return html.replace('__APP_TITLE__', 
               process.env.VITE_APP === 'chained-horse'
                 ? 'Unchained Paddock - a home for your ChainedHorse NFTs'

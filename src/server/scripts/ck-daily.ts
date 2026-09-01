@@ -18,6 +18,7 @@ import {
     marketplaceSaleQuery,
     weiFromPadded,
 } from '../modules/cryptokitties/marketplaceValue';
+import { gensFromNfts } from '../modules/cryptokitties/gensSnapshot';
 
 dotenv.config({ path: path.resolve(process.cwd(), 'src/server/.env') });
 
@@ -152,6 +153,10 @@ const main = async () => {
         ethPrice: (await db.collection('kn_ethprices').findOne({ timestamp: start }))?.ethprice ?? prev?.ethPrice ?? 0,
         auditedAt: new Date(),
         source: 'ck_events',
+        gens: await gensFromNfts(db.collection('ck_nfts')).catch((error) => {
+            console.warn('[ck:daily] gens from ck_nfts failed, copying previous', error);
+            return prev?.gens || undefined;
+        }),
     };
 
     const checks = [

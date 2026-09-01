@@ -21,6 +21,17 @@ const Kitty = ({ kitty, getInfo, handlePurchase, hats=[], showMewts=false, showI
 	const [purchasing, setPurchasing] = useState(false)
 	const [purchased, setPurchased] = useState(false)
 	const [modal, setModal] = useState(false)
+	const artRef = useRef(null)
+
+	useEffect(() => {
+		const node = artRef.current
+		if (!node) return
+		const io = new IntersectionObserver(([entry]) => {
+			node.classList.toggle('is-offscreen', !entry.isIntersecting)
+		}, { rootMargin: '120px' })
+		io.observe(node)
+		return () => io.disconnect()
+	}, [kitty?.tokenId])
 
 
 	const worn = Array.isArray(kitty?.hats) ? kitty.hats : []
@@ -48,11 +59,11 @@ const Kitty = ({ kitty, getInfo, handlePurchase, hats=[], showMewts=false, showI
 	const modalOverlayRef = useRef(null)
 
 	useEffect(() => {
-		modal
-			? document.body.style.overflow = 'hidden'
-			: document.body.style.overflow = 'auto'
+		if (!modal) return
+		const prev = document.body.style.overflow
+		document.body.style.overflow = 'hidden'
 		return () => {
-			document.body.style.overflow = 'auto'
+			document.body.style.overflow = prev
 		}
 	}, [modal])
 
@@ -110,7 +121,7 @@ const Kitty = ({ kitty, getInfo, handlePurchase, hats=[], showMewts=false, showI
 			<Styled.Container style={{ opacity: purchased ? '0.6' : 1 }}>
 				{kitty && (
 					<>
-						<Styled.ImageContainer className={`${bgColor || ''}${(kitty.is_exclusive || kitty.is_fancy || kitty.is_special_edition) ? `` : ' shadow'}${isTinyBoxCattribute(kitty) ? ' tinybox' : ''}`} style={{ cursor: getInfo ? 'pointer' : 'default' }}>
+						<Styled.ImageContainer ref={artRef} className={`${bgColor || ''}${(kitty.is_exclusive || kitty.is_fancy || kitty.is_special_edition) ? `` : ' shadow'}${isTinyBoxCattribute(kitty) ? ' tinybox' : ''}`} style={{ cursor: getInfo ? 'pointer' : 'default' }}>
 							<img src={kittyArt(kitty)} alt={'Cryptokitty ' + (kitty.tokenId || kitty.id)} onClick={() => getInfo(kitty.id || kitty.tokenId)}
 								onError={({ currentTarget }) => {
 									currentTarget.onerror = null

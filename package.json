@@ -54,6 +54,7 @@
     "ck:midnight": "NODE_NO_WARNINGS=1 babel-node -r @babel/register --extensions '.ts' src/server/scripts/ck-midnight.ts",
     "ck:pulse": "NODE_NO_WARNINGS=1 babel-node -r @babel/register --extensions '.ts' src/server/scripts/ck-pulse.ts",
     "ck:stamp-auctions": "NODE_NO_WARNINGS=1 babel-node -r @babel/register --extensions '.ts' src/server/scripts/stamp-ck-auctions.ts",
+    "ck:owner-balances": "NODE_NO_WARNINGS=1 babel-node -r @babel/register --extensions '.ts' src/server/scripts/recompute-ck-owner-balances.ts",
     "ck:fix-values": "NODE_NO_WARNINGS=1 babel-node -r @babel/register --extensions '.ts' src/server/scripts/fix-ck-transfer-values.ts",
     "ck:fill": "NODE_NO_WARNINGS=1 babel-node -r @babel/register --extensions '.ts' src/server/scripts/fill-ck-events.ts",
     "kh:fill": "NODE_NO_WARNINGS=1 babel-node -r @babel/register --extensions '.ts' src/server/scripts/fill-kh-events.ts",

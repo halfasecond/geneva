@@ -156,14 +156,23 @@ export const KittyWithHatPreview = styled.div`
 `
 
 export const Grid = styled(Styled.Grid)`
-    margin: 0 4% ${gutters['xlg']};
+    width: 100%;
+    max-width: 100%;
+    margin: 0 0 ${gutters['xlg']};
+    padding: 0 4%;
+    box-sizing: border-box;
 `
 
 export const Modal = styled(Styled.Modal)`
+    overscroll-behavior: contain;
     > div {
         background-color: #FFF;
         padding-top: ${gutters['xxl']};
         max-width: ${({ wider }) => wider ? '1200px' : '800px'};
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        box-sizing: border-box;
     }
 `
 

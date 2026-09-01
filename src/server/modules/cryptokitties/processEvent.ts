@@ -194,9 +194,11 @@ const handleBirthEvent = async (event: Record<string, unknown>, Models: CryptoKi
     const kitty = typeof genes === 'string' ? birth : { ...birth, ...genes };
     try {
         await new Models.NFT(kitty).save();
+        // Birth is not an ownership change — Core also emits Transfer(0x0 → owner),
+        // which updates balance. Counting both inflated every hatched kitty by 1.
         await Models.Owner.findOneAndUpdate(
             { owner: event.owner },
-            { $inc: { balance: 1, birthed: 1 } },
+            { $inc: { birthed: 1 } },
             { upsert: true },
         ).exec();
     } catch (error) {
@@ -204,9 +206,21 @@ const handleBirthEvent = async (event: Record<string, unknown>, Models: CryptoKi
     }
 };
 
+const ZERO = '0x0000000000000000000000000000000000000000';
+const SALE = Contracts.Sale.addr.toLowerCase();
+const SIRE = Contracts.Sire.addr.toLowerCase();
+
+const isAuction = (addr: string) => addr === SALE || addr === SIRE;
+
 const updateOwnerBalances = async (from: string, to: string, Models: CryptoKittiesModels) => {
-    await Models.Owner.findOneAndUpdate({ owner: from }, { $inc: { balance: -1 } }, { upsert: false }).exec();
-    await Models.Owner.findOneAndUpdate({ owner: to }, { $inc: { balance: 1 } }, { upsert: true }).exec();
+    // Listing Transfer onto Sale/Sire: display owner and count stay with the lister.
+    if (isAuction(to)) return;
+    if (from && from !== ZERO && !isAuction(from)) {
+        await Models.Owner.findOneAndUpdate({ owner: from }, { $inc: { balance: -1 } }, { upsert: false }).exec();
+    }
+    if (to && to !== ZERO && !isAuction(to)) {
+        await Models.Owner.findOneAndUpdate({ owner: to }, { $inc: { balance: 1 } }, { upsert: true }).exec();
+    }
 };
 
 export const processCryptoKittiesEvent = async (

@@ -145,7 +145,7 @@ const Search = ({ account, searchables, handlePurchase, profile, defaultInclude 
 
 			let _string = _params.get('search')
 			if (!_string) return _search
-			const __string = _string.split(' ')
+			const __string = _string.split(/[+\s]+/).filter(Boolean)
 			__string.forEach((s) => {
 				if (s.split(':').length === 2) {
 					const searchTermType = s.split(':')[0]
@@ -161,7 +161,7 @@ const Search = ({ account, searchables, handlePurchase, profile, defaultInclude 
 					}
 				} else {
 					_search.terms = _search.terms || []
-					const searchable = searchables.find(({ description }) => description === s)
+					const searchable = searchables.find(({ description }) => description.toLowerCase() === s.toLowerCase())
 					if (searchable) {
 						if (specialTerms.includes(searchable.type)) {
 							handleStringSearchTerm(searchable.type, s, _search, searchables)
@@ -170,7 +170,7 @@ const Search = ({ account, searchables, handlePurchase, profile, defaultInclude 
 								.filter(({ type }) => type === searchable.type)
 								.map(({ description }) => description)
 							_search.terms = _search.terms.filter((term) => !sameTypeTerms.includes(term))
-							_search.terms.push(s)
+							_search.terms.push(searchable.description)
 						}
 					}
 				}
@@ -221,7 +221,7 @@ const Search = ({ account, searchables, handlePurchase, profile, defaultInclude 
 				}
 			}
 		} else {
-			const searchable = searchables.find((s) => s.description === description)
+			const searchable = searchables.find((s) => s.description.toLowerCase() === description.toLowerCase())
 			if (searchable) {
 				_search.terms = _search.terms || []
 				delete _search['type']
@@ -232,7 +232,7 @@ const Search = ({ account, searchables, handlePurchase, profile, defaultInclude 
 					.filter(({ type }) => type === searchable.type)
 					.map((s) => s.description)
 				_search.terms = _search.terms.filter((term) => !sameTypeTerms.includes(term))
-				_search.terms.push(description)
+				_search.terms.push(searchable.description)
 			}
 			addSearch(_search)
 		}
@@ -286,7 +286,7 @@ const Search = ({ account, searchables, handlePurchase, profile, defaultInclude 
 		_search.terms = []
 		const searchTerms = searchQuery.trim().split(/\s+/)
 		searchTerms.forEach((term) => {
-			const searchable = searchables.find((s) => s.description === term)
+			const searchable = searchables.find((s) => s.description.toLowerCase() === term.toLowerCase())
 			if (searchable) {
 				const sameTypeTerms = searchables
 					.filter(({ type }) => type === searchable.type)
@@ -296,7 +296,7 @@ const Search = ({ account, searchables, handlePurchase, profile, defaultInclude 
 					_search[termType] = term
 				} else {
 					_search.terms = _search.terms.filter((term) => !sameTypeTerms.includes(term))
-					_search.terms.push(term)
+					_search.terms.push(searchable.description)
 				}
 				specialTerms.forEach((type) => {
 					delete _search[type]

@@ -65,9 +65,6 @@ const Homepage: React.FC<Props> = ({ walletAddress, cryptokitties, purrClaim, pu
                 )}
                 <PurrClaim {...{ walletAddress, purrClaimBalance, purrClaim, cryptokitties }} />
             </Styled.Section_2Column>
-            {claims && (
-                <RecentEvents events={claims} eventType='PurrClaim' />
-            )}
             <Styled.Section>
                 <h2>All Kitties - {report && report.Birth}</h2>
                 {report && <Gens { ...{ report }} />}
@@ -95,6 +92,9 @@ const Homepage: React.FC<Props> = ({ walletAddress, cryptokitties, purrClaim, pu
             )}
             {births && (
                 <RecentEvents events={births} eventType='Birth' />
+            )}
+            {claims && (
+                <RecentEvents events={claims} eventType='PurrClaim' />
             )}
             <Styled.Section_2Column>
                 {copy && copy.filter(c => c.slug === allthezen && c.published) && (

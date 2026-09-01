@@ -1,32 +1,27 @@
-import axios from 'axios';
 import express, { Router } from 'express';
 import { CryptoKittiesModels } from '../models';
-
-interface Cattribute {
-    description: string;
-    type: string;
-    gene: number;
-}
+import {
+    CATTRIBUTE_TYPES,
+    Cattribute,
+    ensureCattributes,
+} from '../cattributesCatalog';
 
 const routes = (Models: CryptoKittiesModels, defaultLimit = 20): Router => {
     const router = express.Router();
     const maxLimit = 2000;
-    let cattributes: Cattribute[] = [];
-    let searchables: string[] = [];
-
-    axios.get('https://api.cryptokitties.co/cattributes')
-        .then(res => {
-            cattributes = [...res.data];
-            searchables = cattributes.map(({ description }) => description);
-        })
-        .catch(e => console.log(e));
 
     router.get('/', async (req, res) => {
         const query: Record<string, unknown> = {};
 
         const searchParams = req.query.search;
         if (searchParams && typeof searchParams === 'string') {
-            searchQueryItems(searchParams, query, cattributes, searchables);
+            let cattributes: Cattribute[] = [];
+            try {
+                cattributes = await ensureCattributes();
+            } catch (error) {
+                console.error('[nfts] cattributes catalog', error);
+            }
+            searchQueryItems(searchParams, query, cattributes);
         }
 
         const ownerRaw = req.query.owner_wallet_address || req.query.wallet;
@@ -86,15 +81,34 @@ const routes = (Models: CryptoKittiesModels, defaultLimit = 20): Router => {
     return router;
 };
 
+function tokens(searchParams: string): string[] {
+    return searchParams.split(/[+\s]+/).map((item) => item.trim()).filter(Boolean);
+}
+
+function applyCattribute(item: string, query: Record<string, unknown>, cattributes: Cattribute[]) {
+    const pure = /^pb-/i.test(item);
+    const name = item.replace(/^pb-/i, '').toLowerCase();
+    const g = cattributes.find(({ description }) => description.toLowerCase() === name);
+    if (!g) return;
+    const type = g.type === 'prestige' ? 'purrstige' : g.type;
+    const typeIndex = (CATTRIBUTE_TYPES as readonly string[]).indexOf(type);
+    if (typeIndex < 0) return;
+    if (g.gene === null || g.gene === undefined) return;
+    const gene = Number(g.gene);
+    if (!Number.isFinite(gene)) return;
+    query[`g${typeIndex * 4}`] = gene;
+    if (pure) query[`g${typeIndex * 4}pb`] = true;
+}
+
 function searchQueryItems(
     searchParams: string,
     query: Record<string, unknown>,
     cattributes: Cattribute[],
-    searchables: string[]
 ) {
-    const searchQueryItems = searchParams.split('+');
-    searchQueryItems[0].split(' ').forEach((item) => {
-        const [key, value] = item.split(':');
+    tokens(searchParams).forEach((item) => {
+        const colon = item.indexOf(':');
+        const key = colon === -1 ? '' : item.slice(0, colon);
+        const value = colon === -1 ? undefined : item.slice(colon + 1);
         if (key && value !== undefined) {
             switch (key) {
                 case 'id': {
@@ -112,7 +126,7 @@ function searchQueryItems(
                     const genRange = value.split('-');
                     query.gen = genRange.length === 2
                         ? { $gte: Number(genRange[0]), $lte: Number(genRange[1]) }
-                        : { $in: value.split(',') };
+                        : { $in: value.split(',').map(Number) };
                     break;
                 }
                 case 'hatchedBy':
@@ -142,22 +156,14 @@ function searchQueryItems(
                 case 'hats':
                     if (value === 'true') query.hats = { $exists: true, $ne: [] };
                     break;
+                case 'terms':
+                    applyCattribute(value, query, cattributes);
+                    break;
+                default:
+                    applyCattribute(item, query, cattributes);
             }
-        } else if (searchables.includes(item) || searchables.includes(item.replace('pb-', ''))) {
-            const cattributeTypes = [
-                'body', 'pattern', 'coloreyes', 'eyes', 'colorprimary',
-                'colorsecondary', 'colortertiary', 'wild', 'mouth', 'environment', 'secret', 'purrstige',
-            ];
-            const g = cattributes.find(({ description }) =>
-                description === item || description === item.replace('pb-', '')
-            );
-            if (g) {
-                const cattributeTypeRowNumber = cattributeTypes.indexOf(g.type) * 4;
-                query[`g${cattributeTypeRowNumber}`] = g.gene;
-                if (item.includes('pb-')) {
-                    query[`g${cattributeTypeRowNumber}pb`] = true;
-                }
-            }
+        } else {
+            applyCattribute(item, query, cattributes);
         }
     });
 }

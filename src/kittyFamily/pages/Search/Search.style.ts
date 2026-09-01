@@ -6,6 +6,9 @@ import * as Styled from 'kittyFamily/style'
 export const Div = styled.div`
 	padding-top: ${gutters['xxl']};
 	margin: 0 5%;
+	max-width: 100%;
+	box-sizing: border-box;
+	overflow-x: hidden;
 	display: flex;
 	flex-wrap: wrap;
 	> pre {
@@ -80,6 +83,7 @@ export const IncludeGroupAndTotals = styled.div`
 
 export const TagContainer = styled(Row)`
 	display: flex;
+	flex-wrap: wrap;
 	justify-content: flex-start;
 	> p {
 		margin-right: ${gutters['xs']};

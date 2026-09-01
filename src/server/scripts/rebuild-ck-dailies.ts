@@ -10,6 +10,7 @@
  * Usage:
  *   yarn ck:dailies
  *   yarn ck:dailies -- --window-days 90
+ *   yarn ck:dailies -- --hydrate-gens
  */
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
@@ -17,6 +18,7 @@ import path from 'path';
 import Contracts from '../modules/cryptokitties/contracts';
 import { AUDIT_ID } from '../modules/cryptokitties/routes/audit';
 import { marketplaceSaleQuery } from '../modules/cryptokitties/marketplaceValue';
+import { gensFromNfts, stampGensOnLatestDaily } from '../modules/cryptokitties/gensSnapshot';
 
 dotenv.config({ path: path.resolve(process.cwd(), 'src/server/.env') });
 
@@ -110,33 +112,28 @@ const applyMarket = (days: Map<number, Bucket>, row: any) => {
     bucket.MarketplaceVolumeDaily = add(bucket.MarketplaceVolumeDaily, asWei(row.vol));
 };
 
-const gensFromNfts = async (nfts: any) => {
-    const rows = await nfts
-        .aggregate([{ $group: { _id: '$gen', n: { $sum: 1 } } }], { allowDiskUse: true })
-        .toArray();
-    const byGen = new Map<number, number>();
-    let highestGen = 0;
-    for (const row of rows) {
-        const gen = Number(row._id || 0);
-        byGen.set(gen, Number(row.n || 0));
-        if (gen > highestGen) highestGen = gen;
-    }
-    const gens: Record<string, number> = { highestGen };
-    let gen26etc = 0;
-    for (const [gen, n] of byGen) {
-        if (gen >= 26) gen26etc += n;
-        if (gen >= 0 && gen <= 25) gens[`gen${gen}`] = n;
-    }
-    gens.gen26etc = gen26etc;
-    gens.gen100 = byGen.get(100) || 0;
-    gens.gen1000 = byGen.get(1000) || 0;
-    gens.gen10000 = byGen.get(10000) || 0;
-    return gens;
-};
-
 const main = async () => {
     await waitForDb();
     const db = mongoose.connection.db!;
+    if (process.argv.includes('--hydrate-gens')) {
+        const nfts = db.collection('ck_nfts');
+        const dailies = db.collection('kn_dailies');
+        const stamped = await stampGensOnLatestDaily(dailies, nfts);
+        const staging = db.collection('kn_dailies_next');
+        if ((await staging.estimatedDocumentCount()) > 0) {
+            await stampGensOnLatestDaily(staging, nfts);
+        }
+        console.log(JSON.stringify({
+            hydrated: true,
+            timestamp: stamped.timestamp,
+            highestGen: stamped.gens.highestGen,
+            gen0: stamped.gens.gen0,
+            gen26etc: stamped.gens.gen26etc,
+        }, null, 2));
+        console.log('[ck:dailies] stamped gens onto latest kn_dailies from ck_nfts (live tables otherwise untouched)');
+        await mongoose.disconnect();
+        return;
+    }
     const events = db.collection('ck_events');
     const staging = db.collection('kn_dailies_next');
     const prices = db.collection('kn_ethprices');

@@ -37,8 +37,8 @@ export const Modal = styled(Styled.Modal)`
     }
     @media (min-width: ${breaks['md']}) {
       flex-direction: row;
-      width: min(94vw, 840px);
-      max-width: 840px;
+      width: min(94vw, 920px);
+      max-width: 920px;
       height: min(86vh, 640px);
       min-height: min(86vh, 520px);
       max-height: 86vh;
@@ -160,13 +160,15 @@ export const Modal = styled(Styled.Modal)`
         min-height: 0;
         overflow-x: hidden;
         overflow-y: auto;
+        scrollbar-gutter: stable;
+        padding-right: ${space.sm};
         p, a, li, code, span, b, strong {
           ${typeCss('body')}
         }
         > .bio {
           background: ${color.wash};
-          padding: ${space.xs} ${space.sm};
-          margin: 0;
+          padding: ${space.sm} ${space.sm};
+          margin: ${space.xs} 0;
           max-width: 100%;
           border-radius: 8px;
           overflow-wrap: break-word;
@@ -228,10 +230,15 @@ export const Modal = styled(Styled.Modal)`
             ${typeCss('body')}
             font-weight: 700;
             color: ${color.ink};
-            word-break: break-all;
+            overflow-wrap: anywhere;
             > b {
               font-weight: 700;
             }
+          }
+        }
+        @media (min-width: ${breaks['md']}) {
+          > p.owner {
+            white-space: nowrap;
           }
         }
         > p.born {

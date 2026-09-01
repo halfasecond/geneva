@@ -36,7 +36,9 @@ const schema = new Schema(
         }],
         lastHatBlockNumber: Number,
     },
-    { strict: false }
+    // Gene slots (g0…g47, pb, sl*m*) live on the document but not the
+    // schema. Global mongoose strictQuery would otherwise drop those filters.
+    { strict: false, strictQuery: false }
 );
 
 schema.index({ tokenId: 1 }, { unique: true });
@@ -44,6 +46,9 @@ schema.index({ sale: 1, currentPrice: 1 });
 schema.index({ sire: 1, currentPrice: 1 });
 schema.index({ owner: 1 });
 schema.index({ currentPrice: 1 });
+for (let i = 0; i < 12; i += 1) {
+    schema.index({ [`g${i * 4}`]: 1, tokenId: 1 });
+}
 
 export default (prefix: string, db: Connection, tableSuffix = ''): Model<Record<string, unknown>> => {
     const collection = `${prefix ? `${prefix}_` : ''}nfts${tableSuffix}`;

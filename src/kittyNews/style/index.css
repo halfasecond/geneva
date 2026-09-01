@@ -112,11 +112,14 @@ code {
   }
 }
 .kaleidoscope, .ecw {
-  --cardStackDelay: 0.05s;
-  --kaleidoscopeLoopDuration: 4s;
-  --kaleidoscopeDelay: 0.1s;
-  animation: kaleidoscopeBg var(--kaleidoscopeLoopDuration) linear infinite;
-  will-change: background-color;
-  animation-delay: calc(1 * var(--kaleidoscopeDelay));
-  animation-duration: calc((1 * var(--kaleidoscopeDelay)) + var(--kaleidoscopeLoopDuration));
+  animation: kaleidoscopeBg 10s linear infinite;
+}
+.kaleidoscope.is-offscreen,
+.ecw.is-offscreen {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .kaleidoscope, .ecw {
+    animation: none;
+  }
 }

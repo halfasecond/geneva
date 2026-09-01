@@ -1,15 +1,18 @@
-import axios from 'axios';
 import express, { Router } from 'express';
+import { ensureCattributes } from '../cattributesCatalog';
 
 const routes = (): Router => {
     const router = express.Router();
-    let cattributes: unknown[] = [];
 
-    axios.get('https://api.cryptokitties.co/cattributes')
-        .then(res => { cattributes = [...res.data]; })
-        .catch(e => console.log(e));
-
-    router.get('/', (_req, res) => { res.status(200).send(cattributes); });
+    router.get('/', async (_req, res) => {
+        try {
+            const cattributes = await ensureCattributes();
+            res.status(200).send(cattributes);
+        } catch (error) {
+            console.error('[cattributes] catalog', error);
+            res.status(502).send({ error: 'cattributes catalog unavailable' });
+        }
+    });
 
     return router;
 };

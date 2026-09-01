@@ -10,8 +10,12 @@ import { API } from 'kittyFamily/api'
 import { EYE_COLORS } from 'kittyFamily/style/config'
 import * as Styled from './KittyModal.style'
 
+const SALE = '0xb1690c08e213a35ed9bab7b318de14420fb57d8c'
 const SIRE = '0xc7af99fe5513eb6710e6d5f44f9989da40f27f26'
+const AUCTION = new Set([SALE, SIRE])
 const TABS = ['bio', 'genes', 'activity']
+const FAMILY = 'https://kitty.family'
+const onFamily = import.meta.env.VITE_APP === 'kittyFamily'
 
 const formatEth = (price) => {
     try {
@@ -42,17 +46,21 @@ const formatWhen = (ts) => {
     return d.toLocaleString('en-GB', { timeZone: 'UTC', day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' })
 }
 
-const ownerAddr = (kitty, profile) => {
-    if (typeof kitty?.owner === 'string' && kitty.owner.startsWith('0x')) return kitty.owner
-    return profile?.owner?.address || kitty?.owner?.address || ''
+const asAddr = (value) => {
+    const addr = String(value || '').toLowerCase()
+    return addr.startsWith('0x') && !AUCTION.has(addr) ? addr : ''
 }
 
-const ownerLabel = (kitty, profile) => {
-    const nick = profile?.owner?.nickname
+const ownerAddr = (kitty, profile) =>
+    asAddr(typeof kitty?.owner === 'string' ? kitty.owner : kitty?.owner?.address)
+    || asAddr(profile?.owner?.address)
+
+const ownerLabel = (kitty, profile, familyName) => {
     const addr = ownerAddr(kitty, profile)
-    if (nick) return nick
-    if (addr) return addr
-    return ''
+    if (familyName) return familyName
+    const ckAddr = asAddr(profile?.owner?.address)
+    if (profile?.owner?.nickname && ckAddr && ckAddr === addr) return profile.owner.nickname
+    return addr
 }
 
 const eventName = (event) => {
@@ -67,6 +75,7 @@ const Modal = ({ kitty, hats, handlePurchase, onClose, currentKittyId, priceSymb
     const [bio, setBio] = useState(undefined)
     const [profile, setProfile] = useState(undefined)
     const [events, setEvents] = useState([])
+    const [ownerName, setOwnerName] = useState('')
     const modalRef = useRef(null)
 
     useEffect(() => {
@@ -81,6 +90,15 @@ const Modal = ({ kitty, hats, handlePurchase, onClose, currentKittyId, priceSymb
             .then(({ data }) => setEvents([...(data.events || [])].reverse()))
             .catch((error) => console.error('Error fetching kitty activity:', error))
     }, [kitty?.tokenId])
+
+    useEffect(() => {
+        const addr = ownerAddr(kitty, profile)
+        setOwnerName('')
+        if (!addr) return
+        axios.get(`${API}/kittyfamily-accounts?accounts=[${addr}]`)
+            .then(({ data }) => setOwnerName(data?.[0]?.displayName || ''))
+            .catch(() => setOwnerName(''))
+    }, [kitty?.owner, profile?.owner?.address])
 
     useEffect(() => {
         const handleKeyDown = (event) => {
@@ -197,7 +215,11 @@ const Modal = ({ kitty, hats, handlePurchase, onClose, currentKittyId, priceSymb
                                 : <p className={'stats'}>No bio yet.</p>}
                             {addr && (
                                 <p className={'owner'}>
-                                    owner: <Link to={`/profile/${addr}`}><b>{ownerLabel(kitty, profile) || addr}</b></Link>
+                                    owner: {onFamily ? (
+                                        <Link to={`/profile/${addr}`}><b>{ownerLabel(kitty, profile, ownerName) || addr}</b></Link>
+                                    ) : (
+                                        <a href={`${FAMILY}/profile/${addr}`}><b>{ownerLabel(kitty, profile, ownerName) || addr}</b></a>
+                                    )}
                                 </p>
                             )}
                             {born && born !== 'Invalid date' && (

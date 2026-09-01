@@ -130,10 +130,14 @@ b {
   }
 }
 .kaleidoscope, .ecw {
-  --cardStackDelay: 0.05s;
-  --kaleidoscopeLoopDuration: 4s;
-  --kaleidoscopeDelay: 0.1s;
   animation: kaleidoscopeBg 10s linear infinite;
-  will-change: background-color;
-  animation-duration: 10s;
+}
+.kaleidoscope.is-offscreen,
+.ecw.is-offscreen {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .kaleidoscope, .ecw {
+    animation: none;
+  }
 }

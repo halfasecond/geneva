@@ -36,11 +36,13 @@ export function familyService(Models: KittyFamilyModels, db: Connection) {
         for (const raw of addresses) {
             const address = raw.trim().toLowerCase();
             if (!address) continue;
-            const [existingRows, owner] = await Promise.all([
+            const NFT = ckModels(db)?.NFT;
+            const [existingRows, owner, held] = await Promise.all([
                 Models.Account.find({ address: { $regex: `^${address}$`, $options: 'i' } })
                     .select(ACCOUNT_PUBLIC)
                     .lean() as Promise<Array<{ avatar?: number; displayName?: string; followers?: string[]; following?: string[] }>>,
                 Owner ? Owner.findOne({ owner: address }).lean() : Promise.resolve(null),
+                NFT ? NFT.countDocuments({ owner: address }) : Promise.resolve(null),
             ]);
             const existing =
                 existingRows.find((row) => (row.avatar ?? -1) > -1 || row.displayName) ?? existingRows[0] ?? null;
@@ -50,7 +52,7 @@ export function familyService(Models: KittyFamilyModels, db: Connection) {
                 displayName: existing?.displayName,
                 followers: existing?.followers ?? [],
                 following: existing?.following ?? [],
-                balance: ownerDoc?.balance ?? null,
+                balance: held ?? ownerDoc?.balance ?? null,
                 birthed: ownerDoc?.birthed ?? null,
                 balanceAll: ownerDoc?.balanceAll ?? null,
                 address,

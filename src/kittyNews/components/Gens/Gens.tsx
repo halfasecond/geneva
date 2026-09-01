@@ -4,22 +4,35 @@ import { ReportType } from 'kittyNews/types/report'
 
 const URL = 'https://cryptokitties.co/search?include=sale,sire,other&search='
 
+const GEN_KEYS = [
+    ...Array.from({ length: 26 }, (_, i) => `gen${i}`),
+    'gen26etc',
+    'gen100',
+    'gen1000',
+    'gen10000',
+    'highestGen',
+]
+
+const labelFor = (key: string) => {
+    if (key === 'gen26etc') return 'gen26+'
+    if (key === 'gen10000') return 'gen10k'
+    return key
+}
+
+const searchFor = (key: string, gens: Record<string, number>) => {
+    if (key === 'gen26etc') return `26-${gens.highestGen}`
+    if (key === 'highestGen') return String(gens.highestGen)
+    return String(Number(key.replace('gen', '')))
+}
+
 const Gens: React.FC<{ report: ReportType }> = ({ report: { gens } }) => (
     <Styled.Div>
-        {gens && Object.keys(gens).map((gen, i) => gen !== 'highestGen' && gen !== 'gen26' && (
-            <div key={i}>
-                {gen === 'gen26etc' ? 'gen26+' : gen === 'gen10000' ? 'gen10k' : gen}
-                {gen === 'gen26etc' ? (
-                    <Link to={`${URL}gen:${26}-${gens['highestGen']}&orderBy=age`} target={'_blank'}>{gens['gen26etc']}</Link>
-                ) : (
-                    <Link to={`${URL}gen:${Number(gen.replace('gen', ''))}&orderBy=age`} target={'_blank'}>{gens[gen]}</Link>
-                )}
-            </div>
-        ))}
-        {gens && Object.keys(gens).map((gen, i) => gen === 'highestGen' && (
-            <div key={i}>
-                {gen}
-                <Link to={`${URL}gen:${gens['highestGen']}&orderBy=age`} target={'_blank'}>{gens[gen]}</Link>
+        {gens && GEN_KEYS.map((key) => (
+            <div key={key}>
+                {labelFor(key)}
+                <Link to={`${URL}gen:${searchFor(key, gens)}&orderBy=age`} target={'_blank'}>
+                    {gens[key] ?? 0}
+                </Link>
             </div>
         ))}
     </Styled.Div>

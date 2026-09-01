@@ -70,6 +70,7 @@ export const ImageContainer = styled.div`
     aspect-ratio: 1/1;
     position: relative;
     isolation: isolate;
+    overflow: hidden;
     border-radius: ${gutters['xs']};
     &.shadow {
       &:before {
@@ -124,24 +125,16 @@ export const ImageContainer = styled.div`
         &:last-of-type {
             align-items: center;
             display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            max-width: 72%;
             bottom: ${gutters['sm']};
             right: ${gutters['sm']};
             > div {
-                width: 4vw;
+                width: 18%;
+                max-width: 22px;
                 margin-left: ${gutters['xxs']};
                 z-index: 1000;
-                @media (min-width: ${breaks['sm']}) {
-                    width: 2.5vw;
-                }
-                @media (min-width: ${breaks['md']}) {
-                    width: 2vw;
-                }
-                @media (min-width: ${breaks['lg']}) {
-                    width: 1.5vw;
-                }
-                @media (min-width: ${breaks['xxl']}) {
-                    width: 1vw;
-                }
             }
         }
     }
