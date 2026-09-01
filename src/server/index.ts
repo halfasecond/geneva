@@ -12,6 +12,10 @@ import db from './config/db'
 import runModules, { stopBlockIndexer } from './modules'
 import { resolveRpcUrl } from './indexer'
 
+process.on('unhandledRejection', (reason) => {
+    console.error('[api] unhandledRejection', reason)
+})
+
 const { PORT } = process.env
 
 if (!process.env.RPC_URL && !process.env.WEB3_SOCKET_URL) {

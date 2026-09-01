@@ -1,7 +1,7 @@
 import EventEmitter from 'events';
 import type { Express } from 'express';
 import type { Connection } from 'mongoose';
-import { resolveRpcUrl } from './rpc-url';
+import { resolveHeadRpc, resolveRpcUrl } from './rpc-url';
 import { IndexerStore } from './store';
 import { ContractRegistry } from './registry';
 import { BlockFollower } from './follower';
@@ -13,8 +13,8 @@ export type { WatchedContract } from './registry';
 export { ContractRegistry } from './registry';
 export { followContracts, type FollowedContract, type WatchContractFn } from './follow';
 export { isCatchupEnabled, isFollowEnabled } from './flags';
-export { parseRpcUrl, resolveRpcUrl } from './rpc-url';
-export { erc20BalanceOf } from './rpc';
+export { parseRpcUrl, resolveHeadRpc, resolveRpcUrl } from './rpc-url';
+export { erc20BalanceOf, getLatestBlockNumber } from './rpc';
 
 export interface IndexerHandle {
     registry: ContractRegistry;
@@ -41,8 +41,9 @@ export function createIndexer(app: Express, db: Connection, web3: any, emitter: 
         wssUrl,
         start: async () => {
             if (!isFollowEnabled()) {
-                console.log('[indexer] follow off — HTTP block pulse only (no WSS, no watches)');
-                stopPulse = startBlockPulse(httpUrl, emitter);
+                const head = resolveHeadRpc();
+                console.log(`[indexer] follow off — block pulse via ${new URL(head).host}`);
+                stopPulse = startBlockPulse(head, emitter);
                 return;
             }
             if (registry.list().length === 0) {

@@ -1,8 +1,9 @@
-export async function postJsonRpc<T>(url: string, method: string, params: unknown[]): Promise<T> {
+export async function postJsonRpc<T>(url: string, method: string, params: unknown[], timeoutMs = 15_000): Promise<T> {
     const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ jsonrpc: '2.0', method, params, id: 1 }),
+        signal: AbortSignal.timeout(timeoutMs),
     });
 
     if (!response.ok) {

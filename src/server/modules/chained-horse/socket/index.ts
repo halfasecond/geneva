@@ -108,9 +108,14 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
     initializeWorldState(namespace, []);
     await processActors()
 
-    // Get initial block number
-    const initialBlock = await web3.eth.getBlockNumber();
-    latestEthBlock.blocknumber = Number(initialBlock);
+    let initialBlock = 0
+    try {
+        const { getLatestBlockNumber, resolveHeadRpc } = await import('../../../indexer')
+        initialBlock = await getLatestBlockNumber(resolveHeadRpc())
+    } catch (error) {
+        console.error('[chained-horse] getBlockNumber failed', error)
+    }
+    latestEthBlock.blocknumber = initialBlock
 
     // Log all unique utility traits
     const nfts = await Models.NFT.find({ owner: { $ne: '0x0000000000000000000000000000000000000000' } });

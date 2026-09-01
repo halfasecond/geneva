@@ -29,3 +29,10 @@ export function resolveRpcUrl(): RpcEndpoints {
     }
     return parseRpcUrl(raw);
 }
+
+/** Local Helios (or other head source) for block pulse / games. Fill stays on RPC_URL. */
+export function resolveHeadRpc(): string {
+    const raw = (process.env.BLOCK_RPC || process.env.HEAD_RPC || '').trim();
+    if (raw) return parseRpcUrl(raw).http;
+    return resolveRpcUrl().http;
+}

@@ -17,9 +17,12 @@ const socket = async (io: any, web3: any, name: string, Models: Models, Contract
     // namespace.use(authMiddleware);
     let socketCount = 0;
     let latestEthBlock = { blocknumber: 0, timestamp: 0 };
-    // Get initial block number
-    const initialBlock = await web3.eth.getBlockNumber();
-    latestEthBlock.blocknumber = Number(initialBlock);
+    try {
+        const { getLatestBlockNumber, resolveHeadRpc } = await import('../../../indexer');
+        latestEthBlock.blocknumber = await getLatestBlockNumber(resolveHeadRpc());
+    } catch (error) {
+        console.error('[geneva] getBlockNumber failed', error);
+    }
     emitter.on('newEthBlock', ({ number, timestamp }: { number: number; timestamp: number }) => {
         latestEthBlock.blocknumber = Number(number)
         latestEthBlock.timestamp = Number(timestamp)

@@ -6,7 +6,7 @@ import EventEmitter from 'events';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import path from 'path';
-import { resolveRpcUrl } from '../indexer';
+import { resolveHeadRpc } from '../indexer';
 import { startBlockPulse } from '../indexer/pulse';
 import { startDailyMidnightJob } from '../modules/kittynews/midnight';
 
@@ -22,10 +22,9 @@ const waitForDb = () =>
 
 const main = async () => {
     await waitForDb();
-    const { http } = resolveRpcUrl();
     const emitter = new EventEmitter();
     startDailyMidnightJob(emitter, mongoose.connection);
-    startBlockPulse(http, emitter);
+    startBlockPulse(resolveHeadRpc(), emitter);
     console.log('[ck:pulse] running');
 };
 
