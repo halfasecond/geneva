@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import KittyModal from 'kittyFamily/components/KittyModal'
-import FamilyJewels from 'kittyNews/components/FamilyJewels'
 import { genes } from 'kittyNews/utils'
 import * as Styled from './Pfp.style'
 
@@ -48,25 +47,17 @@ const Pfp: React.FC<Props> = ({ kitty: _kitty, value, eventType }) => {
                 />
             )}
             <Styled.Div className={'kitty-pfp'}>
-                <div className={'pfp-art'}>
-                    <div className={`pfp-circle ${className || ''}`}>
-                        <img
-                            src={`${IMG_CDN}${imgId(_kitty.tokenId)}.png`}
-                            alt={`CryptoKitty #${_kitty.tokenId}`}
-                            onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
-                                const target = e.currentTarget
-                                target.onerror = null
-                                target.src = `${IMG_CDN}${imgId(_kitty.tokenId)}.svg`
-                            }}
-                            onClick={() => setModal(true)}
-                            role={'button'}
-                        />
-                    </div>
-                    <FamilyJewels
-                        enhanced_cattributes={_kitty.enhanced_cattributes}
-                        displayType={'family-jewels'}
-                        tokenId={Number(_kitty.tokenId)}
-                        overlay
+                <div className={className || undefined}>
+                    <img
+                        src={`${IMG_CDN}${imgId(_kitty.tokenId)}.png`}
+                        alt={`CryptoKitty #${_kitty.tokenId}`}
+                        onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+                            const target = e.currentTarget
+                            target.onerror = null
+                            target.src = `${IMG_CDN}${imgId(_kitty.tokenId)}.svg`
+                        }}
+                        onClick={() => setModal(true)}
+                        role={'button'}
                     />
                 </div>
                 <p><Link to={`/kitty/${_kitty.tokenId}`} onClick={handleClick}>#{_kitty.tokenId}</Link></p>

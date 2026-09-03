@@ -18,30 +18,20 @@ export const Div = styled.div`
             font-weight: bold;
             margin-bottom: ${gutters['xxs']};
         }
-        > .pfp-art {
+        > div {
             position: relative;
+            aspect-ratio: 1/1;
             width: 80%;
+            overflow: hidden;
+            border-radius: 100%;
+            box-shadow: rgba(0,0,0,0.2) 0 0 6px;
             margin-bottom: ${gutters['sm']};
-            > .pfp-circle {
-                position: relative;
-                aspect-ratio: 1/1;
-                width: 100%;
-                overflow: hidden;
-                border-radius: 100%;
-                box-shadow: rgba(0,0,0,0.2) 0 0 6px;
-                > img {
-                    position: absolute;
-                    width: 160%;
-                    margin-left: -27%;
-                    margin-top: -14%;
-                    cursor: pointer;
-                }
-            }
-            > .family-jewels {
+            > img {
                 position: absolute;
-                right: -2px;
-                bottom: 0;
-                z-index: 2;
+                width: 160%;
+                margin-left: -27%;
+                margin-top: -14%;
+                cursor: pointer;
             }
         } 
     }

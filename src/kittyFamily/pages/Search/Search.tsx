@@ -359,10 +359,16 @@ const Search = ({ account, searchables, handlePurchase, profile, defaultInclude 
             const ckResult = await axios.get(`https://api.cryptokitties.co/v3/kitties?search=id:${ids}&limit=20`)
             const { data: { kitties: ckData } } = ckResult
     
-            const _kitties = kitties.map(kitty => ({
-                ...ckData.find(ck => Number(ck.id) === Number(kitty.tokenId)),
-                ...kitty,
-            }))
+            const _kitties = kitties.map(kitty => {
+                const ck = ckData.find(row => Number(row.id) === Number(kitty.tokenId))
+                return {
+                    ...ck,
+                    ...kitty,
+                    enhanced_cattributes: kitty.enhanced_cattributes?.length
+                        ? kitty.enhanced_cattributes
+                        : (ck?.enhanced_cattributes || []),
+                }
+            })
             setResults(_kitties)
             setTotal(total)
           }

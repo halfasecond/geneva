@@ -34,7 +34,14 @@ const FamilyTree = ({ handlePurchase }) => {
             .then(ckResult => {
               const { data: { kitties: ckData } } = ckResult;
               const _kitties = data.kitties.map(kitty => {
-                return { ...ckData.find(ck => ck.id === kitty.tokenId), ...kitty };
+                const ck = ckData.find(row => Number(row.id) === Number(kitty.tokenId))
+                return {
+                  ...ck,
+                  ...kitty,
+                  enhanced_cattributes: kitty.enhanced_cattributes?.length
+                    ? kitty.enhanced_cattributes
+                    : (ck?.enhanced_cattributes || []),
+                }
               })
               setKitties(_kitties)
             }).catch(error => console.error('Error fetching CryptoKitties data:', error))

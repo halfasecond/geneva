@@ -17,11 +17,20 @@ export const Div = styled.div`
 export const Jewel = styled.div`
   position: relative;
   cursor: ${({ type }) => type === 'none' ? 'default' : 'pointer'};
-  &:before {
-    content: '';
-    display: block;
-    padding-top: 100%;
-  }
+  ${({ displayType, type }) => displayType === 'family-jewels' && type !== 'none' ? `
+    width: 14px;
+    height: 14px;
+    flex: 0 0 14px;
+    &:before {
+      display: none;
+    }
+  ` : `
+    &:before {
+      content: '';
+      display: block;
+      padding-top: 100%;
+    }
+  `}
   background-image: ${({ type }) => {
     switch(type) {
       case 'diamond':
@@ -36,7 +45,8 @@ export const Jewel = styled.div`
         return 'none'
     }
   }};
-  background-size: 100% auto;
+  background-size: ${({ displayType, type }) => displayType === 'family-jewels' && type !== 'none' ? 'contain' : '100% auto'};
+  background-position: center;
   background-repeat: no-repeat;
   &:after {
     content: '${({ trait }) => trait}';

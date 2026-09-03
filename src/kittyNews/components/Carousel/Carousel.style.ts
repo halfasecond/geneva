@@ -1,9 +1,10 @@
 import { breaks, grey, gutters } from 'kittyNews/style/config'
 import styled from 'styled-components'
 
-const card = `
-    > * > div,
-    > a > div:first-of-type {
+export const Div = styled.div`
+    width: 100%;
+    min-width: 0;
+    a > div:first-of-type {
         width: 100%;
         aspect-ratio: 16/9;
         border-radius: 4px;
@@ -16,12 +17,6 @@ const card = `
         overflow-wrap: anywhere;
         word-break: break-word;
     }
-`
-
-export const Div = styled.div`
-    width: 100%;
-    min-width: 0;
-    ${card}
     .slick-slider {
         .slick-slide {
             > div {

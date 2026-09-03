@@ -132,15 +132,14 @@ export const ImageContainer = styled.div`
         bottom: ${gutters['xs']};
         right: ${gutters['xs']};
         min-height: 0;
+        z-index: 5;
         > div {
             width: 14px;
             height: 14px;
             flex: 0 0 14px;
             margin-left: ${gutters['xxs']};
-            z-index: 1000;
-            &:before {
-                display: none;
-            }
+            background-size: contain;
+            background-position: center;
         }
     }
     > div.bottom {
