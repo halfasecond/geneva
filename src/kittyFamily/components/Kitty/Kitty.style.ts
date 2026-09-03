@@ -133,13 +133,18 @@ export const ImageContainer = styled.div`
         right: ${gutters['xs']};
         min-height: 0;
         z-index: 5;
-        > div {
+        > div,
+        > img {
             width: 14px;
             height: 14px;
             flex: 0 0 14px;
             margin-left: ${gutters['xxs']};
             background-size: contain;
             background-position: center;
+            object-fit: contain;
+        }
+        &:empty {
+            display: none;
         }
     }
     > div.bottom {

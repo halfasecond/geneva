@@ -144,21 +144,36 @@ const Kitty = ({ kitty, getInfo, handlePurchase, hats=[], showMewts=false, showI
 							)}
 							{showMewts && kitty.enhanced_cattributes &&
 								<Styled.Mewtations>
-									{kitty.enhanced_cattributes.filter(c => c.kittyId === kitty.tokenId && c.position === 1).map((d, i) => 
+									{kitty.enhanced_cattributes.filter(c => Number(c.kittyId) === Number(kitty.tokenId) && Number(c.position) === 1).map((d, i) => 
 										<Styled.Diamond key={i} />
 									)}
-									{kitty.enhanced_cattributes.filter(c => c.kittyId === kitty.tokenId && c.position >= 2 && c.position <= 10).map((d, i) => 
+									{kitty.enhanced_cattributes.filter(c => Number(c.kittyId) === Number(kitty.tokenId) && Number(c.position) >= 2 && Number(c.position) <= 10).map((d, i) => 
 										<img src={'/images/icons/gilded.svg'} alt={'Gilded'} key={i} />
 									)}
-									{kitty.enhanced_cattributes.filter(c => c.kittyId === kitty.tokenId && c.position >= 11 && c.position <= 100).map((d, i) => 
+									{kitty.enhanced_cattributes.filter(c => Number(c.kittyId) === Number(kitty.tokenId) && Number(c.position) >= 11 && Number(c.position) <= 100).map((d, i) => 
 										<img src={'/images/icons/amethyst.svg'} alt={'Amethyst'} key={i} />
 									)}
-									{kitty.enhanced_cattributes.filter(c => c.kittyId === kitty.tokenId && c.position >= 101 && c.position <= 500).map((d, i) => 
+									{kitty.enhanced_cattributes.filter(c => Number(c.kittyId) === Number(kitty.tokenId) && Number(c.position) >= 101 && Number(c.position) <= 500).map((d, i) => 
 										<img src={'/images/icons/lapis.svg'} alt={'Lapis'} key={i} />
 									)}
 								</Styled.Mewtations>
 							}
-                            {showMewts && kitty.enhanced_cattributes && (<Jewels {...{ kitty }} displayType={'family-jewels'} hideEmpty />)}
+							{showMewts && kitty.enhanced_cattributes && (
+								<div className={'family-jewels'}>
+									{kitty.enhanced_cattributes.filter(c => Number(c.kittyId) !== Number(kitty.tokenId) && Number(c.position) === 1).map((d, i) =>
+										<img src={'/images/icons/diamond.svg'} alt={d.description || 'Diamond'} key={`fj-d-${i}`} />
+									)}
+									{kitty.enhanced_cattributes.filter(c => Number(c.kittyId) !== Number(kitty.tokenId) && Number(c.position) >= 2 && Number(c.position) <= 10).map((d, i) =>
+										<img src={'/images/icons/gilded.svg'} alt={d.description || 'Gilded'} key={`fj-g-${i}`} />
+									)}
+									{kitty.enhanced_cattributes.filter(c => Number(c.kittyId) !== Number(kitty.tokenId) && Number(c.position) >= 11 && Number(c.position) <= 100).map((d, i) =>
+										<img src={'/images/icons/amethyst.svg'} alt={d.description || 'Amethyst'} key={`fj-a-${i}`} />
+									)}
+									{kitty.enhanced_cattributes.filter(c => Number(c.kittyId) !== Number(kitty.tokenId) && Number(c.position) >= 101 && Number(c.position) <= 500).map((d, i) =>
+										<img src={'/images/icons/lapis.svg'} alt={d.description || 'Lapis'} key={`fj-l-${i}`} />
+									)}
+								</div>
+							)}
 						</Styled.ImageContainer>
 						
 						{showInfo && kitty.status && (

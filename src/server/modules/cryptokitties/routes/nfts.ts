@@ -1,5 +1,6 @@
 import express, { Router } from 'express';
 import { CryptoKittiesModels } from '../models';
+import { attachEnhancedCattributes } from '../attachCattributes';
 import {
     CATTRIBUTE_TYPES,
     Cattribute,
@@ -67,10 +68,11 @@ const routes = (Models: CryptoKittiesModels, defaultLimit = 20): Router => {
         const skip = (page - 1) * limit;
 
         try {
-            const [kitties, total] = await Promise.all([
+            const [docs, total] = await Promise.all([
                 Models.NFT.find(query).sort(sort).skip(skip).limit(limit).exec(),
                 Models.NFT.countDocuments(query),
             ]);
+            const kitties = await attachEnhancedCattributes(docs);
             res.status(200).send({ kitties, total });
         } catch (error) {
             console.error('Error fetching NFTs:', error);

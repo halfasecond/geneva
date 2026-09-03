@@ -1,5 +1,6 @@
 import express, { Router } from 'express';
 import { CryptoKittiesModels } from '../models';
+import { attachEnhancedCattributes } from '../attachCattributes';
 
 const routes = (Models: CryptoKittiesModels): Router => {
     const router = express.Router();
@@ -57,7 +58,10 @@ const routes = (Models: CryptoKittiesModels): Router => {
                     }
                 }
             }
-            res.status(200).send({ kitties, total: kitties.length });
+            res.status(200).send({
+                kitties: await attachEnhancedCattributes(kitties),
+                total: kitties.length,
+            });
         } catch (error) {
             console.error('Error:', error);
             res.status(500).send({ error: 'Internal Server Error' });
