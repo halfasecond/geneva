@@ -158,7 +158,7 @@ const Kitty = ({ kitty, getInfo, handlePurchase, hats=[], showMewts=false, showI
 									)}
 								</Styled.Mewtations>
 							}
-                            {showMewts && kitty.enhanced_cattributes && (<Jewels {...{ kitty }} displayType={'family-jewels'} />)}
+                            {showMewts && kitty.enhanced_cattributes && (<Jewels {...{ kitty }} displayType={'family-jewels'} hideEmpty />)}
 						</Styled.ImageContainer>
 						
 						{showInfo && kitty.status && (

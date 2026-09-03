@@ -1,8 +1,4 @@
 import styled, { keyframes } from 'styled-components'
-import diamond from '/images/icons/diamond.svg'
-import gilded from '/images/icons/gilded.svg'
-import amethyst from '/images/icons/amethyst.svg'
-import lapis from '/images/icons/lapis.svg'
 import { gutters } from 'kittyNews/style/config'
 
 const spritesheet = 'https://cryptokitties.co/images/cattributes/mewtation-gems/diamond-lg-sprite.svg'
@@ -10,6 +6,27 @@ const spritesheet = 'https://cryptokitties.co/images/cattributes/mewtation-gems/
 export const Div = styled.div`
     display: flex;
     justify-content: center;
+    &.overlay {
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        max-width: 72%;
+        pointer-events: none;
+        > div {
+            pointer-events: auto;
+            width: 14px;
+            margin: 0 0 0 2px;
+            &:last-of-type {
+                margin: 0 0 0 2px;
+            }
+            &:after {
+                top: 16px;
+                left: 50%;
+                transform: translateX(-50%);
+                font-size: 10px;
+                white-space: nowrap;
+            }
+        }
+    }
 `
 
 interface Props {
@@ -30,16 +47,16 @@ export const Jewel = styled.div<Props>`
         margin: ${gutters['md']} 0;
     }
     &.diamond {
-        background-image: url('${diamond}');
+        background-image: url('/images/icons/diamond.svg');
     }
     &.gilded {
-        background-image: url('${gilded}');
+        background-image: url('/images/icons/gilded.svg');
     }
     &.amethyst {
-        background-image: url('${amethyst}');
+        background-image: url('/images/icons/amethyst.svg');
     }
     &.lapis {
-        background-image: url('${lapis}');
+        background-image: url('/images/icons/lapis.svg');
     }
     background-size: 100% auto;
     background-repeat: no-repeat;

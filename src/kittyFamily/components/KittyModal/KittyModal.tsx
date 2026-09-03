@@ -140,6 +140,8 @@ const Modal = ({ kitty, hats, handlePurchase, onClose, currentKittyId, priceSymb
     const fancy = profile?.is_fancy || kitty.is_fancy
     const bornAt = profile?.birthday || profile?.created_at || kitty.created_at || kitty.birthday
     const born = bornAt ? handleGetBirthday(bornAt) : ''
+    const displayName = String(kitty.name || profile?.name || '').trim()
+    const tokenLabel = `#${kitty.tokenId ?? kitty.id}`
     const geneKitty = {
         ...kitty,
         ...(profile || {}),
@@ -179,8 +181,8 @@ const Modal = ({ kitty, hats, handlePurchase, onClose, currentKittyId, priceSymb
                 </div>
                 <div className={'card-body'}>
                     <h2>
-                        <span>#{kitty.tokenId}</span>
-                        {kitty.name ? kitty.name : profile?.name || ''}
+                        <span>{tokenLabel}</span>
+                        {displayName || tokenLabel}
                     </h2>
                     <h3>
                         Gen{kitty.gen}

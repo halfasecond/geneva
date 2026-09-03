@@ -122,19 +122,24 @@ export const ImageContainer = styled.div`
     > div {
         position: absolute;
         z-index: 1;
-        &:last-of-type {
-            align-items: center;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: flex-end;
-            max-width: 72%;
-            bottom: ${gutters['sm']};
-            right: ${gutters['sm']};
-            > div {
-                width: 18%;
-                max-width: 22px;
-                margin-left: ${gutters['xxs']};
-                z-index: 1000;
+    }
+    > div.family-jewels {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        max-width: 72%;
+        bottom: ${gutters['xs']};
+        right: ${gutters['xs']};
+        min-height: 0;
+        > div {
+            width: 14px;
+            height: 14px;
+            flex: 0 0 14px;
+            margin-left: ${gutters['xxs']};
+            z-index: 1000;
+            &:before {
+                display: none;
             }
         }
     }
@@ -157,9 +162,15 @@ export const Mewtations = styled.div`
     bottom: ${gutters['sm']};
     left: ${gutters['xs']};
     display: flex;
-    > img {
+    flex-wrap: wrap;
+    align-items: flex-end;
+    max-width: 48%;
+    > img,
+    > div {
       width: 24px;
-      margin-left: ${gutters['xs']};
+      height: 24px;
+      flex: 0 0 24px;
+      margin: 0 0 ${gutters['xxs']} ${gutters['xs']};
     }
 `
 

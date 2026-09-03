@@ -115,8 +115,13 @@ export const FamilyJewels = styled.div`
     min-height: 0;
     justify-content: flex-end;
     > div {
-      width: 18px;
+      width: 14px;
+      height: 14px;
+      flex: 0 0 14px;
       margin-left: ${space.xs};
+      &:before {
+        display: none;
+      }
     }
   }
 `

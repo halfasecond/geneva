@@ -2,7 +2,7 @@
 import React from "react";
 import * as Styled from "./Jewels.style"
 
-const Jewels = ({ kitty, displayType }) => {
+const Jewels = ({ kitty, displayType, hideEmpty }) => {
   const gems = []
   const id = Number(kitty.id ?? kitty.tokenId)
   const traits = kitty.enhanced_cattributes || kitty.cattributes || []
@@ -20,6 +20,7 @@ const Jewels = ({ kitty, displayType }) => {
       origin !== id && c.position >= 101 && c.position <= 500 && gems.push(<Styled.Jewel key={i} type={'lapis'} trait={c.description} {...{ displayType }} />)
     }
   })
+  if (hideEmpty && gems.length === 0) return null
   return (
     <Styled.Div className={displayType}>
     {gems.length > 0
