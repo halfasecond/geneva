@@ -29,6 +29,7 @@ const getContract = (abi: AbiFragment[], address: string) => new web3.eth.Contra
 const cryptokitties: Contract<AbiFragment[]> = getContract(CryptoKitties.Core.abi, CryptoKitties.Core.addr)
 const purr: Contract<AbiFragment[]> = getContract(PurrContracts.Purr.abi, PurrContracts.Purr.addr)
 const purrClaim: Contract<AbiFragment[]> = getContract(PurrContracts.PurrClaim.abi, PurrContracts.PurrClaim.addr)
+const purrClaim2: Contract<AbiFragment[]> = getContract(PurrContracts.PurrClaim2.abi, PurrContracts.PurrClaim2.addr)
 
 const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn, token }) => {
     
@@ -41,6 +42,7 @@ const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn, t
     const [transfers, setTransfers] = useState<ReportType>()
     const [purrBalance, setPurrBalance] = useState<string | undefined>()
     const [purrClaimBalance, setPurrClaimBalance] = useState<string | undefined>()
+    const [purrClaim2Balance, setPurrClaim2Balance] = useState<string | undefined>()
     const [claims, setClaims] = useState<ReportType>()
 
     const getPurrClaimBalance = async () => {
@@ -56,6 +58,22 @@ const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn, t
         } catch (e) {
             console.log(e)
             return setPurrClaimBalance('0')
+        }
+    }
+
+    const getPurrClaim2Balance = async () => {
+        try {
+            if (loggedIn) {
+                const balanceOf = await purr.methods.balanceOf(PurrContracts.PurrClaim2.addr).call();
+                if (balanceOf !== undefined && balanceOf !== null) {
+                    return setPurrClaim2Balance(balanceOf.toString())
+                }
+            }
+            const { data: { balance } } = await axios.get(`${API}/purr/balances/${PurrContracts.PurrClaim2.addr}`)
+            return setPurrClaim2Balance(balance.toString())
+        } catch (e) {
+            console.log(e)
+            return setPurrClaim2Balance('0')
         }
     }
 
@@ -96,11 +114,13 @@ const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn, t
 
     const updateBalances = () => {
         setPurrClaimBalance(undefined)
+        setPurrClaim2Balance(undefined)
         setPurrBalance(undefined)
         if (loggedIn) {
             getUserBalance()
         }
         getPurrClaimBalance()
+        getPurrClaim2Balance()
         getClaims()
     }
 
@@ -110,6 +130,7 @@ const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn, t
         }
         getClaims()
         getPurrClaimBalance()
+        getPurrClaim2Balance()
     }, [loggedIn])
 
     useEffect(() => {
@@ -144,7 +165,7 @@ const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn, t
             {socket && <Logo {...{ socket, report, ethBlock }} />}
             <Styled.Main>
                 <Routes>
-                    <Route path="/" element={<Homepage walletAddress={loggedIn} {...{ report, births, transfers, floor, endpoint, cryptokitties, claims, purr, purrClaim, purrBalance, purrClaimBalance, updateBalances, handleSignIn }} />} />
+                    <Route path="/" element={<Homepage walletAddress={loggedIn} {...{ report, births, transfers, floor, endpoint, cryptokitties, claims, purr, purrClaim, purrClaim2, purrBalance, purrClaimBalance, purrClaim2Balance, updateBalances, handleSignIn }} />} />
                     <Route path="/article/:slug" element={<Article {...{ endpoint, report }} admin={(loggedIn && admin.includes(loggedIn))} />} />
                     <Route path="/news/:slug" element={<News {...{ endpoint }} admin={(loggedIn && admin.includes(loggedIn))} />} />
                     <Route 

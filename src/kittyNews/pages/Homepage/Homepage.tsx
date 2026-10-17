@@ -29,13 +29,15 @@ interface Props {
     claims: ReportType | undefined,
     cryptokitties: Contract<AbiFragment[]>,
     purrClaim: Contract<AbiFragment[]>,
+    purrClaim2: Contract<AbiFragment[]>,
     purrBalance: string | undefined,
     purrClaimBalance: string | undefined,
+    purrClaim2Balance: string | undefined,
     updateBalances: () => void,
     handleSignIn: () => void,
 }
 
-const Homepage: React.FC<Props> = ({ walletAddress, cryptokitties, purrClaim, purrClaimBalance, claims, report, floor, births, transfers, endpoint }) => {
+const Homepage: React.FC<Props> = ({ walletAddress, cryptokitties, purrClaim, purrClaim2, purrClaimBalance, purrClaim2Balance, claims, report, floor, births, transfers, endpoint }) => {
     const [copy, setCopy] = useState<Copy[] | undefined>(undefined)
 
     useEffect(() => {
@@ -63,7 +65,7 @@ const Homepage: React.FC<Props> = ({ walletAddress, cryptokitties, purrClaim, pu
                 {copy && copy.filter(c => c.slug === headline && c.published) && (
                     <Headline copy={copy.filter(c => c.slug === headline)[0]} headlineImage={'erc20-purr-launches.jpg'} />
                 )}
-                <PurrClaim {...{ walletAddress, purrClaimBalance, purrClaim, cryptokitties }} />
+                <PurrClaim {...{ walletAddress, purrClaimBalance, purrClaim2Balance, purrClaim, purrClaim2, cryptokitties }} />
             </Styled.Section_2Column>
             <Styled.Section>
                 <h2>All Kitties - {report && report.Birth}</h2>

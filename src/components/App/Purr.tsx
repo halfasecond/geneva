@@ -7,6 +7,7 @@ import Metamask from 'components/Metamask'
 import Balance from '../Purr/Balance'
 import Claim from '../Purr/Claim'
 import Claim2 from '../Purr/Claim2'
+import RecentClaims from '../Purr/RecentClaims'
 import Diamond from '../Purr/Diamond'
 import CryptoKitties from '../../contracts/CryptoKitties'
 import Contracts from '../../contracts/Purr'
@@ -362,6 +363,8 @@ const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn, t
                         </div>
                     </div>
                 </section>
+
+                <RecentClaims />
 
                 {/* Explore */}
                 <section className="purr-section bg-purr-cream text-black">

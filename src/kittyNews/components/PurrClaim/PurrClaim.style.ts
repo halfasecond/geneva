@@ -6,8 +6,9 @@ export const Div = styled.div`
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    background-color: #140a22;
     background-image: url('https://cdn.halfasecond.com/images/purr/bg.svg');
-    background-image: no-repeat;
+    background-repeat: no-repeat;
     background-size: 250% auto;
     padding-top: ${gutters['xl']};
     border-radius: 12px;
@@ -45,11 +46,20 @@ export const Div = styled.div`
         margin-bottom: ${gutters['xlg']};
         font-size: ${fontSize['lg']};
     }
-    > div {
+    > p.round-name {
+        margin-bottom: ${gutters['sm']};
+        font-size: ${fontSize['xs']};
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: ${grey[300]};
+    }
+
+    > div.panel {
         display: flex;
-        align-items: flex-start;
+        flex-direction: column;
+        align-items: center;
         justify-content: center;
-        margin-bottom: ${gutters['xl']};
+        margin-bottom: ${gutters['lg']};
         box-sizing: border-box;
         > div {
             display: flex;
@@ -81,11 +91,6 @@ export const Div = styled.div`
             width: 28px;
         }
 
-        &:last-of-type {
-            flex-direction: column;
-            align-items: center;
-        }
-
         > button {
             margin: 0 0 ${gutters['sm']};
             padding: ${gutters['md']} ${gutters['md']};
@@ -104,6 +109,40 @@ export const Div = styled.div`
         }
         > h2 {
             margin-bottom: ${gutters['md']};
+        }
+    }
+
+    > div.rounds {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        margin-bottom: ${gutters['xl']};
+
+        > button {
+            width: 28px;
+            height: 28px;
+            padding: 0;
+            border: 0;
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            &::after {
+                content: '';
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background: ${grey[600]};
+            }
+
+            &[aria-selected='true']::after {
+                width: 10px;
+                height: 10px;
+                background: ${grey[0]};
+            }
         }
     }
 `
