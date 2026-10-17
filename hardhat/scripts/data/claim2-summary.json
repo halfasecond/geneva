@@ -1,0 +1,14 @@
+{
+  "gildedCount": 2177,
+  "gildedPurr": 217700,
+  "grandmasterFancies": 110,
+  "uniqueGrandmasterAddresses": 61,
+  "grandmasterPurrIfPerFancy": 110000,
+  "grandmasterPurrIfUniqueAddress": 61000,
+  "totalIfUniqueAddresses": 278700,
+  "totalIfPerFancy": 327700,
+  "missingSearchKeys": [],
+  "skipped": [],
+  "gildedRoot": "0x95f90afe1c8941379e7936dd7f21808ba117bd97c48c9384c838e3e1b9e59191",
+  "note": "Grandmasters are hatchers of ranking-1 of each fancy type (shiny counts). Unique addresses claim 1000 once."
+}

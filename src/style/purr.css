@@ -34,7 +34,8 @@
   }
 
   .purr-card {
-    @apply bg-black/80 backdrop-blur-sm border border-white/10 rounded-lg shadow-2xl;
+    @apply bg-black/80 backdrop-blur-sm rounded-lg
+      shadow-[0_0_24px_rgba(0,0,0,0.9)];
   }
 
   .purr-input {
@@ -98,6 +99,11 @@
     @apply relative;
     z-index: 1;
   }
+}
+
+/* Meyer reset sets border:0 on p/div/form. Unlayered so panel edges actually paint. */
+.purr-card {
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 @keyframes purr-diamond-spin {

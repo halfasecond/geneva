@@ -13,8 +13,8 @@ const LoadingSpinner = () => (
 )
 
 const MultiplierBadge = ({ icon, label, iconClass = '' }: { icon: string; label: string; iconClass?: string }) => (
-    <div className="flex items-center gap-2 bg-neutral-200 text-neutral-700 font-bold text-sm
-        px-3 py-2 rounded shadow-md w-[48%] md:w-[22%] max-w-[160px]">
+    <div className="flex items-center justify-center gap-2 bg-neutral-200 text-neutral-700 font-bold text-sm
+        px-3 py-2 rounded shadow-md w-full">
         <img src={icon} alt={label} className={`w-6 h-6 ${iconClass}`} />
         <span>{label}</span>
     </div>
@@ -31,7 +31,7 @@ const ClaimCriteria = () => (
             <li>Diamond CryptoKitties - <b>$PURR 100</b></li>
         </ol>
         <h4 className="font-display text-base mb-3">x10 Multipliers:</h4>
-        <div className="flex flex-wrap justify-around gap-3 w-full max-w-2xl mx-auto mb-6">
+        <div className="grid grid-cols-2 gap-3 w-full max-w-sm mx-auto mb-6">
             <MultiplierBadge icon={getAssetPath('icons/founders.svg')} label="Founders" />
             <MultiplierBadge icon={getAssetPath('icons/diamond.svg')} label="Diamonds" iconClass="w-5 h-5" />
             <MultiplierBadge icon={getAssetPath('icons/normal.svg')} label="Day1" />
@@ -91,8 +91,7 @@ const Claim: React.FC<{
     const formShell = (children: React.ReactNode) => (
         <form
             onSubmit={(e) => e.preventDefault()}
-            className="purr-card flex flex-col items-center w-full max-w-3xl mx-auto px-6 py-12
-                border-[12px] border-white/10 shadow-[0_0_24px_rgba(236,35,165,0.1)]"
+            className="purr-card flex flex-col items-center w-full h-full max-w-3xl mx-auto xl:max-w-none px-6 py-12"
         >
             {children}
         </form>

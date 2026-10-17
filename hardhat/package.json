@@ -3,7 +3,9 @@
   "devDependencies": {
     "@nomicfoundation/hardhat-network-helpers": "^1.0.12",
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
-    "hardhat": "^2.22.18"
+    "hardhat": "^2.22.18",
+    "keccak256": "^1.0.6",
+    "merkletreejs": "^0.6.0"
   },
   "dependencies": {
     "@openzeppelin/contracts": "5.2.0"

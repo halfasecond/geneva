@@ -75,16 +75,7 @@ const Balance: React.FC<{
         : parseFloat(fromWei(balance, 'ether')).toFixed(2)
 
     return (
-        <div className="fixed top-5 right-5 z-[1000] flex flex-col items-end gap-2">
-            <button
-                type="button"
-                onClick={() => setOpen(prev => !prev)}
-                className="font-display text-sm bg-neutral-200 text-black px-4 py-2 rounded shadow-lg
-                    border border-neutral-400 hover:opacity-80 transition-opacity cursor-pointer"
-            >
-                {`$PURR: ${displayBalance}`}
-            </button>
-
+        <div className="fixed bottom-5 right-5 z-[1000] flex flex-col items-end gap-2">
             {open && (
                 <div className="w-72 bg-neutral-200 text-black p-4 rounded shadow-lg border border-neutral-400">
                     <form
@@ -131,6 +122,15 @@ const Balance: React.FC<{
                     </form>
                 </div>
             )}
+
+            <button
+                type="button"
+                onClick={() => setOpen(prev => !prev)}
+                className="font-display text-sm bg-neutral-200 text-black px-4 py-2 rounded shadow-lg
+                    border border-neutral-400 hover:opacity-80 transition-opacity cursor-pointer"
+            >
+                {`$PURR: ${displayBalance}`}
+            </button>
         </div>
     )
 }

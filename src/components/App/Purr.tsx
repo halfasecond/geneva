@@ -6,6 +6,7 @@ import { AbiFragment } from 'web3'
 import Metamask from 'components/Metamask'
 import Balance from '../Purr/Balance'
 import Claim from '../Purr/Claim'
+import Claim2 from '../Purr/Claim2'
 import Diamond from '../Purr/Diamond'
 import CryptoKitties from '../../contracts/CryptoKitties'
 import Contracts from '../../contracts/Purr'
@@ -13,10 +14,14 @@ import Logo from '../Purr/Logo'
 import { AuthProps } from '../../types/auth'
 import { getContract } from '../../utils'
 import { getAssetPath } from '../../utils/assetPath'
+import gildedGem from '../../kittyFamily/svg/gilded.svg'
 
 const cryptokitties: Contract<AbiFragment[]> = getContract(CryptoKitties.Core.abi, CryptoKitties.Core.addr)
 const purr: Contract<AbiFragment[]> = getContract(Contracts.Purr.abi, Contracts.Purr.addr)
 const purrClaim: Contract<AbiFragment[]> = getContract(Contracts.PurrClaim.abi, Contracts.PurrClaim.addr)
+const purrClaim2 = Contracts.PurrClaim2
+    ? getContract(Contracts.PurrClaim2.abi, Contracts.PurrClaim2.addr)
+    : undefined
 const { VITE_APP_ENDPOINT } = import.meta.env
 
 const EXTERNAL_LINKS: Record<string, string> = {
@@ -26,23 +31,47 @@ const EXTERNAL_LINKS: Record<string, string> = {
     'Dapper Labs': 'https://www.dapperlabs.com/',
 }
 
-const ExternalLink = ({ children, href }: { children: React.ReactNode; href: string }) => (
-    <a href={href} target="_blank" rel="noreferrer" className="purr-link">{children}</a>
+const ExternalLink = ({ children, href, className = 'purr-link' }: { children: React.ReactNode; href: string; className?: string }) => (
+    <a href={href} target="_blank" rel="noreferrer" className={className}>{children}</a>
 )
 
 const PurrLink = ({ to, children, onClick }: { to: string; children: React.ReactNode; onClick?: (e: React.MouseEvent) => void }) => (
     <Link to={to} onClick={onClick} className="purr-link">{children}</Link>
 )
 
-const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn, token, BASE_URL }) => {
-    const claimRef = useRef<HTMLElement>(null)
-    const [purrClaimBalance, setPurrClaimBalance] = useState<string | undefined>(undefined)
-    const [balance, setBalance] = useState<string | undefined>(undefined)
-    const [muted, setMuted] = useState(true)
+const HeroClaim = ({
+    icon,
+    title,
+    detail,
+    onClick,
+}: {
+    icon: React.ReactNode
+    title: string
+    detail: string
+    onClick: (e: React.MouseEvent) => void
+}) => (
+    <button
+        type="button"
+        onClick={onClick}
+        className="purr-card group w-full px-6 py-8 md:py-9 text-center
+            hover:border-white/40 transition-colors duration-200"
+    >
+        <div className="flex justify-center mb-5">{icon}</div>
+        <h2 className="font-display text-sm md:text-base tracking-wide leading-snug">{title}</h2>
+        <p className="mt-2 mb-6 text-xs text-white/55 leading-relaxed">{detail}</p>
+        <span className="purr-btn inline-block text-xs md:text-sm px-5 py-2.5">Claim now</span>
+    </button>
+)
 
-    const scrollToClaim = (e: React.MouseEvent) => {
+const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn, token, BASE_URL }) => {
+    const claimsSectionRef = useRef<HTMLElement>(null)
+    const [purrClaimBalance, setPurrClaimBalance] = useState<string | undefined>(undefined)
+    const [purrClaim2Balance, setPurrClaim2Balance] = useState<string | undefined>(undefined)
+    const [balance, setBalance] = useState<string | undefined>(undefined)
+
+    const scrollToClaims = (e: React.MouseEvent) => {
         e.preventDefault()
-        claimRef.current?.scrollIntoView({ behavior: 'smooth' })
+        claimsSectionRef.current?.scrollIntoView({ behavior: 'smooth' })
     }
 
     const getPurrClaimBalance = async () => {
@@ -52,6 +81,20 @@ const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn, t
         } catch (e) {
             console.log(e)
             setPurrClaimBalance('0')
+        }
+    }
+
+    const getPurrClaim2Balance = async () => {
+        if (!Contracts.PurrClaim2) {
+            setPurrClaim2Balance('0')
+            return
+        }
+        try {
+            const balanceOf = await purr.methods.balanceOf(Contracts.PurrClaim2.addr).call()
+            setPurrClaim2Balance(balanceOf ? balanceOf.toString() : '0')
+        } catch (e) {
+            console.log(e)
+            setPurrClaim2Balance('0')
         }
     }
 
@@ -69,13 +112,16 @@ const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn, t
             getUserBalance()
         }
         getPurrClaimBalance()
+        getPurrClaim2Balance()
     }, [loggedIn])
 
     const updateBalances = () => {
         setPurrClaimBalance(undefined)
+        setPurrClaim2Balance(undefined)
         setBalance(undefined)
         if (loggedIn) getUserBalance()
         getPurrClaimBalance()
+        getPurrClaim2Balance()
     }
 
     return (
@@ -88,16 +134,66 @@ const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn, t
 
                 <div className="purr-content">
                 {/* Hero */}
-                <section className="relative min-h-screen flex flex-col items-center justify-center px-5 pt-20 pb-16">
+                <section className="relative min-h-screen flex flex-col items-center justify-center px-5 pt-24 pb-24 md:pb-16">
+                    <header className="absolute top-0 inset-x-0 flex items-center justify-between px-5 md:px-8 py-4
+                        text-[10px] md:text-xs tracking-[0.22em] uppercase text-white/55">
+                        <a
+                            href="https://kitty.international"
+                            target="_blank"
+                            rel="noreferrer"
+                            className="hover:text-purr-pink transition-colors"
+                        >
+                            Kitty.International
+                        </a>
+                        <nav className="flex items-center gap-5 md:gap-8">
+                            <a
+                                href="https://etherscan.io/address/0x74E9C7f23f11B72b8A7340E11Fe72D93D91fAe8e"
+                                target="_blank"
+                                rel="noreferrer"
+                                className="hover:text-white transition-colors"
+                            >
+                                Contract
+                            </a>
+                            <button
+                                type="button"
+                                onClick={scrollToClaims}
+                                className="bg-transparent border-0 p-0 text-inherit tracking-[0.22em] uppercase
+                                    cursor-pointer hover:text-white transition-colors"
+                            >
+                                Claims
+                            </button>
+                        </nav>
+                    </header>
                     <Logo />
-                    <div className="mt-10 md:mt-16 purr-card text-center px-6 py-8 md:px-12 border-4 border-black
-                        shadow-[0_0_24px_rgba(0,0,0,0.9)] max-w-lg">
-                        <h2 className="font-display text-sm md:text-base flex items-center justify-center gap-4 mb-6">
-                            <Diamond />
-                            DAY1 / DIAMOND CLAIM
-                            <Diamond />
-                        </h2>
-                        <PurrLink to="/" onClick={scrollToClaim}>claim now</PurrLink>
+                    <div className="mt-14 md:mt-20 w-full max-w-xl sm:max-w-2xl flex flex-col items-center px-2">
+                        <span className="block w-24 h-px bg-gradient-to-r from-transparent via-[#e8d5a3]/70 to-transparent mb-6" />
+                        <p className="text-center text-[13px] md:text-[15px] leading-[1.9] tracking-[0.06em] text-[#f0e6c8]
+                            [text-shadow:0_0_28px_rgba(0,0,0,0.95),0_2px_16px_rgba(0,0,0,0.9)]">
+                            <b className="text-white">$PURR</b> is an{' '}
+                            <ExternalLink
+                                href="https://etherscan.io/address/0x74E9C7f23f11B72b8A7340E11Fe72D93D91fAe8e"
+                                className="border-b border-dotted border-[#e8d5a3]/60 hover:text-purr-pink hover:border-purr-pink transition-colors"
+                            >
+                                ERC-20
+                            </ExternalLink>
+                            {' '}on Ethereum, claimable only by CryptoKitties owners
+                            and not, at this time, on exchanges.
+                        </p>
+                        <span className="block w-24 h-px bg-gradient-to-r from-transparent via-[#e8d5a3]/70 to-transparent mt-6" />
+                    </div>
+                    <div className="mt-8 md:mt-10 grid w-full max-w-xl sm:max-w-2xl grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
+                        <HeroClaim
+                            icon={<Diamond className="w-10 h-10" />}
+                            title="DAY1 / DIAMOND"
+                            detail="Day1 kitties and Diamonds"
+                            onClick={scrollToClaims}
+                        />
+                        <HeroClaim
+                            icon={<img src={gildedGem} alt="" className="w-10 h-10" />}
+                            title="GILDED / GRANDMASTER"
+                            detail="Gilded kitties · Fancy #1 breeders"
+                            onClick={scrollToClaims}
+                        />
                     </div>
                 </section>
 
@@ -165,42 +261,6 @@ const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn, t
                     </p>
                 </section>
 
-                {/* Kitty City video */}
-                <section className="purr-section bg-black p-0 md:p-0">
-                    <div className="relative w-full aspect-video">
-                        <video
-                            autoPlay
-                            loop
-                            muted={muted}
-                            playsInline
-                            src={getAssetPath('purrLaunch1080.mp4')}
-                            className="w-full h-full object-cover"
-                        />
-                        <button
-                            type="button"
-                            onClick={() => setMuted(!muted)}
-                            className="absolute top-5 right-5 bg-black/50 text-white px-3 py-2 rounded text-sm
-                                hover:bg-black/70 transition-colors"
-                        >
-                            {muted ? '🔇 Unmute' : '🔊 Mute'}
-                        </button>
-                    </div>
-                    <div className="w-full md:w-[54%] md:ml-auto md:mr-[5%] bg-white/5 px-6 py-12 md:px-12">
-                        <h2 className="font-display text-2xl md:text-3xl mb-6">Live from Kitty City</h2>
-                        <p className="mb-6 leading-8">
-                            The first <b>$PURR</b> claim -{' '}
-                            <PurrLink to="/" onClick={scrollToClaim}>Day1 / Diamonds</PurrLink>
-                            {' '}- is now live with <b>$PURR 250,000</b> allocated for eligible claims.
-                            <b> $PURR</b> claimants will be given exclusive access to a multiplayer Unreal Engine
-                            experience &quot;Kitty City&quot; launching soon.
-                        </p>
-                        <p className="leading-8">
-                            Whether hanging out with other collectors, taking part in competitions, visiting the
-                            8th Anniversary CryptoKitties Exhibition or - wait - is that kitty race track?
-                        </p>
-                    </div>
-                </section>
-
                 {/* White paper */}
                 <section className="purr-section bg-purr-cream text-black">
                     <h2 className="font-display text-2xl md:text-4xl lg:text-5xl text-center mb-10">WHITE PA-$PURR</h2>
@@ -233,7 +293,7 @@ const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn, t
                         <p>
                             All <b>$PURR</b> will be distributed via a series of claim contracts and will work in a variety
                             of ways - e.g. the first claim -{' '}
-                            <PurrLink to="/" onClick={scrollToClaim}>Day1 / Diamond</PurrLink>
+                            <PurrLink to="/" onClick={scrollToClaims}>Day1 / Diamond</PurrLink>
                             {' '}- rewards kitty owners who own either{' '}
                             <ExternalLink href="https://www.cryptokitties.co/search?include=sale,sire,other&search=id:1-3365&orderDirection=desc&orderBy=age">Day1 kitties</ExternalLink>
                             {' '}(CryptoKitties born on the UTC date the contract launched: 23rd November 2017) or{' '}
@@ -247,13 +307,20 @@ const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn, t
                             {' '}qualify for x10 (cumulative) multipliers.
                         </p>
                         <p>
+                            The second claim -{' '}
+                            <PurrLink to="/" onClick={scrollToClaims}>Gilded / Grandmaster</PurrLink>
+                            {' '}- is a separate contract. Gilded kitties pay <b>$PURR 100</b> each to the current
+                            owner, once per kitty. Grandmaster awards go to the hatcher of ranking-1 of each Fancy
+                            type (shiny counts as that type&apos;s #1) - <b>$PURR 1000</b> once per hatcher address.
+                        </p>
+                        <p>
                             Puzzles will play a big part in <b>$PURR</b> claims and the{' '}
                             <ExternalLink href="https://etherscan.io/address/0x0822465a4Ab614bcC53Efc4AA426729bF5D4C65f">first claim contract</ExternalLink>
                             {' '}includes a puzzle (and significant prize) that needs a mystery kitty (or, to be precise,
                             the mystery kitty&apos;s owner) to{' '}
                             <ExternalLink href="https://etherscan.io/address/0x0822465a4Ab614bcC53Efc4AA426729bF5D4C65f#writeContract#F2">open a portal</ExternalLink>
                             {' '}that will allow the owners of Exclusive kitties not born on Day1 to also be included in the{' '}
-                            <PurrLink to="/" onClick={scrollToClaim}>Day1 / Diamond</PurrLink>
+                            <PurrLink to="/" onClick={scrollToClaims}>Day1 / Diamond</PurrLink>
                             {' '}claim round.
                             For those interested in a further technical dig - such as how the claim contract uses merkle
                             trees to identify e.g. Diamond kitties - the{' '}
@@ -268,21 +335,36 @@ const AppView: React.FC<AuthProps> = ({ handleSignIn, handleSignOut, loggedIn, t
                     />
                 </section>
 
-                {/* Claim */}
-                <section ref={claimRef} className="purr-section flex flex-col items-center">
-                    <Claim
-                        walletAddress={loggedIn}
-                        cryptokitties={cryptokitties}
-                        purrClaim={purrClaim}
-                        balance={balance}
-                        purrClaimBalance={purrClaimBalance}
-                        handleSignIn={handleSignIn}
-                        updateBalances={updateBalances}
-                    />
+                {/* Claims */}
+                <section ref={claimsSectionRef} className="purr-section">
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 xl:gap-8 max-w-7xl mx-auto items-stretch w-full">
+                        <div className="min-w-0">
+                            <Claim
+                                walletAddress={loggedIn}
+                                cryptokitties={cryptokitties}
+                                purrClaim={purrClaim}
+                                balance={balance}
+                                purrClaimBalance={purrClaimBalance}
+                                handleSignIn={handleSignIn}
+                                updateBalances={updateBalances}
+                            />
+                        </div>
+                        <div className="min-w-0">
+                            <Claim2
+                                walletAddress={loggedIn}
+                                cryptokitties={cryptokitties}
+                                purrClaim2={purrClaim2}
+                                balance={balance}
+                                purrClaim2Balance={purrClaim2Balance}
+                                handleSignIn={handleSignIn}
+                                updateBalances={updateBalances}
+                            />
+                        </div>
+                    </div>
                 </section>
 
                 {/* Explore */}
-                <section className="purr-section bg-purr-cream text-black min-h-screen">
+                <section className="purr-section bg-purr-cream text-black">
                     <h2 className="font-display text-lg md:text-2xl lg:text-4xl text-center mb-12">
                         MORE TO EXPLORE WITH YOUR PAW
                     </h2>
