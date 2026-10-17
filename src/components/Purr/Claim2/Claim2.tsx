@@ -12,6 +12,12 @@ const LoadingSpinner = () => (
     <img src={getAssetPath('loading.png')} alt="" className="w-5 h-5 inline-block" />
 )
 
+const GildedMark = ({ className = '' }: { className?: string }) => (
+    <div className={`rounded-full bg-neutral-200 flex items-center justify-center ${className}`}>
+        <img src={gildedGem} alt="" className="w-[70%] h-[70%]" />
+    </div>
+)
+
 const CriteriaBadge = ({ icon, label }: { icon: string; label: string }) => (
     <div className="flex items-center justify-center gap-2 bg-neutral-200 text-neutral-700 font-bold text-sm
         px-3 py-2 rounded shadow-md w-[48%] md:w-[30%] max-w-[180px]">
@@ -27,7 +33,7 @@ const Claim2Criteria = () => (
             <li>Fancy #1 Breeders - <b>$PURR {GRANDMASTER_REWARD}</b></li>
         </ol>
         <div className="flex flex-wrap justify-center gap-3 w-full max-w-2xl mx-auto mb-6">
-            <CriteriaBadge icon={getAssetPath('icons/gilded.svg')} label="Gilded" />
+            <CriteriaBadge icon={gildedGem} label="Gilded" />
             <CriteriaBadge icon={fancyIcon} label="Grandmasters" />
         </div>
     </>
@@ -72,10 +78,7 @@ const Claim2: React.FC<{
         const tx = state.claimTX || state.grandmasterTX
         return formShell(
             <>
-                <div
-                    className="w-16 h-16 md:w-24 md:h-24 rounded-full bg-neutral-200 mb-8 bg-center bg-no-repeat bg-[length:70%]"
-                    style={{ backgroundImage: `url(${gildedGem})` }}
-                />
+                <GildedMark className="w-16 h-16 md:w-24 md:h-24 mb-8" />
                 <h4 className="font-display text-lg md:text-xl mb-4">Gilded / Grandmaster Claim</h4>
                 <p className="mb-4">Available: <b>$PURR {availableBalance}</b></p>
                 <h4 className="font-display text-base mb-4">
@@ -101,10 +104,7 @@ const Claim2: React.FC<{
 
     return formShell(
         <>
-            <div
-                className="w-16 h-16 md:w-24 md:h-24 rounded-full bg-neutral-200 mb-8 bg-center bg-no-repeat bg-[length:70%]"
-                style={{ backgroundImage: `url(${gildedGem})` }}
-            />
+            <GildedMark className="w-16 h-16 md:w-24 md:h-24 mb-8" />
             <h4 className="font-display text-xl md:text-2xl mb-4">Gilded / Grandmaster Claim</h4>
             <p className="hidden md:block mb-8">Available: <b>$PURR {availableBalance}</b></p>
 
