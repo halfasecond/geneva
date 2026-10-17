@@ -3,6 +3,7 @@ import { Model } from 'mongoose';
 import auth from './auth'
 import balances from './balances';
 import claims from './claims';
+import claims2 from './claims2';
 import events from './events';
 
 interface Models {
@@ -18,6 +19,7 @@ const routes = (app: Express, urlPrepend: string | undefined, Models: Models) =>
     app.use(`${url}auth`, auth(Models));
     app.use(`${url}balances`, balances(Models));
     app.use(`${url}claims`, claims(Models));
+    app.use(`${url}claims2`, claims2());
     app.use(`${url}events`, events(Models));
 };
 
