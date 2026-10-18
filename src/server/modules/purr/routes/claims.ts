@@ -17,10 +17,14 @@ const routes = (Models: Models): Router => {
     router.get('/', async (req, res) => {
         try {
             const claims = await Models.Claim.find({}, { _id: 0, __v: 0 })
-            if (claims) {
-                return res.json(claims);
-            }
-        } catch (e) {
+            const gilded = await Models.GildedClaim.find({}, { _id: 0, __v: 0 })
+            const merged = [...claims, ...gilded].sort((a, b) => {
+                const at = new Date(a.timestamp ?? 0).getTime()
+                const bt = new Date(b.timestamp ?? 0).getTime()
+                return at - bt
+            })
+            return res.json(merged);
+        } catch (err) {
             const error = err as Error;
             res.status(500).json({ error: error.message });
         }

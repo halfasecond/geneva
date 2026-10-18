@@ -4,6 +4,8 @@ import { Connection } from 'mongoose';
 import _Models from './models';
 import Routes from './routes';
 import Contracts from './contracts';
+import { GILDED_CLAIM } from './claimEvents';
+import { startGildedClaimPoll, storeGildedClaim } from './gildedWatch';
 import { followContracts, type WatchContractFn } from '../../indexer';
 
 
@@ -40,10 +42,16 @@ interface Models {
     Event: any;
     Balance: any;
     Claim: any;
+    GildedClaim: any;
 }
 
 const logEvent = async (event: any, Models: Models, web3: any) => {
     try {
+        if (event.event === GILDED_CLAIM) {
+            await storeGildedClaim(event, Models);
+            return;
+        }
+
         const processor = event.event === 'Transfer' ? processTransferEvent : processClaimEvent;
         await processor(event, web3);
 
@@ -109,6 +117,7 @@ const runModule = (config: ModuleConfig) => {
     const Models = _Models(prefix, db);
 
     Routes(app, name, Models);
+    startGildedClaimPoll({ web3, Models });
 
     return followContracts({
         name: name || 'purr',
@@ -116,6 +125,7 @@ const runModule = (config: ModuleConfig) => {
         contracts: [
             { label: 'Core', abi: Contracts.Core.abi, addr: Contracts.Core.addr, events: eventsToWatch },
             { label: 'Claim', abi: Contracts.PurrClaim.abi, addr: Contracts.PurrClaim.addr, events: ['Claim'] },
+            { label: 'Claim2', abi: Contracts.PurrClaim2.abi, addr: Contracts.PurrClaim2.addr, events: [GILDED_CLAIM] },
         ],
         handle: (event) => logEvent(event, Models, web3),
         backfill: { web3, Models, deployed, increment },

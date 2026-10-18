@@ -50,5 +50,18 @@ export default (prefix: string, db: Connection) => {
         })
     );
 
-    return { Account, Event, Balance, Claim };
+    // Separate collection: purr_claims.tokenId is unique, and gilded ids overlap day-1 claims.
+    const GildedClaim = db.model(
+        `${prefix}_gildedclaim`,
+        new Schema({
+            tokenId: { type: Number, index: true, unique: true },
+            address: { type: String, index: true },
+            amount: String,
+            transactionHash: String,
+            blockNumber: { type: Number, index: true },
+            timestamp: { type: Date, default: Date.now }
+        })
+    );
+
+    return { Account, Event, Balance, Claim, GildedClaim };
 };
